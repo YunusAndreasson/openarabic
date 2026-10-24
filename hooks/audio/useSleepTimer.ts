@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
 import { STRINGS } from '@/constants/strings';
@@ -48,29 +48,29 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
 
   const startTimer = useCallback(
     (minutes: number) => {
-      try {
-        if (!minutes || minutes <= 0 || minutes > 180) {
-          throw new Error(`Invalid timer duration: ${minutes} minutes`);
-        }
-
-        const durationMs = minutes * 60 * 1000;
-        const end = Date.now() + durationMs;
-
-        clearTimerTimeout();
-
-        setEndTime(end);
-        setIsActive(true);
-        // The service checks this at every track end, which keeps working in
-        // the background where the timeout below does not.
-        simpleAudioService.setSleepDeadline(end);
-
-        timeoutRef.current = setTimeout(fireCompletion, durationMs);
-      } catch (error) {
-        void handleError(error, {
+      // Rejected up front rather than thrown and caught: nothing past this
+      // check can fail, and a throw inside a try is something the React
+      // Compiler cannot compile, which left this whole hook unmemoized.
+      if (!minutes || minutes <= 0 || minutes > 180) {
+        void handleError(new Error(`Invalid timer duration: ${minutes} minutes`), {
           toastMessage: STRINGS.FAILED_TO_START_SLEEP_TIMER,
           analyticsEventName: 'Sleep_Timer_Start_Error',
         });
+        return;
       }
+
+      const durationMs = minutes * 60 * 1000;
+      const end = Date.now() + durationMs;
+
+      clearTimerTimeout();
+
+      setEndTime(end);
+      setIsActive(true);
+      // The service checks this at every track end, which keeps working in
+      // the background where the timeout below does not.
+      simpleAudioService.setSleepDeadline(end);
+
+      timeoutRef.current = setTimeout(fireCompletion, durationMs);
     },
     [clearTimerTimeout, fireCompletion],
   );
@@ -98,16 +98,22 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
   // `Date.now()` on every foreground transition makes expiry correct
   // regardless of whether the underlying setTimeout fired on schedule, was
   // merely late, or is still pending.
+  //
+  // Registered once per mount: the check reads the latest timer state through
+  // an effect event, where depending on it re-registered the listener on every
+  // render of the app-root provider.
+  const expireIfPastDeadline = useEffectEvent(() => {
+    if (!isActive || endTime === 0) return;
+    if (Date.now() >= endTime) {
+      fireCompletion();
+    }
+  });
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextState => {
-      if (nextState !== 'active') return;
-      if (!isActive || endTime === 0) return;
-      if (Date.now() >= endTime) {
-        fireCompletion();
-      }
+      if (nextState === 'active') expireIfPastDeadline();
     });
     return () => subscription?.remove();
-  }, [isActive, endTime, fireCompletion]);
+  }, []);
 
   return {
     state: { isActive, endTime },

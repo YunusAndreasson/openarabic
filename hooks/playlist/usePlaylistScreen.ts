@@ -1,33 +1,19 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
-import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { TIMING_CONSTANTS } from '@/constants/animation';
-import { audioQueries, readingProgressQueries } from '@/constants/queries';
-import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useReadingListMutations } from '@/hooks/articles/useReadingListMutations';
+import { useStartArticlePlayback } from '@/hooks/audio/useStartArticlePlayback';
 // Use direct service access to avoid frequent parent re-renders from time updates
 import { useAuth } from '@/hooks/auth/useAuth';
-import { analytics } from '@/services/analytics';
-import { enhancedAudioService, warmTrackCache } from '@/services/audioPlaylist';
-import { simpleAudioService, type SourceTrackedAudioTrack } from '@/services/audioPlayer';
-import { useAppDispatch, useAppSelector, useAppSelectorShallow } from '@/store/hooks';
+import { useSortedEnhancedTracks } from '@/hooks/playlist/useSortedEnhancedTracks';
+import { enhancedAudioService } from '@/services/audioPlaylist';
+import { simpleAudioService } from '@/services/audioPlayer';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/playlistSlice';
+import { selectAudioLanguage } from '@/store/settingsSlice';
 import type { ArticleId } from '@/types/branded.types';
-import { OnboardingStep } from '@/constants/onboarding';
-import {
-  getCurrentArticleId,
-  isAudioBusy,
-  prefetchArticleWithImage,
-  stopNonPlaylistAudioSafely,
-} from '@/utils/audioUtils';
-import { markOnboardingStep } from '@/utils/onboardingStorage';
-import { handleError } from '@/utils/errorHandling';
+import { isAudioBusy, stopNonPlaylistAudioSafely } from '@/utils/audioUtils';
 import { selectionFeedback } from '@/utils/haptics';
-import { useTimerCleanup } from '@/hooks/utils/useTimerCleanup';
-import { shuffleArray } from '@/utils/list';
-import { sortByCustomOrder, sortByDateDesc } from '@/utils/sortingUtils';
 
 /**
  * Official React Query pattern for refetching on screen focus
@@ -50,77 +36,18 @@ function useRefreshOnFocus<T>(refetch: () => Promise<T>) {
 
 export const usePlaylistScreen = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
-  const { prefetchArticle } = useAppPreloader();
+  const audioPreference = useAppSelector(selectAudioLanguage);
+  const startArticlePlayback = useStartArticlePlayback();
 
-  const customOrder = useAppSelector(state => state.playlist.customOrder);
-  const { audioPreference, audioShuffleEnabled } = useAppSelectorShallow(state => ({
-    audioPreference: state.settings.audioLanguagePreference,
-    audioShuffleEnabled: state.settings.audioShuffleEnabled,
-  }));
-
-  // STABILIZATION: Add debouncing for playback mode changes
-  const [playbackMode, setPlaybackMode] = useState<'all' | 'none'>('none');
-  const { setTimer, clearTimer } = useTimerCleanup();
-
-  // Sleep timer functionality is handled by useGlobalAudioState
-
-  const readingListQuery = useQuery(
-    user?.id
-      ? readingProgressQueries.readingList(user.id)
-      : {
-          queryKey: ['readingList', 'none'] as const,
-          queryFn: () => Promise.resolve([]),
-          enabled: false,
-        },
-  );
-  const { data: readingList = [] } = readingListQuery;
+  const { readingListQuery, sortedReadingList, enhancedTracksQuery, sortedEnhancedTracks } =
+    useSortedEnhancedTracks();
   // The query's `placeholderData: []` makes v5 report success before the first
   // fetch lands, so `isLoading` never turns true and an empty placeholder reads
   // as an empty playlist. While the placeholder is what's showing, the real list
   // is not known yet.
   const isReadingListLoading = readingListQuery.isPlaceholderData;
-
-  const sortedReadingList = useMemo(() => {
-    if (!readingList?.length) return [];
-
-    // Deduplicate while preserving order
-    const seen = new Set<number>();
-    const deduped = readingList.filter(item => {
-      if (seen.has(item.article_id)) return false;
-      seen.add(item.article_id);
-      return true;
-    });
-
-    // Sort by custom order with date fallback
-    return sortByCustomOrder(
-      deduped,
-      customOrder,
-      item => item.article_id,
-      (a, b) => sortByDateDesc(a.added_at, b.added_at),
-    );
-  }, [readingList, customOrder]);
-
-  const enhancedTracksQuery = useQuery(
-    user?.id
-      ? audioQueries.tracks(user.id, audioPreference)
-      : {
-          queryKey: ['enhancedAudioTracks', 'none', 'arabic'] as const,
-          queryFn: () => Promise.resolve([]),
-          enabled: false,
-        },
-  );
-  const { data: enhancedTracks = [], error: enhancedTracksError } = enhancedTracksQuery;
-
-  const sortedEnhancedTracks = useMemo(() => {
-    if (!enhancedTracks.length || !sortedReadingList.length) return enhancedTracks;
-
-    // Create position map from sorted reading list order
-    const readingListOrder = sortedReadingList.map(item => item.article_id);
-
-    return sortByCustomOrder(enhancedTracks, readingListOrder, track => track.articleId || 0);
-  }, [enhancedTracks, sortedReadingList]);
+  const { error: enhancedTracksError } = enhancedTracksQuery;
 
   const shouldShowInitialLoading = useMemo(() => {
     return isReadingListLoading && sortedReadingList.length === 0;
@@ -135,98 +62,6 @@ export const usePlaylistScreen = () => {
   // Automatically respects staleTime (5 minutes) - no manual throttling needed
   useRefreshOnFocus(readingListQuery.refetch);
   useRefreshOnFocus(enhancedTracksQuery.refetch);
-
-  // STABILIZATION: Debounce the return to idle so a stop/start pair doesn't
-  // flicker the Play All control.
-  const resetPlaybackModeSoon = useCallback(() => {
-    setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
-  }, [setTimer]);
-
-  /** Start a playlist and keep the screen's playback mode in step with it. */
-  const startPlaylist = useCallback(
-    async (tracks: SourceTrackedAudioTrack[]) => {
-      const success = await simpleAudioService.playPlaylist(tracks, nextTrack => {
-        // Callback when a track completes and the next one starts
-        if (nextTrack?.articleId) {
-          // Prefetch the next article's data and image for smooth transitions
-          void prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
-          // Cache the now-playing track for offline replay (no-op if it was
-          // already local). Only ever the current track — warming the whole
-          // playlist is what used to saturate the connection.
-          warmTrackCache(nextTrack);
-        } else {
-          // Playlist is complete, reset playback mode
-          resetPlaybackModeSoon();
-        }
-      });
-
-      if (success) {
-        // Playback is live — warm only the track that's actually playing.
-        const firstTrack = tracks[0];
-        if (firstTrack) warmTrackCache(firstTrack);
-        void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
-      } else {
-        resetPlaybackModeSoon();
-      }
-    },
-    [queryClient, prefetchArticle, resetPlaybackModeSoon],
-  );
-
-  // STABILIZATION: Enhanced handlePlayAll with better state management
-  const handlePlayAll = useCallback(async () => {
-    // Clear playback mode timeout
-    clearTimer('playbackMode');
-
-    // Get current values directly from audio service instead of relying on local state
-    const currentStatus = simpleAudioService.getStatus();
-    const currentPlaybackMode = playbackMode;
-    const currentTracks = sortedEnhancedTracks;
-
-    const isCurrentlyPlayingNow = currentStatus.playing;
-
-    if (isAudioBusy()) {
-      return;
-    }
-
-    if (isCurrentlyPlayingNow && currentPlaybackMode === 'all') {
-      try {
-        selectionFeedback();
-        await simpleAudioService.stop();
-        resetPlaybackModeSoon();
-      } catch {
-        resetPlaybackModeSoon();
-      }
-    } else if (currentTracks.length) {
-      try {
-        selectionFeedback();
-        // STABILIZATION: Set playback mode immediately for UI feedback
-        setPlaybackMode('all');
-
-        void analytics.track(ANALYTICS_EVENTS.AUDIO_PLAY_ALL_STARTED, {
-          article_count: currentTracks.length,
-          source: 'listen_tab',
-          shuffle_enabled: audioShuffleEnabled,
-        });
-
-        // PLAYLIST SUPPORT: Use the new playlist functionality instead of just playing the first track
-        const tracksToPlay = audioShuffleEnabled ? shuffleArray(currentTracks) : currentTracks;
-
-        await startPlaylist(tracksToPlay);
-      } catch (error) {
-        resetPlaybackModeSoon();
-        void handleError(error);
-      }
-    }
-  }, [
-    playbackMode,
-    sortedEnhancedTracks,
-    audioShuffleEnabled,
-    clearTimer,
-    resetPlaybackModeSoon,
-    startPlaylist,
-  ]);
-
-  // Sleep timer handlers are handled by useGlobalAudioState
 
   // The playlist's delete is the reader's bookmark removal — the same
   // mutation — so it gets the same analytics, the same refresh of everything
@@ -250,72 +85,35 @@ export const usePlaylistScreen = () => {
     async (articleId: ArticleId) => {
       if (isAudioBusy()) return;
 
-      const currentArticleId = getCurrentArticleId();
-      const isCurrentlyPlaying = simpleAudioService.getStatus().playing;
-
-      if (isCurrentlyPlaying && currentArticleId === articleId) {
+      const status = simpleAudioService.getStatus();
+      if (status.playing && status.currentTrack?.articleId === articleId) {
         selectionFeedback();
         await simpleAudioService.stop();
-        resetPlaybackModeSoon();
         return;
       }
 
       // Play from tapped article (Spotify-style): start playlist from this position
-      try {
-        selectionFeedback();
-        setPlaybackMode('all');
-
-        // Find the index of the tapped article in the sorted tracks
-        const startIndex = sortedEnhancedTracks.findIndex(t => t.articleId === articleId);
-
-        if (startIndex === -1 || sortedEnhancedTracks.length === 0) {
-          // Fallback: generate single track if not found in playlist
-          const track = await enhancedAudioService.generateEnhancedAudioTrack(
-            articleId,
-            audioPreference,
-          );
-          if (!track) {
-            setPlaybackMode('none');
-            return;
-          }
-
-          const played = await simpleAudioService.play(track);
-          if (played) {
-            warmTrackCache(track);
-            void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
-          } else {
-            setPlaybackMode('none');
-          }
-          return;
-        }
-
-        // PREFETCH: warm article data and image so audio components show artwork instantly
-        await prefetchArticleWithImage(articleId, queryClient, prefetchArticle);
-
-        // Play playlist starting from tapped article
-        const tracksFromHere = sortedEnhancedTracks.slice(startIndex);
-
-        void analytics.track(ANALYTICS_EVENTS.AUDIO_PLAYBACK_STARTED, {
-          article_id: articleId,
-          article_title: tracksFromHere[0]?.title || '',
-          playlist_position: startIndex + 1,
-          playlist_total: sortedEnhancedTracks.length,
-        });
-
-        await startPlaylist(tracksFromHere);
-      } catch (error) {
-        resetPlaybackModeSoon();
-        void handleError(error);
+      selectionFeedback();
+      const startIndex = sortedEnhancedTracks.findIndex(t => t.articleId === articleId);
+      if (startIndex !== -1) {
+        await startArticlePlayback(sortedEnhancedTracks, { source: 'playlist_row', startIndex });
+        return;
       }
+
+      // The tracks have not caught up with the list yet (an article saved a
+      // moment ago): build this one from the list's own copy of the article,
+      // rather than downloading the whole article again to read five fields.
+      const article = sortedReadingList.find(item => item.article_id === articleId)?.articles;
+      const track = await enhancedAudioService.generateEnhancedAudioTrack(
+        articleId,
+        audioPreference,
+        article,
+      );
+      // On failure the service already showed an error toast
+      if (!track) return;
+      await startArticlePlayback([track], { source: 'playlist_row' });
     },
-    [
-      sortedEnhancedTracks,
-      audioPreference,
-      queryClient,
-      prefetchArticle,
-      resetPlaybackModeSoon,
-      startPlaylist,
-    ],
+    [sortedEnhancedTracks, sortedReadingList, audioPreference, startArticlePlayback],
   );
 
   // Clean up leaked non-playlist audio when the screen loses focus.
@@ -331,13 +129,10 @@ export const usePlaylistScreen = () => {
 
   return {
     sortedReadingList,
-    sortedEnhancedTracks,
     shouldShowInitialLoading,
     isReadingListLoading,
     readingListLoadFailed,
     retryReadingList,
-    playbackMode,
-    handlePlayAll,
     handleArticlePlay,
     handleDelete,
     enhancedTracksError,

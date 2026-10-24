@@ -1,21 +1,14 @@
 import { useCallback } from 'react';
 
-import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { OnboardingStep } from '@/constants/onboarding';
 import { isArticleAudioPaused } from '@/hooks/audio/articleAudioStatus';
 import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
-import { analytics } from '@/services/analytics';
+import { useStartArticlePlayback } from '@/hooks/audio/useStartArticlePlayback';
 import { simpleAudioService } from '@/services/audioPlayer';
-import {
-  enhancedAudioService,
-  warmTrackCache,
-  type AudioTrackArticle,
-} from '@/services/audioPlaylist';
+import { enhancedAudioService, type AudioTrackArticle } from '@/services/audioPlaylist';
 import { useAppSelector } from '@/store/hooks';
+import { selectAudioLanguage } from '@/store/settingsSlice';
 import type { ArticleId } from '@/types/branded.types';
 import { isAudioBusy } from '@/utils/audioUtils';
-import { handleError } from '@/utils/errorHandling';
-import { markOnboardingStep } from '@/utils/onboardingStorage';
 
 /**
  * In-article "Listen" control.
@@ -28,13 +21,15 @@ import { markOnboardingStep } from '@/utils/onboardingStorage';
  */
 export function useArticleListen(
   articleId: ArticleId | undefined,
-  articleTitle?: string,
+  /** Unused: the track carries the article's own title. */
+  _articleTitle?: string,
   /** The article the reader already has loaded. Passed through so the track can
    *  be built without refetching it (see generateEnhancedAudioTrack). */
   article?: AudioTrackArticle | null,
 ) {
   const { playing, isLoading, currentArticle } = useGlobalAudioState();
-  const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
+  const audioPreference = useAppSelector(selectAudioLanguage);
+  const startArticlePlayback = useStartArticlePlayback();
 
   const isCurrentAudioForThisArticle = articleId !== undefined && currentArticle?.id === articleId;
   const isListeningToThisArticle = playing && isCurrentAudioForThisArticle;
@@ -51,44 +46,29 @@ export function useArticleListen(
     }
 
     // Paused on this article (by the MiniPlayer, the lock screen or a call):
-    // Listen carries on from where it stopped rather than starting over.
+    // Listen carries on from where it stopped rather than starting over. A
+    // resume that cannot carry on (the player went away underneath it) falls
+    // through to a fresh start instead of leaving the tap dead.
     if (isCurrentAudioForThisArticle && isArticleAudioPaused(simpleAudioService.getStatus())) {
-      await simpleAudioService.resume();
-      return;
+      if (await simpleAudioService.resume()) return;
     }
 
-    try {
-      const track = await enhancedAudioService.generateEnhancedAudioTrack(
-        articleId,
-        audioPreference,
-        article,
-      );
-      // On failure the service already showed an error toast
-      if (!track) return;
+    const track = await enhancedAudioService.generateEnhancedAudioTrack(
+      articleId,
+      audioPreference,
+      article,
+    );
+    // On failure the service already showed an error toast
+    if (!track) return;
 
-      const success = await simpleAudioService.playPlaylist([track]);
-      if (success) {
-        // Playback is live — now it's safe to pull the file down for next time
-        // without stealing bandwidth from the stream that just started.
-        warmTrackCache(track);
-        void analytics.track(ANALYTICS_EVENTS.AUDIO_PLAYBACK_STARTED, {
-          article_id: articleId,
-          article_title: articleTitle ?? track.title,
-          source: 'article_reader',
-          playlist_total: 1,
-        });
-        void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
-      }
-    } catch (error) {
-      void handleError(error);
-    }
+    await startArticlePlayback([track], { source: 'article_reader' });
   }, [
     articleId,
-    articleTitle,
     audioPreference,
     article,
     isListeningToThisArticle,
     isCurrentAudioForThisArticle,
+    startArticlePlayback,
   ]);
 
   return {

@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 
+import { STRINGS } from '@/constants/strings';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
+import { simpleAudioService } from '@/services/audioPlayer';
 import { handleError } from '@/utils/errorHandling';
 import { generateWordAudioTrack, type WordAudioData } from '@/utils/audioUtils';
-
-import { useSimpleAudioPlayer } from './useSimpleAudioPlayer';
 
 // Re-export for convenience
 export type { WordAudioData };
@@ -34,12 +34,12 @@ export interface UseWordAudioPlaybackOptions {
 export function useWordAudioPlayback(options: UseWordAudioPlaybackOptions = {}) {
   const { showErrorToast = false } = options;
   const isMountedRef = useMountSafety();
-  const { play } = useSimpleAudioPlayer();
 
+  // Commands only, so the service is called directly: subscribing to its
+  // status through useSimpleAudioPlayer re-rendered every word row on every
+  // transport change, for a value it never read.
   const playWordAudio = useCallback(
     async (word: WordAudioData) => {
-      if (!isMountedRef.current) return;
-
       try {
         // Generate audio track using shared utility (now async to use cached paths)
         const track = await generateWordAudioTrack(word);
@@ -47,19 +47,20 @@ export function useWordAudioPlayback(options: UseWordAudioPlaybackOptions = {}) 
         if (!track) {
           return;
         }
+        // The word may have left the screen while its audio resolved.
+        if (!isMountedRef.current) return;
 
-        // Play audio through hook (proper layering)
-        await play(track);
+        await simpleAudioService.play(track);
       } catch (error) {
         if (!isMountedRef.current) return;
 
         void handleError(error, {
           showToast: showErrorToast,
-          toastMessage: 'Word audio playback failed',
+          toastMessage: STRINGS.WORD_AUDIO_PLAY_FAILED,
         });
       }
     },
-    [showErrorToast, isMountedRef, play],
+    [showErrorToast, isMountedRef],
   );
 
   return playWordAudio;

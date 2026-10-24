@@ -66,6 +66,9 @@ jest.mock('@/utils/transitionSound', () => ({
 
 // Import mocked modules
 import { createAudioPlayer, setAudioModeAsync, setIsAudioActiveAsync } from 'expo-audio';
+import { AppState } from 'react-native';
+import { isArticleAudioPaused } from '@/hooks/audio/articleAudioStatus';
+import { audioCache } from '@/services/audioCache';
 import { handleError } from '@/utils/errorHandling';
 import { playTransitionSound } from '@/utils/transitionSound';
 
@@ -1125,5 +1128,210 @@ describe('audioPlayer service', () => {
       expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1);
       expect(audioService.getPlaylistInfo().isPlaylistMode).toBeFalsy();
     });
+  });
+
+  describe('Playback intent', () => {
+    /** A player whose source finishes loading only when the test says so. */
+    function createLoadingPlayer() {
+      const listeners: StatusListener[] = [];
+      const player = {
+        ...mockPlayer,
+        play: jest.fn(),
+        pause: jest.fn(),
+        addListener: jest.fn((event: string, callback: StatusListener) => {
+          if (event === 'playbackStatusUpdate') listeners.push(callback);
+          return { remove: jest.fn() };
+        }),
+      };
+      return {
+        player,
+        emit: (status: PlayerStatus) => listeners.forEach(listener => listener(status)),
+        // The status subscription first, then the ready wait.
+        isWaitingForReady: () => listeners.length >= 2,
+      };
+    }
+
+    /** Let an in-flight play reach its ready wait: the session comes first. */
+    async function flushUntil(condition: () => boolean): Promise<void> {
+      for (let i = 0; i < 50 && !condition(); i++) {
+        await new Promise(resolve => setImmediate(resolve));
+      }
+      expect(condition()).toBe(true);
+    }
+
+    test('a pause while the source loads is honoured once it is ready', async () => {
+      const { player, emit, isWaitingForReady } = createLoadingPlayer();
+      mockCreateAudioPlayer.mockReturnValueOnce(player as unknown as AudioPlayer);
+
+      const started = audioService.playPlaylist([testTrack, testTrack2]);
+      await flushUntil(isWaitingForReady);
+
+      // The MiniPlayer shows Pause for a loading track, so the toggle pauses.
+      expect(await audioService.togglePause()).toBe(true);
+      emit({ isLoaded: true, playbackState: 'ready' });
+
+      // The deferred native play used to win here and start the track anyway.
+      expect(await started).toBe(true);
+      expect(player.play).not.toHaveBeenCalled();
+      const status = audioService.getStatus();
+      expect(status.currentTrack?.id).toBe(testTrack.id);
+      expect(isArticleAudioPaused(status)).toBe(true);
+    });
+
+    test('resuming a track paused during its load starts it and takes the lock screen', async () => {
+      const { player, emit, isWaitingForReady } = createLoadingPlayer();
+      mockCreateAudioPlayer.mockReturnValueOnce(player as unknown as AudioPlayer);
+
+      const started = audioService.playPlaylist([testTrack, testTrack2]);
+      await flushUntil(isWaitingForReady);
+      audioService.pause();
+      emit({ isLoaded: true, playbackState: 'ready' });
+      await started;
+
+      expect(await audioService.resume()).toBe(true);
+      expect(player.play).toHaveBeenCalledTimes(1);
+      // Never started, so it never took the lock screen — without which
+      // Android stops backgrounded playback.
+      expect(player.setActiveForLockScreen).toHaveBeenCalledTimes(1);
+    });
+
+    test('the toggle resumes a paused track', async () => {
+      await audioService.playPlaylist([testTrack]);
+      audioService.pause();
+      // The native side reports the pause.
+      mockPlayer.addListener.mock.calls[0][1]({
+        playing: false,
+        isLoaded: true,
+        isBuffering: false,
+        playbackState: 'ready',
+      });
+      mockPlayer.play.mockClear();
+
+      expect(await audioService.togglePause()).toBe(true);
+      expect(mockPlayer.play).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Failure contracts', () => {
+    test('pause and resume report a native failure instead of throwing', async () => {
+      await audioService.playPlaylist([testTrack]);
+      mockHandleError.mockClear();
+
+      mockPlayer.pause.mockImplementationOnce(() => {
+        throw new Error('native pause failed');
+      });
+      expect(audioService.pause()).toBe(false);
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ toastMessage: STRINGS.AUDIO_PAUSE_FAILED }),
+      );
+
+      mockPlayer.play.mockImplementationOnce(() => {
+        throw new Error('native play failed');
+      });
+      await expect(audioService.resume()).resolves.toBe(false);
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ toastMessage: STRINGS.AUDIO_RESUME_FAILED }),
+      );
+    });
+
+    test('stop resolves whether it stopped', async () => {
+      await audioService.playPlaylist([testTrack]);
+
+      await expect(audioService.stop()).resolves.toBe(true);
+    });
+
+    test('a native load error fails the play at once, with no session reset and no toast', async () => {
+      const failingPlayer = {
+        ...mockPlayer,
+        addListener: jest.fn((event: string, callback: StatusListener) => {
+          if (event === 'playbackStatusUpdate') {
+            process.nextTick(() =>
+              callback({ isLoaded: false, playbackState: 'failed', error: 'Cannot open file' }),
+            );
+          }
+          return { remove: jest.fn() };
+        }),
+      };
+      mockCreateAudioPlayer.mockReturnValue(failingPlayer as unknown as AudioPlayer);
+      mockHandleError.mockClear();
+
+      // A remote source: waiting for readiness instead would sit out the 20 s
+      // streaming budget, far past this test's own timeout.
+      expect(await audioService.play(testTrack)).toBe(false);
+
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1);
+      expect(failingPlayer.play).not.toHaveBeenCalled();
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'SourceLoadError' }),
+        expect.objectContaining({ showToast: false }),
+      );
+    });
+
+    test('a cached file that fails to load is healed straight away', async () => {
+      const failingPlayer = {
+        ...mockPlayer,
+        addListener: jest.fn((event: string, callback: StatusListener) => {
+          if (event === 'playbackStatusUpdate') {
+            process.nextTick(() => callback({ isLoaded: false, error: 'Corrupt file' }));
+          }
+          return { remove: jest.fn() };
+        }),
+      };
+      mockCreateAudioPlayer
+        .mockReturnValueOnce(failingPlayer as unknown as AudioPlayer)
+        .mockReturnValue(mockPlayer as unknown as AudioPlayer);
+      jest.mocked(audioCache.getAudio).mockResolvedValue('file:///cache/audio1-fresh.mp3');
+      const cachedTrack = {
+        ...testTrack,
+        audioUrl: 'file:///cache/audio1.mp3',
+        sourceUrl: testTrack.audioUrl,
+      };
+
+      expect(await audioService.playPlaylist([cachedTrack, testTrack2])).toBe(true);
+
+      expect(audioCache.invalidate).toHaveBeenCalledWith(testTrack.audioUrl);
+      // The bad player and the healed one — no session-reset retry between.
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(2);
+      expect(mockCreateAudioPlayer).toHaveBeenLastCalledWith(
+        'file:///cache/audio1-fresh.mp3',
+        expect.anything(),
+      );
+    });
+  });
+
+  describe('Queue position in the status', () => {
+    test('follows the queue and leaves with it', async () => {
+      await audioService.playPlaylist([testTrack, testTrack2, testTrack3]);
+      expect(audioService.getStatus().queue).toEqual({ index: 0, total: 3 });
+
+      mockPlayer.addListener.mock.calls[0][1]({ didJustFinish: true });
+      await new Promise(resolve => setTimeout(resolve, 100));
+      expect(audioService.getStatus().queue).toEqual({ index: 1, total: 3 });
+
+      await audioService.stop();
+      expect(audioService.getStatus().queue).toBeNull();
+    });
+
+    test('a single track is not a queue', async () => {
+      await audioService.play(testTrack);
+
+      expect(audioService.getStatus().queue).toBeNull();
+    });
+  });
+
+  test('registers its AppState listener once, however often the session is reconfigured', async () => {
+    const addEventListener = jest.mocked(AppState.addEventListener);
+    addEventListener.mockReturnValue({ remove: jest.fn() });
+    await audioService.preconfigureAudioSession();
+    const onAppStateChange = addEventListener.mock.calls[0]?.[1];
+
+    // A return to the foreground reconfigures from inside this very listener.
+    onAppStateChange?.('active');
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(mockSetAudioModeAsync).toHaveBeenCalledTimes(2);
+    expect(addEventListener).toHaveBeenCalledTimes(1);
   });
 });

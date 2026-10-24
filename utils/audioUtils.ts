@@ -2,36 +2,20 @@ import type { QueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 
 import { articleQueries } from '@/constants/queries';
+import { isAudioLoading } from '@/hooks/audio/articleAudioStatus';
 import { audioCache } from '@/services/audioCache';
 import { simpleAudioService } from '@/services/audioPlayer';
-import type { Article } from '@/types/articles.types';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
-import type { ArticleId } from '@/types/branded.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 /**
- * Extract current article ID from audio status
- * @returns Article ID as number or undefined if no track is playing
- */
-export function getCurrentArticleId(): number | undefined {
-  const status = simpleAudioService.getStatus();
-  return status.currentTrack?.articleId
-    ? parseInt(status.currentTrack.articleId.toString(), 10)
-    : undefined;
-}
-
-/**
- * Check if audio service is currently busy (loading)
+ * Check if audio service is currently busy (loading) — the imperative read for
+ * a tap handler; a component subscribes with `useAudioSelector(isAudioLoading)`.
  * @returns true if audio is loading, false otherwise
  */
 export function isAudioBusy(): boolean {
-  const status = simpleAudioService.getStatus();
-  // With no current track the service is idle, not busy. The default
-  // `isLoaded: false` from a freshly-mounted service must not be read as
-  // "still loading" — that would block the very first play attempt.
-  if (!status.currentTrack) return false;
-  return !status.isLoaded || status.isBuffering;
+  return isAudioLoading(simpleAudioService.getStatus());
 }
 
 /**
@@ -42,8 +26,11 @@ export function isAudioBusy(): boolean {
 export async function stopAudioSafely(throwOnError: boolean = false): Promise<void> {
   try {
     const status = simpleAudioService.getStatus();
-    const isLoadingOrPlaying = status.playing || !status.isLoaded || status.isBuffering;
-    if (isLoadingOrPlaying) {
+    // Everything stops except a loaded track holding still. That includes the
+    // idle state: a play still activating the session has not published its
+    // track yet, and the stop is what supersedes it.
+    const isAtRest = status.currentTrack !== null && !status.playing && !isAudioLoading(status);
+    if (!isAtRest) {
       await simpleAudioService.stop();
     }
   } catch (error) {
@@ -69,35 +56,23 @@ export async function stopNonPlaylistAudioSafely(throwOnError: boolean = false):
 }
 
 /**
- * Prefetch article data and image for smooth audio transitions
- * @param articleId - Article to prefetch
- * @param queryClient - React Query client for cache access
- * @param prefetchArticle - Optional prefetch function for full article data
+ * Prefetch a track's article data and artwork for smooth audio transitions.
+ * Fire-and-forget: both are warm-ups, and neither failure blocks playback.
+ *
+ * The artwork comes from the track itself, which carries its resolved image
+ * URL. Reading it off the cached article instead only ever prefetched artwork
+ * that was already cached — exactly the case with nothing left to fetch.
  */
-export async function prefetchArticleWithImage(
-  articleId: ArticleId,
+export function prefetchArticleWithImage(
+  track: EnhancedAudioTrack,
   queryClient: QueryClient,
-  prefetchArticle?: (id: ArticleId) => Promise<boolean | undefined>,
-): Promise<void> {
-  // Prefetch article data
-  queryClient.query(articleQueries.detail(articleId)).catch(() => {
-    // Silent failure
-  });
-
-  // Get cached article for image URL
-  const cachedArticle = queryClient.getQueryData<Article>(
-    articleQueries.detail(articleId).queryKey,
-  );
-  const imageUrl = generateStorageUrl('images', cachedArticle?.image_url);
-
-  if (imageUrl) {
-    // Prefetch image - silent failure won't block functionality
-    Image.prefetch(imageUrl, { cachePolicy: 'memory-disk' }).catch(() => null);
-  } else if (prefetchArticle) {
-    // Fallback to full article prefetch if no cached image
-    prefetchArticle(articleId).catch(() => {
-      // Silent failure
-    });
+): void {
+  if (track.articleId !== undefined) {
+    // query() rejects where prefetchQuery swallowed — keep this fire-and-forget.
+    queryClient.query(articleQueries.detail(track.articleId)).catch(() => undefined);
+  }
+  if (track.imageUrl) {
+    Image.prefetch(track.imageUrl, { cachePolicy: 'memory-disk' }).catch(() => false);
   }
 }
 
