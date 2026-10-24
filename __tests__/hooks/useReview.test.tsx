@@ -26,6 +26,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 
 import { useReview } from '@/hooks/review/useReview';
+import { getPromptSnapshot } from '@/utils/promptTelemetry';
 import {
   createFSRSMock,
   createMockWord,
@@ -207,6 +208,33 @@ describe('useReview Hook', () => {
       );
       expect(audioCache.getAudio).not.toHaveBeenCalled();
     });
+
+    // `resolveCached` answers `undefined` for a file the preloader never
+    // reached. The prompt row compared it with `null`, so every row ever
+    // written claimed a cache hit and a play-time miss was invisible.
+    test.each([
+      { lookup: '/cache/kitab.mp3', cacheMissed: false },
+      { lookup: undefined, cacheMissed: true },
+    ])(
+      'records a play-time cache miss on the prompt ($lookup)',
+      async ({ lookup, cacheMissed }) => {
+        useAudioPreloader.mockReturnValue({
+          isPreloading: false,
+          isReady: true,
+          resolveCached: jest.fn(() => lookup),
+          forgetCached: jest.fn(),
+        });
+        useFSRS.mockReturnValue(fsrsState(mocks, createMockWord()));
+        mocks.mockAudioPlayer.play.mockResolvedValue(true);
+
+        const { result } = renderHook(() => useReview(), { wrapper: createWrapper() });
+
+        await waitFor(() => {
+          expect(getPromptSnapshot(result.current.currentWordKey)?.started).toBe(true);
+        });
+        expect(getPromptSnapshot(result.current.currentWordKey)?.cacheMissed).toBe(cacheMissed);
+      },
+    );
 
     test('a slow cache lookup cannot replace a newer replay', async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports

@@ -72,10 +72,9 @@ function toHotwords(phrases: ReadonlySet<string>): string {
  */
 export function mergeHotwords(current: string, glosses: readonly string[]): string {
   const offered = phrasesOf(glosses);
-  const merged = new Set(current.split('\n').filter(Boolean));
-  const before = merged.size;
-  for (const phrase of offered) merged.add(phrase);
-  if (merged.size === before) return current;
+  const existing = new Set(current.split('\n').filter(Boolean));
+  if (offered.isSubsetOf(existing)) return current;
+  const merged = existing.union(offered);
   if (merged.size <= VOICE_HOTWORDS_MAX_PHRASES) return toHotwords(merged);
   return toHotwords(offered) || current;
 }

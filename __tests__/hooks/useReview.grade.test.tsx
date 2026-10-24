@@ -499,5 +499,71 @@ describe('useReview Hook - Grading', () => {
       act(() => second.unmount());
       await waitFor(() => expect(setQueryData).toHaveBeenCalledWith(key, expect.any(Number)));
     });
+
+    // The completion screen shows a streak, and the streak query does not
+    // refetch on mount — so a session that runs out of cards is finalized when
+    // that screen appears, not when the learner leaves it. Once: the Continue
+    // that follows used to repeat every refresh the screen had already made.
+    test('a session that runs out of cards is finalized once, after its writes settle', async () => {
+      const { useQueryClient } = require('@tanstack/react-query');
+      const { fsrsQueries } = require('@/constants/queries');
+      const setQueryData = jest.fn();
+      const invalidateQueries = jest.fn(async () => undefined);
+      useQueryClient.mockReturnValue({ setQueryData, invalidateQueries });
+      let settleWrites!: () => void;
+      const heldFlush = jest.fn(
+        () =>
+          new Promise<void>(resolve => {
+            settleWrites = resolve;
+          }),
+      );
+      const streakRefreshes = () =>
+        invalidateQueries.mock.calls.filter(
+          ([filters]: unknown[]) =>
+            (filters as { queryKey?: unknown[] }).queryKey?.[0] === 'study-streak',
+        ).length;
+      const word = createMockWord();
+      useFSRS.mockReturnValue({ ...fsrsState(mocks, word), flushPendingWrites: heldFlush });
+
+      const { result, rerender } = renderHook(() => useReview(), { wrapper: createWrapper() });
+      act(() => result.current.revealAnswer());
+      act(() => {
+        result.current.grade('known');
+      });
+      await waitFor(() => expect(mocks.mockUpdateMetrics).toHaveBeenCalled());
+
+      // The last card's grade emptied the session.
+      useFSRS.mockReturnValue({
+        ...fsrsState(mocks, null, { isComplete: true }),
+        flushPendingWrites: heldFlush,
+      });
+      rerender({});
+      await waitFor(() => expect(heldFlush).toHaveBeenCalledTimes(1));
+      // Nothing is refreshed while a write is still in flight.
+      expect(setQueryData).not.toHaveBeenCalled();
+      expect(streakRefreshes()).toBe(0);
+      expect(mocks.mockInvalidateQueries).not.toHaveBeenCalled();
+
+      await act(async () => settleWrites());
+      await waitFor(() =>
+        expect(setQueryData).toHaveBeenCalledWith(
+          fsrsQueries.lastCompletedAtKey('test-user-123'),
+          expect.any(Number),
+        ),
+      );
+      expect(streakRefreshes()).toBe(1);
+      expect(mocks.mockInvalidateQueries).toHaveBeenCalledTimes(1);
+
+      // Continue: the session is already finalized, so nothing runs again.
+      act(() => result.current.handleClose());
+      // The close defers its finalize to an idle callback; let it run.
+      await act(async () => {
+        await jest.runOnlyPendingTimersAsync();
+      });
+      expect(heldFlush).toHaveBeenCalledTimes(1);
+      expect(setQueryData).toHaveBeenCalledTimes(1);
+      expect(streakRefreshes()).toBe(1);
+      expect(mocks.mockInvalidateQueries).toHaveBeenCalledTimes(1);
+    });
   });
 });

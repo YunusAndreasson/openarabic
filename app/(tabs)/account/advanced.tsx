@@ -67,11 +67,7 @@ const AdvancedScreen = () => {
       voiceEnabled: voice.enabled,
       micDenied: false,
       model,
-      engine: {
-        isReady: voice.isReady,
-        isWarming: voice.isWarming,
-        error: voice.error ? new Error(voice.error) : null,
-      },
+      engine: { isReady: voice.isReady, isWarming: voice.isWarming, error: voice.error },
     });
     switch (readiness.kind) {
       case 'off':

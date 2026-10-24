@@ -119,6 +119,33 @@ const seamMask = (progress: number): number => {
 const RESTING_TRANSFORM: TransformsStyle['transform'] = [];
 
 /**
+ * One face of the card at this point in the turn. The faces turn together,
+ * half a turn apart: the front rests at progress 0, the back at progress 1.
+ *
+ * Identity at rest, not `rotateY: 0deg` under a perspective — see
+ * RESTING_TRANSFORM. Exact equality, not a threshold: an overshooting curve
+ * (a spring, if FLIP is ever retuned) passes through the endpoint while still
+ * moving, and a threshold would snap the transform to identity in the middle of
+ * that. `withTiming` and the snap back both land on the endpoint exactly, so
+ * only a genuinely resting card matches.
+ */
+export const faceStyle = (progress: number, restsAt: 0 | 1, restShadowOpacity: number) => {
+  'worklet';
+  const mask = seamMask(progress);
+  return {
+    opacity: mask,
+    shadowOpacity: restShadowOpacity * mask,
+    transform:
+      progress === restsAt
+        ? RESTING_TRANSFORM
+        : [
+            { perspective: LAYOUT.PERSPECTIVE.CARD },
+            { rotateY: `${restsAt * 180 + progress * 180}deg` },
+          ],
+  };
+};
+
+/**
  * A new card rises into place rather than materialising. State-driven (it
  * replays whenever the keyed wrapper remounts on a word change), so per the
  * split documented below it belongs on Reanimated's CSS API, and the builder is
@@ -494,36 +521,12 @@ export function ReviewFlipCard({
 
   const frontStyle = useAnimatedStyle(() => {
     'worklet';
-    const progress = flipProgress.get();
-    const mask = seamMask(progress);
-    return {
-      opacity: mask,
-      shadowOpacity: restShadowOpacity * mask,
-      // Identity at rest, not `rotateY: 0deg` under a perspective — see
-      // RESTING_TRANSFORM. Exact equality, not `<= 0`: an overshooting curve
-      // (a spring, if FLIP is ever retuned) passes through the endpoint while
-      // still moving, and a threshold would snap the transform to identity in
-      // the middle of that. `withTiming` and the `set(0)` below both land on
-      // the endpoint exactly, so only a genuinely resting card matches.
-      transform:
-        progress === 0
-          ? RESTING_TRANSFORM
-          : [{ perspective: LAYOUT.PERSPECTIVE.CARD }, { rotateY: `${progress * 180}deg` }],
-    };
+    return faceStyle(flipProgress.get(), 0, restShadowOpacity);
   });
 
   const backStyle = useAnimatedStyle(() => {
     'worklet';
-    const progress = flipProgress.get();
-    const mask = seamMask(progress);
-    return {
-      opacity: mask,
-      shadowOpacity: restShadowOpacity * mask,
-      transform:
-        progress === 1
-          ? RESTING_TRANSFORM
-          : [{ perspective: LAYOUT.PERSPECTIVE.CARD }, { rotateY: `${180 + progress * 180}deg` }],
-    };
+    return faceStyle(flipProgress.get(), 1, restShadowOpacity);
   });
 
   // Dark mode carries no shadow, same as BaseCard. This card doesn't compensate
@@ -539,10 +542,10 @@ export function ReviewFlipCard({
         backgroundColor: colors.card,
         shadowColor: colors.shadow,
         ...FLIP_SHADOW,
-        shadowOpacity: isDarkMode ? 0 : FLIP_SHADOW.shadowOpacity,
+        shadowOpacity: restShadowOpacity,
       },
     ],
-    [colors.card, colors.shadow, isDarkMode],
+    [colors.card, colors.shadow, restShadowOpacity],
   );
 
   // Recentre for the new card. cancelAnimation first: the committed card is

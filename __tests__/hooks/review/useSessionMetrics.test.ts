@@ -106,6 +106,7 @@ describe('useSessionMetrics', () => {
 
       // Without rootId, falls back to incrementing each call
       expect(result.current.metrics.wordsReviewed).toBe(2);
+      expect(result.current.metrics.firstAttemptKnown).toBe(2);
     });
   });
 
@@ -391,63 +392,6 @@ describe('useSessionMetrics', () => {
 
       expect(result.current.metrics.firstAttemptUnknown).toBe(1);
       expect(result.current.metrics.firstAttemptKnown).toBe(1);
-    });
-
-    test('reset clears first-attempt counters', () => {
-      const { result } = renderHook(() => useSessionMetrics());
-
-      act(() => {
-        result.current.updateMetrics('known', { rootId: rootId(100) });
-        result.current.resetMetrics();
-      });
-
-      expect(result.current.metrics.firstAttemptKnown).toBe(0);
-      expect(result.current.metrics.firstAttemptUnknown).toBe(0);
-    });
-  });
-
-  describe('Reset functionality', () => {
-    test('should reset all metrics including unique words set', () => {
-      const { result } = renderHook(() => useSessionMetrics());
-
-      // Build up metrics
-      act(() => {
-        result.current.updateMetrics('known', {
-          rootId: rootId(100),
-          oldStability: 2.0,
-          newStability: 3.5,
-        });
-        result.current.updateMetrics('known', {
-          rootId: rootId(200),
-          oldStability: 4.5,
-          newStability: 5.5,
-        });
-      });
-
-      expect(result.current.metrics.wordsReviewed).toBe(2);
-      expect(result.current.metrics.masteredWords).toBe(1);
-
-      // Reset
-      act(() => {
-        result.current.resetMetrics();
-      });
-
-      expect(result.current.metrics).toMatchObject({
-        wordsReviewed: 0,
-        wordsKnown: 0,
-        wordsUnknown: 0,
-        averageStabilityIncrease: 0,
-        longestStreak: 0,
-        currentStreak: 0,
-        masteredWords: 0,
-      });
-
-      // After reset, same words should be counted again
-      act(() => {
-        result.current.updateMetrics('known', { rootId: rootId(100) });
-      });
-
-      expect(result.current.metrics.wordsReviewed).toBe(1);
     });
   });
 

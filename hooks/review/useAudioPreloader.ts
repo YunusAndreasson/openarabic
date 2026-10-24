@@ -4,8 +4,10 @@ import { clearPreloadedSource, preload } from 'expo-audio';
 
 import { audioCache } from '@/services/audioCache';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { delay, withTimeout } from '@/utils/async';
 import { mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
 import { generateStorageUrl } from '@/utils/storageUtils';
+import { toError } from '@/utils/toError';
 
 /**
  * Hard cap on how long the FIRST CARD's audio may block the review UI
@@ -207,7 +209,7 @@ export const useAudioPreloader = (
           await Promise.all(batch.map(url => cacheOne(url, isStale)));
 
           if (!deadlineHit && i + BATCH_SIZE < urls.length) {
-            await new Promise<void>(resolve => setTimeout(resolve, BATCH_DELAY));
+            await delay(BATCH_DELAY);
           }
         }
         return { batched, abandoned: false, deadlineHit };
@@ -264,18 +266,11 @@ export const useAudioPreloader = (
       // Block on the first card only, under a tight deadline. In-flight work
       // keeps running after the deadline — it just stops being waited on.
       if (priorityUrls.length > 0) {
-        let deadlineTimer: ReturnType<typeof setTimeout> | null = null;
-        const deadline = new Promise<void>(resolve => {
-          deadlineTimer = setTimeout(resolve, FIRST_CARD_DEADLINE_MS);
-        });
-        try {
-          await Promise.race([
-            Promise.all(priorityUrls.map(url => cacheOne(url, isStale))),
-            deadline,
-          ]);
-        } finally {
-          if (deadlineTimer) clearTimeout(deadlineTimer);
-        }
+        await withTimeout(
+          Promise.all(priorityUrls.map(url => cacheOne(url, isStale))),
+          FIRST_CARD_DEADLINE_MS,
+          () => undefined,
+        );
       }
 
       endFirstCard({ files: priorityUrls.length });
@@ -362,9 +357,7 @@ export const useAudioPreloader = (
     // await, so this identifies exactly the detached pass we just launched.
     const runId = runIdRef.current;
     void preloadPromise.catch(error => {
-      diagMark('preload.error', {
-        message: error instanceof Error ? error.message : String(error),
-      });
+      diagMark('preload.error', { message: toError(error).message });
       if (runId === runIdRef.current) {
         setIsPreloading(false);
         setIsReady(true);
@@ -386,9 +379,7 @@ export const useAudioPreloader = (
 
     fresh.forEach(word => preloadedIdsRef.current.add(word.root_id));
     void topUpSessionAudio(fresh).catch(error => {
-      diagMark('preload.topup-error', {
-        message: error instanceof Error ? error.message : String(error),
-      });
+      diagMark('preload.topup-error', { message: toError(error).message });
     });
   }, [wordQueue, isReady, isSessionComplete, topUpSessionAudio]);
 
