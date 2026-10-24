@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
+import { CSS_EASING, TIMING_CONFIG, VERDICT } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
@@ -166,7 +166,10 @@ const CARD_ENTRANCE: ReanimatedCSSAnimationStyle = {
     to: { transform: [{ translateY: 0 }, { scale: 1 }] },
   },
   animationDuration: TIMING_CONFIG.CARD_EXIT.duration,
-  animationTimingFunction: 'ease-out',
+  // CARD_EXIT's own curve. CSS 'ease-out' is not Easing.out(Easing.cubic) —
+  // see CSS_EASING — so the rise used to run a different curve from the fade
+  // it is timed to land with.
+  animationTimingFunction: CSS_EASING.OUT_CUBIC,
   animationFillMode: 'both',
 };
 

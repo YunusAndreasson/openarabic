@@ -5,6 +5,7 @@
  */
 
 // Export all animation hooks
+export { useMotionStyle } from './useMotionStyle';
 export { useOpacityAnimation } from './useOpacityAnimation';
 export {
   PRESS_ANIMATION_BUTTON,

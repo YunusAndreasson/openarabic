@@ -1,4 +1,6 @@
-import { Easing } from 'react-native-reanimated';
+import type { ViewStyle } from 'react-native';
+import { cubicBezier, Easing, ZoomIn } from 'react-native-reanimated';
+import type { CSSAnimationTimingFunction } from 'react-native-reanimated';
 
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 
@@ -55,6 +57,22 @@ export const TIMING_CONFIG = {
     duration: 180,
     easing: Easing.out(Easing.cubic), // Decelerating throw — fast off the mark
   },
+} as const;
+
+/**
+ * The curves above, for Reanimated's CSS API.
+ *
+ * The CSS API cannot take an `Easing` worklet, and it is not lenient about
+ * strings either: a `'cubic-bezier(…)'` string throws everywhere but the
+ * `transition` shorthand, so a curve has to be a `cubicBezier()` object. Nor is
+ * CSS's `ease-out` the tokens' `Easing.out(Easing.cubic)` — it is
+ * cubic-bezier(0, 0, 0.58, 1), much slower off the mark — so a CSS animation
+ * timed to a token above but eased `'ease-out'` (or left on the `'ease'`
+ * default) ran a different curve from the worklet it was meant to match.
+ */
+export const CSS_EASING = {
+  /** `Easing.out(Easing.cubic)`: FAST, MEDIUM, ENTRANCE, PROGRESS, COUNT and CARD_EXIT. */
+  OUT_CUBIC: cubicBezier(0.33, 1, 0.68, 1),
 } as const;
 
 /**
@@ -216,6 +234,10 @@ export const HORIZON_TRAVEL = {
 
 /**
  * Spring configuration presets for common animations
+ *
+ * No `energyThreshold` on these. Reanimated 4 reads it as a fraction of the
+ * spring's starting energy (default 6e-9); the 0.01 carried over from
+ * Reanimated 3, where it was absolute, stopped them about 10% short of rest.
  */
 export const SPRING_CONFIG = {
   /**
@@ -238,14 +260,12 @@ export const SPRING_CONFIG = {
     stiffness: 180, // Higher stiffness for more responsive feel
     mass: 0.9, // Slightly lighter for snappier response
     overshootClamping: false,
-    energyThreshold: 0.01,
   },
   CARD: {
     damping: 20, // High damping - no bounce
     stiffness: 400, // Very high stiffness - instant response
     mass: 0.4, // Light mass - snappy
     overshootClamping: true, // No overshoot
-    energyThreshold: 0.01,
   },
 } as const;
 
@@ -367,32 +387,72 @@ export const TIMING_CONSTANTS = {
   /** Touch interaction delays */
   LONG_PRESS_DELAY: 500,
 
-  /** Pulsating animation duration */
-  PULSATE_DURATION: 1500,
+  /**
+   * Long-press on a reader word: instant save to practice. Shorter than
+   * LONG_PRESS_DELAY on purpose — long enough not to fire during scroll
+   * hesitation, short enough to feel instant (RNGH's default is 500ms).
+   */
+  WORD_LONG_PRESS_DELAY: 400,
+
+  /** The reader's word tooltip fading in — short enough that the transparency flash is imperceptible. */
+  TOOLTIP_FADE_IN: 100,
+
+  /**
+   * Smoothing between the recorder's ~10 Hz mic-level buffers. Slightly longer
+   * than the buffer interval so each level carries into the next without
+   * visible steps; much longer and the meter lags the voice enough to feel
+   * disconnected.
+   */
+  MIC_LEVEL_SMOOTHING: 130,
 
   /** Stagger animation delays for sequential reveals */
   STAGGER: {
     BASE: 50,
-    FAST: 100,
   },
 } as const;
+
+/**
+ * Half a breath — one leg of a pulse that eases between two levels and back,
+ * forever (`breatheStyle`).
+ *
+ * Three pulses, three tempos, kept as they shipped: nothing says they were
+ * meant to match, and retiming a loop is a visible change. Named here so the
+ * numbers stop living as literals in three files.
+ */
+export const BREATHE_HALF_PERIOD = {
+  /** PulsatingLoader's ring. */
+  LOADER: 750,
+  /** The review card's meter while the microphone opens. */
+  MIC_OPENING: 700,
+  /** The reader tutorial's first-word marker (a Skia shared value, not CSS). */
+  TUTORIAL_MARKER: 800,
+} as const;
+
+/** CSS `ease-in-out` as a worklet curve, for a breath driven by a shared value. */
+export const BREATHE_EASING = Easing.bezier(0.42, 0, 0.58, 1);
 
 /**
  * The mount fade-in every list row and screen body uses.
  *
  * Five call sites declared this same `from/to opacity` keyframe object inline,
  * differing only in the duration token and the fill mode. Keyframe blocks that
- * animate something else (a pulse, a scale, the card entrance) are genuinely
- * different animations and stay where they are.
+ * animate something else (a scale, the card entrance) are genuinely different
+ * animations and stay where they are; a pulse is `breatheStyle` below.
  *
  * `backwards` holds the FROM frame during any delay before the animation runs —
  * what a staggered list row needs so it does not flash at full opacity first.
  * `forwards` holds the TO frame after it ends, which is what a screen body that
  * fades in once needs.
+ *
+ * Eased like the duration tokens it is handed (`CSS_EASING.OUT_CUBIC`); it used
+ * to run on CSS's `ease` default. SLOW is the one token whose own curve IS CSS
+ * `ease` — `Easing.bezier(0.25, 0.1, 0.25, 1)` — so a caller timing to SLOW
+ * that wants its exact curve passes `'ease'`.
  */
 export const fadeInStyle = (
   duration: number,
   animationFillMode: 'forwards' | 'backwards' = 'forwards',
+  animationTimingFunction: CSSAnimationTimingFunction = CSS_EASING.OUT_CUBIC,
 ): ReanimatedCSSAnimationStyle => ({
   animationName: {
     from: { opacity: 0 },
@@ -400,4 +460,47 @@ export const fadeInStyle = (
   },
   animationDuration: `${duration}ms`,
   animationFillMode,
+  animationTimingFunction,
 });
+
+/**
+ * A pulse on Reanimated's CSS API: `from` to `to` and back, forever, on CSS
+ * `ease-in-out`, one leg every `halfPeriodMs` (`BREATHE_HALF_PERIOD`).
+ *
+ * CSS-API animations ignore Reduce Motion (still true in Reanimated 4.7), so a
+ * caller gates a breath that MOVES with `useMotionStyle`; one that only fades
+ * plays either way.
+ */
+export const breatheStyle = (
+  from: ViewStyle,
+  to: ViewStyle,
+  halfPeriodMs: number,
+): ReanimatedCSSAnimationStyle => ({
+  animationName: { from, to },
+  animationDuration: halfPeriodMs,
+  animationIterationCount: 'infinite',
+  animationDirection: 'alternate',
+  animationTimingFunction: 'ease-in-out',
+});
+
+const CHECK_POP_DAMPING_RATIO = 0.75;
+
+/**
+ * The tick that pops in when something is done: the session's checkmark and a
+ * get-started row's check.
+ *
+ * A factory, not a shared builder. Reanimated's builder methods mutate the
+ * instance they are called on and return it, so one shared instance would hand
+ * CompletionScreen's `.withCallback` (its success haptic) to every other check.
+ *
+ * The duration goes INTO springify: a bare `.springify()` resets the duration
+ * set before it, which ran the default physics spring for ~0.8s and landed the
+ * completion haptic half a second after the pop. A perceptual 120ms ends at
+ * ~180ms.
+ *
+ * Damping ratio 0.75: a small pop with one barely visible overshoot. That is
+ * the ratio of Reanimated's Wiggly preset; its Gentle preset is 1, critically
+ * damped, which these were once mislabelled as.
+ */
+export const checkPopEntering = () =>
+  ZoomIn.springify(TIMING_CONFIG.FAST.duration).dampingRatio(CHECK_POP_DAMPING_RATIO);

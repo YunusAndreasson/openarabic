@@ -2,18 +2,13 @@ import { Icon } from '@/components/ui';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  ZoomIn,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { BaseCard } from '@/components/common';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
+import { TIMING_CONFIG, checkPopEntering, fadeInStyle } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ONBOARDING_CONFIG, OnboardingStep } from '@/constants/onboarding';
 import { getArticleRoute, ROUTE_PATHS } from '@/constants/routes';
@@ -33,15 +28,11 @@ const CHECK_ICON_SIZE = 22;
 // instead of popping in behind the closing modal.
 const MOUNT_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.SLOW.duration, 'forwards');
 
-/** A small pop with no wobble — the ratio CompletionScreen's check uses. */
-const CHECK_DAMPING_RATIO = 0.75;
-
-// The duration goes INTO springify: a bare `.springify()` runs Reanimated's
-// default physics spring for ~0.8s, a long wobble for a tick that should land
-// while the learner is still looking at the row.
-const ENTERING_CHECK = ZoomIn.springify(TIMING_CONFIG.FAST.duration).dampingRatio(
-  CHECK_DAMPING_RATIO,
-);
+// The same pop as CompletionScreen's check. Its duration goes into springify:
+// a bare `.springify()` runs Reanimated's default physics spring for ~0.8s, a
+// long wobble for a tick that should land while the learner is still looking
+// at the row.
+const ENTERING_CHECK = checkPopEntering();
 
 interface GetStartedChecklistProps {
   articlesData: Article[];

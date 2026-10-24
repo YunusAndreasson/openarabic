@@ -17,7 +17,6 @@ import {
 } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 import {
-  Easing,
   useAnimatedReaction,
   useSharedValue,
   withRepeat,
@@ -36,6 +35,7 @@ import {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { BREATHE_EASING, BREATHE_HALF_PERIOD, TIMING_CONSTANTS } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -51,14 +51,6 @@ import {
   WORD_PADDING,
   type SentenceWordMetrics,
 } from '@/utils/sentenceWordLayout';
-
-// Long-press threshold: long enough not to fire during scroll hesitation,
-// short enough to feel instant (RNGH default is 500ms)
-const LONG_PRESS_DELAY_MS = 400;
-
-/** One half of the tutorial marker's breathing cycle, as the CSS pulse ran it. */
-const HIGHLIGHT_PULSE_MS = 800;
-const HIGHLIGHT_PULSE_EASING = Easing.bezier(0.42, 0, 0.58, 1); // CSS ease-in-out
 
 /** The id type of the reader's `activeWordIdSV` (`ArticleSentenceProps`). */
 type WordId = string | number;
@@ -210,8 +202,9 @@ const SentenceWordsInternal = function SkiaSentenceWords({
     markerPulse.set(
       withRepeat(
         withTiming(LAYOUT.OPACITY.SUBTLE, {
-          duration: HIGHLIGHT_PULSE_MS,
-          easing: HIGHLIGHT_PULSE_EASING,
+          // One leg of the breath, as the CSS pulse this replaced ran it.
+          duration: BREATHE_HALF_PERIOD.TUTORIAL_MARKER,
+          easing: BREATHE_EASING,
         }),
         -1,
         true,
@@ -500,7 +493,7 @@ function WordTarget({ word, onWordPress, onWordLongPress, style, children }: Wor
       testID={testID}
       onPress={handlePress}
       onLongPress={onWordLongPress ? handleLongPress : undefined}
-      delayLongPress={LONG_PRESS_DELAY_MS}
+      delayLongPress={TIMING_CONSTANTS.WORD_LONG_PRESS_DELAY}
       {...accessibilityProps}
       accessibilityRole="button"
       accessibilityHint={onWordPress ? STRINGS.ARABIC_WORD_A11Y_HINT : undefined}
