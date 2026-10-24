@@ -1,17 +1,19 @@
 /**
  * Notification priming prompt state
  * Device-local funnel state for the "turn on smart reminders" card on the
- * review completion screen (mirrors utils/onboardingStorage.ts: single JSON
- * blob, in-module cache + listener set for useSyncExternalStore, fail-safe
- * reads). Kept out of Redux — this is prompt bookkeeping, not a preference.
+ * review completion screen: a single JSON blob, read through an in-module
+ * cache, with fail-safe reads. Kept out of Redux — this is prompt
+ * bookkeeping, not a preference.
+ *
+ * The key belongs to whoever is signed in, and an account switch removes it
+ * (utils/accountSwitch), which resets the cache here too — otherwise the
+ * previous learner's impressions and "accepted" flag were written back under
+ * the new account by the next update.
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-import { handleError } from '@/utils/errorHandling';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
+import { createJsonStore, decodeFields } from '@/utils/createJsonStore';
 
-const PROMPT_STORAGE_KEY = STORAGE_KEYS.NOTIFICATION_PROMPT_STATE;
 const PROMPT_STATE_VERSION = 1;
 
 export interface NotificationPromptState {
@@ -37,45 +39,46 @@ function createState(overrides: Partial<NotificationPromptState> = {}): Notifica
   };
 }
 
-let cachedState: NotificationPromptState | null = null;
+const promptStore = createJsonStore<NotificationPromptState>({
+  key: STORAGE_KEYS.NOTIFICATION_PROMPT_STATE,
+  decode: raw =>
+    decodeFields(raw, createState(), {
+      version: 'number',
+      sessionsCompleted: 'number',
+      impressions: 'number',
+      lastImpressionSession: 'number',
+      accepted: 'boolean',
+    }),
+  empty: () => createState(),
+  // FAIL-SAFE: a read/parse error yields an exhausted state (impressions maxed,
+  // not persisted) so a storage problem can never turn into a nagging prompt.
+  onReadError: () => createState({ impressions: Number.MAX_SAFE_INTEGER }),
+  cache: true,
+});
 
-/**
- * FAIL-SAFE: a read/parse error yields an exhausted state (impressions maxed,
- * not persisted) so a storage problem can never turn into a nagging prompt.
- */
-export async function loadNotificationPromptState(): Promise<NotificationPromptState> {
-  if (cachedState) return cachedState;
-  try {
-    const raw = await AsyncStorage.getItem(PROMPT_STORAGE_KEY);
-    cachedState = raw
-      ? { ...createState(), ...(JSON.parse(raw) as Partial<NotificationPromptState>) }
-      : createState();
-  } catch (error) {
-    void handleError(error, { showToast: false });
-    cachedState = createState({ impressions: Number.MAX_SAFE_INTEGER });
-  }
-  return cachedState;
+export function loadNotificationPromptState(): Promise<NotificationPromptState> {
+  return promptStore.read();
 }
 
-async function writeState(next: NotificationPromptState): Promise<void> {
-  cachedState = next;
-  try {
-    await AsyncStorage.setItem(PROMPT_STORAGE_KEY, JSON.stringify(next));
-  } catch (error) {
-    void handleError(error, { showToast: false });
-  }
+/**
+ * Forget the cached state. Called once the key it mirrors has been removed
+ * for an account switch, so the next read starts from the new account's
+ * (empty) storage instead of the previous account's copy in memory.
+ */
+export function resetNotificationPromptState(): void {
+  promptStore.reset();
 }
 
 /** Increment the completed-session counter. Fire-and-forget safe. */
 export async function recordSessionCompleted(): Promise<void> {
   const state = await loadNotificationPromptState();
-  await writeState({ ...state, sessionsCompleted: state.sessionsCompleted + 1 });
+  await promptStore.write({ ...state, sessionsCompleted: state.sessionsCompleted + 1 });
 }
 
 /** Record that the priming card was shown this session. */
 export async function recordImpression(): Promise<void> {
   const state = await loadNotificationPromptState();
-  await writeState({
+  await promptStore.write({
     ...state,
     impressions: state.impressions + 1,
     lastImpressionSession: state.sessionsCompleted,
@@ -86,5 +89,5 @@ export async function recordImpression(): Promise<void> {
 export async function recordAccepted(): Promise<void> {
   const state = await loadNotificationPromptState();
   if (state.accepted) return;
-  await writeState({ ...state, accepted: true });
+  await promptStore.write({ ...state, accepted: true });
 }

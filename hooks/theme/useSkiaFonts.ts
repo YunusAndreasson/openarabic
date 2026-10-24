@@ -11,6 +11,7 @@ import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
 import { SKIA_FONT_FAMILY_MAP, type SkiaFontFamily } from '@/constants/fonts';
 import { useAppSelector } from '@/store/hooks';
 import { selectArabicFont, selectArabicFontSize } from '@/store/settingsSlice';
+import { createExternalStore } from '@/utils/createExternalStore';
 
 /**
  * The .ttf/.otf behind each Skia family, keyed by the family name itself.
@@ -39,9 +40,8 @@ const FONT_SOURCES: Record<SkiaFontFamily, number> = {
  * hundreds of redundant ~4MB font loads per article. The typefaces are
  * loaded exactly once here and shared by every ParagraphBuilder.
  */
-let sharedFontManager: SkTypefaceFontProvider | null = null;
+const sharedFontManager = createExternalStore<SkTypefaceFontProvider | null>(null);
 let fontLoadPromise: Promise<void> | null = null;
-const fontSubscribers = new Set<() => void>();
 
 const loadSharedFontManager = (): Promise<void> => {
   if (!fontLoadPromise) {
@@ -64,8 +64,7 @@ const loadSharedFontManager = (): Promise<void> => {
         for (const [familyName, typeface] of entries) {
           manager.registerFont(typeface, familyName);
         }
-        sharedFontManager = manager;
-        fontSubscribers.forEach(notify => notify());
+        sharedFontManager.set(manager);
       })
       .catch((error: unknown) => {
         // Allow a retry on the next subscriber if loading failed (e.g. dev server hiccup)
@@ -78,15 +77,15 @@ const loadSharedFontManager = (): Promise<void> => {
   return fontLoadPromise;
 };
 
+// Every subscribe asks for the load, not only the first: a failed load clears
+// its promise, and the next component to mount retries it.
 const subscribeToFontManager = (callback: () => void) => {
-  fontSubscribers.add(callback);
+  const unsubscribe = sharedFontManager.subscribe(callback);
   void loadSharedFontManager();
-  return () => {
-    fontSubscribers.delete(callback);
-  };
+  return unsubscribe;
 };
 
-const getFontManagerSnapshot = () => sharedFontManager;
+const getFontManagerSnapshot = () => sharedFontManager.get();
 
 export interface UseSkiaFontsResult {
   /** Whether fonts are ready to use */
