@@ -43,15 +43,28 @@ export const voiceBreadcrumb = (
   level?: Sentry.Breadcrumb['level'],
 ): void => breadcrumb('voice', message, data, level);
 
-// Store toast handler globally - updated to support types
-let globalToastHandler: ((message: string, duration?: number, type?: ToastType) => void) | null =
-  null;
+type ToastHandler = (message: string, duration?: number, type?: ToastType) => void;
 
-// Function to set the toast handler (call this in your ToastProvider)
-export const setGlobalToastHandler = (
-  handler: (message: string, duration?: number, type?: ToastType) => void,
-): void => {
+// Store toast handler globally - updated to support types
+let globalToastHandler: ToastHandler | null = null;
+
+/**
+ * Install the handler that global toasts (handleError, showSuccessToast) are
+ * shown through; `null` clears it, and toasts are dropped until one is set.
+ *
+ * Returns the restore: it reinstates the handler that was current before this
+ * call, but only while this one still is. Providers nest — the article reader
+ * mounts its own ToastProvider so its toasts draw above the reader's modal — and
+ * clearing the slot when that inner one unmounted left the app with no handler
+ * at all: after the first article closed, every error and success toast was
+ * silently dropped for the rest of the session.
+ */
+export const setGlobalToastHandler = (handler: ToastHandler | null): (() => void) => {
+  const previous = globalToastHandler;
   globalToastHandler = handler;
+  return () => {
+    if (globalToastHandler === handler) globalToastHandler = previous;
+  };
 };
 
 /**

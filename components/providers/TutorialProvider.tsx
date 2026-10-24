@@ -3,10 +3,11 @@
  * Provides tutorial state management to entire app via Context
  */
 
-import { createContext, use, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import type { TutorialId } from '@/constants/tutorials';
 import { useTutorialManager } from '@/hooks/tutorials/useTutorialManager';
+import { createRequiredContext } from '@/utils/createRequiredContext';
 
 interface TutorialContextValue {
   shouldShowTutorial: (tutorialId: TutorialId) => boolean;
@@ -15,7 +16,16 @@ interface TutorialContextValue {
   isLoaded: boolean;
 }
 
-const TutorialContext = createContext<TutorialContextValue | null>(null);
+/**
+ * Hook to access tutorial context
+ * Throws error if used outside TutorialProvider
+ */
+const [TutorialContext, useTutorialContext] = createRequiredContext<TutorialContextValue>(
+  'TutorialContext',
+  'useTutorialContext must be used within TutorialProvider',
+);
+
+export { useTutorialContext };
 
 interface TutorialProviderProps {
   children: ReactNode;
@@ -32,17 +42,3 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
 }
 
 TutorialProvider.displayName = 'TutorialProvider';
-
-/**
- * Hook to access tutorial context
- * Throws error if used outside TutorialProvider
- */
-export function useTutorialContext(): TutorialContextValue {
-  const context = use(TutorialContext);
-
-  if (!context) {
-    throw new Error('useTutorialContext must be used within TutorialProvider');
-  }
-
-  return context;
-}
