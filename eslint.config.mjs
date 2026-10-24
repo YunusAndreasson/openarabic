@@ -395,7 +395,6 @@ export default defineConfig([
     'coverage/',
     'jest.setup.js',
     'jest.config.js',
-    'jest.polyfills.js',
   ]),
 
   // Prettier must be last

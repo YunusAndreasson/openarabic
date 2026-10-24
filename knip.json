@@ -16,7 +16,7 @@
     "!**/supabase/migrations/**",
     "!**/admin-dashboard/**"
   ],
-  "ignore": ["admin-dashboard/**", "types/database.types.ts"],
+  "ignore": ["types/database.types.ts"],
   "ignoreDependencies": [
     "@expo/agent-cli",
     "@expo-google-fonts/material-symbols",
