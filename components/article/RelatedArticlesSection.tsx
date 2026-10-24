@@ -1,21 +1,21 @@
+import { useQuery } from '@tanstack/react-query';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { RelatedArticlesByFilter } from '@/components/article/RelatedArticlesByFilter';
 import { LAYOUT } from '@/constants/layout';
+import { articleQueries } from '@/constants/queries';
 import { useRelatedArticles } from '@/hooks/articles/useRelatedArticles';
 import type { Article } from '@/types/articles.types';
+
+/** Stable while the catalogue loads, so the selection hooks below see one value. */
+const EMPTY_ARTICLES: Article[] = [];
 
 interface RelatedArticlesSectionProps {
   /**
    * The current article to get author and category from
    */
   article: Article;
-
-  /**
-   * The articles data to select from
-   */
-  articlesData: Article[];
 }
 
 /**
@@ -27,47 +27,54 @@ interface RelatedArticlesSectionProps {
  *
  * A text by this author in this category qualifies for both. It is shown once,
  * in the author list: the category list leaves out what the author list chose.
+ *
+ * The catalogue is a subscription, not a cache read. The reader used to pass
+ * in `queryClient.getQueryData(['articles'])` read during render, which the
+ * React Compiler memoises on the client's identity — so a reader opened before
+ * the catalogue had loaded (a cold deep link: the list is not persisted) kept
+ * an empty footer for the whole visit. `useQuery` re-renders when it lands,
+ * and fetches it when nothing else has.
  */
-export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
-  ({ article, articlesData }) => {
-    const byAuthor = useRelatedArticles({
-      currentArticleId: article.id,
-      articlesData,
-      filterType: 'author',
-      filterId: article.author_id,
-    });
+export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(({ article }) => {
+  const { data: articlesData = EMPTY_ARTICLES } = useQuery(articleQueries.all());
 
-    const byCategory = useRelatedArticles({
-      currentArticleId: article.id,
-      articlesData,
-      filterType: 'category',
-      filterId: article.category_id,
-      excludeIds: new Set(byAuthor.articles.map(related => related.id)),
-    });
+  const byAuthor = useRelatedArticles({
+    currentArticleId: article.id,
+    articlesData,
+    filterType: 'author',
+    filterId: article.author_id,
+  });
 
-    // Nothing to recommend: no empty container
-    if (byAuthor.articles.length === 0 && byCategory.articles.length === 0) {
-      return null;
-    }
+  const byCategory = useRelatedArticles({
+    currentArticleId: article.id,
+    articlesData,
+    filterType: 'category',
+    filterId: article.category_id,
+    excludeIds: new Set(byAuthor.articles.map(related => related.id)),
+  });
 
-    return (
-      <View style={styles.container}>
-        <RelatedArticlesByFilter
-          filterType="author"
-          filterName={article.author.name}
-          articles={byAuthor.articles}
-          progressMap={byAuthor.progressMap}
-        />
-        <RelatedArticlesByFilter
-          filterType="category"
-          filterName={article.category.name}
-          articles={byCategory.articles}
-          progressMap={byCategory.progressMap}
-        />
-      </View>
-    );
-  },
-);
+  // Nothing to recommend: no empty container
+  if (byAuthor.articles.length === 0 && byCategory.articles.length === 0) {
+    return null;
+  }
+
+  return (
+    <View style={styles.container}>
+      <RelatedArticlesByFilter
+        filterType="author"
+        filterName={article.author.name}
+        articles={byAuthor.articles}
+        progressMap={byAuthor.progressMap}
+      />
+      <RelatedArticlesByFilter
+        filterType="category"
+        filterName={article.category.name}
+        articles={byCategory.articles}
+        progressMap={byCategory.progressMap}
+      />
+    </View>
+  );
+});
 
 RelatedArticlesSection.displayName = 'RelatedArticlesSection';
 

@@ -1,6 +1,5 @@
 import type { FlashListProps, FlashListRef, ViewToken } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
-import { useQueryClient } from '@tanstack/react-query';
 import { memo, useCallback, type ComponentType, type ReactElement, type RefObject } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -250,12 +249,8 @@ const ArticleContentInternal = function ArticleContent({
     </View>
   );
 
-  // Get articles from cache for recommendations (avoid re-querying here)
-  const queryClient = useQueryClient();
-  const articlesData = queryClient.getQueryData<Article[]>(['articles']) || [];
-
   // React Compiler auto-memoizes
-  const footerComponent = <RelatedArticlesSection article={article} articlesData={articlesData} />;
+  const footerComponent = <RelatedArticlesSection article={article} />;
 
   // The reader hosts its own MiniPlayer (app/article/[id].tsx), floating at
   // `insets.bottom + SMALL` and at least 112pt tall. With only the reading space
