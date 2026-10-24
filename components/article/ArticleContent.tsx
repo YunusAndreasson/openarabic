@@ -1,6 +1,6 @@
 import type { FlashListProps, FlashListRef, ViewToken } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
-import { memo, useCallback, type ComponentType, type ReactElement, type RefObject } from 'react';
+import { memo, type ComponentType, type ReactElement, type RefObject } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -20,8 +20,7 @@ import {
   TEXT_STYLES,
 } from '@/constants/layout';
 import { useArticleScrollHandler } from '@/hooks/articles/useArticleScrollHandler';
-import { useMiniPlayerHeight } from '@/hooks/audio/useMiniPlayerHeight';
-import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
+import { useMiniPlayerOverlap } from '@/hooks/audio/useMiniPlayerClearance';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -113,9 +112,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Static constants for better performance
-const SCROLL_THROTTLE = SCROLL_EVENT_THROTTLE;
-
 // Static key extractor for better performance
 const sentenceKeyExtractor = (item: Tables<'article_sentences'>) => item.id.toString();
 
@@ -174,16 +170,6 @@ const ArticleContentInternal = function ArticleContent({
 
   // High-performance scroll handler - runs on UI thread (no cross-thread calls)
   const { scrollY, onScrollAnimated } = useArticleScrollHandler();
-
-  // Tooltip closure handler - only triggers when scroll begins, not during continuous scrolling
-  // This prevents blocking scroll performance while still closing tooltip on user interaction
-  const handleScrollBegin = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      // Call parent's handler for tooltip closure (minimal performance impact)
-      handleScroll(event);
-    },
-    [handleScroll],
-  );
 
   // Reserve right-side space so text never sits under the two floating action
   // buttons (Listen + playlist, TINY gap between them)
@@ -256,11 +242,10 @@ const ArticleContentInternal = function ArticleContent({
   // `insets.bottom + SMALL` and at least 112pt tall. With only the reading space
   // below the list, the end of every article — the last related card, or with
   // none the last Arabic line — sat under the player for as long as anything
-  // played. Same arithmetic as `useMiniPlayerClearance`, which is for tab
-  // screens and drops the Android inset the tab bar owns; a modal has no tab bar.
-  const shouldShowMiniPlayer = useShouldShowMiniPlayer();
-  const miniPlayerHeight = useMiniPlayerHeight();
-  const miniPlayerClearance = shouldShowMiniPlayer ? miniPlayerHeight + LAYOUT.SPACING.SMALL : 0;
+  // played. Not `useMiniPlayerClearance`, which is for tab screens and drops the
+  // Android inset the tab bar owns: a modal has no tab bar, so the full inset is
+  // added here and only the player's own overlap comes from the hook.
+  const miniPlayerClearance = useMiniPlayerOverlap();
 
   // React Compiler auto-memoizes
   const contentContainerStyle = {
@@ -269,18 +254,14 @@ const ArticleContentInternal = function ArticleContent({
   };
 
   // React Compiler auto-memoizes
-  const listContainerStyle = {
-    flex: 1,
-    backgroundColor: colors.background,
-    position: 'relative' as const,
-  };
+  const listContainerStyle = [styles.listContainer, { backgroundColor: colors.background }];
 
   return (
     <View style={styles.content}>
       <Animated.View style={[styles.flexOne, MOUNT_FADE_IN_STYLE]}>
         {sortedSentences.length > 0 ? (
           <View style={listContainerStyle}>
-            {/* Sticky Parallax Header behind content - using Skia gradients for Android stability */}
+            {/* Sticky parallax hero, behind the list it scrolls under */}
             <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
             <AnimatedFlashList
               /**
@@ -306,11 +287,12 @@ const ArticleContentInternal = function ArticleContent({
               ListHeaderComponent={headerComponent}
               ListFooterComponent={footerComponent}
               onScroll={onScrollAnimated}
-              onScrollBeginDrag={handleScrollBegin}
+              // Closes the tooltip once per drag, not on every scroll event
+              onScrollBeginDrag={handleScroll}
               onViewableItemsChanged={handleViewableItemsChanged}
               onMomentumScrollEnd={handleScrollEnd}
               viewabilityConfig={VIEWABILITY_CONFIG}
-              scrollEventThrottle={SCROLL_THROTTLE}
+              scrollEventThrottle={SCROLL_EVENT_THROTTLE}
               showsVerticalScrollIndicator={true}
               alwaysBounceVertical={true}
               bounces={true}
