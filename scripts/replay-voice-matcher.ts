@@ -37,7 +37,7 @@ import { execFile } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
+import { parseArgs, promisify } from 'node:util';
 
 import { matchSingleWord } from '../utils/voiceMatching';
 import { addAlias, isAliasStorable, normalizeAlias } from '../utils/voiceAliases';
@@ -102,9 +102,19 @@ async function credentials(): Promise<{ url: string; key: string }> {
 const DEFAULT_GATE_SINCE = '2026-08-12';
 
 async function main(): Promise<void> {
-  const argv = process.argv.slice(2);
-  const verbose = argv.includes('--verbose');
-  const since = argv[argv.indexOf('--since') + 1] ?? DEFAULT_GATE_SINCE;
+  // Strict, so a mistyped flag throws. The indexOf lookup this replaces read
+  // `--verbose` alone as `--since --verbose`, a date every row sorts after, so
+  // the gate window silently took in the whole history.
+  const { values } = parseArgs({
+    args: process.argv.slice(2),
+    strict: true,
+    allowPositionals: false,
+    options: {
+      verbose: { type: 'boolean', default: false },
+      since: { type: 'string', default: DEFAULT_GATE_SINCE },
+    },
+  });
+  const { verbose, since } = values;
   const { url, key } = await credentials();
 
   const cols =

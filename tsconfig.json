@@ -3,18 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "skipLibCheck": true,
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@library/*": ["components/library/*"],
-      "@bookmarks/*": ["components/bookmarks/*"],
-      "@study/*": ["components/study/*"],
-      "@account/*": ["components/account/*"],
-      "@article/*": ["components/article/*"],
-      "@common/*": ["components/common/*"],
-      "@ui/*": ["components/ui/*"],
-      "@charts/*": ["components/common/charts/*"]
+      "@/*": ["./*"]
     },
     "noImplicitAny": true,
     "noUnusedLocals": true,
