@@ -1,7 +1,7 @@
 // react-redux for tests, in two modes.
 //
-// Under a <Provider> (TestStoreProvider, createHookTestWrapper's `withRedux`, a
-// suite's own `<Provider store={setupTestStore(...)}>`), the real react-redux
+// Under a <Provider> (createHookTestWrapper's `withRedux`, or a suite's own
+// `<Provider store={setupTestStore(...)}>`), the real react-redux
 // runs against that real store: selectors see its state, dispatches reach its
 // reducers and subscribers re-render. This stub used to ignore the Provider
 // entirely, so every such suite ran against the fixed state below instead.

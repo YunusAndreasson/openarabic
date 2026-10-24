@@ -67,7 +67,7 @@ Suites live in `__tests__/` as `*.test.ts(x)`; jest collects nothing else.
 - **react-native** is the jest.setup.js mock. `StyleSheet.flatten` is the real
   merge, so assert on `StyleSheet.flatten(node.props.style)` instead of
   hand-merging style arrays.
-- **Redux**: under a `<Provider>` (`TestStoreProvider`, `setupTestStore`,
+- **Redux**: under a `<Provider>` (a store from `setupTestStore`, or
   `createHookTestWrapper({ withRedux: true })`) the real react-redux runs
   against that store. Without one, the hooks read the fixed state in
   `__mocks__/react-redux.js`.
