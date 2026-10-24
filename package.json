@@ -154,8 +154,6 @@
   "private": true,
   "resolutions": {
     "@react-native-async-storage/async-storage": "^2.2.0",
-    "@typescript-eslint/eslint-plugin": "8.65.0",
-    "@typescript-eslint/parser": "8.65.0",
     "jest-environment-jsdom": "^30.0.0",
     "jest-environment-node": "^30.0.0",
     "jest-mock": "^30.0.0",
