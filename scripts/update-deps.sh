@@ -46,10 +46,12 @@ fi
 
 # Supplying the unpatched, unheld direct package list lets Yarn update everything
 # else without moving a dependency away from the exact version its patch targets
-# or across a version this repo knows to be broken.
-mapfile -t UPDATE_PACKAGES < <(node <<'NODE'
+# or across a version this repo knows to be broken. Lines starting with `=` are
+# native modules Expo does not manage, which stay pinned exactly (step 3).
+mapfile -t CANDIDATES < <(node <<'NODE'
 const fs = require('fs');
 const pkg = require('./package.json');
+const bundled = require('./node_modules/expo/bundledNativeModules.json');
 const direct = { ...pkg.dependencies, ...pkg.devDependencies, ...pkg.optionalDependencies };
 
 const patched = new Set();
@@ -68,8 +70,6 @@ if (fs.existsSync('patches')) {
   }
 }
 
-// Versions this repo holds deliberately. Each one has broken the build or the
-// test suite before; `yarn up --latest` walks straight back into them.
 // Ranges this repo pins by hand. `yarn up` rewrites every range it is given to
 // `^latest`, and the bundledNativeModules re-pin below cannot restore these
 // because none of them is Expo-managed — so they have to be held out of `up`.
@@ -80,6 +80,21 @@ const pinned = {
   eslint: '10.9.0',
 };
 
+// Ranges another package dictates, derived rather than typed in so they cannot
+// go stale (each was once restored by hand after this script). Expo pins react
+// but neither of its companions, which step 4 re-aligns; executorch is held by
+// its patch, so its blob-util peer range is the only valid one.
+const react = pkg.dependencies.react;
+pinned['react-test-renderer'] = react;
+pinned['@types/react'] = `~${react.split('.').slice(0, 2).join('.')}.0`;
+const executorch = 'node_modules/react-native-executorch/package.json';
+const blobUtilPeer = fs.existsSync(executorch)
+  ? JSON.parse(fs.readFileSync(executorch, 'utf8')).peerDependencies?.['react-native-blob-util']
+  : undefined;
+if (blobUtilPeer) pinned['react-native-blob-util'] = blobUtilPeer;
+
+// Versions this repo holds deliberately. Each one has broken the build or the
+// test suite before; `yarn up --latest` walks straight back into them.
 const held = {
   '@babel/runtime':
     'babel-preset-expo peers on ^7.20.0. On 8.x Yarn cannot hoist babel-preset-expo ' +
@@ -95,7 +110,8 @@ const held = {
 for (const name of Object.keys(direct).sort()) {
   if (name === 'expo' || patched.has(name) || Object.hasOwn(held, name)) continue;
   if (Object.hasOwn(pinned, name)) continue;
-  console.log(name);
+  const exact = /^\d+\.\d+\.\d+$/.test(direct[name]) && !Object.hasOwn(bundled, name);
+  console.log(exact ? `=${name}` : name);
 }
 console.error('  preserving installed Expo SDK: expo');
 for (const name of patched) console.error(`  preserving patched dependency: ${name}`);
@@ -106,23 +122,40 @@ for (const [name, range] of Object.entries(pinned)) {
 NODE
 )
 
+UPDATE_PACKAGES=()
+EXACT_PACKAGES=()
+for entry in "${CANDIDATES[@]}"; do
+  if [[ "$entry" == =* ]]; then
+    EXACT_PACKAGES+=("${entry#=}")
+  else
+    UPDATE_PACKAGES+=("$entry")
+  fi
+done
+
 echo
 if [ "$LATEST" -eq 1 ]; then
   echo "▸ [3/6] Updating unpatched dependencies to their latest releases…"
   # Yarn 4's `up` goes to latest and rewrites package.json — Yarn 1's `upgrade --latest`.
   yarn up "${UPDATE_PACKAGES[@]}"
+  # Native modules outside Expo's SDK (react-native-audio-api, react-native-skia)
+  # are pinned to exact versions, so native code only changes when someone means
+  # it to. Plain `yarn up` rewrites them to `^latest`; `-E` updates them exactly.
+  if [ "${#EXACT_PACKAGES[@]}" -gt 0 ]; then
+    yarn up -E "${EXACT_PACKAGES[@]}"
+  fi
 else
   echo "▸ [3/6] Updating unpatched dependencies within declared semver ranges…"
   # `-R` re-resolves the existing ranges and touches only the lockfile — Yarn 1's bare `upgrade`.
-  yarn up -R "${UPDATE_PACKAGES[@]}"
+  yarn up -R "${UPDATE_PACKAGES[@]}" "${EXACT_PACKAGES[@]}"
 fi
 
 echo
 echo "▸ [4/6] Re-pinning Expo-managed packages to SDK-compatible versions…"
 npx expo install --fix --yarn
 
-# Keep the renderer aligned with React; Expo intentionally ignores this package.
-yarn add --dev "react-test-renderer@$(node -p "require('./package.json').dependencies.react")"
+# Keep React's companions aligned with it; Expo intentionally ignores both.
+REACT_VERSION="$(node -p "require('./package.json').dependencies.react")"
+yarn add --dev "react-test-renderer@$REACT_VERSION" "@types/react@~${REACT_VERSION%.*}.0"
 
 echo
 echo "▸ [5/6] Normalising Expo-managed ranges and deduplicating…"
@@ -168,6 +201,11 @@ yarn dedupe
 echo
 echo "▸ [6/6] Validating the installed dependency tree…"
 npx expo-doctor || true
+# Unmet peer requirements of this project's own dependencies (the transitive
+# ones are mostly upstream noise). A held range drifting from what peers on it,
+# e.g. react-native-blob-util against react-native-executorch, shows up here.
+echo "  Unmet peer requirements of direct dependencies:"
+yarn explain peer-requirements | grep '✘' | grep '@workspace:' || true
 
 echo
 echo "▸ Done. Review package.json and yarn.lock before committing."
