@@ -43,8 +43,8 @@ export function getDifficultyLevel(
  * The difficulty level to *show* for a study word.
  *
  * `getDifficultyLevel(null)` returns 'new', but that branch never fired in
- * production: a never-practised word carries a placeholder difficulty of 6.5,
- * not null, so the dictionary painted it amber and called it "Moderate" — a
+ * production: a never-practised word carries a placeholder difficulty
+ * (`PLACEHOLDER_FSRS`), not null, so the dictionary painted it amber and called it "Moderate" — a
  * judgement about a word the learner has never been asked. Gate on real reviews
  * first, exactly as the memory meter beside it does, so the two signals agree
  * about which words haven't started.

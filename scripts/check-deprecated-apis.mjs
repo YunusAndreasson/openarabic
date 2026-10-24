@@ -114,17 +114,8 @@ for (const sourceFile of program.getSourceFiles()) {
     continue;
   }
 
-  const lines = sourceFile.text.split('\n');
   const record = (node, deprecated) => {
     const start = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
-    // A use that cannot move yet (the replacement does not exist until the
-    // dependency's next major) carries `deprecated-api-allowed: <why>` in a
-    // comment on its own line or the line above. The reason is required, so the
-    // exception says what has to happen before it can go.
-    const marked = [lines[start.line], lines[start.line - 1]].some(text =>
-      /deprecated-api-allowed:\s*\S/.test(text ?? ''),
-    );
-    if (marked) return;
     const relative = path.relative(projectRoot, sourceFile.fileName);
     const key = `${relative}:${start.line + 1}:${start.character + 1}:${deprecated.symbol}`;
     findings.set(key, {

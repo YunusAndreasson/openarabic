@@ -60,6 +60,14 @@ function parseDayKey(key: string): Date {
   return new Date(year, month - 1, day);
 }
 
+/** Today's and yesterday's local day keys — the two days a streak is still alive on. */
+function recentDayKeys(): { todayKey: string; yesterdayKey: string } {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  return { todayKey: toLocalDateString(today), yesterdayKey: toLocalDateString(yesterday) };
+}
+
 /** Is `day` the calendar day immediately after `previous`? */
 function isNextDay(previous: Date, day: Date): boolean {
   const next = new Date(previous);
@@ -90,10 +98,7 @@ export function calculateStreakFromDayKeys(dayKeys: Set<string>): ReadingStreak 
   const sortedKeys = Array.from(dayKeys).sort();
   const mostRecentKey = sortedKeys.at(-1) ?? '';
 
-  const todayKey = toLocalDateString(new Date());
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayKey = toLocalDateString(yesterday);
+  const { todayKey, yesterdayKey } = recentDayKeys();
 
   // Anchor on the latest day that is not in the future. A key can be ahead of
   // today's local date: a review just after midnight in Tokyo is keyed to that
@@ -101,7 +106,7 @@ export function calculateStreakFromDayKeys(dayKeys: Set<string>): ReadingStreak 
   // anchoring on the newest key then showed a 0-day streak until the local
   // date caught up (as does a clock set ahead and back). Keys are YYYY-MM-DD,
   // so string order is date order.
-  const anchorKey = sortedKeys.filter(key => key <= todayKey).pop() ?? '';
+  const anchorKey = sortedKeys.findLast(key => key <= todayKey) ?? '';
 
   // Yesterday still counts: the streak must not evaporate at midnight, before
   // the learner has had today to keep it alive.
@@ -200,13 +205,9 @@ export class ReadingStreakService {
     // Mark the most recent period as active if it's current
     if (periods.length > 0) {
       const lastPeriod = periods.at(-1);
-      const todayStr = toLocalDateString(new Date());
+      const { todayKey, yesterdayKey } = recentDayKeys();
 
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = toLocalDateString(yesterday);
-
-      if (lastPeriod && (lastPeriod.endDate === todayStr || lastPeriod.endDate === yesterdayStr)) {
+      if (lastPeriod && (lastPeriod.endDate === todayKey || lastPeriod.endDate === yesterdayKey)) {
         lastPeriod.isActive = true;
       }
     }

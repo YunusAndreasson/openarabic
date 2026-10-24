@@ -9,6 +9,7 @@ import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { ReadingProgress } from '@/services/readingProgress';
 import type { Article } from '@/types/articles.types';
 import { deduplicateArticlesByImage, pickStarterArticles } from '@/utils/articleUtils';
+import { seededRandom, shuffleArray } from '@/utils/list';
 import { calculateProgressPercentage, getArticleProgressPercentage } from '@/utils/progressUtils';
 
 /** How many cards the lead rail ("Continue reading" / "Getting started") carries. */
@@ -87,34 +88,6 @@ const DISCOVERY_RAILS: readonly DiscoveryRailConfig[] = [
     matches: article => article.difficulty_level >= ADVANCED_MIN_DIFFICULTY,
   },
 ];
-
-/**
- * mulberry32, seeded by APP_SESSION_ID and the rail, so a rail's order is
- * stable within a session and fresh on the next launch.
- */
-function seededRandom(seed: number): () => number {
-  let t = seed;
-  return () => {
-    t = (t + 0x6d2b79f5) | 0;
-    let x = Math.imul(t ^ (t >>> 15), 1 | t);
-    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
-    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** Seeded Fisher-Yates shuffle, returning the first `count` items. */
-function shuffleAndSlice<T>(items: T[], count: number, seed: number): T[] {
-  if (items.length === 0) return [];
-  const rand = seededRandom(seed);
-  const arr = [...items];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    const temp = arr[i];
-    arr[i] = arr[j] as T;
-    arr[j] = temp as T;
-  }
-  return arr.slice(0, count);
-}
 
 /** Partly read texts (above 0%, below completion), most recently read first. */
 function getContinueReading(
@@ -220,8 +193,13 @@ export function useExploreRails(
     const candidates = articlesData.filter(
       article => !claimed.has(article.id) && isUnread(article) && rail.matches(article),
     );
+    // Seeded by APP_SESSION_ID and the rail, so a rail's order is stable within
+    // a session and fresh on the next launch.
     const picked = deduplicateArticlesByImage(
-      shuffleAndSlice(candidates, MAX_ARTICLES_PER_DISCOVERY_RAIL, APP_SESSION_ID ^ rail.seed),
+      shuffleArray(candidates, seededRandom(APP_SESSION_ID ^ rail.seed)).slice(
+        0,
+        MAX_ARTICLES_PER_DISCOVERY_RAIL,
+      ),
     );
     if (picked.length === 0) continue;
     for (const article of picked) {

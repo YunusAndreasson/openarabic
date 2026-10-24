@@ -18,7 +18,7 @@ import type { FSRSUpdateResult, UseFSRSOptions, UseFSRSResult } from '@/types/fs
 import type { IntervalLabels, WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
-import { convertToFSRSCard } from '@/utils/fsrsCard';
+import { convertToFSRSCard, toFSRSWordUpdate } from '@/utils/fsrsCard';
 import {
   calculateWordPriority,
   createSpacingState,
@@ -345,21 +345,9 @@ export function useFSRS({
           return { status: 'rejected', reason: 'scheduler-error' };
         }
 
-        const now = new Date();
-
         // Phase 1.2: Use FSRS-calculated due date (trust learning_steps: ['1m', '10m'])
         // No need to override - FSRS handles this correctly
-        const wordUpdateData = {
-          fsrs_due: newCard.due.toISOString(),
-          fsrs_stability: newCard.stability,
-          fsrs_difficulty: newCard.difficulty,
-          fsrs_scheduled_days: newCard.scheduled_days,
-          fsrs_reps: newCard.reps,
-          fsrs_learning_steps: newCard.learning_steps,
-          fsrs_lapses: newCard.lapses,
-          fsrs_state: newCard.state,
-          fsrs_last_review: now.toISOString(),
-        };
+        const wordUpdateData = toFSRSWordUpdate(newCard);
 
         // Track session counters immediately
         countersRef.current.processedWords += 1;

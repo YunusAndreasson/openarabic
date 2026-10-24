@@ -26,7 +26,16 @@ interface RankStrugglingWordsOptions {
  * should I be shown next", a property of the schedule. It deliberately does NOT
  * apply the session cooldown — that gate belongs to the due-words query.
  */
-export function isLeechWord(word: StudyWord, minLapses: number = LEECH_MIN_LAPSES): boolean {
+export function isLeechWord(word: StudyWord): boolean {
+  return meetsLeechBar(word, LEECH_MIN_LAPSES);
+}
+
+/**
+ * The leech rule at a given bar. Private so `isLeechWord` can take ONE
+ * argument: with an optional `minLapses` second parameter, `.filter(isLeechWord)`
+ * handed it the array index, which made every word at index 0 or 1 a leech.
+ */
+function meetsLeechBar(word: StudyWord, minLapses: number): boolean {
   return (
     word.fsrs_state !== State.New &&
     (word.fsrs_reps ?? 0) > 0 &&
@@ -50,7 +59,7 @@ export function rankStrugglingWords(
   const limit = opts.limit ?? LEECH_LIST_LIMIT;
 
   return words
-    .filter(word => isLeechWord(word, minLapses))
+    .filter(word => meetsLeechBar(word, minLapses))
     .sort(
       (a, b) =>
         (b.fsrs_lapses ?? 0) - (a.fsrs_lapses ?? 0) ||

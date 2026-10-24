@@ -2,6 +2,7 @@ import { COMPLETION_THRESHOLD } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { shuffleArray } from '@/utils/list';
 import { getArticleProgressPercentage, type ReadingProgressLookup } from '@/utils/progressUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
 
@@ -53,26 +54,14 @@ export function deduplicateArticlesByImage(articles: Article[]): Article[] {
 }
 
 /**
- * Helper function to shuffle array and return first N items using Fisher-Yates algorithm
- * @param items - The array to shuffle
+ * Up to `count` items, picked at random
+ * @param items - The array to pick from
  * @param count - The number of items to return
- * @returns Randomly selected items from the array
+ * @returns Randomly selected items from the array (all of them, in order, when
+ *   there are no more than `count`)
  */
 export function getRandomItems<T>(items: T[], count: number): T[] {
-  if (items.length <= count) return [...items];
-
-  const shuffled = [...items];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const temp = shuffled[i];
-    const other = shuffled[j];
-    if (temp !== undefined && other !== undefined) {
-      shuffled[i] = other;
-      shuffled[j] = temp;
-    }
-  }
-
-  return shuffled.slice(0, count);
+  return items.length <= count ? [...items] : shuffleArray(items).slice(0, count);
 }
 
 /**
@@ -232,15 +221,7 @@ function filterArticlesByWordSet(
       return { article, wordCount: 0 };
     }
 
-    // Count matching root IDs using Set intersection
-    let matchCount = 0;
-    for (const rootId of articleRootIds) {
-      if (wordRootIds.has(rootId)) {
-        matchCount++;
-      }
-    }
-
-    return { article, wordCount: matchCount };
+    return { article, wordCount: articleRootIds.intersection(wordRootIds).size };
   });
 
   // Filter articles that actually have matching words

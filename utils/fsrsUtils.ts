@@ -1,4 +1,4 @@
-import { computeDecayFactor, fsrs, generatorParameters } from 'ts-fsrs';
+import { fsrs, generatorParameters } from 'ts-fsrs';
 
 import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
@@ -7,14 +7,14 @@ import {
 } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { MILLISECONDS_PER_DAY, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
+import { clamp01, MILLISECONDS_PER_DAY, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
+import { fillTemplate } from '@/utils/fillTemplate';
 import { dueTimestampMs, hasBeenPractised } from '@/utils/wordClassification';
 
 // The app's one FSRS instance. The review engine (useFSRS) grades through it and
 // every read-only derivation here reads through it, so a config or library change
 // can never move one side without the other.
-const FSRS_PARAMS = generatorParameters(OPTIMIZED_FSRS_CONFIG);
-export const FSRS_INSTANCE = fsrs(FSRS_PARAMS);
+export const FSRS_INSTANCE = fsrs(generatorParameters(OPTIMIZED_FSRS_CONFIG));
 
 export interface RetrievabilityForecast {
   date: Date;
@@ -73,21 +73,22 @@ export function calculateRetrievability(
     (targetDate.getTime() - lastReview.getTime()) / MILLISECONDS_PER_DAY,
   );
 
-  return Math.max(0, Math.min(1, FSRS_INSTANCE.forgetting_curve(daysSinceReview, stability)));
+  return clamp01(FSRS_INSTANCE.forgetting_curve(daysSinceReview, stability));
 }
 
 /**
  * Days after the last review until retrievability decays to `threshold`.
  * Closed-form inversion of the ts-fsrs forgetting curve R(t,S) = (1 + factor·t/S)^decay,
- * parameterized from the same weights as the review engine so a library upgrade
+ * computed by the review engine's own instance so a library upgrade
  * (e.g. FSRS-6 per-deck decay w[20]) changes both sides together.
  * Returns null when stability or threshold make the question meaningless.
  */
 export function timeUntilRetrievability(stabilityDays: number, threshold: number): number | null {
   if (stabilityDays <= 0 || threshold <= 0 || threshold >= 1) return null;
 
-  const { decay, factor } = computeDecayFactor(FSRS_PARAMS.w);
-  return (stabilityDays / factor) * (threshold ** (1 / decay) - 1);
+  // The library's own I(r) = (r^(1/decay) - 1) / factor, the interval
+  // multiplier it schedules with (rounded to 8 decimals there).
+  return stabilityDays * FSRS_INSTANCE.calculate_interval_modifier(threshold);
 }
 
 /**
@@ -260,5 +261,5 @@ export function getNextReviewLabel(due: string | null): string {
 
   if (days <= 0) return STRINGS.WORD_DUE_LATER_TODAY;
   if (days === 1) return STRINGS.WORD_DUE_TOMORROW;
-  return STRINGS.WORD_DUE_IN_DAYS.replace('{count}', String(days));
+  return fillTemplate(STRINGS.WORD_DUE_IN_DAYS, { count: days });
 }
