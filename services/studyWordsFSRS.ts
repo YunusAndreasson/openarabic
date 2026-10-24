@@ -324,7 +324,10 @@ export const studyWordsFSRSService = {
    * `roots`. Every candidate ordering available in the database (by id, by
    * corpus usage) produces a deck with duplicate English answers in it.
    */
-  async getCommonRoots(limit: number = STARTER_WORD_COUNT): Promise<Tables<'roots'>[]> {
+  async getCommonRoots(
+    limit: number = STARTER_WORD_COUNT,
+    request: RequestOptions = {},
+  ): Promise<Tables<'roots'>[]> {
     const data = await executeQuery(
       () =>
         supabase
@@ -332,6 +335,7 @@ export const studyWordsFSRSService = {
           .select('id, letters, meaning, audio_url, audio_url_en')
           .in('id', [...STARTER_ROOT_IDS]),
       errorConfig.allRoots,
+      request,
     );
 
     if (!data) return [];
@@ -351,7 +355,11 @@ export const studyWordsFSRSService = {
    * Add multiple roots to the user's study list at once.
    * Skips roots that are already in the study list.
    */
-  async addMultipleRoots(userId: string, rootIds: RootId[]): Promise<number> {
+  async addMultipleRoots(
+    userId: string,
+    rootIds: RootId[],
+    request: RequestOptions = {},
+  ): Promise<number> {
     if (rootIds.length === 0) return 0;
 
     // Get existing study words to avoid duplicates
@@ -360,6 +368,7 @@ export const studyWordsFSRSService = {
       () =>
         supabase.from('study_words').select('root_id').eq('user_id', userId).in('root_id', rootIds),
       errorConfig.addMultipleCheck,
+      request,
     );
 
     // In the caller's order (a Set keeps insertion order), each root once.
@@ -371,9 +380,12 @@ export const studyWordsFSRSService = {
 
     const entries = createBulkFSRSEntries(userId, newRootIds);
 
-    await executeAuthenticatedQuery(userId, () => supabase.from('study_words').insert(entries), {
-      ...errorConfig.addMultipleInsert,
-    });
+    await executeAuthenticatedQuery(
+      userId,
+      () => supabase.from('study_words').insert(entries),
+      errorConfig.addMultipleInsert,
+      request,
+    );
 
     return newRootIds.length;
   },
