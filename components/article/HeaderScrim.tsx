@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { StyleSheet, useWindowDimensions } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -7,7 +7,6 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Canvas, LinearGradient, Rect, vec } from 'react-native-skia';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -50,9 +49,11 @@ interface HeaderScrimProps {
  *   cannot do this job: body text read straight through it and collided with
  *   the close icon ("All✕h bless him"). Text now scrolls cleanly out of sight
  *   under an opaque band instead.
+ *
+ * The gradient is the platform's own (`backgroundImage`), not a Skia canvas: it
+ * never changes once drawn, and a canvas is a GPU surface of its own for it.
  */
 const HeaderScrimInternal = memo<HeaderScrimProps>(({ colors, scrollY, headerHeight }) => {
-  const { width: windowWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
   // Must track FloatingActionButtons exactly — this band exists to keep those
@@ -62,22 +63,22 @@ const HeaderScrimInternal = memo<HeaderScrimProps>(({ colors, scrollY, headerHei
   const buttonTop = insets.top;
   const scrimHeight = buttonTop + MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE;
 
-  const gradientColors = useMemo(() => {
+  const gradientLayerStyle = useMemo(() => {
     const base = colors.gradientOverlay;
-    return [
+    const stops = [
       withOpacity(base, 0.85),
       withOpacity(base, 0.6),
       withOpacity(base, 0.25),
-      // Not the `transparent` keyword: Skia resolves it to rgba(0,0,0,0), so
-      // the tail would interpolate towards black rather than towards `base`.
+      // Not the `transparent` keyword: that is rgba(0,0,0,0), so the tail would
+      // fade through black rather than towards `base`. React Native only patches
+      // a transparent stop on iOS (and Skia, which drew this before, never did).
       withOpacity(base, 0),
-    ] as const;
-  }, [colors.gradientOverlay]);
-
-  const containerStyle = useMemo(
-    () => [STATIC_STYLES.container, { height: scrimHeight }],
-    [scrimHeight],
-  );
+    ];
+    return [
+      STATIC_STYLES.container,
+      { height: scrimHeight, backgroundImage: `linear-gradient(to bottom, ${stops.join(', ')})` },
+    ];
+  }, [colors.gradientOverlay, scrimHeight]);
 
   // Body content reaches the band once the hero has scrolled past all but
   // `scrimHeight` of itself. Fade the solid layer in just before that, so the
@@ -99,15 +100,7 @@ const HeaderScrimInternal = memo<HeaderScrimProps>(({ colors, scrollY, headerHei
   return (
     <>
       <Animated.View style={[opaqueLayerStyle, opaqueStyle]} pointerEvents="none" />
-      <Canvas style={containerStyle} pointerEvents="none">
-        <Rect x={0} y={0} width={windowWidth} height={scrimHeight}>
-          <LinearGradient
-            start={vec(0, 0)}
-            end={vec(0, scrimHeight)}
-            colors={[...gradientColors]}
-          />
-        </Rect>
-      </Canvas>
+      <View style={gradientLayerStyle} pointerEvents="none" />
     </>
   );
 });

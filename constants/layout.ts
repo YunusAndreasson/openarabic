@@ -121,6 +121,8 @@ const TYPOGRAPHY_HIERARCHY = {
   LINE_HEIGHT_MULTIPLIERS: {
     TIGHT: 1.2,
     NORMAL: 1.4,
+    /** Prose a step looser than body text (usage notes, sentence notes). */
+    RELAXED: 1.5,
     LOOSE: 1.6,
     ARABIC: 2.2, // Standard Arabic line height multiplier
   },
@@ -239,6 +241,7 @@ export const LAYOUT = {
   INPUT: {
     HEIGHT: TOUCH_TARGETS.LARGE + BASE_UNIT, // 52 - responsive to touch targets + padding
     MULTILINE_HEIGHT: BASE_UNIT * 50, // 200 - standard height for multiline text areas
+    MULTILINE_MIN_HEIGHT: BASE_UNIT * 37.5, // 150 - resting height; grows to MULTILINE_HEIGHT
     BORDER_WIDTH: {
       DEFAULT: BORDER_WIDTHS.NORMAL, // 1 - at rest
       FOCUSED: BORDER_WIDTHS.FOCUSED, // 2 - thickens on focus (was also 1.5→2, so nothing moved)
@@ -320,6 +323,12 @@ export const LAYOUT = {
     HEIGHT: BASE_UNIT, // 4 - responsive to base unit (changed from 0.75 to avoid fractional pixels)
   },
 
+  /** The centred icon, title, hint and action of an empty list or screen */
+  EMPTY_STATE: {
+    HINT_MAX_WIDTH: BASE_UNIT * 80, // 320 - keeps the hint to a readable measure on wide screens
+    ACTION_MIN_WIDTH: BASE_UNIT * 50, // 200 - so a short action label still reads as a button
+  },
+
   /** Common sizes for bottom sheet UI elements */
   BOTTOM_SHEET: {
     /**
@@ -331,6 +340,8 @@ export const LAYOUT = {
      * `<FormSheet>` — so the same space there would be dead space.
      */
     GRABBER_CLEARANCE: Platform.OS === 'android' ? SPACING_SCALE.MEDIUM : SPACING_SCALE.XLARGE,
+    /** The error fallback a sheet shows in place of content that threw. */
+    ERROR_MIN_HEIGHT: BASE_UNIT * 25, // 100
     HEADER: {
       paddingHorizontal: SPACING_SCALE.MEDIUM, // 12 - consistent with practice bottom sheets
       paddingBottom: SPACING_SCALE.TINY, // 4 - consistent with practice bottom sheets

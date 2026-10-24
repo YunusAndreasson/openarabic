@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE, // 16px - separates title group from hint
   },
   hintContainer: {
-    maxWidth: 320,
+    maxWidth: LAYOUT.EMPTY_STATE.HINT_MAX_WIDTH,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
     alignItems: 'center',
@@ -115,10 +115,10 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     marginTop: LAYOUT.SPACING.XLARGE,
-    minWidth: 200,
+    minWidth: LAYOUT.EMPTY_STATE.ACTION_MIN_WIDTH,
   },
   secondaryActionContainer: {
     marginTop: LAYOUT.SPACING.MEDIUM,
-    minWidth: 200,
+    minWidth: LAYOUT.EMPTY_STATE.ACTION_MIN_WIDTH,
   },
 });

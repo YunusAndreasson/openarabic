@@ -127,20 +127,8 @@ const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProp
 export const BottomSheetBackdrop = memo(BlurBackdropComponent);
 
 const styles = StyleSheet.create({
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  blur: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
+  backdrop: StyleSheet.absoluteFill,
+  blur: StyleSheet.absoluteFill,
 });
 
 /**

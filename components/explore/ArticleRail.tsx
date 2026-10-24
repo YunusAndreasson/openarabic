@@ -2,12 +2,10 @@ import { memo } from 'react';
 import { useWindowDimensions } from 'react-native';
 
 import { SnapRail } from '@/components/common';
-import { PlaylistItemCard } from '@/components/playlist/PlaylistItemCard';
-import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import type { ArticleRailItem } from '@/hooks/explore/useExploreRails';
 import type { Article } from '@/types/articles.types';
-import { generateStorageUrl } from '@/utils/storageUtils';
-import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
+
+import { ArticleRow } from './ArticleRow';
 
 const CARD_WIDTH_RATIO = 0.7;
 
@@ -26,21 +24,16 @@ interface ArticleRailProps {
  * label above it.
  */
 const ArticleRailComponent = ({ items, keyPrefix, onArticlePress }: ArticleRailProps) => {
-  const prefetchArticle = useArticlePrefetch();
   const { width } = useWindowDimensions();
 
   return (
     <SnapRail itemWidth={width * CARD_WIDTH_RATIO}>
       {items.map(({ article, progress }) => (
-        <PlaylistItemCard
+        <ArticleRow
           key={`${keyPrefix}-${article.id}`}
-          title={article.title}
-          secondaryText={getArticleMetadataWithoutCategory(article)}
-          imageUrl={generateStorageUrl('images', article.image_url)}
-          articleId={article.id}
+          article={article}
           progressPercentage={progress}
-          onPress={() => onArticlePress(article)}
-          onPressIn={() => prefetchArticle(article.id)}
+          onPress={onArticlePress}
           compact
         />
       ))}

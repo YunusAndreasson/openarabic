@@ -2,6 +2,7 @@ import { Host, Switch } from '@expo/ui/jetpack-compose';
 import { StyleSheet, View } from 'react-native';
 
 import { useColors } from '@/hooks/theme/useColors';
+import { useNativeColorScheme } from '@/hooks/theme/useThemeDetection';
 import type { ToggleProps } from '@/types/ui/form.types';
 
 export type { ToggleProps } from '@/types/ui/form.types';
@@ -15,10 +16,13 @@ export type { ToggleProps } from '@/types/ui/form.types';
  */
 export function Toggle({ value, testID }: ToggleProps) {
   const colors = useColors();
+  // Any role the colours above leave out comes from the host's Material theme,
+  // which follows the OS appearance unless told the app's.
+  const colorScheme = useNativeColorScheme();
 
   return (
     <View style={styles.passive} importantForAccessibility="no-hide-descendants" testID={testID}>
-      <Host matchContents>
+      <Host colorScheme={colorScheme} matchContents>
         <Switch
           value={value}
           colors={{

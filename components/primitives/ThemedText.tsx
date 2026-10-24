@@ -139,6 +139,12 @@ const WEIGHT_FONT_MAP = {
  * with automatic theming support and various text styles.
  * Enhanced with sophisticated color relationships and micro-typography optimizations.
  *
+ * Arabic and Latin text are two components behind this one, chosen by `type`,
+ * so each runs only its own hooks. As a single component every instance — 212
+ * call sites, 12 of them Arabic — subscribed to the Arabic font and ran the
+ * size debounce (a store subscription, a state and a timer on mount) for text
+ * that never uses either.
+ *
  * @example
  * // Default body text with theme colors
  * <ThemedText>Regular text</ThemedText>
@@ -152,52 +158,56 @@ const WEIGHT_FONT_MAP = {
  * // Custom semantic color from enhanced system
  * <ThemedText colorName="authorText">Author byline</ThemedText>
  */
-export function ThemedText({
+export function ThemedText(props: ThemedTextProps) {
+  const { type } = props;
+  if (type === 'arabic' || type === 'arabicCompact') {
+    return <ArabicThemedText {...props} type={type} />;
+  }
+  return <LatinThemedText {...props} type={type} />;
+}
+
+ThemedText.displayName = 'ThemedText';
+
+type ArabicTextType = Extract<TextTypeName, 'arabic' | 'arabicCompact'>;
+
+interface ArabicThemedTextProps extends ThemedTextProps {
+  type: ArabicTextType;
+}
+
+interface LatinThemedTextProps extends ThemedTextProps {
+  type?: Exclude<TextTypeName, ArabicTextType>;
+}
+
+/** `type="arabic"` / `"arabicCompact"`: the learner's Arabic face and size. */
+function ArabicThemedText({
   style,
-  type = 'body',
-  weight,
+  type,
+  // `weight` is deliberately ignored here: WEIGHT_FONT_MAP names Inter
+  // families, which carry no Arabic glyphs, so applying it silently
+  // discarded the user's chosen Arabic font for an OS fallback face.
+  // Emphasize Arabic with size or color instead.
+  weight: _weight,
   align,
   colorName,
   skipDefaultColor = false,
   numberOfLines,
   ellipsizeMode,
   ...rest
-}: ThemedTextProps) {
+}: ArabicThemedTextProps) {
   const colors = useColors();
   const selectedArabicFont = useAppSelector(selectArabicFont);
-  const isArabic = type === 'arabic' || type === 'arabicCompact';
-  // Only use debounced font size for Arabic text to prevent flickering during slider changes
-  const debouncedArabicFontSize = useDebouncedArabicFontSize(isArabic ? 100 : 0);
+  // Debounced to prevent flickering while the font-size slider moves
+  const debouncedArabicFontSize = useDebouncedArabicFontSize(100);
 
   // Memoize style computation to prevent unnecessary recalculations
   const finalStyle = useMemo((): StyleProp<TextStyle> => {
     const textColor = getTextColor(colors, type, colorName, skipDefaultColor);
-
-    if (isArabic) {
-      const fontSize = debouncedArabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
-      // `weight` is deliberately ignored here: WEIGHT_FONT_MAP names Inter
-      // families, which carry no Arabic glyphs, so applying it silently
-      // discarded the user's chosen Arabic font for an OS fallback face.
-      // Emphasize Arabic with size or color instead.
-      return [
-        type === 'arabicCompact'
-          ? getCompactArabicTextStyle(fontSize, selectedArabicFont)
-          : getArabicTextStyle(fontSize, {}, selectedArabicFont),
-        textColor && { color: textColor },
-        align && { textAlign: align },
-        style,
-      ].filter(Boolean);
-    }
-
-    const baseStyle = BASE_STYLE_MAP[type] || BASE_STYLE_MAP.body;
-
-    // No opacity layer: the hierarchy is carried by the ink alone (see
-    // DEFAULT_COLOR_BY_TYPE), so a colour handed in through `colorName` or
-    // `style` renders at the contrast it was chosen for.
+    const fontSize = debouncedArabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
     return [
-      baseStyle,
+      type === 'arabicCompact'
+        ? getCompactArabicTextStyle(fontSize, selectedArabicFont)
+        : getArabicTextStyle(fontSize, {}, selectedArabicFont),
       textColor && { color: textColor },
-      weight && { fontFamily: WEIGHT_FONT_MAP[weight] },
       align && { textAlign: align },
       style,
     ].filter(Boolean);
@@ -206,10 +216,8 @@ export function ThemedText({
     colorName,
     skipDefaultColor,
     type,
-    isArabic,
     debouncedArabicFontSize,
     selectedArabicFont,
-    weight,
     align,
     style,
   ]);
@@ -224,4 +232,43 @@ export function ThemedText({
   );
 }
 
-ThemedText.displayName = 'ThemedText';
+/** Every other type: the bundled Inter faces, from the type scale above. */
+function LatinThemedText({
+  style,
+  type = 'body',
+  weight,
+  align,
+  colorName,
+  skipDefaultColor = false,
+  numberOfLines,
+  ellipsizeMode,
+  ...rest
+}: LatinThemedTextProps) {
+  const colors = useColors();
+
+  // Memoize style computation to prevent unnecessary recalculations
+  const finalStyle = useMemo((): StyleProp<TextStyle> => {
+    const textColor = getTextColor(colors, type, colorName, skipDefaultColor);
+    const baseStyle = BASE_STYLE_MAP[type] || BASE_STYLE_MAP.body;
+
+    // No opacity layer: the hierarchy is carried by the ink alone (see
+    // DEFAULT_COLOR_BY_TYPE), so a colour handed in through `colorName` or
+    // `style` renders at the contrast it was chosen for.
+    return [
+      baseStyle,
+      textColor && { color: textColor },
+      weight && { fontFamily: WEIGHT_FONT_MAP[weight] },
+      align && { textAlign: align },
+      style,
+    ].filter(Boolean);
+  }, [colors, colorName, skipDefaultColor, type, weight, align, style]);
+
+  return (
+    <Text
+      ellipsizeMode={ellipsizeMode}
+      numberOfLines={numberOfLines}
+      style={finalStyle}
+      {...rest}
+    />
+  );
+}

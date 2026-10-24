@@ -3,6 +3,7 @@ import { labelsHidden, tint, toggleStyle } from '@expo/ui/swift-ui/modifiers';
 import { StyleSheet, View } from 'react-native';
 
 import { useColors } from '@/hooks/theme/useColors';
+import { useNativeColorScheme } from '@/hooks/theme/useThemeDetection';
 import type { ToggleProps } from '@/types/ui/form.types';
 
 /**
@@ -17,6 +18,9 @@ import type { ToggleProps } from '@/types/ui/form.types';
  */
 export function Toggle({ value, testID }: ToggleProps) {
   const colors = useColors();
+  // SwiftUI draws in the OS appearance unless the host says otherwise, and the
+  // app's theme is its own setting (default Dark).
+  const colorScheme = useNativeColorScheme();
 
   return (
     <View
@@ -25,7 +29,7 @@ export function Toggle({ value, testID }: ToggleProps) {
       importantForAccessibility="no-hide-descendants"
       testID={testID}
     >
-      <Host matchContents>
+      <Host colorScheme={colorScheme} matchContents>
         <NativeToggle
           isOn={value}
           modifiers={[toggleStyle('switch'), labelsHidden(), tint(colors.tint)]}

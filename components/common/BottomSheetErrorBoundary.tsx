@@ -5,11 +5,13 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { toError } from '@/utils/toError';
 
 import { ComponentErrorBoundary } from './ComponentErrorBoundary';
 
 interface BottomSheetErrorFallbackProps {
-  readonly error: Error;
+  /** Whatever was thrown — not necessarily an `Error`. */
+  readonly error: unknown;
 }
 
 const BottomSheetErrorFallback = memo(function BottomSheetErrorFallback({
@@ -22,7 +24,7 @@ const BottomSheetErrorFallback = memo(function BottomSheetErrorFallback({
       </ThemedText>
       {__DEV__ && (
         <ThemedText colorName="textTertiary" type="caption" style={styles.errorDetail}>
-          {error.message}
+          {toError(error).message}
         </ThemedText>
       )}
     </View>
@@ -53,7 +55,7 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.LARGE,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 100,
+    minHeight: LAYOUT.BOTTOM_SHEET.ERROR_MIN_HEIGHT,
   },
   errorText: {
     textAlign: 'center',

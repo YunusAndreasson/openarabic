@@ -157,6 +157,28 @@ describe('ThemedInput', () => {
     });
   });
 
+  describe('Multiline', () => {
+    // The feedback form's message box used to be a raw TextInput: no app font,
+    // no selection colour, its own border. It is this variant now.
+    test('is a top-aligned prose field with sentence case and autocorrect', () => {
+      const { getByPlaceholderText } = render(<ThemedInput multiline placeholder="Message" />);
+
+      const input = getByPlaceholderText('Message');
+      expect(input.props.multiline).toBe(true);
+      expect(input.props.textAlignVertical).toBe('top');
+      expect(input.props.autoCapitalize).toBe('sentences');
+      expect(input.props.autoCorrect).toBe(true);
+    });
+
+    test('a caller still overrides the prose defaults', () => {
+      const { getByPlaceholderText } = render(
+        <ThemedInput multiline autoCapitalize="none" placeholder="Message" />,
+      );
+
+      expect(getByPlaceholderText('Message').props.autoCapitalize).toBe('none');
+    });
+  });
+
   describe('Accessibility', () => {
     test('disables auto capitalization', () => {
       const { getByPlaceholderText } = render(<ThemedInput placeholder="email" />);

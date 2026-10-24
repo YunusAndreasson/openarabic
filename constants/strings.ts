@@ -33,6 +33,10 @@ export const STRINGS = {
   ARABIC_FONT: 'Arabic text',
   ARABIC_TEXT_VALUE: '{font} · {size}',
   FONT_SIZE: 'Font size',
+  FONT_SIZE_VALUE: '{size}px',
+  FONT_SIZE_VALUE_A11Y: '{size} pixels',
+  // The small and the large letter either side of the font-size slider
+  FONT_SIZE_SAMPLE_LETTER: 'A',
   // Shared bilingual label
   BILINGUAL_LABEL: 'English + Arabic',
   AUDIO_LANGUAGE: 'Audio language',
@@ -293,6 +297,14 @@ export const STRINGS = {
   // so this app doesn't have to.
   MAKER_BYLINE: 'Made by Yunus Andreasson',
   MAKER_PROJECTS_URL: 'https://andreassonphoto.com/projects',
+  // The version lines at the foot of Settings (BrandFooter). "embedded" means no
+  // over-the-air update has been applied: the app runs the bundle in the binary.
+  APP_VERSION: 'Version {version}',
+  APP_VERSION_WITH_BUILD: 'Version {version} ({build})',
+  OTA_EMBEDDED: 'OTA embedded · {channel}',
+  OTA_UPDATE: 'OTA {id} · {channel}',
+  OTA_CHANNEL_UNKNOWN: 'unknown',
+  COPYRIGHT: '© {year} OpenArabic',
   // App Store Review
   RATE_APP: 'Rate OpenArabic',
   PLAY_STORE_LISTING_URL: 'https://play.google.com/store/apps/details?id={package}',
@@ -1358,6 +1370,16 @@ export const STRINGS = {
   },
   GRAMMAR_LEGEND_SINGLE_WORD_NOTE:
     'A single word like "house" is never coloured: the colours show how the parts of a phrase line up with its English, and one word has nothing to line up.',
+  /** The worked phrases under the guide: the English each is coloured against, and its parts. */
+  GRAMMAR_EXAMPLES: {
+    AND_THE_HOUSE: { english: 'and the house', breakdown: 'و (and) + ال (the) + root word' },
+    WITH_MY_BOOK: { english: 'with my book', breakdown: 'ب (with) + root + ي (my)' },
+    SO_THEY_SAID: { english: 'so they said', breakdown: 'ف (so) + root + وا (they/plural)' },
+    TO_THE_MUSLIMS: {
+      english: 'to the Muslims',
+      breakdown: 'ل (to) + ال (the) + root + ين (plural)',
+    },
+  },
   HELP_SEARCH_PLACEHOLDER: 'Search help',
   HELP_SEARCH_CLEAR: 'Clear search',
   HELP_SEARCH_RESULTS_SINGULAR: 'result',

@@ -17,6 +17,7 @@ export { BrandedBottomSheet } from './BrandedBottomSheet';
 export { CloseButton } from './CloseButton';
 export { DisclosureChevron } from './DisclosureChevron';
 export { EnhancedImage } from './EnhancedImage';
+export { GlyphButton } from './GlyphButton';
 // `HeaderIconButton` and `Toast` are deliberately not re-exported: their only
 // consumers live inside components/ui and components/providers, which must import
 // by direct path (see the cycle note above).

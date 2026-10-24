@@ -2,17 +2,10 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import * as Sentry from '@sentry/react-native';
 import { memo, useCallback, useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/primitives/ThemedButton';
+import { ThemedInput } from '@/components/primitives/ThemedInput';
 import { IconButton } from '@/components/ui';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { FONTS } from '@/constants/fonts';
@@ -24,9 +17,17 @@ import { useColors } from '@/hooks/theme';
 import pkg from '@/package.json';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 const MIN_CHARACTERS = 10;
 
+/**
+ * The feedback form. Content only: the route renders it inside a
+ * `ScreenScaffold`, whose scroll view is keyboard-aware (iOS insets the
+ * content by the keyboard; Android resizes the window). It used to bring its
+ * own KeyboardAvoidingView and ScrollView, with a guessed 90pt offset for the
+ * header, and a raw TextInput with no app font or selection colour.
+ */
 export const FeedbackForm = memo(() => {
   const colors = useColors();
   const { user } = useAuth();
@@ -43,11 +44,10 @@ export const FeedbackForm = memo(() => {
     characterCount < MIN_CHARACTERS
       ? characterCount === MIN_CHARACTERS - 1
         ? STRINGS.FEEDBACK_CHARACTER_NEEDED
-        : STRINGS.FEEDBACK_CHARACTERS_NEEDED.replace(
-            '{count}',
-            String(MIN_CHARACTERS - characterCount),
-          )
-      : STRINGS.FEEDBACK_CHARACTER_COUNT.replace('{count}', String(characterCount));
+        : fillTemplate(STRINGS.FEEDBACK_CHARACTERS_NEEDED, {
+            count: MIN_CHARACTERS - characterCount,
+          })
+      : fillTemplate(STRINGS.FEEDBACK_CHARACTER_COUNT, { count: characterCount });
 
   // Never error ink. A message still being typed is not a mistake, and the
   // count used to turn red from the first character until the tenth; there is
@@ -64,7 +64,7 @@ export const FeedbackForm = memo(() => {
     if (message.trim().length < MIN_CHARACTERS) {
       Alert.alert(
         STRINGS.FEEDBACK_SHORT_TITLE,
-        STRINGS.FEEDBACK_SHORT_MESSAGE.replace('{minCharacters}', String(MIN_CHARACTERS)),
+        fillTemplate(STRINGS.FEEDBACK_SHORT_MESSAGE, { minCharacters: MIN_CHARACTERS }),
       );
       return;
     }
@@ -168,122 +168,81 @@ export const FeedbackForm = memo(() => {
   }, [message, user?.email, user?.id, screenshotUri]);
 
   return (
-    <>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.content}>
-            <TextInput
-              accessibilityLabel={STRINGS.FEEDBACK_MESSAGE_LABEL}
-              style={[
-                styles.textInput,
-                {
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                  borderColor: colors.border,
-                },
-              ]}
-              placeholder={STRINGS.FEEDBACK_PLACEHOLDER}
-              placeholderTextColor={colors.textTertiary}
-              value={message}
-              onChangeText={setMessage}
-              multiline={true}
-              numberOfLines={6}
-              textAlignVertical="top"
-              autoFocus={true}
-              editable={!isSubmitting}
-            />
+    <View style={styles.content}>
+      <View style={styles.messageField}>
+        <ThemedInput
+          accessibilityLabel={STRINGS.FEEDBACK_MESSAGE_LABEL}
+          placeholder={STRINGS.FEEDBACK_PLACEHOLDER}
+          value={message}
+          onChangeText={setMessage}
+          multiline
+          autoFocus
+          editable={!isSubmitting}
+        />
+      </View>
 
-            {screenshotUri ? (
-              <View style={styles.screenshotPreview}>
-                <Image
-                  source={{ uri: screenshotUri }}
-                  style={styles.screenshotImage}
-                  contentFit="cover"
-                  cachePolicy="none"
-                />
-                <View style={styles.removeButton}>
-                  <IconButton
-                    accessibilityLabel={STRINGS.FEEDBACK_SCREENSHOT_REMOVE_A11Y}
-                    icon="close"
-                    size="small"
-                    tone="destructive"
-                    onPress={handleRemoveScreenshot}
-                  />
-                </View>
-              </View>
-            ) : (
-              <ThemedButton
-                allowTitleWrap
-                fullWidth
-                icon="image"
-                style={styles.addScreenshotButton}
-                title={STRINGS.FEEDBACK_SCREENSHOT_LABEL}
-                variant="outlined"
-                onPress={() => void handleAddScreenshot()}
-              />
-            )}
-
-            <View style={styles.metaRow}>
-              <ThemedText type="caption" colorName="textTertiary">
-                {user?.email
-                  ? STRINGS.FEEDBACK_EMAIL_INCLUDED.replace('{email}', user.email)
-                  : STRINGS.FEEDBACK_EMAIL_UNAVAILABLE}
-              </ThemedText>
-              <ThemedText
-                type="caption"
-                style={[styles.characterCount, { color: characterCountColor }]}
-              >
-                {characterHint}
-              </ThemedText>
-            </View>
-
-            <ThemedButton
-              title={isSubmitting ? STRINGS.FEEDBACK_SENDING : STRINGS.FEEDBACK_SUBMIT}
-              onPress={() => void handleSubmit()}
-              disabled={isSubmitting || characterCount < MIN_CHARACTERS}
-              variant={characterCount < MIN_CHARACTERS ? 'outlined' : 'filled'}
-              style={styles.submitButton}
+      {screenshotUri ? (
+        <View style={styles.screenshotPreview}>
+          <Image
+            source={{ uri: screenshotUri }}
+            style={styles.screenshotImage}
+            contentFit="cover"
+            cachePolicy="none"
+          />
+          <View style={styles.removeButton}>
+            <IconButton
+              accessibilityLabel={STRINGS.FEEDBACK_SCREENSHOT_REMOVE_A11Y}
+              icon="close"
+              size="small"
+              tone="destructive"
+              onPress={handleRemoveScreenshot}
             />
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </>
+        </View>
+      ) : (
+        <ThemedButton
+          allowTitleWrap
+          fullWidth
+          icon="image"
+          style={styles.addScreenshotButton}
+          title={STRINGS.FEEDBACK_SCREENSHOT_LABEL}
+          variant="outlined"
+          onPress={() => void handleAddScreenshot()}
+        />
+      )}
+
+      <View style={styles.metaRow}>
+        <ThemedText type="caption" colorName="textTertiary">
+          {user?.email
+            ? fillTemplate(STRINGS.FEEDBACK_EMAIL_INCLUDED, { email: user.email })
+            : STRINGS.FEEDBACK_EMAIL_UNAVAILABLE}
+        </ThemedText>
+        <ThemedText type="caption" style={[styles.characterCount, { color: characterCountColor }]}>
+          {characterHint}
+        </ThemedText>
+      </View>
+
+      <ThemedButton
+        title={isSubmitting ? STRINGS.FEEDBACK_SENDING : STRINGS.FEEDBACK_SUBMIT}
+        onPress={() => void handleSubmit()}
+        disabled={isSubmitting || characterCount < MIN_CHARACTERS}
+        variant={characterCount < MIN_CHARACTERS ? 'outlined' : 'filled'}
+        style={styles.submitButton}
+      />
+    </View>
   );
 });
 
 FeedbackForm.displayName = 'FeedbackForm';
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
+  // The scaffold supplies the bottom padding (and the home-indicator inset).
   content: {
-    flex: 1,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
   },
-  textInput: {
-    borderWidth: 1,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    padding: LAYOUT.SPACING.MEDIUM,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    minHeight: 150,
-    maxHeight: 200,
-    marginBottom: LAYOUT.SPACING.SMALL,
+  // With ThemedInput's own TINY margin, the SMALL gap the field always had.
+  messageField: {
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   metaRow: {
     gap: LAYOUT.SPACING.SMALL,

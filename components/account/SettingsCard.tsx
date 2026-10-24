@@ -1,11 +1,12 @@
 import { memo, type ReactNode } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { Icon, type IconName, Toggle } from '@/components/ui';
-import { INLINE_VALUE_MIN_WIDTH, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { useTextLayout } from '@/hooks/ui/useTextLayout';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface BaseSettingsCardProps {
@@ -42,6 +43,11 @@ interface CustomCardProps extends BaseSettingsCardProps {
   rightComponent: ReactNode;
 }
 
+/**
+ * No affordance. Also what an omitted `rightType` means: such a row is static
+ * ("Signed in as") or opens an alert ("Remove voice model"), and the chevron it
+ * used to get by default promised a destination neither has.
+ */
 interface NoneCardProps extends BaseSettingsCardProps {
   rightType?: 'none';
 }
@@ -60,10 +66,9 @@ type SettingsCardProps =
  */
 export const SettingsCard = memo((props: SettingsCardProps) => {
   const colors = useColors();
-  const { width, fontScale } = useWindowDimensions();
+  const { crowded } = useTextLayout();
   const stackValue =
-    (props.rightType === 'text-chevron' || props.rightType === 'custom') &&
-    width / fontScale < INLINE_VALUE_MIN_WIDTH;
+    (props.rightType === 'text-chevron' || props.rightType === 'custom') && crowded;
   const {
     icon,
     label,
@@ -107,13 +112,13 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
       case 'custom':
         return stackValue ? null : props.rightComponent;
 
-      case 'none':
-        return null;
-
       case 'chevron':
       case 'external':
-      default:
         return navigationIndicator;
+
+      case 'none':
+      default:
+        return null;
     }
   };
 

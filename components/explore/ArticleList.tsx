@@ -1,4 +1,4 @@
-import { useTransition, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -55,15 +55,6 @@ export function ArticleList({
   scrollEventThrottle,
 }: ArticleListProps) {
   const colors = useColors();
-  const [, startTransition] = useTransition();
-
-  const handleRefreshWithTransition = () => {
-    if (onRefresh) {
-      startTransition(() => {
-        onRefresh();
-      });
-    }
-  };
 
   const hasStatus = isLoading || isError;
 
@@ -93,7 +84,10 @@ export function ArticleList({
           refreshing={isRefreshing}
           tintColor={colors.tint}
           progressViewOffset={progressViewOffset}
-          onRefresh={handleRefreshWithTransition}
+          // Called directly. It was wrapped in startTransition, which demoted
+          // the refresh's first update — the spinner — to a transition, while
+          // the heavy work after its await ran outside it anyway.
+          onRefresh={onRefresh}
         />
       }
       keyboardShouldPersistTaps="handled"

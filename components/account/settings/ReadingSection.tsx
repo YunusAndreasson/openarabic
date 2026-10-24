@@ -12,6 +12,7 @@ import {
   selectWordTapShowsTooltip,
   setWordTapShowsTooltip,
 } from '@/store/settingsSlice';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 const FONT_DISPLAY_NAMES: Record<ArabicFontName, string> = {
   'NotoSansArabic-Regular': 'Noto Sans',
@@ -38,10 +39,10 @@ export const ReadingSection = memo(() => {
   const currentArabicFontSize = useAppSelectorShallow(selectArabicFontSize);
   const wordTapShowsTooltip = useAppSelectorShallow(selectWordTapShowsTooltip);
 
-  const arabicTextValue = STRINGS.ARABIC_TEXT_VALUE.replace(
-    '{font}',
-    FONT_DISPLAY_NAMES[currentArabicFont],
-  ).replace('{size}', String(currentArabicFontSize));
+  const arabicTextValue = fillTemplate(STRINGS.ARABIC_TEXT_VALUE, {
+    font: FONT_DISPLAY_NAMES[currentArabicFont],
+    size: currentArabicFontSize,
+  });
 
   const handleFontPress = useCallback(() => {
     router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR);

@@ -2,15 +2,16 @@ import {
   DocEffectiveDate,
   DocHeading,
   DocParagraph,
+  DocSections,
   LegalDocument,
+  type DocSection,
 } from '@/components/common/LegalDocument';
 import { EmailLink } from '@/components/common/EmailLink';
-import { Fragment } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 
 /** Ordered title/body pairs — the document is data, not markup. */
-const SECTIONS: { title: string; body: string }[] = [
+const SECTIONS: DocSection[] = [
   { title: STRINGS.TERMS_SERVICE_DESCRIPTION_TITLE, body: STRINGS.TERMS_SERVICE_DESCRIPTION },
   { title: STRINGS.TERMS_ACCOUNT_TITLE, body: STRINGS.TERMS_ACCOUNT },
   { title: STRINGS.TERMS_ACCEPTABLE_USE_TITLE, body: STRINGS.TERMS_ACCEPTABLE_USE },
@@ -32,12 +33,7 @@ export const TermsOfServiceContent = () => (
     <DocEffectiveDate>{STRINGS.TERMS_EFFECTIVE_DATE}</DocEffectiveDate>
     <DocParagraph>{STRINGS.TERMS_INTRO}</DocParagraph>
 
-    {SECTIONS.map(({ title, body }) => (
-      <Fragment key={title}>
-        <DocHeading>{title}</DocHeading>
-        <DocParagraph>{body}</DocParagraph>
-      </Fragment>
-    ))}
+    <DocSections sections={SECTIONS} />
 
     <DocHeading>{STRINGS.TERMS_CONTACT_TITLE}</DocHeading>
     <DocParagraph last>

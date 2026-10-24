@@ -73,11 +73,22 @@ describe('SettingsCard', () => {
   });
 
   describe('Right Side Variants', () => {
-    test('renders chevron by default', () => {
+    test('renders a chevron for rightType="chevron"', () => {
       const { getByTestId } = render(
         <SettingsCard icon="settings" label="Settings" rightType="chevron" onPress={mockOnPress} />,
       );
       expect(getByTestId('mock-icon-chevron-forward').props.name).toBe('chevron-forward');
+    });
+
+    // An omitted rightType used to fall through to the chevron, so "Signed in
+    // as" (a static row) and "Remove voice model" (an alert, like Sign out and
+    // Reset, which pass "none") both promised a destination they don't have.
+    test('draws no affordance when rightType is omitted', () => {
+      const { queryByTestId } = render(
+        <SettingsCard icon="person-circle" label="Signed in as" subtitle="me@example.com" />,
+      );
+      expect(queryByTestId('mock-icon-chevron-forward')).toBeNull();
+      expect(queryByTestId('mock-icon-open-outline')).toBeNull();
     });
 
     test('renders text with chevron', () => {

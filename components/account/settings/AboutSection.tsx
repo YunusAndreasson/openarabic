@@ -1,25 +1,18 @@
 import { memo, useCallback } from 'react';
-import { Linking } from 'react-native';
 import { router } from 'expo-router';
 
 import { SettingsCard, SettingsSection } from '@/components/account';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { handleError } from '@/utils/errorHandling';
+import { openExternalUrl } from '@/utils/openExternalUrl';
 
-const openSocialLink = async (url: string) => {
-  try {
-    await Linking.openURL(url);
-  } catch (error) {
-    void handleError(error, {
-      analyticsEventName: 'Social_Media_Link_Failed',
-      sentryTags: { location: 'account_screen', action: 'social_media' },
-      sentryExtra: { url },
-      showToast: false,
-      sentrySeverity: 'info',
-    });
-  }
-};
+const openSocialLink = (url: string) =>
+  openExternalUrl(url, {
+    analyticsEventName: 'Social_Media_Link_Failed',
+    sentryTags: { location: 'account_screen', action: 'social_media' },
+    showToast: false,
+    sentrySeverity: 'info',
+  });
 
 /**
  * About — the legal documents and the maker's credit.

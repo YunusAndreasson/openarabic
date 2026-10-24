@@ -1,13 +1,8 @@
-import {
-  StyleSheet,
-  useWindowDimensions,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { MetricCard } from '@/components/common/MetricCard';
-import { INLINE_VALUE_MIN_WIDTH, LAYOUT } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
+import { useTextLayout } from '@/hooks/ui/useTextLayout';
 
 interface Metric {
   id: string;
@@ -26,8 +21,7 @@ interface MetricCardGridProps {
 
 /** Keep short metrics side by side when they fit, and readable when text grows. */
 export function MetricCardGrid({ metrics, density, animated, style }: MetricCardGridProps) {
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width / fontScale < INLINE_VALUE_MIN_WIDTH;
+  const { crowded: stacked } = useTextLayout();
   return (
     <View style={[styles.row, stacked && styles.stack, style]}>
       {metrics.map(({ id, ...metric }) => (

@@ -1,10 +1,11 @@
 import { ScreenScaffold } from '@/components/common/ScreenScaffold';
-import type { ReactNode } from 'react';
-import { Linking, StyleSheet } from 'react-native';
+import { Fragment, type ReactNode } from 'react';
+import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { TextLink } from '@/components/ui/TextLink';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
+import { openExternalUrl } from '@/utils/openExternalUrl';
 
 /**
  * The terms, privacy and attribution screens are long-form prose under a
@@ -69,6 +70,8 @@ export const DocParagraph = ({
  * This used to hand-roll a tint-coloured `ThemedText` inside a `Pressable` with
  * a pressed-opacity style callback — a verbatim copy of the very pattern
  * `TextLink` exists to have deleted. It also picked up a hit slop it never had.
+ *
+ * A URL the system refuses is reported, not left as an unhandled rejection.
  */
 export const DocLink = ({ url }: { url: string }) => (
   <TextLink
@@ -77,9 +80,43 @@ export const DocLink = ({ url }: { url: string }) => (
     style={styles.linkContainer}
     type="body"
     onPress={() => {
-      void Linking.openURL(url);
+      void openExternalUrl(url, {
+        analyticsEventName: 'Legal_Link_Failed',
+        sentryTags: { location: 'legal_document', action: 'open_url' },
+        showToast: false,
+        sentrySeverity: 'info',
+      });
     }}
   />
+);
+
+/** A section of a document given as data: a body, labelled subsections, or both. */
+export interface DocSection {
+  title: string;
+  body?: string;
+  subsections?: readonly { title: string; body: string }[];
+}
+
+/**
+ * The run of data-driven sections that makes up most of a legal document. The
+ * privacy policy and the terms each mapped their own list through this same
+ * heading-and-paragraph shape.
+ */
+export const DocSections = ({ sections }: { sections: readonly DocSection[] }) => (
+  <>
+    {sections.map(({ title, body, subsections }) => (
+      <Fragment key={title}>
+        <DocHeading>{title}</DocHeading>
+        {body ? <DocParagraph>{body}</DocParagraph> : null}
+        {subsections?.map(subsection => (
+          <Fragment key={subsection.title}>
+            <DocHeading level="subsection">{subsection.title}</DocHeading>
+            <DocParagraph>{subsection.body}</DocParagraph>
+          </Fragment>
+        ))}
+      </Fragment>
+    ))}
+  </>
 );
 
 /** A credited item — a font, a library — with its one-line description. */

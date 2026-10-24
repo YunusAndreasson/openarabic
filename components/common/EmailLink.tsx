@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
-import { Linking, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import type { ThemedTextProps } from '@/types/ui/text.types';
-import { handleError } from '@/utils/errorHandling';
+import { openExternalUrl } from '@/utils/openExternalUrl';
 
 interface EmailLinkProps {
   email: string;
@@ -16,6 +16,10 @@ interface EmailLinkProps {
  * Renders an email address as an inline link that opens the default email client.
  * Designed to blend seamlessly with surrounding text while being visually distinct.
  *
+ * It used to ask `Linking.canOpenURL('mailto:…')` first, which says false on
+ * Android 11+ and on iOS whenever the scheme is not declared — so the "Contact
+ * us" links did nothing on most phones. See `openExternalUrl`.
+ *
  * @example
  * ```tsx
  * <ThemedText type="body">
@@ -24,32 +28,14 @@ interface EmailLinkProps {
  * ```
  */
 export const EmailLink = ({ email, type = 'body' }: EmailLinkProps) => {
-  const handleEmailPress = useCallback(async () => {
-    try {
-      const mailtoUrl = `mailto:${email}`;
-      const canOpen = await Linking.canOpenURL(mailtoUrl);
-
-      if (canOpen) {
-        await Linking.openURL(mailtoUrl);
-      } else {
-        // Use handleError for consistent error tracking
-        void handleError(new Error('Cannot open email client'), {
-          analyticsEventName: 'Email_Client_Unavailable',
-          sentryTags: { location: 'email_link', action: 'canOpenURL' },
-          sentryExtra: { email, mailtoUrl },
-          showToast: false, // Silent failure for email links
-          sentrySeverity: 'info', // Not critical, just informational
-        });
-      }
-    } catch (error) {
-      void handleError(error, {
-        analyticsEventName: 'Email_Link_Failed',
-        sentryTags: { location: 'email_link', action: 'mailto' },
-        sentryExtra: { email },
-        showToast: false, // Silent failure for email links
-        sentrySeverity: 'info', // Not critical, just informational
-      });
-    }
+  const handleEmailPress = useCallback(() => {
+    void openExternalUrl(`mailto:${email}`, {
+      analyticsEventName: 'Email_Link_Failed',
+      sentryTags: { location: 'email_link', action: 'mailto' },
+      sentryExtra: { email },
+      showToast: false, // Silent failure for email links
+      sentrySeverity: 'info', // Not critical, just informational
+    });
   }, [email]);
 
   return (
@@ -59,7 +45,7 @@ export const EmailLink = ({ email, type = 'body' }: EmailLinkProps) => {
       style={styles.link}
       accessibilityRole="link"
       accessibilityLabel={email}
-      onPress={() => void handleEmailPress()}
+      onPress={handleEmailPress}
       suppressHighlighting={true}
     >
       {email}

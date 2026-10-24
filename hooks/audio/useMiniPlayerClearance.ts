@@ -6,6 +6,20 @@ import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
 import { useMiniPlayerHeight } from '@/hooks/audio/useMiniPlayerHeight';
 
 /**
+ * How much of the bottom of a scroll view the floating mini player covers: its
+ * height plus the gap it floats at while it is showing, 0 while it is not.
+ *
+ * The player-only half of `useMiniPlayerClearance`, for a screen that accounts
+ * for its own insets — the article reader, a modal with no tab bar to own the
+ * Android inset, adds it to the full `insets.bottom`.
+ */
+export function useMiniPlayerOverlap(): number {
+  const shouldShowMiniPlayer = useShouldShowMiniPlayer();
+  const playerHeight = useMiniPlayerHeight();
+  return shouldShowMiniPlayer ? playerHeight + LAYOUT.SPACING.SMALL : 0;
+}
+
+/**
  * Bottom content padding a scrolling tab screen must reserve so its last row
  * never hides behind the floating mini player. Use it for
  * `contentContainerStyle.paddingBottom`.
@@ -24,11 +38,9 @@ import { useMiniPlayerHeight } from '@/hooks/audio/useMiniPlayerHeight';
  */
 export function useMiniPlayerClearance(): number {
   const insets = useSafeAreaInsets();
-  const shouldShowMiniPlayer = useShouldShowMiniPlayer();
-  const playerHeight = useMiniPlayerHeight();
+  const miniPlayerOverlap = useMiniPlayerOverlap();
 
   const bottomInsetClearance = Platform.OS === 'android' ? 0 : insets.bottom;
-  const miniPlayerClearance = shouldShowMiniPlayer ? playerHeight + LAYOUT.SPACING.SMALL : 0;
 
-  return bottomInsetClearance + miniPlayerClearance + LAYOUT.SPACING.LARGE;
+  return bottomInsetClearance + miniPlayerOverlap + LAYOUT.SPACING.LARGE;
 }
