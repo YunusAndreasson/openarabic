@@ -1,8 +1,8 @@
 import type { BlurTint } from 'expo-blur';
 
-import { Theme } from '@/constants/colors';
+import type { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
-import { useAppSelector } from '@/store/hooks';
+import { useCurrentTheme } from '@/hooks/theme/useThemeDetection';
 
 type BlurSurface = 'tabBar' | 'backdrop';
 
@@ -26,7 +26,7 @@ const BLUR_CONFIG: Record<BlurSurface, { intensity: number; tint: Record<Theme, 
 
 /** Returns theme-aware blur intensity and tint for a given surface */
 export function useBlurProps(surface: BlurSurface): { intensity: number; tint: BlurTint } {
-  const theme = useAppSelector(state => state.theme.theme || Theme.Dark);
+  const theme = useCurrentTheme();
   const config = BLUR_CONFIG[surface];
   return { intensity: config.intensity, tint: config.tint[theme] };
 }

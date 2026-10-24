@@ -43,7 +43,6 @@ import {
 } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
-import { Theme } from '@/constants/colors';
 import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
@@ -55,6 +54,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { getSkiaGpuContext } from '@/hooks/theme/useSkiaGpuAvailable';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsCalculator';
 import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
@@ -66,10 +66,7 @@ import {
   initializeNotifications,
   setNotificationNavigationCallback,
 } from '@/services/notificationService';
-import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
-import type { RootState } from '@/store/store';
 import { persistor, store } from '@/store/store';
-import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
 import { registerMutationDefaults } from '@/utils/mutationDefaults';
 import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
@@ -288,9 +285,9 @@ Sentry.setTag('expo_update_runtime_version', Updates.runtimeVersion ?? 'unknown'
 Sentry.setTag('expo_update_is_embedded', String(Updates.isEmbeddedLaunch));
 
 function AppContent() {
-  const dispatch = useAppDispatch();
-  const theme = useAppSelectorShallow((state: RootState) => state.theme.theme);
-  const isDark = theme === Theme.Dark;
+  // A stored null theme reads as the default, Dark, through selectTheme — so
+  // there is nothing to normalise into the store on launch any more.
+  const isDark = useIsDarkMode();
   const [appReady, setAppReady] = useState(false);
   const [initialSessionStartedAt] = useState(() => Date.now());
   const activeSessionStartedAt = useRef(initialSessionStartedAt);
@@ -405,14 +402,6 @@ function AppContent() {
       },
     };
   }, [isDark, colors.tint, colors.background]);
-
-  // Set default theme based on system preference if none is set yet
-  useEffect(() => {
-    if (!theme) {
-      // Use dark theme (Midnight Summer) as the default for new users
-      dispatch(setTheme(Theme.Dark)); // Default to dark theme for comfortable evening study
-    }
-  }, [dispatch, theme]);
 
   // Handle preloading app data - start when auth is ready
   useEffect(() => {

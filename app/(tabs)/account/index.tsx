@@ -21,15 +21,17 @@ import { STRINGS } from '@/constants/strings';
 import { THEME_OPTIONS } from '@/constants/themeOptions';
 import { useAccountScreen } from '@/hooks/account';
 import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
+import { useCurrentTheme } from '@/hooks/theme/useThemeDetection';
 import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
+  selectAudioLanguage,
   selectDailyWordLimit,
   setAudioLanguagePreference,
   setDailyWordLimit,
 } from '@/store/settingsSlice';
 import { setTheme } from '@/store/themeSlice';
-import { AudioLanguage } from '@/types/enums';
+import type { AudioLanguage } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 
 // Type-safe picker state
@@ -49,17 +51,8 @@ const AccountScreen = () => {
   const tabBarAutoHide = useTabBarAutoHide();
   const miniPlayerClearance = useMiniPlayerClearance();
 
-  const rawTheme = useAppSelectorShallow(state => state.theme.theme);
-  const currentTheme = useMemo(() => rawTheme ?? ('dark' as const), [rawTheme]);
-
-  const rawAudioLanguage = useAppSelectorShallow(state => state.settings.audioLanguagePreference);
-  const currentAudioLanguage = useMemo(
-    () =>
-      rawAudioLanguage === AudioLanguage.ARABIC_ONLY
-        ? AudioLanguage.ARABIC_ONLY
-        : AudioLanguage.ENGLISH_ARABIC,
-    [rawAudioLanguage],
-  );
+  const currentTheme = useCurrentTheme();
+  const currentAudioLanguage = useAppSelectorShallow(selectAudioLanguage);
 
   const currentDailyWordLimit = useAppSelectorShallow(selectDailyWordLimit);
 
