@@ -141,6 +141,7 @@ describe('Study List Button State - Bug Reproduction', () => {
         mockUserId,
         mockRootId,
         undefined,
+        expect.objectContaining({ managed: true }),
       );
 
       // The hook's optimistic mutation itself must put the word in the cache.
@@ -162,6 +163,7 @@ describe('Study List Button State - Bug Reproduction', () => {
         mockUserId,
         mockRootId,
         undefined,
+        expect.objectContaining({ managed: true }),
       );
 
       // The hook's optimistic mutation itself must remove the word.
@@ -184,6 +186,7 @@ describe('Study List Button State - Bug Reproduction', () => {
         mockUserId,
         mockRootId,
         undefined,
+        expect.objectContaining({ managed: true }),
       );
 
       // A later add must not be affected by a stale result from the removal.

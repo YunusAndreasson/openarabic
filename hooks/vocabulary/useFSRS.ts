@@ -12,15 +12,9 @@ import {
 } from '@/constants/fsrs';
 import { fsrsQueries, gated } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
-import type {
-  FSRSUpdateResult,
-  FSRSWordUpdate,
-  UseFSRSOptions,
-  UseFSRSResult,
-} from '@/types/fsrs.types';
+import type { FSRSUpdateResult, UseFSRSOptions, UseFSRSResult } from '@/types/fsrs.types';
 import type { IntervalLabels, WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
@@ -34,7 +28,7 @@ import {
   type SpacingState,
 } from '@/utils/fsrsSpacing';
 import { FSRS_INSTANCE } from '@/utils/fsrsUtils';
-import { FSRS_GRADE_MUTATION_KEY, FSRS_GRADE_MUTATION_SCOPE } from '@/utils/mutationDefaults';
+import { fsrsGradeMutation } from '@/utils/mutationDefaults';
 import { PriorityQueue } from '@/utils/priorityQueue';
 import { decideDrill, type DrillProgress } from '@/utils/review/drillPolicy';
 import { getSessionProgress } from '@/utils/review/sessionProgress';
@@ -50,12 +44,6 @@ interface FSRSCounters {
    */
   finishedWords: number;
   uniqueWords: Set<RootId>;
-}
-
-interface GradeWriteVariables {
-  userId: string;
-  rootId: RootId;
-  update: FSRSWordUpdate;
 }
 
 /** Session-lifecycle latches for the queue. Local: nothing outside this hook
@@ -137,12 +125,9 @@ export function useFSRS({
   // onlineManager sees the connection return. Still fire-and-forget: the
   // caller below chains .catch()/.finally() on mutateAsync exactly as it did
   // on the raw service call, so the card advance is never held up by it.
-  const gradeMutation = useMutation({
-    mutationKey: FSRS_GRADE_MUTATION_KEY,
-    scope: FSRS_GRADE_MUTATION_SCOPE,
-    mutationFn: ({ userId: mutationUserId, rootId, update }: GradeWriteVariables) =>
-      studyWordsFSRSService.updateWordAndReview(mutationUserId, rootId, update),
-  });
+  // The options are the registered default itself (utils/mutationDefaults.ts),
+  // so a grade resumed after a restart runs exactly this mutationFn and scope.
+  const gradeMutation = useMutation(fsrsGradeMutation);
 
   // The factory owns the due queryFn (conditional cooldown included) — the key
   // encodes the cooldown, so this never collides with differently-parameterized

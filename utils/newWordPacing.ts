@@ -1,8 +1,8 @@
-import { State } from 'ts-fsrs';
-
 import {
   DEFAULT_SESSION_COOLDOWN_HOURS,
   DUE_BACKLOG_ADD_THRESHOLD,
+  isCooldownExemptState,
+  isSessionCooldownActive,
   NEW_WORD_PACING,
 } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -148,9 +148,7 @@ export function filterDueWords(
   allWords: StudyWord[],
   { lastCompletedAt, cooldownHours = DEFAULT_SESSION_COOLDOWN_HOURS, nowMs }: FilterDueWordsOptions,
 ): StudyWord[] {
-  const applyCooldown =
-    typeof lastCompletedAt === 'number' &&
-    nowMs - lastCompletedAt < cooldownHours * MILLISECONDS_PER_HOUR;
+  const applyCooldown = isSessionCooldownActive(lastCompletedAt, cooldownHours, nowMs);
   const cutoffMs = nowMs - cooldownHours * MILLISECONDS_PER_HOUR;
 
   return allWords.filter(word => {
@@ -159,14 +157,10 @@ export function filterDueWords(
     if (!isDueAt(word, nowMs)) return false;
 
     // New words never had a session to cool down from, and Learning /
-    // Relearning are exempt by design — see the matching exemption and
-    // rationale in studyWordsFSRSService.getFSRSWords.
-    if (
-      !applyCooldown ||
-      word.fsrs_state === State.New ||
-      word.fsrs_state === State.Learning ||
-      word.fsrs_state === State.Relearning
-    ) {
+    // Relearning are exempt by design — the same COOLDOWN_EXEMPT_STATES the
+    // server filter in studyWordsFSRSService.getFSRSWords uses, with its
+    // rationale there.
+    if (!applyCooldown || isCooldownExemptState(word.fsrs_state)) {
       return true;
     }
 

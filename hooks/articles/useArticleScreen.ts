@@ -68,7 +68,6 @@ export function useArticleScreen({
     refetchStudyWords,
     isLoadingStudyWords,
     isInReadingList,
-    refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
 
   // Track article viewed (once per article load)
@@ -86,7 +85,7 @@ export function useArticleScreen({
   }, [article]);
 
   // Article mutations - using focused hooks directly
-  const { handleToggleReadingList } = useReadingListMutations(refetchReadingListStatus);
+  const { handleToggleReadingList } = useReadingListMutations();
   const { handleRootPress } = useStudyWordMutations(async () => {
     await refetchStudyWords();
   });

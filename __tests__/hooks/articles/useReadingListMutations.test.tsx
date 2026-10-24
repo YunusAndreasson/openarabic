@@ -12,7 +12,7 @@ jest.unmock('@tanstack/react-query');
 
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { Provider } from 'react-redux';
 
@@ -61,16 +61,17 @@ jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));
 
+/** The service is called as a managed request: the mutation cache reports a failure once. */
+const MANAGED = expect.objectContaining({ managed: true });
+
 describe('useReadingListMutations', () => {
   let queryClient: QueryClient;
   let mockStore: ReturnType<typeof setupTestStore>;
-  let mockRefetchReadingListStatus: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
     queryClient = createTestQueryClient();
     mockStore = setupTestStore();
-    mockRefetchReadingListStatus = jest.fn();
 
     // Default mock implementations
     mockCheckAuthentication.mockResolvedValue({ user: { id: 'test-user-id' } });
@@ -86,7 +87,7 @@ describe('useReadingListMutations', () => {
 
   describe('Initialization', () => {
     test('returns expected interface', () => {
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -98,7 +99,7 @@ describe('useReadingListMutations', () => {
 
   describe('handleToggleReadingList', () => {
     test('returns early for undefined articleId', async () => {
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -111,7 +112,7 @@ describe('useReadingListMutations', () => {
     });
 
     test('checks authentication before toggling', async () => {
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -125,7 +126,7 @@ describe('useReadingListMutations', () => {
     test('keeps the reader in place and asks to sign in when the session check fails', async () => {
       mockCheckAuthentication.mockRejectedValue(new Error('Not authenticated'));
 
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -146,7 +147,7 @@ describe('useReadingListMutations', () => {
     });
 
     test('calls addToReadingList when not in reading list', async () => {
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -155,12 +156,12 @@ describe('useReadingListMutations', () => {
       });
 
       await waitFor(() => {
-        expect(mockAddToReadingList).toHaveBeenCalledWith('test-user-id', 123);
+        expect(mockAddToReadingList).toHaveBeenCalledWith('test-user-id', 123, MANAGED);
       });
     });
 
     test('calls removeFromReadingList when in reading list', async () => {
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -169,7 +170,7 @@ describe('useReadingListMutations', () => {
       });
 
       await waitFor(() => {
-        expect(mockRemoveFromReadingList).toHaveBeenCalledWith('test-user-id', 123);
+        expect(mockRemoveFromReadingList).toHaveBeenCalledWith('test-user-id', 123, MANAGED);
       });
     });
 
@@ -179,7 +180,7 @@ describe('useReadingListMutations', () => {
         () => new Promise<void>(resolve => (resolveMutation = resolve)) as never,
       );
 
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -201,7 +202,7 @@ describe('useReadingListMutations', () => {
     test('returns false without redirecting when the mutation fails', async () => {
       mockAddToReadingList.mockRejectedValue(new Error('Network error'));
 
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -217,7 +218,7 @@ describe('useReadingListMutations', () => {
 
   describe('addToReadingListMutation', () => {
     test('calls bookmark service with correct params', async () => {
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -229,12 +230,13 @@ describe('useReadingListMutations', () => {
       });
 
       await waitFor(() => {
-        expect(mockAddToReadingList).toHaveBeenCalledWith('test-user-id', 42);
+        expect(mockAddToReadingList).toHaveBeenCalledWith('test-user-id', 42, MANAGED);
       });
     });
 
-    test('calls refetchReadingListStatus on success', async () => {
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+    test('refreshes the reading list and the tracks of every audio language on success', async () => {
+      const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -245,14 +247,57 @@ describe('useReadingListMutations', () => {
         });
       });
 
-      expect(mockRefetchReadingListStatus).toHaveBeenCalled();
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ['readingList', 'test-user-id'],
+      });
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ['enhancedAudioTracks', 'test-user-id'],
+      });
+    });
+
+    // Whether an article is saved is a select of the reading list, and the
+    // reader's button holds its optimistic state until the mutation settles.
+    test('settles only once the reading list has refetched', async () => {
+      let resolveList: ((list: never[]) => void) | undefined;
+      const listFetch = jest.fn(() => new Promise<never[]>(resolve => (resolveList = resolve)));
+      const observer = renderHook(
+        () =>
+          useQuery({
+            queryKey: ['readingList', 'test-user-id'],
+            queryFn: listFetch,
+            staleTime: Infinity,
+            initialData: [],
+          }),
+        { wrapper },
+      );
+      const { result } = renderHook(() => useReadingListMutations(), { wrapper });
+
+      let settled = false;
+      let mutation: Promise<void> | undefined;
+      await act(async () => {
+        mutation = result.current.addToReadingListMutation
+          .mutateAsync({ userId: 'test-user-id', articleId: 42 as ArticleId })
+          .then(() => {
+            settled = true;
+          });
+      });
+
+      await waitFor(() => expect(listFetch).toHaveBeenCalled());
+      expect(settled).toBe(false);
+
+      await act(async () => {
+        resolveList?.([]);
+        await mutation;
+      });
+      expect(settled).toBe(true);
+      observer.unmount();
     });
 
     test('handles duplicate key errors silently', async () => {
       const { handleError } = require('@/utils/errorHandling');
       mockAddToReadingList.mockRejectedValue(new Error('duplicate key value violates constraint'));
 
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -274,7 +319,7 @@ describe('useReadingListMutations', () => {
 
   describe('removeFromReadingListMutation', () => {
     test('calls bookmark service with correct params', async () => {
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -286,12 +331,13 @@ describe('useReadingListMutations', () => {
       });
 
       await waitFor(() => {
-        expect(mockRemoveFromReadingList).toHaveBeenCalledWith('test-user-id', 42);
+        expect(mockRemoveFromReadingList).toHaveBeenCalledWith('test-user-id', 42, MANAGED);
       });
     });
 
-    test('calls refetchReadingListStatus on success', async () => {
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+    test('refreshes the reading list on success', async () => {
+      const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -302,14 +348,16 @@ describe('useReadingListMutations', () => {
         });
       });
 
-      expect(mockRefetchReadingListStatus).toHaveBeenCalled();
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ['readingList', 'test-user-id'],
+      });
     });
 
     test('handles errors silently', async () => {
       const { handleError } = require('@/utils/errorHandling');
       mockRemoveFromReadingList.mockRejectedValue(new Error('Network error'));
 
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -336,7 +384,7 @@ describe('useReadingListMutations', () => {
     test('invalidates queries on successful add', async () => {
       const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 
@@ -353,7 +401,7 @@ describe('useReadingListMutations', () => {
     test('invalidates queries on successful remove', async () => {
       const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
-      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+      const { result } = renderHook(() => useReadingListMutations(), {
         wrapper,
       });
 

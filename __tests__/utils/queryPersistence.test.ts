@@ -129,11 +129,13 @@ describe('Query Persistence', () => {
     });
 
     describe('vocabulary keys', () => {
-      test('should persist fsrs-words query without userId (fallback queries)', () => {
+      // Every real fsrs-words key carries the user id; the branch that would
+      // have persisted one without it matched no key and is gone.
+      test('should NOT persist an fsrs-words query even without a userId', () => {
         const query = createMockQuery(['fsrs-words']);
         expect(
           shouldDehydrateQuery(query as unknown as Parameters<typeof shouldDehydrateQuery>[0]),
-        ).toBeTruthy();
+        ).toBeFalsy();
       });
 
       test('should NOT persist fsrs-words query with userId (user-specific)', () => {
@@ -145,13 +147,6 @@ describe('Query Persistence', () => {
 
       test('should NOT persist fsrs-words query with "due" pattern', () => {
         const query = createMockQuery(['fsrs-words', 'user-123', 'due']);
-        expect(
-          shouldDehydrateQuery(query as unknown as Parameters<typeof shouldDehydrateQuery>[0]),
-        ).toBeFalsy();
-      });
-
-      test('should NOT persist fsrs-words query with "live" pattern', () => {
-        const query = createMockQuery(['fsrs-words', 'user-123', 'live']);
         expect(
           shouldDehydrateQuery(query as unknown as Parameters<typeof shouldDehydrateQuery>[0]),
         ).toBeFalsy();
@@ -177,8 +172,8 @@ describe('Query Persistence', () => {
     });
 
     describe('excluded keys', () => {
-      test('should NOT persist isInReadingList query', () => {
-        const query = createMockQuery(['isInReadingList', 'user-123', 1]);
+      test('should NOT persist the reading list, even if it were listed to persist', () => {
+        const query = createMockQuery(['readingList', 'user-123']);
         expect(
           shouldDehydrateQuery(query as unknown as Parameters<typeof shouldDehydrateQuery>[0]),
         ).toBeFalsy();
@@ -195,13 +190,6 @@ describe('Query Persistence', () => {
     describe('excluded patterns', () => {
       test('should NOT persist queries with "due" pattern in any position', () => {
         const query = createMockQuery(['some-key', 'due', 'user-123']);
-        expect(
-          shouldDehydrateQuery(query as unknown as Parameters<typeof shouldDehydrateQuery>[0]),
-        ).toBeFalsy();
-      });
-
-      test('should NOT persist queries with "live" pattern in any position', () => {
-        const query = createMockQuery(['some-key', 'user-123', 'live']);
         expect(
           shouldDehydrateQuery(query as unknown as Parameters<typeof shouldDehydrateQuery>[0]),
         ).toBeFalsy();

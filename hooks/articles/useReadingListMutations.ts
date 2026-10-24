@@ -3,15 +3,18 @@ import { useCallback } from 'react';
 
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { audioQueries, readingProgressQueries } from '@/constants/queries';
+import { readingProgressQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
-import { bookmarkService } from '@/services/bookmark';
 import { checkAuthentication } from '@/services/supabase';
-import { useAppSelector } from '@/store/hooks';
 import type { ArticleId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import { handleError } from '@/utils/errorHandling';
+import {
+  readingListAddMutation,
+  readingListRemoveMutation,
+  type ReadingListVariables,
+} from '@/utils/mutationDefaults';
 
 interface ReadingListMutationsResult {
   handleToggleReadingList: (
@@ -19,39 +22,34 @@ interface ReadingListMutationsResult {
     isInReadingList: boolean,
   ) => Promise<boolean>;
 
-  addToReadingListMutation: UseMutationResult<
-    void,
-    Error,
-    { userId: string; articleId: ArticleId }
-  >;
+  addToReadingListMutation: UseMutationResult<void, Error, ReadingListVariables>;
 
-  removeFromReadingListMutation: UseMutationResult<
-    void,
-    Error,
-    { userId: string; articleId: ArticleId }
-  >;
+  removeFromReadingListMutation: UseMutationResult<void, Error, ReadingListVariables>;
 }
 
 /**
  * Hook for reading list (bookmarks) mutations
- * Handles adding and removing articles from user's reading list
+ * Handles adding and removing articles from user's reading list — from the
+ * reader's bookmark and the playlist's delete alike, so both get the same
+ * analytics, the same refresh and the same offline queueing.
  *
- * @param refetchReadingListStatus - Function to refetch reading list status
  * @returns Object with reading list mutation functions
  */
-export const useReadingListMutations = (
-  refetchReadingListStatus: () => void,
-): ReadingListMutationsResult => {
+export const useReadingListMutations = (): ReadingListMutationsResult => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
-  const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
 
   /**
-   * What both mutations do once the server has confirmed: report it, write the
-   * new membership straight into the cache, then refetch the lists that derive
-   * from it. Identical for add and remove apart from the boolean, so it is
-   * written once — the two copies were a standing invitation for one list to be
-   * invalidated and the other not.
+   * What both mutations do once the server has confirmed: report it, then
+   * refresh everything the list feeds. Identical for add and remove apart from
+   * the boolean, so it is written once — the two copies were a standing
+   * invitation for one list to be invalidated and the other not.
+   *
+   * Returned, so the mutation settles only once the list has refetched.
+   * Whether one article is saved is a `select` of that list, and the reader's
+   * button holds its optimistic state exactly until the mutation settles — were
+   * it to settle first, the button would flick back to the old state until the
+   * refetch landed.
    */
   const onMutationSuccess = useCallback(
     (inList: boolean, userId: string, articleId: ArticleId) => {
@@ -60,27 +58,13 @@ export const useReadingListMutations = (
         action: inList ? 'add' : 'remove',
       });
 
-      // Immediately update cache to reflect the new membership
-      queryClient.setQueryData(
-        readingProgressQueries.isInReadingList(userId, articleId).queryKey,
-        inList,
-      );
-
-      // Then refetch to ensure consistency
-      refetchReadingListStatus();
-      void queryClient.invalidateQueries({
-        queryKey: readingProgressQueries.readingList(userId).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: audioQueries.tracks(userId, audioPreference).queryKey,
-      });
+      return readingProgressQueries.onListChanged(queryClient, userId);
     },
-    [queryClient, audioPreference, refetchReadingListStatus],
+    [queryClient],
   );
 
   const addToReadingListMutation = useMutation({
-    mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
-      bookmarkService.addToReadingList(userId, articleId),
+    ...readingListAddMutation,
     onSuccess: (_data, { userId, articleId }) => onMutationSuccess(true, userId, articleId),
     // Only add can violate the unique constraint — there is no duplicate-key
     // failure mode for a delete, which is why remove has no such filter.
@@ -101,8 +85,7 @@ export const useReadingListMutations = (
   });
 
   const removeFromReadingListMutation = useMutation({
-    mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
-      bookmarkService.removeFromReadingList(userId, articleId),
+    ...readingListRemoveMutation,
     onSuccess: (_data, { userId, articleId }) => onMutationSuccess(false, userId, articleId),
     onError: (error: Error) => {
       // Silently handle errors - no toast notifications for bookmarks actions

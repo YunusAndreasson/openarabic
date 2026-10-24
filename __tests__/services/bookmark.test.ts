@@ -127,31 +127,49 @@ describe('bookmarkService', () => {
     });
   });
 
-  describe('isInReadingList', () => {
-    test('returns true when data exists', async () => {
-      const query: FromReturn = {} as FromReturn;
-      query.select = jest.fn((..._args: unknown[]) => query);
-      query.eq = jest.fn((..._args: unknown[]) => query) as any;
-      query.maybeSingle = jest.fn((..._args: unknown[]) => ({
-        data: { article_id: 1 },
-        error: null,
-      }));
-      fromMock.mockReturnValue(asBuilder(query));
+  describe('addManyToReadingList', () => {
+    // One upsert for the whole set, so a failure is one report and one toast —
+    // the ten parallel requests it replaced could fail as ten.
+    test('upserts every article in one request', async () => {
+      const upsert = jest.fn(async (..._args: unknown[]) => ({ data: null, error: null }));
+      fromMock.mockReturnValue(asBuilder({ upsert }));
+      mockCheckAuthentication.mockResolvedValue({} as never);
 
-      const result = await bookmarkService.isInReadingList('u1', articleId(1));
-      expect(result).toBeTruthy();
-      expect(query.select).toHaveBeenCalledWith('article_id');
+      await bookmarkService.addManyToReadingList('u1', [articleId(1), articleId(2)]);
+
+      expect(fromMock).toHaveBeenCalledTimes(1);
+      expect(upsert).toHaveBeenCalledWith(
+        [
+          { user_id: 'u1', article_id: 1 },
+          { user_id: 'u1', article_id: 2 },
+        ],
+        { onConflict: 'user_id,article_id' },
+      );
     });
 
-    test('returns false when no data', async () => {
-      const query: FromReturn = {} as FromReturn;
-      query.select = jest.fn((..._args: unknown[]) => query);
-      query.eq = jest.fn((..._args: unknown[]) => query) as any;
-      query.maybeSingle = jest.fn((..._args: unknown[]) => ({ data: null, error: null }));
-      fromMock.mockReturnValue(asBuilder(query));
+    test('reports a failure once', async () => {
+      const upsert = jest.fn(async (..._args: unknown[]) => ({
+        data: null,
+        error: { message: 'bad', code: '', details: '', hint: '' },
+        status: 500,
+      }));
+      fromMock.mockReturnValue(asBuilder({ upsert }));
+      mockCheckAuthentication.mockResolvedValue({} as never);
 
-      const result = await bookmarkService.isInReadingList('u1', articleId(2));
-      expect(result).toBeFalsy();
+      await expect(
+        bookmarkService.addManyToReadingList('u1', [articleId(1), articleId(2)]),
+      ).rejects.toThrow('bad');
+      expect(mockHandleError).toHaveBeenCalledTimes(1);
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ toastMessage: "Couldn't add to playlist. Try again" }),
+      );
+    });
+
+    test('makes no request for an empty set', async () => {
+      await bookmarkService.addManyToReadingList('u1', []);
+
+      expect(fromMock).not.toHaveBeenCalled();
     });
   });
 
@@ -202,11 +220,11 @@ describe('bookmarkService', () => {
       fromMock.mockReturnValue(asBuilder(query));
 
       await expect(bookmarkService.removeFromReadingList('u1', articleId(5))).rejects.toThrow(
-        error,
+        error.message,
       );
 
       expect(mockHandleError).toHaveBeenCalledWith(
-        error,
+        expect.objectContaining({ message: error.message }),
         expect.objectContaining({ toastMessage: "Couldn't remove from playlist. Try again" }),
       );
     });

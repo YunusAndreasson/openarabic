@@ -1,12 +1,9 @@
-import { skipToken, useQueries } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { sentencesService } from '@/services/sentences';
+
+import { reviewChunkQueries } from '@/constants/queries';
 import type { StudyWord } from '@/types/vocabulary.types';
-import {
-  createReviewChunkMerger,
-  getReviewChunkQueryInputs,
-  REVIEW_CHUNK_STALE_TIME_MS,
-} from './useReviewChunkQueryInputs';
+import { createReviewChunkMerger, getReviewChunkQueryInputs } from './useReviewChunkQueryInputs';
 
 /**
  * Every English name the corpus gives each word in the current review chunk,
@@ -27,15 +24,7 @@ export function useReviewGlossAlternates(
     [enrichmentBatches],
   );
   return useQueries({
-    queries: batchInputs.map(({ rootIds, keySignature }) => ({
-      queryKey: ['review', 'glossAlternates', keySignature],
-      queryFn:
-        rootIds.length > 0 ? () => sentencesService.getGlossAlternatesForRoots(rootIds) : skipToken,
-      staleTime: REVIEW_CHUNK_STALE_TIME_MS,
-      // Widening the accepted answers is a bonus, not a requirement; retrying
-      // costs a session more requests than the feature is worth.
-      retry: false,
-    })),
+    queries: batchInputs.map(reviewChunkQueries.glossAlternates),
     combine: mergeAlternates,
   });
 }

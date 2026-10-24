@@ -4,34 +4,25 @@ import { useCallback } from 'react';
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { REFUSAL_TOAST_DURATION } from '@/constants/animation';
-import { fsrsQueries } from '@/constants/queries';
+import { estimateDueWordsFromCache, fsrsQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
 import { analytics } from '@/services/analytics';
-import { studyWordsFSRSService, type StudyWordMutationResult } from '@/services/studyWordsFSRS';
+import type { StudyWordMutationResult } from '@/services/studyWordsFSRS';
 import { checkAuthentication } from '@/services/supabase';
 import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import type { StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { OnboardingStep } from '@/constants/onboarding';
 import { handleError } from '@/utils/errorHandling';
+import { fillTemplate } from '@/utils/fillTemplate';
 import { warningFeedback } from '@/utils/haptics';
-import {
-  STUDY_WORD_TOGGLE_MUTATION_KEY,
-  STUDY_WORD_TOGGLE_MUTATION_SCOPE,
-} from '@/utils/mutationDefaults';
-import { evaluateDueBacklogGate, filterDueWords } from '@/utils/newWordPacing';
+import { studyWordToggleMutation, type StudyWordToggleVariables } from '@/utils/mutationDefaults';
+import { evaluateDueBacklogGate } from '@/utils/newWordPacing';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
 
 interface StudyWordContext {
   previousStudyWords: StudyWord[];
-}
-
-interface ToggleStudyVariables {
-  userId: string;
-  rootId: RootId;
-  /** Explicit direction from the UI the user acted on; omitted = legacy toggle */
-  intent?: StudyWordIntent;
 }
 
 /**
@@ -68,7 +59,7 @@ interface StudyWordMutationsResult {
   toggleRootMutation: UseMutationResult<
     StudyWordMutationResult,
     Error,
-    ToggleStudyVariables,
+    StudyWordToggleVariables,
     StudyWordContext
   >;
 }
@@ -103,7 +94,7 @@ export const useStudyWordMutations = (
     }
     return dailyWordLimit === 0
       ? STRINGS.DAILY_LIMIT_REACHED
-      : STRINGS.DAILY_LIMIT_REACHED_COUNT.replace('{count}', String(dailyWordLimit));
+      : fillTemplate(STRINGS.DAILY_LIMIT_REACHED_COUNT, { count: dailyWordLimit });
   }, [getEffectiveLimitInfo, dailyWordLimit]);
 
   // Due-backlog gate: block NEW saves while the review backlog is high. The
@@ -142,15 +133,8 @@ export const useStudyWordMutations = (
         return Array.isArray(words) ? Math.max(max, words.length) : max;
       }, 0);
 
-      const allWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey);
-      const derivedDueCount = allWords
-        ? filterDueWords(allWords, {
-            lastCompletedAt: queryClient.getQueryData<number>(
-              fsrsQueries.lastCompletedAtKey(userId),
-            ),
-            nowMs: Date.now(),
-          }).length
-        : 0;
+      const derivedDueCount =
+        estimateDueWordsFromCache(queryClient, userId, Date.now())?.length ?? 0;
 
       const gate = evaluateDueBacklogGate(Math.max(cachedDueCount, derivedDueCount));
       return gate.blocked ? gate.dueCount : null;
@@ -171,7 +155,7 @@ export const useStudyWordMutations = (
       if (backlogCount !== null) {
         return {
           reason: 'due-backlog',
-          message: STRINGS.BACKLOG_CLEAR_REVIEWS_TOAST.replace('{count}', String(backlogCount)),
+          message: fillTemplate(STRINGS.BACKLOG_CLEAR_REVIEWS_TOAST, { count: backlogCount }),
         };
       }
       return null;
@@ -196,26 +180,23 @@ export const useStudyWordMutations = (
     [showToast],
   );
 
+  // The registered default's key, scope and mutationFn (utils/mutationDefaults.ts),
+  // so a toggle resumed after a restart is exactly this write.
   const toggleStudyOptions = {
-    mutationKey: STUDY_WORD_TOGGLE_MUTATION_KEY,
-    scope: STUDY_WORD_TOGGLE_MUTATION_SCOPE,
-    mutationFn: async ({ userId, rootId, intent }: ToggleStudyVariables) => {
-      return studyWordsFSRSService.setFSRSStudyRoot(userId, rootId, intent);
-    },
+    ...studyWordToggleMutation,
     onMutate: async ({
       userId,
       rootId,
       intent,
-    }: ToggleStudyVariables): Promise<StudyWordContext> => {
+    }: StudyWordToggleVariables): Promise<StudyWordContext> => {
       // CRITICAL: Use fsrsQueries.all() to match what UI components read
       // This ensures optimistic updates are immediately visible in both underlines and buttons
       await queryClient.cancelQueries({
         queryKey: fsrsQueries.all(userId).queryKey,
       });
-      const previousStudyWords =
-        (queryClient.getQueryData(fsrsQueries.all(userId).queryKey) as StudyWord[]) || [];
+      const previousStudyWords = queryClient.getQueryData(fsrsQueries.all(userId).queryKey) ?? [];
 
-      queryClient.setQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey, (old = []) => {
+      queryClient.setQueryData(fsrsQueries.all(userId).queryKey, (old = []) => {
         const exists = old.some(sw => sw.root_id === rootId);
         // With explicit intent the optimistic direction matches the server's;
         // legacy toggles fall back to inverting the cached state.
@@ -236,7 +217,7 @@ export const useStudyWordMutations = (
 
       return { previousStudyWords };
     },
-    onError: (error: Error, { userId }: ToggleStudyVariables, context?: StudyWordContext) => {
+    onError: (error: Error, { userId }: StudyWordToggleVariables, context?: StudyWordContext) => {
       // Revert optimistic update on error
       if (context?.previousStudyWords) {
         queryClient.setQueryData(fsrsQueries.all(userId).queryKey, context.previousStudyWords);
@@ -250,7 +231,7 @@ export const useStudyWordMutations = (
     },
     onSuccess: (
       result: StudyWordMutationResult,
-      { userId, rootId }: ToggleStudyVariables,
+      { userId, rootId }: StudyWordToggleVariables,
       context?: StudyWordContext,
     ) => {
       // Track word added/removed (fire and forget - don't block UI)
@@ -290,7 +271,7 @@ export const useStudyWordMutations = (
   const toggleRootMutation = useMutation<
     StudyWordMutationResult,
     Error,
-    ToggleStudyVariables,
+    StudyWordToggleVariables,
     StudyWordContext
   >(toggleStudyOptions);
 
@@ -318,12 +299,9 @@ export const useStudyWordMutations = (
 
         // Check if word already exists (remove operation should be allowed even if limit reached)
         // CRITICAL: Use same query as UI components for DRY consistency
-        const existingWords = queryClient.getQueryData<StudyWord[]>(
-          fsrsQueries.all(currentUserId).queryKey,
-        );
+        const existingWords = queryClient.getQueryData(fsrsQueries.all(currentUserId).queryKey);
 
-        const wordExists =
-          existingWords?.some((word: StudyWord) => word.root_id === rootId) ?? false;
+        const wordExists = existingWords?.some(word => word.root_id === rootId) ?? false;
         // Explicit intent (from the button the user saw) wins over the cache guess
         const isAdd = intent ? intent === 'add' : !wordExists;
 

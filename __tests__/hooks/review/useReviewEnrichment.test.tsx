@@ -3,8 +3,12 @@ jest.unmock('@tanstack/react-query');
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { renderHook, waitFor } from '@testing-library/react-native';
 
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
+
 import { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { rootId } from '@/__tests__/helpers/ids';
+import { reviewChunkQueries } from '@/constants/queries';
 import { useReviewExamples } from '@/hooks/review/useReviewExamples';
 import { useReviewGlossAlternates } from '@/hooks/review/useReviewGlossAlternates';
 import { useReviewRootEnrichments } from '@/hooks/review/useReviewRootEnrichments';
@@ -12,6 +16,11 @@ import type { WordExample } from '@/services/sentences';
 import type { RootEnrichment } from '@/types/rootEnrichment.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { computeColoredSegments } from '@/utils/arabicWordAnalysis';
+import * as errorHandling from '@/utils/errorHandling';
+import { reportQueryFailure } from '@/utils/queryMeta';
+import { SupabaseRequestError, type RequestOptions } from '@/utils/supabaseHelpers';
+
+jest.mock('@/utils/errorHandling', () => ({ handleError: jest.fn() }));
 
 let mockColors = { text: '#111111' };
 
@@ -38,6 +47,9 @@ jest.mock('@/services/rootEnrichment', () => ({
 
 const { sentencesService } = require('@/services/sentences');
 const { rootEnrichmentService } = require('@/services/rootEnrichment');
+
+/** Each chunk load is a managed request: the query cache owns its (silenced) report. */
+const MANAGED = expect.objectContaining({ managed: true });
 
 function studyWord(id: number): StudyWord {
   return { root_id: rootId(id) } as StudyWord;
@@ -158,7 +170,10 @@ describe('review enrichment batches', () => {
     );
 
     await waitFor(() => expect(result.current.size).toBe(2));
-    expect(sentencesService.getExamplesForRoots).toHaveBeenCalledWith([rootId(1), rootId(2)]);
+    expect(sentencesService.getExamplesForRoots).toHaveBeenCalledWith(
+      [rootId(1), rootId(2)],
+      MANAGED,
+    );
 
     // A grade can replace the arrays handed down by React, but immutable batch
     // identities keep the cached query stable.
@@ -169,7 +184,7 @@ describe('review enrichment batches', () => {
     rerender({ batches: [[...firstBatch], [studyWord(3)]] });
     await waitFor(() => expect(result.current.size).toBe(3));
     expect(sentencesService.getExamplesForRoots).toHaveBeenCalledTimes(2);
-    expect(sentencesService.getExamplesForRoots).toHaveBeenLastCalledWith([rootId(3)]);
+    expect(sentencesService.getExamplesForRoots).toHaveBeenLastCalledWith([rootId(3)], MANAGED);
     expect(result.current.get(1)?.english).toBe('english-1');
   });
 
@@ -201,13 +216,61 @@ describe('review enrichment batches', () => {
     );
 
     await waitFor(() => expect(result.current.size).toBe(2));
-    expect(rootEnrichmentService.getByRootIds).toHaveBeenCalledWith([rootId(1), rootId(2)]);
+    expect(rootEnrichmentService.getByRootIds).toHaveBeenCalledWith(
+      [rootId(1), rootId(2)],
+      MANAGED,
+    );
 
     rerender({ batches: [[...firstBatch], [studyWord(3)]] });
     await waitFor(() => expect(result.current.size).toBe(3));
 
     expect(rootEnrichmentService.getByRootIds).toHaveBeenCalledTimes(2);
-    expect(rootEnrichmentService.getByRootIds).toHaveBeenLastCalledWith([rootId(3)]);
+    expect(rootEnrichmentService.getByRootIds).toHaveBeenLastCalledWith([rootId(3)], MANAGED);
     expect(result.current.get(1)?.usageNote).toBe('root-story-1');
+  });
+
+  // The hooks document these loads as silent — a card simply omits the block —
+  // yet their service config toasted "Failed to load sentences" on every
+  // failed attempt. The factories now say so to the query cache's reporter.
+  test.each(['examples', 'glossAlternates', 'rootEnrichments'] as const)(
+    'the %s chunk query is silent and never retried',
+    name => {
+      const options = reviewChunkQueries[name]({ rootIds: [rootId(1)], keySignature: '1' });
+
+      expect(options.meta).toEqual({ silent: true });
+      expect(options.retry).toBe(false);
+    },
+  );
+
+  test('a failed chunk load reports nothing, even through the app-wide reporter', async () => {
+    const handleError = jest.mocked(errorHandling.handleError);
+    sentencesService.getExamplesForRoots.mockImplementation(
+      async (_ids: number[], request?: RequestOptions) =>
+        Promise.reject(
+          new SupabaseRequestError(
+            { message: 'boom', code: '', details: '', hint: '' },
+            503,
+            request?.managed ? { toastMessage: 'Failed to load sentences' } : undefined,
+          ),
+        ),
+    );
+    const queryClient = new QueryClient({
+      queryCache: new QueryCache({
+        onError: (error, query) => reportQueryFailure(error, query.meta),
+      }),
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useReviewExamples([[studyWord(1)]]), { wrapper });
+
+    await waitFor(() =>
+      expect(queryClient.getQueryState(['review', 'examples', '1'])?.status).toBe('error'),
+    );
+    expect(result.current.size).toBe(0);
+    expect(sentencesService.getExamplesForRoots).toHaveBeenCalledTimes(1);
+    expect(handleError).not.toHaveBeenCalled();
+    queryClient.clear();
   });
 });

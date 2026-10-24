@@ -528,7 +528,12 @@ describe('useStudyWordMutations', () => {
       });
 
       await waitFor(() => {
-        expect(mockToggleFSRSStudyRoot).toHaveBeenCalledWith('test-user-id', 456, undefined);
+        expect(mockToggleFSRSStudyRoot).toHaveBeenCalledWith(
+          'test-user-id',
+          456,
+          undefined,
+          expect.objectContaining({ managed: true }),
+        );
       });
     });
   });

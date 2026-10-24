@@ -3,14 +3,13 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import type { Query, QueryClient } from '@tanstack/react-query';
 import { persistQueryClientSave } from '@tanstack/react-query-persist-client';
 
-import { FSRS_BASE_KEY } from '@/constants/fsrs';
+import { PERSISTED_CACHE_MAX_AGE_MS } from '@/constants/queries';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
 
 // Constants for better performance and maintainability
 const CACHE_KEY = STORAGE_KEYS.QUERY_CACHE;
 const LEGACY_CACHE_KEY = STORAGE_KEYS.QUERY_CACHE_LEGACY;
 const THROTTLE_TIME = 1000; // 1 second
-const MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7 days
 
 // Pre-defined sets for faster lookups
 const PERSIST_KEYS = new Set([
@@ -21,14 +20,13 @@ const PERSIST_KEYS = new Set([
   // 'readingList' - EXCLUDED: User-specific & auth-dependent, causes hydration errors
   // Note: 'reading-progress-bulk' is excluded (see EXCLUDED_KEYS) to prevent HMR hydration errors
 ]);
-const VOCABULARY_KEYS = new Set([FSRS_BASE_KEY]);
+// Checked before PERSIST_KEYS, so these stay out even if one is ever added there.
 const EXCLUDED_KEYS = new Set([
-  'isInReadingList',
   'readingList', // User-specific & auth-dependent - causes hydration errors
   'enhancedAudioTracks',
   'reading-progress-bulk', // Explicitly exclude to prevent HMR hydration errors
 ]);
-const EXCLUDED_PATTERNS = new Set(['due', 'live', 'cooldown']);
+const EXCLUDED_PATTERNS = new Set(['due', 'cooldown']);
 
 // Create the persister backed by AsyncStorage
 export const queryPersister = createAsyncStoragePersister({
@@ -54,21 +52,6 @@ const immediatePersister = createAsyncStoragePersister({
   serialize: JSON.stringify,
   deserialize: JSON.parse,
 });
-
-/**
- * Clears all persisted React Query cache from AsyncStorage
- * This removes both current and legacy cache keys to ensure complete cleanup
- * Used by the "Clear Cache" feature in Account settings
- */
-export const clearPersistedQueryCache = async (): Promise<void> => {
-  try {
-    // Clear both old and new cache keys to ensure complete cleanup
-    await AsyncStorage.removeItem(LEGACY_CACHE_KEY);
-    await AsyncStorage.removeItem(CACHE_KEY);
-  } catch {
-    // Ignore errors - this is best-effort cleanup
-  }
-};
 
 /**
  * Helper to check if query key contains any excluded patterns
@@ -99,31 +82,15 @@ const shouldDehydrateQuery = (query: Query): boolean => {
     return false;
   }
 
-  // Fast lookups for persistent keys
-  if (PERSIST_KEYS.has(firstKey)) {
-    return true;
-  }
-
-  // Handle vocabulary data
-  // IMPORTANT: Only persist FSRS queries without user IDs or session-specific data
-  // User-specific FSRS queries should be fetched fresh on each session
-  if (VOCABULARY_KEYS.has(firstKey)) {
-    // Check if this is a user-specific query (has userId in position 1)
-    if (queryKey.length > 1 && typeof queryKey[1] === 'string' && queryKey[1].length > 10) {
-      // Looks like a UUID/userId - don't persist user-specific queries
-      return false;
-    }
-    return true;
-  }
-
-  // Default to not persisting
-  return false;
+  // Fast lookups for persistent keys. Everything else — the user's FSRS words
+  // included, which are fetched fresh each session — is not persisted.
+  return PERSIST_KEYS.has(firstKey);
 };
 
 // Configuration for cache persistence
 export const PERSISTENCE_OPTIONS = {
   persister: queryPersister,
-  maxAge: MAX_AGE,
+  maxAge: PERSISTED_CACHE_MAX_AGE_MS,
   // Bump this string to invalidate the persisted cache instead of renaming the
   // storage key — persistQueryClient discards AND deletes a blob whose buster
   // doesn't match at restore (documented persistQueryClient behavior).

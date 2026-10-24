@@ -24,13 +24,9 @@ export function useSentenceSelectedRoots(words: readonly SentenceWord[]): Readon
   const sentenceRoots = new Set<RootId>(words.map(word => word.root_id));
 
   const selectSentenceRoots = (studyWords: StudyWord[]): number[] =>
-    [
-      ...new Set(
-        studyWords
-          .filter(studyWord => sentenceRoots.has(studyWord.root_id))
-          .map(studyWord => studyWord.root_id),
-      ),
-    ].sort((a, b) => a - b);
+    [...new Set(studyWords.map(studyWord => studyWord.root_id)).intersection(sentenceRoots)].sort(
+      (a, b) => a - b,
+    );
 
   const { data: studyRoots } = useQuery({
     ...gated(fsrsQueries.all, user?.id),
@@ -41,5 +37,5 @@ export function useSentenceSelectedRoots(words: readonly SentenceWord[]): Readon
     select: selectSentenceRoots,
   });
 
-  return new Set([...(studyRoots ?? []), ...(dueRoots ?? [])]);
+  return new Set(studyRoots).union(new Set(dueRoots));
 }

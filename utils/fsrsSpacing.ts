@@ -1,6 +1,6 @@
 import { State } from 'ts-fsrs';
 
-import { MIN_WORD_SPACING, SPACING_ITERATION_LIMIT } from '@/constants/fsrs';
+import { isShortStepState, MIN_WORD_SPACING, SPACING_ITERATION_LIMIT } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
   MILLISECONDS_PER_DAY,
@@ -53,7 +53,7 @@ export function calculateWordPriority(word: StudyWord, nowMs: number = Date.now(
     return 2 + sooner((nowMs - savedMs) / MILLISECONDS_PER_DAY);
   }
 
-  if (word.fsrs_state === State.Learning || word.fsrs_state === State.Relearning) {
+  if (isShortStepState(word.fsrs_state)) {
     const dueMs = parseSupabaseTimestamp(word.fsrs_due)?.getTime() ?? nowMs;
     return sooner((nowMs - dueMs) / MILLISECONDS_PER_HOUR);
   }

@@ -1,14 +1,10 @@
-import { skipToken, useQueries } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { rootEnrichmentService } from '@/services/rootEnrichment';
+import { reviewChunkQueries } from '@/constants/queries';
 import type { RootEnrichment } from '@/types/rootEnrichment.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-import {
-  createReviewChunkMerger,
-  getReviewChunkQueryInputs,
-  REVIEW_CHUNK_STALE_TIME_MS,
-} from './useReviewChunkQueryInputs';
+import { createReviewChunkMerger, getReviewChunkQueryInputs } from './useReviewChunkQueryInputs';
 
 /**
  * Root stories for every word admitted to the review session, fetched once per
@@ -27,12 +23,7 @@ export function useReviewRootEnrichments(
   );
 
   return useQueries({
-    queries: batchInputs.map(({ rootIds, keySignature }) => ({
-      queryKey: ['review', 'rootEnrichments', keySignature],
-      queryFn: rootIds.length > 0 ? () => rootEnrichmentService.getByRootIds(rootIds) : skipToken,
-      staleTime: REVIEW_CHUNK_STALE_TIME_MS,
-      retry: false,
-    })),
+    queries: batchInputs.map(reviewChunkQueries.rootEnrichments),
     combine: mergeRootEnrichments,
   });
 }

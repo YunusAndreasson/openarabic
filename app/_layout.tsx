@@ -1,6 +1,12 @@
 import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
-import { QueryClient, focusManager, onlineManager } from '@tanstack/react-query';
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  focusManager,
+  onlineManager,
+} from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useFonts } from 'expo-font';
@@ -74,6 +80,7 @@ import { handleError } from '@/utils/errorHandling';
 import { registerMutationDefaults } from '@/utils/mutationDefaults';
 import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
 import { flushPersistedQueryCache, PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
+import { reportQueryFailure } from '@/utils/queryMeta';
 import { retryWhileOnline } from '@/utils/queryRetry';
 import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
 import type * as NotificationsModule from 'expo-notifications';
@@ -164,6 +171,16 @@ focusManager.setEventListener(handleFocus => {
 
 // Move queryClient outside component scope for better performance
 const queryClient = new QueryClient({
+  // Failures are reported here, once each, after the last retry — not by the
+  // services on every attempt. See reportQueryFailure (utils/queryMeta.ts)
+  // for how a query's `meta` and a managed request's error decide the report.
+  queryCache: new QueryCache({
+    onError: (error, query) => reportQueryFailure(error, query.meta),
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _onMutateResult, mutation) =>
+      reportQueryFailure(error, mutation.meta),
+  }),
   defaultOptions: {
     queries: {
       staleTime: QUERY_DEFAULTS.STALE_TIME,

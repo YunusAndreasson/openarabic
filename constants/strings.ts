@@ -1163,6 +1163,10 @@ export const STRINGS = {
     'Permanently deletes all reading positions and progress. This cannot be undone.',
   READING_PROGRESS_RESET_SUCCESSFULLY: 'Reading progress reset',
   FAILED_TO_RESET_READING_PROGRESS: "Couldn't reset reading progress. " + tryAgain,
+  /** The reset's alert when no user is signed in. */
+  NO_USER_ID_AVAILABLE: 'No user ID available',
+  /** Toast when saving the reader's position fails. */
+  FAILED_TO_UPDATE_READING_PROGRESS: 'Failed to update reading progress',
   // Notifications
   ENABLE_NOTIFICATIONS: 'Enable notifications',
   TURN_ON_NOTIFICATIONS:

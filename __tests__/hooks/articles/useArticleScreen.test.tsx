@@ -106,7 +106,6 @@ describe('useArticleScreen Hook', () => {
   const mockHandleAddWordToStudy = jest.fn();
   const mockCloseTooltipOnScroll = jest.fn();
   const mockRefetchStudyWords = jest.fn();
-  const mockRefetchReadingListStatus = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -128,7 +127,6 @@ describe('useArticleScreen Hook', () => {
       sentenceWordsMap: new Map(),
       refetchStudyWords: mockRefetchStudyWords,
       isInReadingList: false,
-      refetchReadingListStatus: mockRefetchReadingListStatus,
     } as any);
 
     jest.mocked(useReadingListMutations).mockReturnValue({
@@ -213,7 +211,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: false,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>
@@ -237,7 +234,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: true,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>
@@ -297,7 +293,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: false,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>
@@ -323,7 +318,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: false, // Not in list
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>
@@ -352,7 +346,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: true, // In list
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>
@@ -724,7 +717,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: false,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>
@@ -746,7 +738,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: false,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>

@@ -1,15 +1,12 @@
-import { skipToken, useQueries } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
+import { reviewChunkQueries } from '@/constants/queries';
 import { useColors } from '@/hooks/theme/useColors';
-import { sentencesService, type WordExample } from '@/services/sentences';
+import type { WordExample } from '@/services/sentences';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { computeColoredSegments } from '@/utils/arabicWordAnalysis';
-import {
-  createReviewChunkMerger,
-  getReviewChunkQueryInputs,
-  REVIEW_CHUNK_STALE_TIME_MS,
-} from './useReviewChunkQueryInputs';
+import { createReviewChunkMerger, getReviewChunkQueryInputs } from './useReviewChunkQueryInputs';
 
 /**
  * One example sentence per word in the current review chunk, fetched once.
@@ -65,14 +62,9 @@ export function useReviewExamples(
   );
 
   return useQueries({
-    queries: batchInputs.map(({ rootIds, keySignature }) => ({
-      queryKey: ['review', 'examples', keySignature],
-      queryFn: rootIds.length > 0 ? () => sentencesService.getExamplesForRoots(rootIds) : skipToken,
-      staleTime: REVIEW_CHUNK_STALE_TIME_MS,
+    queries: batchInputs.map(input => ({
+      ...reviewChunkQueries.examples(input),
       select: colorExamples,
-      // A missing example is cosmetic; retrying costs a session more requests
-      // than the feature is worth.
-      retry: false,
     })),
     combine: mergeExamples,
   });

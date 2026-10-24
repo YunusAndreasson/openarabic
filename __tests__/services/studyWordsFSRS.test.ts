@@ -33,6 +33,7 @@ const createBuilder = (response: any = { data: [], error: null }) => {
     order: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
     range: jest.fn().mockReturnThis(),
+    abortSignal: jest.fn().mockReturnThis(),
   };
   builder.then = jest.fn((resolve, reject) => Promise.resolve(response).then(resolve, reject));
   return builder;
@@ -43,7 +44,7 @@ beforeEach(() => {
   (checkAuthentication as jest.Mock).mockResolvedValue(undefined);
 });
 
-describe('toggleFSRSStudyRoot', () => {
+describe('setFSRSStudyRoot', () => {
   test('inserts a new entry when none exists', async () => {
     const selectObj = {
       select: jest.fn().mockReturnThis(),
@@ -57,7 +58,7 @@ describe('toggleFSRSStudyRoot', () => {
       .mockImplementationOnce(() => selectObj)
       .mockImplementationOnce(() => insertObj);
 
-    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', rootId(1));
+    const { inStudyList: result } = await studyWordsFSRSService.setFSRSStudyRoot('u1', rootId(1));
 
     expect(insertMock).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'u1', root_id: 1 }));
     expect(result).toBeTruthy();
@@ -82,7 +83,7 @@ describe('toggleFSRSStudyRoot', () => {
       .mockImplementationOnce(() => selectObj)
       .mockImplementationOnce(() => deleteObj);
 
-    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', rootId(1));
+    const { inStudyList: result } = await studyWordsFSRSService.setFSRSStudyRoot('u1', rootId(1));
 
     expect(deleteObj.delete).toHaveBeenCalled();
     expect(deleteFinal).toHaveBeenCalled();
@@ -102,7 +103,11 @@ describe('toggleFSRSStudyRoot', () => {
       .mockImplementationOnce(() => selectObj)
       .mockImplementation(() => ({ delete: deleteMock, insert: insertMock }));
 
-    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', rootId(1), 'add');
+    const { inStudyList: result } = await studyWordsFSRSService.setFSRSStudyRoot(
+      'u1',
+      rootId(1),
+      'add',
+    );
 
     expect(result).toBeTruthy();
     expect(deleteMock).not.toHaveBeenCalled();
@@ -122,7 +127,11 @@ describe('toggleFSRSStudyRoot', () => {
       .mockImplementationOnce(() => selectObj)
       .mockImplementation(() => ({ delete: deleteMock, insert: insertMock }));
 
-    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', rootId(1), 'remove');
+    const { inStudyList: result } = await studyWordsFSRSService.setFSRSStudyRoot(
+      'u1',
+      rootId(1),
+      'remove',
+    );
 
     expect(result).toBeFalsy();
     expect(deleteMock).not.toHaveBeenCalled();
@@ -144,19 +153,17 @@ describe('updateWordAndReview', () => {
   };
 
   test('calls direct UPDATE to update word FSRS parameters', async () => {
-    const selectMock = jest.fn(async (..._args: unknown[]) => ({
-      data: [{ root_id: 5 }],
-      error: null,
-    }));
-    const updateObj = {
+    const selectMock = jest.fn();
+    const updateObj: any = {
       update: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       select: selectMock,
+      then: jest.fn((resolve: any) => resolve({ data: null, error: null, status: 204 })),
     };
 
     (supabase.from as jest.Mock).mockReturnValue(updateObj);
 
-    const result = await studyWordsFSRSService.updateWordAndReview('u1', rootId(5), update);
+    await studyWordsFSRSService.updateWordAndReview('u1', rootId(5), update);
 
     expect(supabase.from).toHaveBeenCalledWith('study_words');
     expect(updateObj.update).toHaveBeenCalledWith(
@@ -168,7 +175,8 @@ describe('updateWordAndReview', () => {
     );
     expect(updateObj.eq).toHaveBeenCalledWith('user_id', 'u1');
     expect(updateObj.eq).toHaveBeenCalledWith('root_id', 5);
-    expect(result).toBeTruthy();
+    // The updated row was only ever read for a boolean no caller used.
+    expect(selectMock).not.toHaveBeenCalled();
   });
 });
 
@@ -217,26 +225,37 @@ describe('getFSRSWords', () => {
     expect(called).toBe(expected);
   });
 
-  test('applies mastered and learning category filters', async () => {
+  test('orders by due date, then root_id, so tied due dates page stably', async () => {
     const builder = createBuilder();
     (supabase.from as jest.Mock).mockReturnValue(builder);
 
-    await studyWordsFSRSService.getFSRSWords('u1', { category: 'mastered' });
+    await studyWordsFSRSService.getFSRSWords('u1');
 
-    expect(builder.eq).toHaveBeenCalledWith('fsrs_state', 2);
-    expect(builder.gte).toHaveBeenCalledWith('fsrs_stability', 5);
+    expect(builder.order.mock.calls).toEqual([['fsrs_due', { ascending: true }], ['root_id']]);
+    expect(builder.range).toHaveBeenCalledWith(0, 999);
+  });
 
-    builder.eq.mockClear();
-    builder.gte.mockClear();
-    builder.or.mockClear();
-
-    await studyWordsFSRSService.getFSRSWords('u1', { category: 'learning' });
-
-    // State 0 (New) words are due for first review, not learning
-    // Only states 1, 3, or state 2 with low stability are learning
-    expect(builder.or).toHaveBeenCalledWith(
-      'fsrs_state.in.(1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)',
+  test('pages the full list past the 1000-row cap', async () => {
+    const page = (count: number, offset: number) =>
+      Array.from({ length: count }, (_, index) => ({ root_id: offset + index + 1 }));
+    const builder = createBuilder();
+    const responses = [
+      { data: page(1000, 0), error: null },
+      { data: page(3, 1000), error: null },
+    ];
+    builder.then = jest.fn((resolve: any, reject: any) =>
+      Promise.resolve(responses.shift()).then(resolve, reject),
     );
+    (supabase.from as jest.Mock).mockReturnValue(builder);
+
+    const words = await studyWordsFSRSService.getFSRSWords('u1');
+
+    expect(words).toHaveLength(1003);
+    expect(new Set(words.map(word => word.root_id)).size).toBe(1003);
+    expect(builder.range.mock.calls).toEqual([
+      [0, 999],
+      [1000, 1999],
+    ]);
   });
 
   test('throws when supabase returns an error', async () => {
@@ -442,5 +461,31 @@ describe('STARTER_ROOT_IDS', () => {
 
   test('contains no duplicate root — a repeated id would show one word twice', () => {
     expect(new Set(STARTER_ROOT_IDS).size).toBe(STARTER_ROOT_IDS.length);
+  });
+});
+
+describe('addMultipleRoots', () => {
+  test('inserts only the roots not already saved, in the order given, each once', async () => {
+    const existing: any = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      in: jest.fn().mockReturnThis(),
+      then: jest.fn((resolve: any) => resolve({ data: [{ root_id: 2 }], error: null })),
+    };
+    const insert = jest.fn(async (..._args: unknown[]) => ({ data: null, error: null }));
+    (supabase.from as jest.Mock)
+      .mockImplementationOnce(() => existing)
+      .mockImplementationOnce(() => ({ insert }));
+
+    const added = await studyWordsFSRSService.addMultipleRoots('u1', [
+      rootId(3),
+      rootId(2),
+      rootId(1),
+      rootId(3),
+    ]);
+
+    expect(added).toBe(2);
+    const entries = insert.mock.calls[0]![0] as { root_id: number }[];
+    expect(entries.map(entry => entry.root_id)).toEqual([3, 1]);
   });
 });

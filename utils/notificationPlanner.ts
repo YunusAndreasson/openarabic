@@ -3,6 +3,7 @@ import { State } from 'ts-fsrs';
 import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
   DEFAULT_SESSION_COOLDOWN_HOURS,
+  isSessionCooldownActive,
 } from '@/constants/fsrs';
 import { NOTIFICATION_TYPES, SMART_NOTIFICATIONS } from '@/constants/notifications';
 import type { SmartNotificationType } from '@/constants/notifications';
@@ -110,10 +111,6 @@ export function buildNotificationPlan(input: NotificationPlannerInput): PlannedN
   const timelines = computeTimelines(words, nowMs);
 
   const minLeadMs = nowMs + SMART_NOTIFICATIONS.MIN_LEAD_MINUTES * 60 * 1000;
-  const cooldownUntilMs =
-    lastSessionCompletedAt !== undefined
-      ? lastSessionCompletedAt + DEFAULT_SESSION_COOLDOWN_HOURS * MILLISECONDS_PER_HOUR
-      : 0;
   const minGapMs = SMART_NOTIFICATIONS.MIN_GAP_HOURS * MILLISECONDS_PER_HOUR;
 
   const plan: PlannedNotification[] = [];
@@ -124,7 +121,10 @@ export function buildNotificationPlan(input: NotificationPlannerInput): PlannedN
     const slotMs = slot.getTime();
 
     if (slotMs < minLeadMs) continue;
-    if (slotMs < cooldownUntilMs) continue;
+    // No slot while a just-finished session's cooldown is still in force.
+    if (isSessionCooldownActive(lastSessionCompletedAt, DEFAULT_SESSION_COOLDOWN_HOURS, slotMs)) {
+      continue;
+    }
     if (slotMs - lastKeptMs < minGapMs) continue;
 
     let dueCount = 0;

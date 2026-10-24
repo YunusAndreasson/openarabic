@@ -10,6 +10,8 @@
 import { describe, expect, test, jest, beforeEach } from '@jest/globals';
 
 import {
+  buildStudyHistory,
+  calculateStreakFromDayKeys,
   ReadingStreakService,
   StudySessionStreakService,
   type DailyReadingActivity,
@@ -33,6 +35,8 @@ const chainableResult = (promise: Promise<any>) =>
   Object.assign(promise, {
     range: jest.fn((..._args: unknown[]) => promise),
     gt: jest.fn((..._args: unknown[]) => promise),
+    order: jest.fn((..._args: unknown[]) => promise),
+    abortSignal: jest.fn((..._args: unknown[]) => promise),
   });
 
 // Helper to create query builder chain for SELECT queries
@@ -51,6 +55,20 @@ const createSelectBuilder = (response: any = { data: [], error: null }) => {
 beforeEach(() => {
   jest.clearAllMocks();
 });
+
+/** The streak over activity rows, through the one streak calculation (over day keys). */
+const calculateStreak = (activities: DailyReadingActivity[]) =>
+  calculateStreakFromDayKeys(
+    new Set(activities.filter(day => day.hasActivity).map(day => day.date)),
+  );
+
+/** What the streak query's `select` makes of the study-days scan. */
+const streakOf = async (userId: string) =>
+  calculateStreakFromDayKeys(await StudySessionStreakService.fetchStudyDayKeys(userId));
+
+/** What the history query's `select` makes of the same scan. */
+const historyOf = async (userId: string, days: number) =>
+  buildStudyHistory(await StudySessionStreakService.fetchStudyDayKeys(userId), days);
 
 describe('StudyStreakService', () => {
   describe('calculateStreak', () => {
@@ -82,7 +100,7 @@ describe('StudyStreakService', () => {
 
     test('should return zero streak for no activity', () => {
       const activities: DailyReadingActivity[] = [];
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result).toEqual({
         currentStreak: 0,
@@ -100,7 +118,7 @@ describe('StudyStreakService', () => {
         createActivity(today),
       ];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result.currentStreak).toBe(3);
       expect(result.totalReadingDays).toBe(3);
@@ -115,7 +133,7 @@ describe('StudyStreakService', () => {
         createActivity(today, false),
       ];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result.currentStreak).toBe(3);
       expect(result.lastReadingDate).toEqual(localMidnight(yesterday));
@@ -132,7 +150,7 @@ describe('StudyStreakService', () => {
         createActivity(tomorrow),
       ];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result.currentStreak).toBe(3);
       expect(result.totalReadingDays).toBe(4);
@@ -146,7 +164,7 @@ describe('StudyStreakService', () => {
         createActivity(today, false),
       ];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result.currentStreak).toBe(0);
       expect(result.longestStreak).toBe(1);
@@ -170,7 +188,7 @@ describe('StudyStreakService', () => {
         createActivity(today, false),
       ];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result.currentStreak).toBe(1);
       expect(result.longestStreak).toBe(3);
@@ -187,7 +205,7 @@ describe('StudyStreakService', () => {
         createActivity('2024-01-06'),
       ];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result.longestStreak).toBe(2); // Days 3-4
       expect(result.totalReadingDays).toBe(4);
@@ -196,7 +214,7 @@ describe('StudyStreakService', () => {
     test('should handle single day activity', () => {
       const activities = [createActivity(yesterday)];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result.currentStreak).toBe(1);
       expect(result.longestStreak).toBe(1);
@@ -215,7 +233,7 @@ describe('StudyStreakService', () => {
         createActivity('2024-01-07'),
       ];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result.longestStreak).toBe(3); // Days 5-7
       expect(result.totalReadingDays).toBe(5);
@@ -233,11 +251,11 @@ describe('StudyStreakService', () => {
         },
       ];
 
-      expect(() => ReadingStreakService.calculateStreak(activities)).not.toThrow();
+      expect(() => calculateStreak(activities)).not.toThrow();
     });
 
     test('should handle empty activity arrays', () => {
-      const result = ReadingStreakService.calculateStreak([]);
+      const result = calculateStreak([]);
 
       expect(result.currentStreak).toBe(0);
       expect(result.longestStreak).toBe(0);
@@ -382,7 +400,7 @@ describe('StudyStreakService', () => {
       // Create dates that cross midnight boundaries
       const activities = [createActivity('2024-01-31'), createActivity('2024-02-01')];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result.longestStreak).toBe(2);
     });
@@ -395,7 +413,7 @@ describe('StudyStreakService', () => {
         createActivity('2024-02-02'),
       ];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result.longestStreak).toBe(4);
     });
@@ -408,7 +426,7 @@ describe('StudyStreakService', () => {
         createActivity('2024-01-02'),
       ];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result.longestStreak).toBe(4);
     });
@@ -420,7 +438,7 @@ describe('StudyStreakService', () => {
         createActivity('2024-03-01'),
       ];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       expect(result.longestStreak).toBe(3);
     });
@@ -434,7 +452,7 @@ describe('StudyStreakService', () => {
         createActivity('2024-01-05'),
       ];
 
-      const result = ReadingStreakService.calculateStreak(activities);
+      const result = calculateStreak(activities);
 
       // Each streak is 2 days
       expect(result.longestStreak).toBe(2);
@@ -443,14 +461,14 @@ describe('StudyStreakService', () => {
 });
 
 describe('StudySessionStreakService', () => {
-  describe('getDailyStudySessionActivity', () => {
+  describe('the chart window', () => {
     test('should return activity for specified number of days', async () => {
       const mockData = [{ fsrs_last_review: new Date().toISOString() }];
       const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
       eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: mockData, error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
+      const result = (await historyOf('user-123', 7)).dailyActivity;
 
       expect(result).toHaveLength(7);
       expect(supabase.from).toHaveBeenCalledWith('study_words');
@@ -469,7 +487,7 @@ describe('StudySessionStreakService', () => {
       eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: mockData, error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
+      const result = (await historyOf('user-123', 7)).dailyActivity;
 
       const activeDays = result.filter(day => day.hasActivity);
       expect(activeDays.length).toBeGreaterThanOrEqual(2);
@@ -481,7 +499,7 @@ describe('StudySessionStreakService', () => {
       eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: mockData, error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
+      const result = (await historyOf('user-123', 7)).dailyActivity;
 
       expect(result).toHaveLength(7);
       // Should handle null gracefully without throwing
@@ -492,14 +510,14 @@ describe('StudySessionStreakService', () => {
       eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: [], error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
+      const result = (await historyOf('user-123', 7)).dailyActivity;
 
       expect(result).toHaveLength(7);
       expect(result).toEqual(expect.arrayOf(expect.objectContaining({ hasActivity: false })));
     });
   });
 
-  describe('getStudySessionStreak', () => {
+  describe('the streak', () => {
     test('should calculate streak from study activity', async () => {
       const today = new Date();
       const yesterday = new Date(today);
@@ -513,7 +531,7 @@ describe('StudySessionStreakService', () => {
       eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: mockData, error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await StudySessionStreakService.getStudySessionStreak('user-123');
+      const result = await streakOf('user-123');
 
       expect(result.currentStreak).toBeGreaterThanOrEqual(1);
       expect(result.totalReadingDays).toBeGreaterThanOrEqual(1);
@@ -524,7 +542,7 @@ describe('StudySessionStreakService', () => {
       eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: [], error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await StudySessionStreakService.getStudySessionStreak('user-123');
+      const result = await streakOf('user-123');
 
       expect(result.currentStreak).toBe(0);
       expect(result.longestStreak).toBe(0);
@@ -540,9 +558,7 @@ describe('StudySessionStreakService', () => {
       eqFn.mockReturnValue(chainableResult(Promise.reject(new Error('DB error'))));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      await expect(StudySessionStreakService.getStudySessionStreak('user-123')).rejects.toThrow(
-        'DB error',
-      );
+      await expect(streakOf('user-123')).rejects.toThrow('DB error');
     });
 
     test('reports a genuine zero streak for an account with no reviews', async () => {
@@ -552,14 +568,14 @@ describe('StudySessionStreakService', () => {
       eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: [], error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await StudySessionStreakService.getStudySessionStreak('user-123');
+      const result = await streakOf('user-123');
 
       expect(result.currentStreak).toBe(0);
       expect(result.totalReadingDays).toBe(0);
     });
   });
 
-  describe('getStudySessionHistory', () => {
+  describe('the history', () => {
     test('should return complete history data', async () => {
       const today = new Date();
       const mockData = [{ fsrs_last_review: today.toISOString() }];
@@ -567,7 +583,7 @@ describe('StudySessionStreakService', () => {
       eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: mockData, error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await StudySessionStreakService.getStudySessionHistory('user-123', 7);
+      const result = await historyOf('user-123', 7);
 
       expect(result).toHaveProperty('dailyActivity');
       expect(result).toHaveProperty('streakPeriods');
@@ -583,9 +599,7 @@ describe('StudySessionStreakService', () => {
       eqFn.mockReturnValue(chainableResult(Promise.reject(new Error('Error'))));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      await expect(StudySessionStreakService.getStudySessionHistory('user-123', 7)).rejects.toThrow(
-        'Error',
-      );
+      await expect(historyOf('user-123', 7)).rejects.toThrow('Error');
     });
 
     test('should calculate streak periods from activity', async () => {
@@ -601,7 +615,7 @@ describe('StudySessionStreakService', () => {
       eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: mockData, error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await StudySessionStreakService.getStudySessionHistory('user-123', 30);
+      const result = await historyOf('user-123', 30);
 
       expect(result.streakPeriods.length).toBeGreaterThanOrEqual(1);
       expect(result.metrics.totalReadingDays).toBeGreaterThanOrEqual(1);
@@ -634,7 +648,7 @@ describe('StudySessionStreakService', () => {
     test('reports a 60-day run in full, not clipped to the 30-day window', async () => {
       mockReviewedDays(60);
 
-      const result = await StudySessionStreakService.getStudySessionStreak('user-123');
+      const result = await streakOf('user-123');
 
       expect(result.currentStreak).toBe(60);
       expect(result.longestStreak).toBe(60);
@@ -643,10 +657,10 @@ describe('StudySessionStreakService', () => {
 
     test('practice card and streak sheet report the same streak', async () => {
       mockReviewedDays(60);
-      const card = await StudySessionStreakService.getStudySessionStreak('user-123');
+      const card = await streakOf('user-123');
 
       mockReviewedDays(60);
-      const sheet = await StudySessionStreakService.getStudySessionHistory('user-123', 40);
+      const sheet = await historyOf('user-123', 40);
 
       expect(sheet.metrics.currentStreak).toBe(card.currentStreak);
       expect(sheet.metrics.longestStreak).toBe(card.longestStreak);
@@ -661,12 +675,26 @@ describe('StudySessionStreakService', () => {
       // days out of a 30-day window reported 29.
       mockReviewedDays(30);
 
-      const result = await StudySessionStreakService.getStudySessionHistory('user-123', 30);
+      const result = await historyOf('user-123', 30);
 
       expect(result.dailyActivity).toEqual(
         expect.arrayOf(expect.objectContaining({ hasActivity: true })),
       );
       expect(result.metrics.currentStreak).toBe(30);
+    });
+
+    // Pages without a unique order have no stable boundary: a day kept alive
+    // by one word could appear on two pages or fall out of the streak.
+    test('pages the scan in root_id order, unique per user', async () => {
+      mockReviewedDays(3);
+
+      await streakOf('user-123');
+
+      type Chain = Record<string, jest.Mock<(...args: unknown[]) => Chain>>;
+      const chain = (supabase.from as jest.Mock).mock.results[0]?.value as Chain;
+      const eqResult = chain.select().eq('user_id', 'user-123');
+      expect(eqResult.order).toHaveBeenCalledWith('root_id');
+      expect(eqResult.range).toHaveBeenCalledWith(0, 999);
     });
 
     test('ignores words that were only added, never reviewed', async () => {
@@ -675,7 +703,7 @@ describe('StudySessionStreakService', () => {
       // counted as a day spent studying.
       mockReviewedDays(3);
 
-      await StudySessionStreakService.getStudySessionStreak('user-123');
+      await streakOf('user-123');
 
       type Chain = Record<string, jest.Mock<(...args: unknown[]) => Chain>>;
       const chain = (supabase.from as jest.Mock).mock.results[0]?.value as Chain;

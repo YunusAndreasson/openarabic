@@ -2,34 +2,35 @@ import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { AuthorRow } from '@/types/articles.types';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
-import { executeQuery } from '@/utils/supabaseHelpers';
+import { executeQuery, type RequestOptions } from '@/utils/supabaseHelpers';
 
 const errorConfig = {
   load: createServiceErrorConfig('authors', 'load', {
     toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
   }),
-  loadArticleAuthors: createServiceErrorConfig('article_authors', 'load', {
-    toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
-    analyticsEventName: 'Article_Authors_Load_Error',
-  }),
 };
 
 export const authorsService = {
-  async getUniqueAuthors(): Promise<AuthorRow[]> {
-    // Use a simpler approach - get all authors and filter by those with articles
-    const allAuthors = await executeQuery(
-      () => supabase.from('authors').select('id, name').order('name', { ascending: true }),
+  /**
+   * Every author with at least one published article, by name.
+   *
+   * One request. The empty `articles!inner()` embed is an existence filter: it
+   * keeps only the authors that have a matching (published) article and adds
+   * no column to the row, so the typed result is exactly `{ id, name }`. It
+   * replaced two requests and a client-side filter whose second request read
+   * every published article's `author_id` — a scan PostgREST would also have
+   * truncated at 1000 rows.
+   */
+  getUniqueAuthors(request: RequestOptions = {}): Promise<AuthorRow[]> {
+    return executeQuery(
+      () =>
+        supabase
+          .from('authors')
+          .select('id, name, articles!inner()')
+          .eq('articles.published', true)
+          .order('name', { ascending: true }),
       errorConfig.load,
+      request,
     );
-
-    // Get unique author IDs from articles
-    const articleAuthors = await executeQuery(
-      () => supabase.from('articles').select('author_id').eq('published', true),
-      errorConfig.loadArticleAuthors,
-    );
-
-    // Filter to only authors that have articles
-    const authorIdsWithArticles = new Set(articleAuthors.map(a => a.author_id));
-    return allAuthors.filter(author => authorIdsWithArticles.has(author.id));
   },
 };

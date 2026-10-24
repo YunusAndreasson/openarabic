@@ -15,7 +15,10 @@ import { checkAuthentication } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import {
   executeAuthenticatedQuery,
+  executeCountQuery,
   executeQuery,
+  fetchAllPages,
+  managedRequest,
   SupabaseRequestError,
 } from '@/utils/supabaseHelpers';
 import {
@@ -239,6 +242,141 @@ describe('supabaseHelpers', () => {
       await executeAuthenticatedQuery('user-789', mockQueryFn);
 
       expect(checkAuthenticationMock).toHaveBeenCalledWith('user-789');
+    });
+  });
+
+  // A queryFn's request: reported once by the query cache after the last
+  // retry, not here on every attempt.
+  describe('managed requests', () => {
+    test('defer their report to the error, handed out exactly once', async () => {
+      const config = { toastMessage: 'Failed to load data', analyticsEventName: 'Data_Load_Error' };
+
+      const thrown = await executeQuery(
+        async () => failed(createPostgrestErrorMock('boom'), 503),
+        config,
+        managedRequest(),
+      ).catch((error: unknown) => error as SupabaseRequestError);
+
+      expect(handleErrorMock).not.toHaveBeenCalled();
+      expect(thrown.takeReport()).toBe(config);
+      expect(thrown.takeReport()).toBeUndefined();
+    });
+
+    test('a direct call reports at the throw and leaves nothing pending', async () => {
+      const thrown = await executeQuery(async () => failed(createPostgrestErrorMock('boom')), {
+        toastMessage: 'x',
+      }).catch((error: unknown) => error as SupabaseRequestError);
+
+      expect(handleErrorMock).toHaveBeenCalledTimes(1);
+      expect(thrown.takeReport()).toBeUndefined();
+    });
+
+    // A superseded refetch or a screen that left is not a failure.
+    test('a request its caller cancelled is neither reported nor wrapped', async () => {
+      const controller = new AbortController();
+      controller.abort();
+
+      const thrown = await executeQuery(
+        async () => failed(createPostgrestErrorMock('AbortError: Aborted'), 0),
+        { toastMessage: 'x' },
+        { signal: controller.signal },
+      ).catch((error: unknown) => error);
+
+      expect(thrown).not.toBeInstanceOf(SupabaseRequestError);
+      expect(handleErrorMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('executeCountQuery', () => {
+    test('resolves to the count of rows the write touched', async () => {
+      const count = await executeCountQuery(async () => ({
+        data: null,
+        error: null,
+        count: 3,
+        status: 204,
+        statusText: '',
+        success: true as const,
+      }));
+
+      expect(count).toBe(3);
+    });
+
+    test('treats a missing count as zero', async () => {
+      await expect(executeCountQuery(async () => ok(null))).resolves.toBe(0);
+    });
+  });
+
+  describe('fetchAllPages', () => {
+    const page = (count: number, offset: number) =>
+      Array.from({ length: count }, (_, index) => ({ id: offset + index }));
+
+    test('requests consecutive ranges until a short page', async () => {
+      const fetchPage = jest.fn(async (from: number, to: number) =>
+        ok(from === 0 ? page(1000, 0) : page(to - from - 500, from)),
+      );
+
+      const rows = await fetchAllPages(fetchPage);
+
+      expect(fetchPage.mock.calls.map(([from, to]) => [from, to])).toEqual([
+        [0, 999],
+        [1000, 1999],
+      ]);
+      expect(rows).toHaveLength(1499);
+    });
+
+    test('stops after maxPages even when every page is full', async () => {
+      const fetchPage = jest.fn(async (from: number) => ok(page(10, from)));
+
+      const rows = await fetchAllPages(fetchPage, { pageSize: 10, maxPages: 3 });
+
+      expect(fetchPage).toHaveBeenCalledTimes(3);
+      expect(rows).toHaveLength(30);
+    });
+
+    test('hands every page the request signal, or one that never fires', async () => {
+      const controller = new AbortController();
+      const signals: AbortSignal[] = [];
+      const fetchPage = jest.fn(async (_from: number, _to: number, signal: AbortSignal) => {
+        signals.push(signal);
+        return ok([]);
+      });
+
+      await fetchAllPages(fetchPage, { request: { signal: controller.signal } });
+      await fetchAllPages(fetchPage);
+
+      expect(signals[0]).toBe(controller.signal);
+      expect(signals[1]?.aborted).toBe(false);
+    });
+
+    test('stops paging once the signal fires between pages', async () => {
+      const controller = new AbortController();
+      const fetchPage = jest.fn(async (from: number) => {
+        controller.abort();
+        return ok(page(1000, from));
+      });
+
+      await expect(
+        fetchAllPages(fetchPage, { request: { signal: controller.signal } }),
+      ).rejects.toBeDefined();
+
+      expect(fetchPage).toHaveBeenCalledTimes(1);
+      expect(handleErrorMock).not.toHaveBeenCalled();
+    });
+
+    test('reports a failed page with the config for its offset', async () => {
+      const fetchPage = jest.fn(async (from: number) =>
+        from === 0 ? ok(page(1000, 0)) : failed(createPostgrestErrorMock('page failed'), 500),
+      );
+
+      await expect(
+        fetchAllPages(fetchPage, {
+          errorConfig: offset => ({ analyticsProperties: { offset } }),
+        }),
+      ).rejects.toThrow('page failed');
+
+      expect(handleErrorMock).toHaveBeenCalledWith(expect.any(SupabaseRequestError), {
+        analyticsProperties: { offset: 1000 },
+      });
     });
   });
 });

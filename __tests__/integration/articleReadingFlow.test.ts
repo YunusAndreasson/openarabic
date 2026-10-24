@@ -110,7 +110,6 @@ describe('Article Reading Flow - Integration Test', () => {
     mockArticlesService.getArticleById.mockResolvedValue(createTestArticle());
 
     // Setup default empty progress
-    mockReadingProgressService.getProgress.mockResolvedValue(null);
     mockReadingProgressService.getBulkProgress.mockResolvedValue(
       new Map<ArticleId, ReadingProgress>(),
     );
@@ -126,14 +125,13 @@ describe('Article Reading Flow - Integration Test', () => {
       expect(article.article_sentences).toHaveLength(10);
       expect(mockArticlesService.getArticleById).toHaveBeenCalledWith(testArticleId);
 
-      // ====== STEP 2: Check for existing progress ======
-      const existingProgress = await readingProgressService.getProgress(testUserId, testArticleId);
-
-      expect(existingProgress).toBeNull(); // No previous progress
-      expect(mockReadingProgressService.getProgress).toHaveBeenCalledWith(
-        testUserId,
+      // ====== STEP 2: Check for existing progress (the reader's bulk map) ======
+      const existingProgress = (await readingProgressService.getBulkProgress(testUserId)).get(
         testArticleId,
       );
+
+      expect(existingProgress).toBeUndefined(); // No previous progress
+      expect(mockReadingProgressService.getBulkProgress).toHaveBeenCalledWith(testUserId);
 
       // ====== STEP 3: User reads to sentence 5 ======
       const currentSentenceIndex = 5;
@@ -198,7 +196,6 @@ describe('Article Reading Flow - Integration Test', () => {
         created_at: '2024-01-01T10:00:00Z',
       };
 
-      mockReadingProgressService.getProgress.mockResolvedValue(previousProgress);
       mockReadingProgressService.getBulkProgress.mockResolvedValue(
         new Map([[testArticleId, previousProgress]]),
       );
@@ -208,10 +205,12 @@ describe('Article Reading Flow - Integration Test', () => {
 
       expect(article).toBeDefined();
 
-      // ====== STEP 2: Check for existing progress ======
-      const existingProgress = await readingProgressService.getProgress(testUserId, testArticleId);
+      // ====== STEP 2: Check for existing progress (the reader's bulk map) ======
+      const existingProgress = (await readingProgressService.getBulkProgress(testUserId)).get(
+        testArticleId,
+      );
 
-      expect(existingProgress).not.toBeNull();
+      expect(existingProgress).toBeDefined();
       expect(existingProgress?.last_sentence_read).toBe(5);
 
       // ====== STEP 3: Verify scroll-to-position logic ======
@@ -298,9 +297,13 @@ describe('Article Reading Flow - Integration Test', () => {
         created_at: '2024-01-01T10:00:00Z',
       };
 
-      mockReadingProgressService.getProgress.mockResolvedValue(progress1);
+      mockReadingProgressService.getBulkProgress.mockResolvedValue(
+        new Map([[testArticleId, progress1]]),
+      );
 
-      const existingProgress1 = await readingProgressService.getProgress(testUserId, testArticleId);
+      const existingProgress1 = (await readingProgressService.getBulkProgress(testUserId)).get(
+        testArticleId,
+      );
       expect(existingProgress1?.last_sentence_read).toBe(3);
 
       await readingProgressService.updateProgress({
@@ -320,9 +323,13 @@ describe('Article Reading Flow - Integration Test', () => {
         created_at: '2024-01-01T10:00:00Z',
       };
 
-      mockReadingProgressService.getProgress.mockResolvedValue(progress2);
+      mockReadingProgressService.getBulkProgress.mockResolvedValue(
+        new Map([[testArticleId, progress2]]),
+      );
 
-      const existingProgress2 = await readingProgressService.getProgress(testUserId, testArticleId);
+      const existingProgress2 = (await readingProgressService.getBulkProgress(testUserId)).get(
+        testArticleId,
+      );
       expect(existingProgress2?.last_sentence_read).toBe(7);
 
       // Verify updateProgress was called 2 times (once per cycle)
@@ -343,7 +350,6 @@ describe('Article Reading Flow - Integration Test', () => {
       expect(article).toBeDefined();
 
       // Progress operations should not be called without user
-      expect(mockReadingProgressService.getProgress).not.toHaveBeenCalled();
       expect(mockReadingProgressService.updateProgress).not.toHaveBeenCalled();
     });
 
