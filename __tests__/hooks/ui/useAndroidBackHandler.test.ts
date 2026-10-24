@@ -14,8 +14,7 @@ let pressBack: BackPress | undefined;
 
 beforeEach(() => {
   pressBack = undefined;
-  // `resetMocks` strips the react-native mock's implementation before every
-  // test, so the registration has to be re-armed here.
+  // Captures the registered handler, so a test can press back.
   jest.mocked(BackHandler.addEventListener).mockImplementation((_event, handler) => {
     pressBack = handler;
     return { remove: mockRemove };

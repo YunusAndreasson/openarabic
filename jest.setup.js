@@ -1,31 +1,31 @@
-import { TextDecoder, TextEncoder } from 'util';
+// `resetMocks: true` (jest.config.js) wipes the implementation of EVERY
+// jest.fn() before each test, the ones in the jest.mock factories below and in
+// __mocks__/* included, so `jest.fn(impl)` there returns undefined inside a
+// test. A mock whose implementation must hold is made with `mockStable(impl)`:
+// the implementation is recorded and re-applied by the beforeEach below, which
+// runs right after the reset. Its calls are still recorded and cleared per
+// test, and a test can still override it (mockReturnValue, mockImplementation)
+// for that one test.
+//
+// A global, so __mocks__/* can use it too; the `mock` prefix is what lets the
+// hoisted jest.mock factories reference it (babel-plugin-jest-hoist).
+const mockStableRegistry = [];
+global.mockStable = impl => {
+  const fn = jest.fn(impl);
+  mockStableRegistry.push([fn, impl]);
+  return fn;
+};
+beforeEach(() => {
+  for (const [fn, impl] of mockStableRegistry) fn.mockImplementation(impl);
+});
 
-import { jest } from '@jest/globals';
-if (typeof global.jest === 'undefined') {
-  global.jest = jest;
-}
+// TextEncoder/TextDecoder, structuredClone, performance, queueMicrotask and
+// AbortController are not polyfilled here: jest-environment-node 30 copies
+// Node's own into every test context.
 
 // Mock Expo winter runtime globals to prevent import scope errors
 if (typeof global.__ExpoImportMetaRegistry === 'undefined') {
   global.__ExpoImportMetaRegistry = {};
-}
-
-// Mock structuredClone if not available
-if (typeof global.structuredClone === 'undefined') {
-  global.structuredClone = value => JSON.parse(JSON.stringify(value));
-}
-
-// Mock other potential missing globals
-if (typeof global.performance === 'undefined') {
-  global.performance = {
-    now: () => Date.now(),
-    mark: jest.fn(),
-    measure: jest.fn(),
-  };
-}
-
-if (typeof global.queueMicrotask === 'undefined') {
-  global.queueMicrotask = callback => setTimeout(callback, 0);
 }
 
 // Enhanced animation frame mocking for consistent timing
@@ -37,71 +37,59 @@ global.cancelAnimationFrame = function (id) {
   global.clearTimeout(id);
 };
 
-// Comprehensive AsyncStorage mock with AI-friendly error handling
+// AsyncStorage: nothing stored, every write accepted. The real module rejects
+// a missing key and a null/undefined value; an empty string is a valid value.
 jest.mock('@react-native-async-storage/async-storage', () => ({
-  setItem: jest.fn().mockImplementation(async (key, value) => {
-    if (!key || !value) throw new Error(`AsyncStorage.setItem: Invalid key or value`);
-    const promise = Promise.resolve();
-    // Ensure redux-persist compatibility by adding catch method
-    promise.catch = jest.fn(() => promise);
-    return promise;
+  setItem: mockStable(async (key, value) => {
+    if (!key || value == null) throw new Error('AsyncStorage.setItem: Invalid key or value');
   }),
-  getItem: jest.fn().mockImplementation(async key => {
-    if (!key) throw new Error(`AsyncStorage.getItem: Invalid key`);
-    const promise = Promise.resolve(null);
-    promise.catch = jest.fn(() => promise);
-    return promise;
+  getItem: mockStable(async key => {
+    if (!key) throw new Error('AsyncStorage.getItem: Invalid key');
+    return null;
   }),
-  removeItem: jest.fn().mockImplementation(async key => {
-    if (!key) throw new Error(`AsyncStorage.removeItem: Invalid key`);
-    const promise = Promise.resolve();
-    promise.catch = jest.fn(() => promise);
-    return promise;
+  removeItem: mockStable(async key => {
+    if (!key) throw new Error('AsyncStorage.removeItem: Invalid key');
   }),
-  clear: jest.fn().mockImplementation(() => {
-    const promise = Promise.resolve(undefined);
-    promise.catch = jest.fn(() => promise);
-    return promise;
-  }),
-  getAllKeys: jest.fn().mockImplementation(() => {
-    const promise = Promise.resolve([]);
-    promise.catch = jest.fn(() => promise);
-    return promise;
-  }),
-  multiGet: jest.fn().mockImplementation(() => {
-    const promise = Promise.resolve([]);
-    promise.catch = jest.fn(() => promise);
-    return promise;
-  }),
-  multiSet: jest.fn().mockImplementation(() => {
-    const promise = Promise.resolve(undefined);
-    promise.catch = jest.fn(() => promise);
-    return promise;
-  }),
-  multiRemove: jest.fn().mockImplementation(() => {
-    const promise = Promise.resolve(undefined);
-    promise.catch = jest.fn(() => promise);
-    return promise;
-  }),
+  clear: mockStable(async () => undefined),
+  getAllKeys: mockStable(async () => []),
+  multiGet: mockStable(async () => []),
+  multiSet: mockStable(async () => undefined),
+  multiRemove: mockStable(async () => undefined),
 }));
 
-// AI-optimized timer configuration
+// Jest's own fake clock, starting at a fixed instant, so `jest.setSystemTime`
+// works everywhere. (A `Date` subclass used to pin `new Date()` and
+// `Date.now()` on top of it, which turned setSystemTime into a no-op until a
+// suite called useFakeTimers again.) `advanceTimers` lets timers, and the
+// clock, move with real time, so code awaiting a timeout needs no manual
+// advance; nextTick and setImmediate stay real for the async plumbing.
+//
+// This holds only until something re-installs fake timers. Importing
+// @testing-library/react-native does, with Jest's defaults (RNTL swaps in real
+// timers to capture them, then calls `jest.useFakeTimers({ legacyFakeTimers:
+// false })`): in a suite that imports RNTL the clock starts at the real time,
+// does not advance on its own, and fakes nextTick and setImmediate too. Moving
+// these options to jest.config.js `fakeTimers` would make them survive that,
+// but turns on real-time advancing in every RNTL suite, and frame-stepping
+// tests (advanceTimersToNextFrame) then depend on how long earlier tests took.
 jest.useFakeTimers({
+  now: new Date('2024-01-15T12:00:00.000Z'),
   advanceTimers: true,
-  doNotFake: ['nextTick', 'setImmediate'], // Keep these real for better async testing
+  doNotFake: ['nextTick', 'setImmediate'],
 });
 
 // Mock expo-router/react-navigation: loading it pulls in MaskedViewNative which
 // reaches getViewManagerConfig on react-native's NativeModules. Tests don't
 // exercise this; stub the small surface the codebase actually imports.
+//
+// `useFocusEffect` behaves as it does on a focused screen: the effect runs
+// after mount and again whenever the (memoised) callback changes, and its
+// cleanup runs before that and on unmount.
 jest.mock('expo-router/react-navigation', () => {
   const React = require('react');
   return {
-    useFocusEffect: jest.fn(callback => {
-      const cleanup = callback?.();
-      return typeof cleanup === 'function' ? cleanup : undefined;
-    }),
-    useHeaderHeight: jest.fn(() => 44),
+    useFocusEffect: mockStable(callback => React.useEffect(callback, [callback])),
+    useHeaderHeight: mockStable(() => 44),
     DarkTheme: { dark: true, colors: {} },
     DefaultTheme: { dark: false, colors: {} },
     ThemeProvider: ({ children }) => children,
@@ -118,11 +106,10 @@ jest.mock('expo-router', () => {
     push: jest.fn(),
     replace: jest.fn(),
     back: jest.fn(),
-    canGoBack: jest.fn(() => true),
-    // A plain function, not a jest.fn: `resetMocks` strips mock implementations
-    // between tests, and an undefined answer here reads as "nothing to dismiss
-    // to" and reroutes every close. A test that needs `false` spies on it.
-    canDismiss: () => true,
+    canGoBack: mockStable(() => true),
+    // An undefined answer here reads as "nothing to dismiss to" and reroutes
+    // every close. A test that needs `false` overrides it for that test.
+    canDismiss: mockStable(() => true),
     setParams: jest.fn(),
     navigate: jest.fn(),
     dismiss: jest.fn(),
@@ -139,10 +126,7 @@ jest.mock('expo-router', () => {
   return {
     router,
     useRouter: () => router,
-    useFocusEffect: jest.fn(callback => {
-      const cleanup = callback?.();
-      return typeof cleanup === 'function' ? cleanup : undefined;
-    }),
+    useFocusEffect: mockStable(callback => React.useEffect(callback, [callback])),
     useIsFocused: () => true,
     useNavigation: () => ({
       navigate: jest.fn(),
@@ -167,9 +151,9 @@ jest.mock('expo-router', () => {
 
 // Mock expo-system-ui for system UI customization
 jest.mock('expo-system-ui', () => ({
-  setBackgroundColorAsync: jest.fn().mockResolvedValue(undefined),
-  setStatusBarStyle: jest.fn().mockResolvedValue(undefined),
-  getBackgroundColorAsync: jest.fn().mockResolvedValue('#000000'),
+  setBackgroundColorAsync: mockStable(() => Promise.resolve(undefined)),
+  setStatusBarStyle: mockStable(() => Promise.resolve(undefined)),
+  getBackgroundColorAsync: mockStable(() => Promise.resolve('#000000')),
 }));
 
 // Mock expo-keep-awake. The review session and the article reader hold a wake
@@ -177,19 +161,15 @@ jest.mock('expo-system-ui', () => ({
 // stub the native module, so importing either screen threw "Cannot find native
 // module 'ExpoKeepAwake'" before the suite could render anything.
 //
-// Plain functions, NOT jest.fn(): `resetMocks: true` strips every jest.fn()
-// implementation between tests, so the second test in any file rendering those
-// screens would get `undefined` back from activateKeepAwakeAsync and throw on
-// the hook's `.catch()`. This mock is therefore deliberately un-assertable —
-// it exists to keep unrelated suites running. The lock's own behaviour (tag
-// identity, release on unmount, release on going inactive) is covered by
-// __tests__/hooks/common/useKeepScreenAwake.test.ts, which installs its own
-// assertable jest.fn() mock and reinstates the implementations per test.
+// The promises must hold in every test: the hook chains `.catch()` on
+// activateKeepAwakeAsync. The lock's own behaviour (tag identity, release on
+// unmount, release on going inactive) is covered by
+// __tests__/hooks/common/useKeepScreenAwake.test.ts.
 jest.mock('expo-keep-awake', () => ({
-  useKeepAwake: () => undefined,
-  activateKeepAwakeAsync: () => Promise.resolve(),
-  deactivateKeepAwake: () => Promise.resolve(),
-  isAvailableAsync: () => Promise.resolve(true),
+  useKeepAwake: mockStable(() => undefined),
+  activateKeepAwakeAsync: mockStable(() => Promise.resolve()),
+  deactivateKeepAwake: mockStable(() => Promise.resolve()),
+  isAvailableAsync: mockStable(() => Promise.resolve(true)),
   ExpoKeepAwakeTag: 'ExpoKeepAwakeDefaultTag',
 }));
 
@@ -211,14 +191,14 @@ jest.mock('expo-file-system', () => ({
   Directory: {
     create: jest.fn(),
     delete: jest.fn(),
-    list: jest.fn(() => []),
+    list: mockStable(() => []),
     exists: true,
   },
   File: {
     create: jest.fn(),
     delete: jest.fn(),
     write: jest.fn(),
-    text: jest.fn(() => ''),
+    text: mockStable(() => ''),
     copy: jest.fn(),
     exists: true,
     size: 1024,
@@ -241,44 +221,27 @@ jest.mock('@/hooks/audio/useShouldShowMiniPlayer', () => ({
   useShouldShowMiniPlayer: () => false,
 }));
 
-// Mock audio cache service
-jest.mock('@/services/audioCache', () => ({
-  audioCache: {
-    getAudio: jest.fn().mockImplementation(url => {
-      // Return a mock local path that preserves the filename for test assertions
-      const filename = url.split('/').pop() || 'audio.mp3';
-      return Promise.resolve(`file:///mock/cache/${filename}`);
-    }),
+// Mock audio cache service. Lookups hand back a local path that keeps the
+// file name, so a test can tell which file was asked for.
+jest.mock('@/services/audioCache', () => {
+  const mockLocalPath = url =>
+    Promise.resolve(`file:///mock/cache/${url.split('/').pop() || 'audio.mp3'}`);
+  const mockCacheApi = () => ({
+    getAudio: mockStable(mockLocalPath),
     // Cache-hit-only lookup. Defaults to a HIT so existing suites keep seeing a
     // local path; miss-path tests override with mockResolvedValue(null).
-    getCachedPath: jest.fn().mockImplementation(url => {
-      const filename = url.split('/').pop() || 'audio.mp3';
-      return Promise.resolve(`file:///mock/cache/${filename}`);
-    }),
-    prefetch: jest.fn().mockResolvedValue(undefined),
-    cacheAudio: jest.fn().mockResolvedValue(undefined),
-    invalidate: jest.fn().mockResolvedValue(undefined),
-    clearCache: jest.fn().mockResolvedValue(undefined),
-    getCacheSize: jest.fn().mockResolvedValue(0),
-  },
-  AudioCacheManager: {
-    getInstance: jest.fn(() => ({
-      getAudio: jest.fn().mockImplementation(url => {
-        const filename = url.split('/').pop() || 'audio.mp3';
-        return Promise.resolve(`file:///mock/cache/${filename}`);
-      }),
-      getCachedPath: jest.fn().mockImplementation(url => {
-        const filename = url.split('/').pop() || 'audio.mp3';
-        return Promise.resolve(`file:///mock/cache/${filename}`);
-      }),
-      prefetch: jest.fn().mockResolvedValue(undefined),
-      cacheAudio: jest.fn().mockResolvedValue(undefined),
-      invalidate: jest.fn().mockResolvedValue(undefined),
-      clearCache: jest.fn().mockResolvedValue(undefined),
-      getCacheSize: jest.fn().mockResolvedValue(0),
-    })),
-  },
-}));
+    getCachedPath: mockStable(mockLocalPath),
+    prefetch: mockStable(() => Promise.resolve(undefined)),
+    cacheAudio: mockStable(() => Promise.resolve(undefined)),
+    invalidate: mockStable(() => Promise.resolve(undefined)),
+    clearCache: mockStable(() => Promise.resolve(undefined)),
+    getCacheSize: mockStable(() => Promise.resolve(0)),
+  });
+  return {
+    audioCache: mockCacheApi(),
+    AudioCacheManager: { getInstance: mockStable(mockCacheApi) },
+  };
+});
 
 // Mock react-native-worklets for thread scheduling
 jest.mock('react-native-worklets', () => ({
@@ -288,13 +251,13 @@ jest.mock('react-native-worklets', () => ({
   // the app — the swipe commit arm, the verdict tone, AnimatedCount, the sheet
   // backdrop — was a silent no-op under test and anything downstream of one
   // passed vacuously.
-  scheduleOnRN: jest.fn((callback, ...args) => {
+  scheduleOnRN: mockStable((callback, ...args) => {
     if (typeof callback === 'function') {
       return callback(...args);
     }
     return callback;
   }),
-  scheduleOnUI: jest.fn((callback, ...args) => {
+  scheduleOnUI: mockStable((callback, ...args) => {
     // Execute callback immediately in test environment (no threading)
     if (typeof callback === 'function') {
       callback(...args);
@@ -330,7 +293,7 @@ jest.mock('react-native-reanimated', () => {
     // animations that are opacity only (useCardVerdict, useOpacityAnimation).
     ReduceMotion: { System: 'system', Always: 'always', Never: 'never' },
     // Cancellation
-    cancelAnimation: jest.fn(() => undefined),
+    cancelAnimation: jest.fn(),
     // Core animation values
     useSharedValue: (initialValue = 0) => {
       // Use React's useRef to maintain a stable reference across re-renders
@@ -369,20 +332,25 @@ jest.mock('react-native-reanimated', () => {
     useReducedMotion: () => false,
     useAnimatedProps: callback => callback(),
     useAnimatedReaction: (prepare, react) => {
-      // Execute the reaction on every render. `previous` is what Reanimated
-      // passes: null on the first run, then the last prepared value. Passing
-      // `prepared` twice made every `current !== previous` guard false, so a
-      // reaction that only acts on a change never ran under test.
+      // Runs after every commit. Reanimated starts its mapper from an effect, so
+      // a reaction never runs during render; running it there here made any
+      // reaction that sets React state through scheduleOnRN re-render forever.
+      // `previous` is what Reanimated passes: null on the first run, then the
+      // last prepared value. Passing `prepared` twice made every
+      // `current !== previous` guard false, so a reaction that only acts on a
+      // change never ran under test.
       const React = require('react');
       const previousRef = React.useRef(null);
-      try {
-        const prepared = prepare();
-        const previous = previousRef.current;
-        previousRef.current = prepared;
-        react(prepared, previous);
-      } catch {
-        // Ignore errors in test environment
-      }
+      React.useEffect(() => {
+        try {
+          const prepared = prepare();
+          const previous = previousRef.current;
+          previousRef.current = prepared;
+          react(prepared, previous);
+        } catch {
+          // Ignore errors in test environment
+        }
+      });
     },
 
     // Animation functions
@@ -438,24 +406,24 @@ jest.mock('react-native-reanimated', () => {
 
     // Easing functions
     Easing: {
-      linear: jest.fn(t => t),
-      ease: jest.fn(t => t),
-      quad: jest.fn(t => t * t),
-      cubic: jest.fn(t => t * t * t),
-      bezier: jest.fn(() => jest.fn(t => t)),
-      circle: jest.fn(t => 1 - Math.sqrt(1 - t * t)),
-      back: jest.fn(t => t),
-      bounce: jest.fn(t => t),
-      elastic: jest.fn(t => t),
-      sin: jest.fn(t => Math.sin((t * Math.PI) / 2)),
-      exp: jest.fn(t => Math.pow(2, 10 * (t - 1))),
-      out: jest.fn(fn => fn),
-      in: jest.fn(fn => fn),
-      inOut: jest.fn(fn => fn),
+      linear: mockStable(t => t),
+      ease: mockStable(t => t),
+      quad: mockStable(t => t * t),
+      cubic: mockStable(t => t * t * t),
+      bezier: mockStable(() => t => t),
+      circle: mockStable(t => 1 - Math.sqrt(1 - t * t)),
+      back: mockStable(() => t => t),
+      bounce: mockStable(t => t),
+      elastic: mockStable(() => t => t),
+      sin: mockStable(t => Math.sin((t * Math.PI) / 2)),
+      exp: mockStable(t => Math.pow(2, 10 * (t - 1))),
+      out: mockStable(fn => fn),
+      in: mockStable(fn => fn),
+      inOut: mockStable(fn => fn),
     },
 
     // CSS-style easing helper used at module scope (e.g. ProgressBar.tsx)
-    cubicBezier: jest.fn(() => 'linear'),
+    cubicBezier: mockStable(() => 'linear'),
 
     // Animated components
     createAnimatedComponent: component =>
@@ -475,59 +443,70 @@ jest.mock('react-native-reanimated', () => {
 
 // Enhanced React Native mock with comprehensive API coverage
 jest.mock('react-native', () => {
+  // Every `addEventListener` hands back a subscription, as the real ones do, so
+  // an effect cleaning up with `subscription.remove()` works under test.
+  const mockSubscription = () => ({ remove: jest.fn() });
+
+  // react-native's own flattenStyle: falsy and non-object entries drop out,
+  // nested arrays merge left to right, and a plain object comes back as is.
+  const mockFlattenStyle = style => {
+    if (style === null || typeof style !== 'object') return undefined;
+    if (!Array.isArray(style)) return style;
+    const result = {};
+    for (const entry of style) {
+      const flat = mockFlattenStyle(entry);
+      if (flat) Object.assign(result, flat);
+    }
+    return result;
+  };
+
   return {
     // App state management
     AppState: {
-      addEventListener: jest.fn((_event, _callback) => ({
-        remove: jest.fn(),
-      })),
+      addEventListener: mockStable(mockSubscription),
       removeEventListener: jest.fn(),
       currentState: 'active',
     },
 
-    // Accessibility settings.
-    // Plain functions, NOT jest.fn(): `resetMocks` strips every jest.fn()
-    // implementation between tests, which would make these return `undefined`
-    // and throw on the `.then()` that reads them. Same trap as
-    // `useWindowDimensions` below.
+    // Accessibility settings
     AccessibilityInfo: {
-      isReduceTransparencyEnabled: () => Promise.resolve(false),
-      isReduceMotionEnabled: () => Promise.resolve(false),
-      isScreenReaderEnabled: () => Promise.resolve(false),
-      addEventListener: () => ({ remove: () => {} }),
-      announceForAccessibility: () => {},
+      isReduceTransparencyEnabled: mockStable(() => Promise.resolve(false)),
+      isReduceMotionEnabled: mockStable(() => Promise.resolve(false)),
+      isScreenReaderEnabled: mockStable(() => Promise.resolve(false)),
+      addEventListener: mockStable(mockSubscription),
+      announceForAccessibility: jest.fn(),
     },
 
     // Device information
     Dimensions: {
-      get: jest.fn(dimension => {
+      get: mockStable(dimension => {
         const dimensions = {
           window: { width: 375, height: 812, scale: 2, fontScale: 1 },
           screen: { width: 375, height: 812, scale: 2, fontScale: 1 },
         };
         return dimensions[dimension] || dimensions.window;
       }),
-      addEventListener: jest.fn(),
+      addEventListener: mockStable(mockSubscription),
       removeEventListener: jest.fn(),
     },
 
     // Theme detection
-    useColorScheme: jest.fn(() => 'light'),
-    // A plain function, NOT jest.fn(): `resetMocks` strips every jest.fn()
-    // implementation between tests, so the mocked hook returned `undefined` and
-    // any component destructuring it threw. Same trap as the Skia mock.
-    useWindowDimensions: () => ({
+    useColorScheme: mockStable(() => 'light'),
+    useWindowDimensions: mockStable(() => ({
       width: 375,
       height: 812,
       scale: 2,
       fontScale: 1,
-    }),
+    })),
 
-    // Platform detection
+    // Platform detection. `select` resolves as the real one does on iOS: the
+    // `ios` key, then `native`, then `default`, so a falsy `ios` value is kept.
     Platform: {
       OS: 'ios',
       Version: '15.0',
-      select: jest.fn(obj => obj.ios || obj.default),
+      select: mockStable(obj =>
+        'ios' in obj ? obj.ios : 'native' in obj ? obj.native : obj.default,
+      ),
       isPad: false,
       isTesting: true,
     },
@@ -542,33 +521,33 @@ jest.mock('react-native', () => {
 
     // Styling
     StyleSheet: {
-      create: jest.fn(styles => styles),
-      flatten: jest.fn(style => style),
+      create: mockStable(styles => styles),
+      flatten: mockStable(mockFlattenStyle),
       absoluteFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
       absoluteFillObject: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
       hairlineWidth: 1,
     },
 
     Animated: {
-      Value: jest.fn(_value => ({
+      Value: mockStable(_value => ({
         setValue: jest.fn(),
         addListener: jest.fn(),
         removeListener: jest.fn(),
         removeAllListeners: jest.fn(),
         interpolate: jest.fn(() => ({ interpolate: jest.fn() })),
       })),
-      timing: jest.fn(() => ({ start: jest.fn() })),
-      spring: jest.fn(() => ({ start: jest.fn() })),
-      decay: jest.fn(() => ({ start: jest.fn() })),
-      sequence: jest.fn(() => ({ start: jest.fn() })),
-      parallel: jest.fn(() => ({ start: jest.fn() })),
-      stagger: jest.fn(() => ({ start: jest.fn() })),
-      loop: jest.fn(() => ({ start: jest.fn() })),
+      timing: mockStable(() => ({ start: jest.fn() })),
+      spring: mockStable(() => ({ start: jest.fn() })),
+      decay: mockStable(() => ({ start: jest.fn() })),
+      sequence: mockStable(() => ({ start: jest.fn() })),
+      parallel: mockStable(() => ({ start: jest.fn() })),
+      stagger: mockStable(() => ({ start: jest.fn() })),
+      loop: mockStable(() => ({ start: jest.fn() })),
       View: 'Animated.View',
       Text: 'Animated.Text',
       ScrollView: 'Animated.ScrollView',
       Image: 'Animated.Image',
-      createAnimatedComponent: jest.fn(component => component),
+      createAnimatedComponent: mockStable(component => component),
     },
 
     // Core components
@@ -591,34 +570,31 @@ jest.mock('react-native', () => {
     Switch: 'Switch',
     Button: 'Button',
 
-    // User interaction
+    // User interaction. A recorder only, like the real dialog until someone
+    // presses a button: a test presses one itself, through the buttons in
+    // `Alert.alert.mock.calls`. (This used to "press" the first button, which
+    // is usually Cancel; resetMocks had silently switched that off for every
+    // test, and the suites are written against the recorder.)
     Alert: {
-      alert: jest.fn((title, message, buttons, _options) => {
-        // Simulate pressing the first button or OK
-        if (buttons && buttons[0] && buttons[0].onPress) {
-          buttons[0].onPress();
-        }
-      }),
+      alert: jest.fn(),
       prompt: jest.fn(),
     },
 
     // Keyboard
     Keyboard: {
-      addListener: jest.fn(() => ({ remove: jest.fn() })),
+      addListener: mockStable(mockSubscription),
       removeListener: jest.fn(),
       removeAllListeners: jest.fn(),
       dismiss: jest.fn(),
     },
 
-    // Layout measurement. Plain functions, not `jest.fn()`: `resetMocks` strips
-    // a jest.fn's implementation before every test, so `roundToNearestPixel`
-    // returned undefined and every position snapped through it vanished.
+    // Layout measurement
     PixelRatio: {
-      get: () => 2,
-      getFontScale: () => 1,
-      getPixelSizeForLayoutSize: size => size * 2,
+      get: mockStable(() => 2),
+      getFontScale: mockStable(() => 1),
+      getPixelSizeForLayoutSize: mockStable(size => size * 2),
       // Snaps to the device-pixel grid of a 2x screen, as the real one does.
-      roundToNearestPixel: size => Math.round(size * 2) / 2,
+      roundToNearestPixel: mockStable(size => Math.round(size * 2) / 2),
     },
 
     // Status bar
@@ -636,271 +612,145 @@ jest.mock('react-native', () => {
 
     // Linking
     Linking: {
-      openURL: jest.fn().mockResolvedValue(true),
-      canOpenURL: jest.fn().mockResolvedValue(true),
-      getInitialURL: jest.fn().mockResolvedValue(null),
-      addEventListener: jest.fn(),
+      openURL: mockStable(() => Promise.resolve(true)),
+      canOpenURL: mockStable(() => Promise.resolve(true)),
+      getInitialURL: mockStable(() => Promise.resolve(null)),
+      addEventListener: mockStable(mockSubscription),
       removeEventListener: jest.fn(),
     },
 
     // BackHandler
     BackHandler: {
-      addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+      addEventListener: mockStable(mockSubscription),
       removeEventListener: jest.fn(),
       exitApp: jest.fn(),
     },
 
     // Share
     Share: {
-      share: jest.fn().mockResolvedValue({ action: 'sharedAction' }),
+      share: mockStable(() => Promise.resolve({ action: 'sharedAction' })),
     },
 
     // Clipboard
     Clipboard: {
-      getString: jest.fn().mockResolvedValue(''),
+      getString: mockStable(() => Promise.resolve('')),
       setString: jest.fn(),
     },
 
     // PanResponder
     PanResponder: {
-      create: jest.fn(() => ({
+      create: mockStable(() => ({
         panHandlers: {},
       })),
     },
   };
 });
 
-// Enhanced Supabase mock with realistic API simulation
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({
-    auth: {
-      getUser: jest.fn().mockResolvedValue({
-        data: { user: null },
-        error: null,
-      }),
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: null },
-        error: null,
-      }),
-      signInWithPassword: jest.fn().mockResolvedValue({
-        data: { user: null },
-        error: null,
-      }),
-      signUp: jest.fn().mockResolvedValue({
-        data: { user: null },
-        error: null,
-      }),
-      signOut: jest.fn().mockResolvedValue({ error: null }),
-      onAuthStateChange: jest.fn(() => ({
-        data: { subscription: { unsubscribe: jest.fn() } },
-      })),
-    },
-    from: jest.fn(_table => {
-      // Create a mock query builder that can return realistic data
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        insert: jest.fn().mockReturnThis(),
-        update: jest.fn().mockReturnThis(),
-        delete: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        neq: jest.fn().mockReturnThis(),
-        gt: jest.fn().mockReturnThis(),
-        lt: jest.fn().mockReturnThis(),
-        gte: jest.fn().mockReturnThis(),
-        lte: jest.fn().mockReturnThis(),
-        like: jest.fn().mockReturnThis(),
-        ilike: jest.fn().mockReturnThis(),
-        is: jest.fn().mockReturnThis(),
-        in: jest.fn().mockReturnThis(),
-        contains: jest.fn().mockReturnThis(),
-        containedBy: jest.fn().mockReturnThis(),
-        rangeGt: jest.fn().mockReturnThis(),
-        rangeGte: jest.fn().mockReturnThis(),
-        rangeLt: jest.fn().mockReturnThis(),
-        rangeLte: jest.fn().mockReturnThis(),
-        rangeAdjacent: jest.fn().mockReturnThis(),
-        overlaps: jest.fn().mockReturnThis(),
-        textSearch: jest.fn().mockReturnThis(),
-        match: jest.fn().mockReturnThis(),
-        not: jest.fn().mockReturnThis(),
-        or: jest.fn().mockReturnThis(),
-        filter: jest.fn().mockReturnThis(),
-        order: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        range: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
-          data: { id: 1, title: 'Test Article', content: 'Test content' },
-          error: null,
-        }),
-        maybeSingle: jest.fn().mockResolvedValue({
-          data: { id: 1, title: 'Test Article', content: 'Test content' },
-          error: null,
-        }),
-        then: jest.fn().mockResolvedValue({
-          data: [
-            { id: 1, title: 'Test Article 1', content: 'Test content 1' },
-            { id: 2, title: 'Test Article 2', content: 'Test content 2' },
-          ],
-          error: null,
-        }),
-      };
-
-      return mockQueryBuilder;
-    }),
-    rpc: jest.fn().mockResolvedValue({
-      data: { result: 'success' },
-      error: null,
-    }),
-    storage: {
-      from: jest.fn(() => ({
-        upload: jest.fn().mockResolvedValue({ data: null, error: null }),
-        download: jest.fn().mockResolvedValue({ data: null, error: null }),
-        remove: jest.fn().mockResolvedValue({ data: null, error: null }),
-        list: jest.fn().mockResolvedValue({ data: [], error: null }),
-        getPublicUrl: jest.fn().mockReturnValue({
-          data: { publicUrl: 'https://example.com/file.jpg' },
-        }),
-      })),
-    },
-  })),
-}));
+// Supabase: a database with nothing in it. Every query resolves (a list to
+// `[]`, a single row to `null`) and no session is signed in; a suite that needs
+// rows mocks '@/services/supabase' itself. The client is created at import
+// time, before the first reset, so its methods are mockStable; a query builder
+// is made per `from()` call, so its methods can stay plain jest.fn()s.
+jest.mock('@supabase/supabase-js', () => {
+  const mockResult = data => ({ data, error: null });
+  const mockQueryBuilder = () => {
+    const builder = {};
+    for (const name of [
+      'select',
+      'insert',
+      'upsert',
+      'update',
+      'delete',
+      'eq',
+      'neq',
+      'gt',
+      'lt',
+      'gte',
+      'lte',
+      'like',
+      'ilike',
+      'is',
+      'in',
+      'contains',
+      'containedBy',
+      'rangeGt',
+      'rangeGte',
+      'rangeLt',
+      'rangeLte',
+      'rangeAdjacent',
+      'overlaps',
+      'textSearch',
+      'match',
+      'not',
+      'or',
+      'filter',
+      'order',
+      'limit',
+      'range',
+      'abortSignal',
+    ]) {
+      builder[name] = jest.fn(() => builder);
+    }
+    builder.single = jest.fn(() => Promise.resolve(mockResult(null)));
+    builder.maybeSingle = jest.fn(() => Promise.resolve(mockResult(null)));
+    // A real thenable: `await supabase.from(...).select()` settles.
+    builder.then = jest.fn((onFulfilled, onRejected) =>
+      Promise.resolve(mockResult([])).then(onFulfilled, onRejected),
+    );
+    return builder;
+  };
+  return {
+    createClient: mockStable(() => ({
+      auth: {
+        getUser: mockStable(() => Promise.resolve(mockResult({ user: null }))),
+        getSession: mockStable(() => Promise.resolve(mockResult({ session: null }))),
+        signInWithPassword: mockStable(() => Promise.resolve(mockResult({ user: null }))),
+        signUp: mockStable(() => Promise.resolve(mockResult({ user: null }))),
+        signOut: mockStable(() => Promise.resolve({ error: null })),
+        onAuthStateChange: mockStable(() => ({
+          data: { subscription: { unsubscribe: jest.fn() } },
+        })),
+      },
+      from: mockStable(mockQueryBuilder),
+      rpc: mockStable(() => Promise.resolve(mockResult(null))),
+      storage: {
+        from: mockStable(() => ({
+          upload: jest.fn(() => Promise.resolve(mockResult(null))),
+          download: jest.fn(() => Promise.resolve(mockResult(null))),
+          remove: jest.fn(() => Promise.resolve(mockResult(null))),
+          list: jest.fn(() => Promise.resolve(mockResult([]))),
+          getPublicUrl: jest.fn(() => ({
+            data: { publicUrl: 'https://example.com/file.jpg' },
+          })),
+        })),
+      },
+    })),
+  };
+});
 
 // Mock redux-persist to prevent AsyncStorage issues
 jest.mock('redux-persist', () => {
   const actual = jest.requireActual('redux-persist');
   return {
     ...actual,
-    persistStore: jest.fn(() => ({
+    // Called when the store module loads, before the first reset.
+    persistStore: mockStable(() => ({
       dispatch: jest.fn(),
-      subscribe: jest.fn(),
-      getState: jest.fn(() => ({})),
+      subscribe: mockStable(() => () => {}),
+      getState: mockStable(() => ({})),
       replaceReducer: jest.fn(),
-      purge: jest.fn(() => Promise.resolve()),
-      flush: jest.fn(() => Promise.resolve()),
+      purge: mockStable(() => Promise.resolve()),
+      flush: mockStable(() => Promise.resolve()),
       pause: jest.fn(),
       persist: jest.fn(),
     })),
-    persistReducer: jest.fn((config, reducer) => reducer),
+    persistReducer: mockStable((config, reducer) => reducer),
   };
 });
 
-// Enhanced React Query mock with realistic data flow
-jest.mock('@tanstack/react-query', () => {
-  const originalModule = jest.requireActual('@tanstack/react-query');
-
-  return {
-    ...originalModule,
-    useQuery: jest.fn().mockImplementation(({ queryKey, queryFn, enabled = true, initialData }) => {
-      if (!enabled) {
-        return {
-          data: initialData,
-          isLoading: false,
-          isFetching: false,
-          isError: false,
-          error: null,
-          refetch: jest.fn().mockResolvedValue({ data: initialData }),
-          remove: jest.fn(),
-          queryKey,
-          isSuccess: false,
-          isIdle: true,
-          status: 'idle',
-        };
-      }
-
-      // Actually call the query function to test real logic
-      try {
-        let data;
-        if (queryFn) {
-          // Handle both sync and async query functions
-          const result = queryFn();
-          if (result instanceof Promise) {
-            // For async functions, we can't await in the mock, so return a default structure
-            data = initialData || new Map();
-          } else {
-            data = result;
-          }
-        } else {
-          data = initialData || [];
-        }
-
-        return {
-          data,
-          isLoading: false,
-          isFetching: false,
-          isError: false,
-          error: null,
-          refetch: jest.fn().mockResolvedValue({ data }),
-          remove: jest.fn(),
-          queryKey,
-          isSuccess: true,
-          isIdle: false,
-          status: 'success',
-        };
-      } catch (error) {
-        return {
-          data: initialData,
-          isLoading: false,
-          isFetching: false,
-          isError: true,
-          error,
-          refetch: jest.fn().mockRejectedValue(error),
-          remove: jest.fn(),
-          queryKey,
-          isSuccess: false,
-          isIdle: false,
-          status: 'error',
-        };
-      }
-    }),
-    useMutation: jest.fn().mockImplementation(({ mutationFn, onSuccess, onError }) => ({
-      mutate: jest.fn().mockImplementation(async variables => {
-        try {
-          const result = await mutationFn(variables);
-          if (onSuccess) onSuccess(result, variables);
-          return result;
-        } catch (error) {
-          if (onError) onError(error, variables);
-          throw error;
-        }
-      }),
-      mutateAsync: jest.fn().mockImplementation(async variables => {
-        try {
-          const result = await mutationFn(variables);
-          if (onSuccess) onSuccess(result, variables);
-          return result;
-        } catch (error) {
-          if (onError) onError(error, variables);
-          throw error;
-        }
-      }),
-      isLoading: false,
-      isError: false,
-      error: null,
-      reset: jest.fn(),
-      variables: undefined,
-      data: undefined,
-    })),
-    useQueryClient: jest.fn().mockReturnValue({
-      invalidateQueries: jest.fn().mockResolvedValue(undefined),
-      setQueryData: jest.fn(),
-      getQueryData: jest.fn().mockReturnValue(undefined),
-      removeQueries: jest.fn(),
-      cancelQueries: jest.fn().mockResolvedValue(undefined),
-      refetchQueries: jest.fn().mockResolvedValue(undefined),
-      clear: jest.fn(),
-    }),
-    QueryClient: jest.fn().mockImplementation(() => ({
-      invalidateQueries: jest.fn().mockResolvedValue(undefined),
-      setQueryData: jest.fn(),
-      getQueryData: jest.fn().mockReturnValue(undefined),
-      removeQueries: jest.fn(),
-      cancelQueries: jest.fn().mockResolvedValue(undefined),
-      refetchQueries: jest.fn().mockResolvedValue(undefined),
-      clear: jest.fn(),
-    })),
-    QueryClientProvider: ({ children }) => children,
-  };
-});
+// @tanstack/react-query is the real library: a suite renders with
+// createHookTestWrapper (or its own QueryClientProvider) and mocks the
+// services the queries call.
 
 // AI-optimized console configuration (selective logging)
 const originalConsole = global.console;
@@ -937,7 +787,7 @@ global.console = {
 };
 
 // Enhanced fetch mock with realistic network simulation
-global.fetch = jest.fn().mockImplementation(async (url, _options = {}) => {
+global.fetch = mockStable(async (url, _options = {}) => {
   // Simulate network delay for more realistic testing
   await new Promise(resolve => global.setTimeout(resolve, 10));
 
@@ -957,43 +807,8 @@ global.fetch = jest.fn().mockImplementation(async (url, _options = {}) => {
   return mockResponse;
 });
 
-// Enhanced date/time mocking for consistent testing
-const mockDate = new Date('2024-01-15T12:00:00.000Z');
-global.Date = class extends Date {
-  constructor(...args) {
-    if (args.length === 0) {
-      super(mockDate);
-    } else {
-      super(...args);
-    }
-  }
-
-  static now() {
-    return mockDate.getTime();
-  }
-};
-
-// Intl polyfill for consistent internationalization
-global.Intl = {
-  ...global.Intl,
-  DateTimeFormat: jest.fn().mockImplementation((locale, options) => ({
-    format: jest.fn(date => new Date(date).toISOString()),
-    formatToParts: jest.fn(() => []),
-    resolvedOptions: jest.fn(() => ({
-      locale: locale || 'en-US',
-      timeZone: 'UTC',
-      ...options,
-    })),
-  })),
-  NumberFormat: jest.fn().mockImplementation((locale, options) => ({
-    format: jest.fn(number => number.toString()),
-    formatToParts: jest.fn(() => []),
-    resolvedOptions: jest.fn(() => ({
-      locale: locale || 'en-US',
-      ...options,
-    })),
-  })),
-};
+// No Intl stand-in: the real one is there, and `toLocaleDateString` and
+// friends never read the global binding anyway.
 
 // Enhanced safe area context mock
 jest.mock('react-native-safe-area-context', () => ({
@@ -1020,7 +835,7 @@ jest.mock('react-native-safe-area-context', () => ({
 
 // Mock for static file imports with better error handling
 jest.mock('react-native/Libraries/Image/resolveAssetSource', () =>
-  jest.fn(source => {
+  mockStable(source => {
     if (!source) return null;
     return {
       uri: typeof source === 'string' ? source : 'test-file-stub',
@@ -1031,64 +846,21 @@ jest.mock('react-native/Libraries/Image/resolveAssetSource', () =>
   }),
 );
 
-// `resetMocks: true` (jest.config.js) clears the implementation of EVERY jest.fn()
-// before each test — including the ones baked into module factories and the
-// __mocks__/* files. Any mocked async API therefore returns `undefined` instead of
-// a promise unless its implementation is re-applied here, per test.
-//
-// expo-haptics needs this: utils/haptics attaches a .catch() to swallow
-// "A haptics engine is not available on this device" (the top production error),
-// and .catch() on undefined throws. Re-arm the promise-returning implementations.
-//
-// NOTE for suites tempted to add their own `jest.mock('expo-haptics', …)`: don't.
 // expo-haptics is mocked globally for every suite through jest.config.js
-// `moduleNameMapper` → __mocks__/expo-haptics.js, and this block re-arms it per
-// test. A local factory shadows that with a second mock object that nothing
-// re-arms, so production code chaining .catch() breaks.
+// `moduleNameMapper` → __mocks__/expo-haptics.js, whose promise-returning
+// implementations are mockStable: utils/haptics chains .catch() on them to
+// swallow "A haptics engine is not available on this device" (the top
+// production error). A suite that adds its own `jest.mock('expo-haptics', …)`
+// shadows that with a second mock object, so production code chaining .catch()
+// breaks unless the local factory returns promises too.
 //
 // The same trap applies to `jest.mock('@/utils/haptics', …)`: that module
 // replaces the real one wholesale, so ANY export omitted from the factory is
 // `undefined` at the call site rather than a no-op, and the component under
 // test dies with "is not a function".
-beforeEach(() => {
-  const haptics = require('expo-haptics');
-  for (const name of [
-    'impactAsync',
-    'selectionAsync',
-    'notificationAsync',
-    'performAndroidHapticsAsync',
-  ]) {
-    if (typeof haptics[name]?.mockResolvedValue === 'function') {
-      haptics[name].mockResolvedValue(undefined);
-    }
-  }
-
-  // Same problem, same fix: `resetMocks` strips the implementation that returns
-  // a subscription, so every AppState.addEventListener() handed back undefined
-  // and any effect cleaning itself up with `subscription.remove()` threw on
-  // unmount. Tests that assert on the listener read `.mock.calls`, which is
-  // untouched by re-arming this.
-  const { AppState } = require('react-native');
-  if (typeof AppState?.addEventListener?.mockImplementation === 'function') {
-    AppState.addEventListener.mockImplementation(() => ({ remove: jest.fn() }));
-  }
-});
 
 // Global error handler for unhandled promise rejections
 process.on('unhandledRejection', reason => {
   // Handle unhandled promise rejections silently in tests
   throw new Error(`Unhandled promise rejection: ${reason}`);
 });
-
-// Optimized test timeout for AI efficiency
-jest.setTimeout(15000); // Reduced from default
-
-// React 19 + react-test-renderer compatibility fixes
-global.IS_REACT_ACT_ENVIRONMENT = true;
-
-if (typeof TextEncoder === 'undefined') {
-  global.TextEncoder = TextEncoder;
-}
-if (typeof TextDecoder === 'undefined') {
-  global.TextDecoder = TextDecoder;
-}

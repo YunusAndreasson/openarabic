@@ -20,24 +20,10 @@
 
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 
 import { Toast } from '@/components/ui/Toast';
 import { ToastType } from '@/types/enums';
-
-/**
- * jest.setup stubs `StyleSheet.flatten` as the identity function, so a style
- * array has to be merged here for an assertion on its values to mean anything.
- */
-const flattenStyle = (style: unknown): Record<string, unknown> => {
-  if (Array.isArray(style)) {
-    return style.reduce<Record<string, unknown>>(
-      (acc, entry) => ({ ...acc, ...flattenStyle(entry) }),
-      {},
-    );
-  }
-  return style && typeof style === 'object' ? (style as Record<string, unknown>) : {};
-};
 
 // Use shared mock factories from componentMocks.tsx
 jest.mock('react-native-reanimated', () =>
@@ -205,15 +191,15 @@ describe('Toast', () => {
         <Toast visible={true} message="Saved" type={type} onClose={mockOnClose} />,
       );
 
-      expect(flattenStyle(getByText('Saved').props.style).color).toBe('#000000');
+      expect(StyleSheet.flatten(getByText('Saved').props.style)?.color).toBe('#000000');
       expect(getByTestId(`mock-icon-${icon}`)).toHaveProp('color', hue);
 
       // The nearest ancestor that paints a background is the toast's own surface.
       let node = getByText('Saved').parent;
-      while (node && flattenStyle(node.props.style).backgroundColor === undefined) {
+      while (node && StyleSheet.flatten(node.props.style)?.backgroundColor === undefined) {
         node = node.parent;
       }
-      expect(flattenStyle(node?.props.style).backgroundColor).toBe('#EEEEEE');
+      expect(StyleSheet.flatten(node?.props.style)?.backgroundColor).toBe('#EEEEEE');
     },
   );
 

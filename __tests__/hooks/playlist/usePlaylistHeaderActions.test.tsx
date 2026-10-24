@@ -6,8 +6,6 @@
  * the same start path as the rest of the app.
  */
 
-jest.unmock('@tanstack/react-query');
-
 import { renderHook, act } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';

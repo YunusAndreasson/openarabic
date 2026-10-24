@@ -1,5 +1,3 @@
-jest.unmock('@tanstack/react-query');
-
 import { afterEach, describe, expect, jest, test } from '@jest/globals';
 import { onlineManager, QueryClient } from '@tanstack/react-query';
 

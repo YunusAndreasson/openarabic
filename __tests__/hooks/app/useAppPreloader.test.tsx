@@ -7,8 +7,6 @@
  * until the network came back.
  */
 
-jest.unmock('@tanstack/react-query');
-
 import { act, renderHook } from '@testing-library/react-native';
 import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';

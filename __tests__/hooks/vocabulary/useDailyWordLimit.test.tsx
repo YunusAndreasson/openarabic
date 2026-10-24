@@ -132,6 +132,7 @@ describe('useDailyWordLimit', () => {
         <Provider store={unlimitedStore}>{children}</Provider>
       );
       const { result } = renderHook(() => useDailyWordLimit(), { wrapper: unlimitedWrapper });
+      expect(result.current.dailyWordLimit).toBe(0);
 
       const success = await result.current.incrementDailyWordCount();
       expect(success).toBeTruthy();
@@ -168,6 +169,7 @@ describe('useDailyWordLimit', () => {
         <Provider store={unlimitedStore}>{children}</Provider>
       );
       const { result } = renderHook(() => useDailyWordLimit(), { wrapper: unlimitedWrapper });
+      expect(result.current.dailyWordLimit).toBe(0);
 
       const canAdd = await result.current.canAddWord();
       expect(canAdd).toBeTruthy();
@@ -197,6 +199,7 @@ describe('useDailyWordLimit', () => {
         <Provider store={unlimitedStore}>{children}</Provider>
       );
       const { result } = renderHook(() => useDailyWordLimit(), { wrapper: unlimitedWrapper });
+      expect(result.current.dailyWordLimit).toBe(0);
 
       const approaching = await result.current.isApproachingLimit();
       expect(approaching).toBeFalsy();

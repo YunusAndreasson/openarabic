@@ -1,5 +1,3 @@
-jest.unmock('@tanstack/react-query');
-
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { renderHook, waitFor } from '@testing-library/react-native';
 

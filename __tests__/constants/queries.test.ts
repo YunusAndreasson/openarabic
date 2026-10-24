@@ -2,8 +2,6 @@
  * Query factories: what each shares, and with whom.
  */
 
-jest.unmock('@tanstack/react-query');
-
 import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { QueryClient, QueryObserver, skipToken } from '@tanstack/react-query';
 

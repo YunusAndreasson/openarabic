@@ -7,14 +7,11 @@
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
 
-// Unmock React Query to test real hook behavior
-jest.unmock('@tanstack/react-query');
-
 import type { QueryClient } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { act } from 'react';
 
-import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { readingProgressQueries } from '@/constants/queries';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { readingProgressService } from '@/services/readingProgress';
@@ -35,12 +32,13 @@ const mockUseAuth = jest.requireMock('@/hooks/auth/useAuth');
 
 describe('useReadingProgress', () => {
   let queryClient: QueryClient;
+  let wrapper: HookTestWrapper;
   const testUserId = 'test-user-123';
   const testArticleId = articleId(42);
 
   beforeEach(() => {
     jest.clearAllMocks();
-    queryClient = createTestQueryClient();
+    ({ wrapper, queryClient } = createHookTestWrapper());
 
     // Setup auth mock to return test user
     mockUseAuth.useAuth = jest.fn((..._args: unknown[]) => ({
@@ -72,11 +70,6 @@ describe('useReadingProgress', () => {
   afterEach(() => {
     queryClient.clear();
   });
-
-  const wrapper = ({ children }: { children: React.ReactNode }) => {
-    const { QueryClientProvider } = require('@tanstack/react-query');
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-  };
 
   describe('Query Configuration', () => {
     // An observer option, not a query option: it lives on

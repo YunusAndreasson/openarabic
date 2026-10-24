@@ -14,33 +14,10 @@ import { Platform } from 'react-native';
 
 import { commitFeedback, lightFeedback, selectionFeedback, warningFeedback } from '@/utils/haptics';
 
-// Keep inline mock for this test since it needs direct access to jest.fn() instances for assertions.
-// Every expo-haptics function returns Promise<void> — the mocks must too, or
-// utils/haptics can't attach the .catch() that swallows "no haptics engine".
-jest.mock('expo-haptics', () => ({
-  selectionAsync: jest.fn((..._args: unknown[]) => Promise.resolve()),
-  impactAsync: jest.fn((..._args: unknown[]) => Promise.resolve()),
-  notificationAsync: jest.fn((..._args: unknown[]) => Promise.resolve()),
-  performAndroidHapticsAsync: jest.fn((..._args: unknown[]) => Promise.resolve()),
-  ImpactFeedbackStyle: {
-    Light: 'light',
-    Medium: 'medium',
-    Heavy: 'heavy',
-    Rigid: 'rigid',
-    Soft: 'soft',
-  },
-  NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
-  AndroidHaptics: {
-    Segment_Tick: 'segment-tick',
-    Segment_Frequent_Tick: 'segment-frequent-tick',
-    Virtual_Key: 'virtual-key',
-    Context_Click: 'context-click',
-    Clock_Tick: 'clock-tick',
-    Long_Press: 'long-press',
-    Confirm: 'confirm',
-    Reject: 'reject',
-  },
-}));
+// expo-haptics is the global mock (__mocks__/expo-haptics.js): every function
+// returns Promise<void> in every test, so utils/haptics can attach the .catch()
+// that swallows "no haptics engine". A local factory here had its
+// implementations stripped by `resetMocks`.
 
 // The settings gate reads the store directly (module singleton, no subscription),
 // so drive it from here rather than standing up a real store per case.

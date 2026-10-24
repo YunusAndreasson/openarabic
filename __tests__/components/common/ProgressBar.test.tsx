@@ -10,6 +10,7 @@
 import { render } from '@testing-library/react-native';
 import { describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
+import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
 import { ProgressBar } from '@/components/common/ProgressBar';
@@ -28,29 +29,20 @@ jest.mock('@/hooks/theme/useColors', () =>
 );
 
 /**
- * `StyleSheet.flatten` is the identity function under this jest setup, so a
- * rendered `style` prop is the raw array the component passed. These helpers
- * merge it so a test can assert on the resolved value instead of settling for
- * `toBeTruthy()` — which is what every case here used to do, leaving the
+ * Resolved styles, so a test can assert on the value instead of settling for
+ * `toBeTruthy()`, which is what every case here used to do, leaving the
  * clamping and invalid-input handling below completely unverified.
  */
 type RenderedNode = { props: { style?: unknown }; children?: unknown } | null;
 
-const mergeStyle = (style: unknown): Record<string, unknown> =>
-  (Array.isArray(style) ? style : [style])
-    .flat(Infinity)
-    .filter(
-      (entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object',
-    )
-    .reduce<Record<string, unknown>>((acc, entry) => ({ ...acc, ...entry }), {});
-
 /** Resolved style of the outer track. */
-const trackStyle = (json: RenderedNode): Record<string, unknown> => mergeStyle(json?.props.style);
+const trackStyle = (json: RenderedNode): ViewStyle =>
+  StyleSheet.flatten(json?.props.style as StyleProp<ViewStyle>) ?? {};
 
 /** Resolved style of the inner fill, whose `width` percentage IS the progress. */
-const fillStyle = (json: RenderedNode): Record<string, unknown> => {
+const fillStyle = (json: RenderedNode): ViewStyle => {
   const fill = (json as { children?: RenderedNode[] } | null)?.children?.[0];
-  return mergeStyle(fill?.props.style);
+  return StyleSheet.flatten(fill?.props.style as StyleProp<ViewStyle>) ?? {};
 };
 
 describe('ProgressBar', () => {

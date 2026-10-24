@@ -7,13 +7,10 @@
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
 
-// Unmock React Query to test real hook behavior
-jest.unmock('@tanstack/react-query');
-
 import type { QueryClient } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 
-import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { articlesService } from '@/services/articles';
@@ -44,20 +41,16 @@ const savedArticle = (id: number) =>
 
 describe('useArticleData', () => {
   let queryClient: QueryClient;
+  let wrapper: HookTestWrapper;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    queryClient = createTestQueryClient();
+    ({ wrapper, queryClient } = createHookTestWrapper());
   });
 
   afterEach(() => {
     queryClient.clear();
   });
-
-  const wrapper = ({ children }: { children: React.ReactNode }) => {
-    const { QueryClientProvider } = require('@tanstack/react-query');
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-  };
 
   test('returns processed article data with real React Query caching', async () => {
     const mockArticle: Article = {

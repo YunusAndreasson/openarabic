@@ -65,8 +65,8 @@ beforeEach(() => {
     inputConfigurationReady = true;
     events.push('reset:end');
   });
-  // `resetMocks` strips the shared mock's implementation, and a subscription the
-  // provider cannot remove would throw out of the session release.
+  // A subscription the provider can remove, without the shared mock's listener
+  // registry: this suite delivers no system events.
   jest
     .mocked(AudioManager.addSystemEventListener)
     .mockImplementation(

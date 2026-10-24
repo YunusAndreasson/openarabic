@@ -11,9 +11,6 @@
  * is reduced here to a plain author/category filter.
  */
 
-// The real client, so the subscription and the fetch are what run.
-jest.unmock('@tanstack/react-query');
-
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react-native';
 import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';

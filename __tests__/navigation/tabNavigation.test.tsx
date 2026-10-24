@@ -127,10 +127,8 @@ jest.mock('expo-router/react-navigation', () => {
   };
 });
 
-import { QueryClientProvider } from '@tanstack/react-query';
-import TestStoreProvider from '../helpers/testStore';
+import { createHookTestWrapper } from '../helpers/hookMocks';
 
-import { createTestQueryClient } from '../helpers/testUtils';
 import TabLayout from '../../app/(tabs)/_layout';
 import { PRACTICE_DUE_WORDS_LIMIT } from '../../constants/queries';
 
@@ -300,14 +298,7 @@ jest.mock('../../services/readingProgress', () => ({
   updateReadingProgress: jest.fn(async (..._args: unknown[]) => undefined),
 }));
 
-const createWrapper = () => {
-  const queryClient = createTestQueryClient();
-  return ({ children }: { children: React.ReactNode }) => (
-    <TestStoreProvider>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </TestStoreProvider>
-  );
-};
+const createWrapper = () => createHookTestWrapper({ withRedux: true }).wrapper;
 
 // Asserted rather than read back from TAB_SCREENS: a test that looks up the same
 // table the layout does would pass even if the table itself were wrong.

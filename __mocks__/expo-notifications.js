@@ -4,26 +4,26 @@
 const mockSubscription = { remove: jest.fn() };
 
 const mockSetNotificationHandler = jest.fn();
-const mockSetNotificationCategoryAsync = jest.fn().mockResolvedValue(undefined);
-const mockSetNotificationChannelAsync = jest.fn().mockResolvedValue(undefined);
-const mockAddNotificationReceivedListener = jest.fn(() => mockSubscription);
-const mockAddNotificationResponseReceivedListener = jest.fn(() => mockSubscription);
-const mockAddNotificationsDroppedListener = jest.fn(() => mockSubscription);
-const mockGetPermissionsAsync = jest.fn().mockResolvedValue({ status: 'granted' });
-const mockRequestPermissionsAsync = jest.fn().mockResolvedValue({ status: 'granted' });
-const mockScheduleNotificationAsync = jest.fn().mockResolvedValue('notification-id');
-const mockCancelAllScheduledNotificationsAsync = jest.fn().mockResolvedValue(undefined);
-const mockCancelScheduledNotificationAsync = jest.fn().mockResolvedValue(undefined);
-const mockGetAllScheduledNotificationsAsync = jest.fn().mockResolvedValue([]);
-const mockGetPresentedNotificationsAsync = jest.fn().mockResolvedValue([]);
-const mockDismissNotificationAsync = jest.fn().mockResolvedValue(undefined);
-const mockSetBadgeCountAsync = jest.fn().mockResolvedValue(undefined);
-const mockGetBadgeCountAsync = jest.fn().mockResolvedValue(0);
+const mockSetNotificationCategoryAsync = mockStable(() => Promise.resolve(undefined));
+const mockSetNotificationChannelAsync = mockStable(() => Promise.resolve(undefined));
+const mockAddNotificationReceivedListener = mockStable(() => mockSubscription);
+const mockAddNotificationResponseReceivedListener = mockStable(() => mockSubscription);
+const mockAddNotificationsDroppedListener = mockStable(() => mockSubscription);
+const mockGetPermissionsAsync = mockStable(() => Promise.resolve({ status: 'granted' }));
+const mockRequestPermissionsAsync = mockStable(() => Promise.resolve({ status: 'granted' }));
+const mockScheduleNotificationAsync = mockStable(() => Promise.resolve('notification-id'));
+const mockCancelAllScheduledNotificationsAsync = mockStable(() => Promise.resolve(undefined));
+const mockCancelScheduledNotificationAsync = mockStable(() => Promise.resolve(undefined));
+const mockGetAllScheduledNotificationsAsync = mockStable(() => Promise.resolve([]));
+const mockGetPresentedNotificationsAsync = mockStable(() => Promise.resolve([]));
+const mockDismissNotificationAsync = mockStable(() => Promise.resolve(undefined));
+const mockSetBadgeCountAsync = mockStable(() => Promise.resolve(undefined));
+const mockGetBadgeCountAsync = mockStable(() => Promise.resolve(0));
 // Cold-start handling in app/_layout.tsx uses the SYNCHRONOUS pair. The `…Async`
 // variants are deprecated in SDK 57 and are deliberately not mocked here — mocking
 // them as promises would let the cold-start path pass against a shape the real
 // module no longer returns.
-const mockGetLastNotificationResponse = jest.fn(() => null);
+const mockGetLastNotificationResponse = mockStable(() => null);
 const mockClearLastNotificationResponse = jest.fn();
 
 module.exports = {

@@ -6,27 +6,15 @@
 import React from 'react';
 
 /**
- * WHY THE NON-COMPONENT EXPORTS BELOW ARE PLAIN FUNCTIONS, NOT `jest.fn()`.
+ * `resetMocks: true` in jest.config.js strips the implementation off every
+ * plain `jest.fn()` before each test, the ones declared here included. So:
  *
- * `resetMocks: true` in jest.config.js strips the implementation off EVERY
- * `jest.fn()` before each test — including the ones declared here. So a factory
- * written as `jest.fn(() => builder)` returned `undefined` in every suite that
- * ever called it, and `Skia.PathBuilder.Make().moveTo(...)` died with "Cannot
- * read properties of undefined". The mock looked complete and was inert.
- *
- * Builders, geometry helpers and the Reanimated-backed hooks are therefore
- * plain functions: nothing asserts on their call records, and they only have to
- * return values of the right shape.
- *
- * KNOWN LIMITATION, not a design choice. The COMPONENT exports further down are
- * still `jest.fn()`, so `resetMocks` strips them too — including `Canvas`,
- * `Group` and `Mask`, which are written to render their children and are reset
- * to rendering nothing. Anything nested inside a `<Canvas>` (a chart's axis
- * labels, a legend row) is therefore absent from the tree, and a
- * `queryByText(...)).toBeNull()` about it passes for the wrong reason. They are
- * left as they are because every existing suite's assertions were written
- * against that output; converting them would surface previously-invisible text
- * and would need those suites re-checked. Fix them together, not by accident.
+ * - Builders, geometry helpers and the Reanimated-backed hooks are plain
+ *   functions: nothing asserts on their call records, and they only have to
+ *   return values of the right shape.
+ * - The COMPONENT exports are `mockStable` (jest.setup.js), so a test can read
+ *   the props each was drawn with and they still render in every test: `Canvas`,
+ *   `Group` and `Mask` draw their children, the leaves draw nothing.
  */
 
 // Mock Skia Paragraph API
@@ -163,40 +151,40 @@ export const Skia = {
 };
 
 // Mock Canvas component
-export const Canvas = jest.fn(({ children, style }) =>
+export const Canvas = mockStable(({ children, style }) =>
   React.createElement('View', { style, testID: 'skia-canvas' }, children),
 );
 
 // Mock Paragraph component (renamed to avoid conflicts)
-export const Paragraph = jest.fn(() => null);
+export const Paragraph = mockStable(() => null);
 
 // Mock Text component
-export const Text = jest.fn(() => null);
+export const Text = mockStable(() => null);
 
 // Mock Rect component (for gradient rectangles)
-export const Rect = jest.fn(() => null);
+export const Rect = mockStable(() => null);
 
 // Mock LinearGradient component
-export const LinearGradient = jest.fn(() => null);
+export const LinearGradient = mockStable(() => null);
 
 // Mock chart/shape components
-export const Group = jest.fn(({ children }) =>
+export const Group = mockStable(({ children }) =>
   React.createElement('View', { testID: 'skia-group' }, children),
 );
-export const Path = jest.fn(() => null);
-export const Circle = jest.fn(() => null);
-export const RoundedRect = jest.fn(() => null);
-export const Line = jest.fn(() => null);
-export const Mask = jest.fn(({ children }) =>
+export const Path = mockStable(() => null);
+export const Circle = mockStable(() => null);
+export const RoundedRect = mockStable(() => null);
+export const Line = mockStable(() => null);
+export const Mask = mockStable(({ children }) =>
   React.createElement('View', { testID: 'skia-mask' }, children),
 );
 
 // Mock Atlas — draws N sprites of one texture in a single call. Rendered as a
 // leaf so a test can assert it mounted without needing a real GPU surface.
-export const Atlas = jest.fn(() => null);
+export const Atlas = mockStable(() => null);
 
 // Mock DashPathEffect (dashed rules on charts)
-export const DashPathEffect = jest.fn(() => null);
+export const DashPathEffect = mockStable(() => null);
 
 // Mock vec / rect helper functions (gradient + sprite coordinates)
 export const vec = (x, y) => ({ x, y });

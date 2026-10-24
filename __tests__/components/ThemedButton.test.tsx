@@ -10,26 +10,12 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { PRESS_LOCK_WINDOW_MS } from '@/constants/animation';
 import { tonalSurface } from '@/utils/colorUtils';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
-
-/**
- * jest.setup stubs `StyleSheet.flatten` as the identity function, so calling it
- * on a style array hands back the array and every `toMatchObject` against it
- * passes vacuously. Flatten it here instead, so the assertion means something.
- */
-const flattenStyle = (style: unknown): Record<string, unknown> => {
-  if (Array.isArray(style)) {
-    return style.reduce<Record<string, unknown>>(
-      (acc, entry) => ({ ...acc, ...flattenStyle(entry) }),
-      {},
-    );
-  }
-  return style && typeof style === 'object' ? (style as Record<string, unknown>) : {};
-};
 
 // Use shared mock factories from componentMocks.tsx
 jest.mock('react-native-reanimated', () =>
@@ -87,7 +73,7 @@ describe('ThemedButton', () => {
       );
 
       expect(
-        flattenStyle(UNSAFE_getByProps({ accessibilityRole: 'button' }).props.style),
+        StyleSheet.flatten(UNSAFE_getByProps({ accessibilityRole: 'button' }).props.style),
       ).toMatchObject(expectedStyle);
     });
 
@@ -100,7 +86,7 @@ describe('ThemedButton', () => {
       );
 
       expect(
-        flattenStyle(UNSAFE_getByProps({ accessibilityRole: 'button' }).props.style),
+        StyleSheet.flatten(UNSAFE_getByProps({ accessibilityRole: 'button' }).props.style),
       ).toMatchObject({
         backgroundColor: expectedHue,
         borderColor: expectedHue,
@@ -161,13 +147,13 @@ describe('ThemedButton', () => {
         <ThemedButton title="Small" size="small" onPress={mockOnPress} />,
       );
 
-      expect(flattenStyle(getByText('Small').props.style)).toMatchObject({ fontSize: 13 });
+      expect(StyleSheet.flatten(getByText('Small').props.style)).toMatchObject({ fontSize: 13 });
     });
 
     test('renders medium size with 16pt text by default', () => {
       const { getByText } = render(<ThemedButton title="Medium" onPress={mockOnPress} />);
 
-      expect(flattenStyle(getByText('Medium').props.style)).toMatchObject({ fontSize: 16 });
+      expect(StyleSheet.flatten(getByText('Medium').props.style)).toMatchObject({ fontSize: 16 });
     });
 
     test('renders large size with 18pt text', () => {
@@ -175,7 +161,7 @@ describe('ThemedButton', () => {
         <ThemedButton title="Large" size="large" onPress={mockOnPress} />,
       );
 
-      expect(flattenStyle(getByText('Large').props.style)).toMatchObject({ fontSize: 18 });
+      expect(StyleSheet.flatten(getByText('Large').props.style)).toMatchObject({ fontSize: 18 });
     });
   });
 
@@ -260,7 +246,7 @@ describe('ThemedButton', () => {
         <ThemedButton fullWidth testID="cta" title="Continue" onPress={mockOnPress} />,
       );
 
-      expect(flattenStyle(getByTestId('cta').props.style)).toMatchObject({
+      expect(StyleSheet.flatten(getByTestId('cta').props.style)).toMatchObject({
         alignSelf: 'stretch',
       });
     });

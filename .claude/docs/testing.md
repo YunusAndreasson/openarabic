@@ -51,7 +51,33 @@ During development:
 - Focus on specific tests related to your changes
 - Test only what's necessary to validate fixes
 - Use Jest with React Native Testing Library
-- Test timeout: 10 seconds for async operations
+- Test timeout: 15 seconds, set once in `jest.config.js` (`testTimeout`, with `maxWorkers: '75%'`); the scripts pass neither
+
+## Test Harness
+
+Suites live in `__tests__/` as `*.test.ts(x)`; jest collects nothing else.
+
+- **`resetMocks: true`** wipes every `jest.fn()` implementation before each
+  test, including the ones in a `jest.mock` factory. A shared mock that must
+  keep its behaviour is made with `mockStable(impl)`, a global defined in
+  jest.setup.js and used there and in `__mocks__/*`: the implementation is
+  re-applied after the reset, and a test can still override it for that test.
+  A suite's own factory `jest.fn(impl)` is gone by the time the test runs, so
+  arm it in `beforeEach`.
+- **react-native** is the jest.setup.js mock. `StyleSheet.flatten` is the real
+  merge, so assert on `StyleSheet.flatten(node.props.style)` instead of
+  hand-merging style arrays.
+- **Redux**: under a `<Provider>` (a store from `setupTestStore`, or
+  `createHookTestWrapper({ withRedux: true })`) the real react-redux runs
+  against that store. Without one, the hooks read the fixed state in
+  `__mocks__/react-redux.js`.
+- **React Query** is the real library. Render through
+  `createHookTestWrapper()` (`__tests__/helpers/hookMocks.tsx`): a fresh
+  client per call, retries off, no garbage collection.
+- **Clock**: Jest's fake timers, starting at 2024-01-15T12:00Z and advancing
+  with real time, so `jest.setSystemTime` works. Importing
+  `@testing-library/react-native` re-installs them with Jest's defaults
+  (real current time, no auto-advance); see jest.setup.js.
 
 ## End of Session (REQUIRED)
 

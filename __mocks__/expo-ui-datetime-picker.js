@@ -8,8 +8,8 @@
 //
 // The picker is a native view with no JS-observable behaviour, so a null render
 // is a faithful stand-in. To drive it from a test, assert on the props captured
-// by this jest.fn rather than adding logic to the stub.
-const DateTimePicker = jest.fn(() => null);
+// by this mock rather than adding logic to the stub.
+const DateTimePicker = mockStable(() => null);
 
 module.exports = {
   __esModule: true,

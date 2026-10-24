@@ -1,15 +1,13 @@
 // Mock haptic feedback.
 //
-// NOTE: jest.config.js sets `resetMocks: true`, which strips the implementation
-// from every jest.fn() before each test — so implementations defined *here* never
-// survive to run. jest.setup.js re-arms these as promise-returning in a global
-// beforeEach; that is what makes them usable. Keep the shape in sync with the real
-// expo-haptics module (every *Async export returns Promise<void>) so production
-// code can chain .catch() on them.
-const mockImpactAsync = jest.fn();
-const mockSelectionAsync = jest.fn();
-const mockNotificationAsync = jest.fn();
-const mockPerformAndroidHapticsAsync = jest.fn();
+// mockStable (jest.setup.js) keeps these promise-returning in every test, past
+// `resetMocks`. Keep the shape in sync with the real expo-haptics module (every
+// *Async export returns Promise<void>) so production code can chain .catch() on
+// them.
+const mockImpactAsync = mockStable(() => Promise.resolve());
+const mockSelectionAsync = mockStable(() => Promise.resolve());
+const mockNotificationAsync = mockStable(() => Promise.resolve());
+const mockPerformAndroidHapticsAsync = mockStable(() => Promise.resolve());
 
 module.exports = {
   __esModule: true,
