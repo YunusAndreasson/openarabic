@@ -1428,12 +1428,11 @@ export function useReview({
     }
   }, [commitPendingGrade, flushPendingWrites, invalidateQueries, queryClient, user]);
 
-  // Held in a ref so the unmount cleanup can call it without taking it as a
-  // dependency — that effect must stay mount/unmount-only (see its own note).
-  const finalizeSessionRef = useRef(finalizeSession);
-  useEffect(() => {
-    finalizeSessionRef.current = finalizeSession;
-  }, [finalizeSession]);
+  // The effects below call the latest finalizeSession without taking it as a
+  // dependency — the unmount cleanup's effect must stay mount/unmount-only (see
+  // its own note). `finalizeSession` itself stays a callback: handleClose calls
+  // it, and an Effect Event may only be called from an effect.
+  const finalizeFromEffect = useEffectEvent(finalizeSession);
 
   // A session that ran out of cards is over the moment the completion screen
   // shows, not when the learner leaves it. Finalizing here is what gives that
@@ -1448,7 +1447,7 @@ export function useReview({
   // Continue and the unmount that follow fall through it.
   useEffect(() => {
     if (!isComplete || isUpdatingUI) return;
-    runWhenIdle(() => finalizeSessionRef.current());
+    runWhenIdle(() => finalizeFromEffect());
   }, [isComplete, isUpdatingUI]);
 
   const handleClose = () => {
@@ -1511,7 +1510,7 @@ export function useReview({
       // and back gesture, or a parent navigation. Idempotent, so the ✕ path
       // (which already finalized) falls straight through.
       closingRef.current = true;
-      finalizeSessionRef.current();
+      finalizeFromEffect();
 
       if (
         sessionStarted.current &&

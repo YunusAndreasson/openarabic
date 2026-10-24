@@ -40,7 +40,14 @@
  * recognizer should look like. Silence and hallucinated transcripts are exempt;
  * those are us failing to hear, not them being wrong.
  */
-import { type SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type SetStateAction,
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from 'react';
 
 import { useToast, useVoiceGrading } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
@@ -378,20 +385,19 @@ export function useVoiceReview({
   const [result, setResult] = useState<VoiceResult | null>(null);
   const [debug, setDebug] = useState<VoiceDebug>(createEmptyVoiceDebug);
   const debugRef = useRef(debug);
-  const debugEnabledRef = useRef(debugEnabled);
 
   // Diagnostics must keep their latest snapshot for a HUD that is enabled
   // mid-attempt, but hidden instrumentation must not repaint ReviewContent.
   // Keep the canonical value in a ref and publish it to React only while the
-  // advanced HUD is actually visible.
-  const publishDebug = useCallback((update: SetStateAction<VoiceDebug>): void => {
+  // advanced HUD is actually visible. An Effect Event: every caller is an
+  // effect (or the attempt one starts), and it reads the setting as it is now.
+  const publishDebug = useEffectEvent((update: SetStateAction<VoiceDebug>): void => {
     const next = typeof update === 'function' ? update(debugRef.current) : update;
     debugRef.current = next;
-    if (debugEnabledRef.current) setDebug(next);
-  }, []);
+    if (debugEnabled) setDebug(next);
+  });
 
   useEffect(() => {
-    debugEnabledRef.current = debugEnabled;
     if (debugEnabled) setDebug(debugRef.current);
   }, [debugEnabled]);
 
@@ -452,39 +458,42 @@ export function useVoiceReview({
    */
   const disclosedForKeyRef = useRef<string | null>(null);
 
-  // Stable refs for callback identity.
+  // What the attempt reads only once it has been graded — the screen's
+  // callbacks, the dev settings snapshotted into telemetry `meta`, and the two
+  // grading widenings — as Effect Events, so the arm effect always sees the
+  // latest without taking any of them as deps. Those deps are load-bearing:
+  // every one of these arrives fresh on every render (or flips with a toggle),
+  // and a re-run would cancel the recording in flight.
+  const fireVagueAuto = useEffectEvent(onVagueAuto);
+  const fireRevealAnswer = useEffectEvent(onRevealAnswer);
+  const fireMissHeard = useEffectEvent(onMissHeard);
+  const readSettings = useEffectEvent(() => ({
+    energyGateEnabled,
+    gainNormalizeEnabled,
+    iosRawMode,
+    debugEnabled,
+  }));
+  const readWidenings = useEffectEvent(() => ({
+    aliases,
+    alternates: glossAlternates ?? EMPTY_STRINGS,
+  }));
+
+  // Refs, not Effect Events: the handlers returned to the screen (accept,
+  // reject, retry, speakNow, stopSpeaking) read these, and an Effect Event may
+  // only be called from an effect.
   const onKnownAutoRef = useRef(onKnownAuto);
-  const onVagueAutoRef = useRef(onVagueAuto);
   const onUnknownAutoRef = useRef(onUnknownAuto);
-  const onRevealAnswerRef = useRef(onRevealAnswer);
-  const onMissHeardRef = useRef(onMissHeard);
   const stopAudioRef = useRef(stopAudio);
-  // Latest dev-settings snapshot for telemetry `meta` (read from a ref so the
-  // arm effect / stable callbacks always log the current values without taking
-  // the settings as effect deps and re-arming when a toggle flips).
-  const settingsRef = useRef({ energyGateEnabled, gainNormalizeEnabled, iosRawMode, debugEnabled });
   // Read by speakNow/stopSpeaking, which are stable callbacks handed to the
   // voice channel: they need the CURRENT phase to decide whether there is
   // anything to take over or to stop.
   const phaseRef = useRef<VoicePhase>('idle');
-  // The two grading widenings, held in refs for the same reason the settings
-  // are: both arrive as fresh arrays every render, and the arm effect's deps
-  // are load-bearing — adding either would re-run it (and cancel an in-flight
-  // recording) on any incidental re-render.
-  const aliasesRef = useRef<readonly string[]>(EMPTY_STRINGS);
-  const glossAlternatesRef = useRef<readonly string[]>(EMPTY_STRINGS);
   const otherGlossesRef = useRef<readonly string[]>(EMPTY_STRINGS);
   useEffect(() => {
     onKnownAutoRef.current = onKnownAuto;
-    onVagueAutoRef.current = onVagueAuto;
     onUnknownAutoRef.current = onUnknownAuto;
-    onRevealAnswerRef.current = onRevealAnswer;
-    onMissHeardRef.current = onMissHeard;
     stopAudioRef.current = stopAudio;
-    settingsRef.current = { energyGateEnabled, gainNormalizeEnabled, iosRawMode, debugEnabled };
     phaseRef.current = phase;
-    aliasesRef.current = aliases;
-    glossAlternatesRef.current = glossAlternates ?? EMPTY_STRINGS;
     otherGlossesRef.current = otherGlosses ?? EMPTY_STRINGS;
   });
 
@@ -535,7 +544,7 @@ export function useVoiceReview({
       clearTimeout(armRetryTimerRef.current);
       armRetryTimerRef.current = null;
     }
-  }, [currentWordKey, publishDebug]);
+  }, [currentWordKey]);
 
   // Drop a pending arm retry if the screen goes away mid-backoff.
   useEffect(
@@ -846,7 +855,7 @@ export function useVoiceReview({
             tapToCapturingMs: null,
             streamRefreshed: false,
             meta: {
-              settings: settingsRef.current,
+              settings: readSettings(),
               phase: 'denied',
               prompt: getPromptSnapshot(currentWordKey),
             },
@@ -900,7 +909,7 @@ export function useVoiceReview({
           tapToCapturingMs: null,
           streamRefreshed: false,
           meta: {
-            settings: settingsRef.current,
+            settings: readSettings(),
             phase: 'gave-up',
             prompt: getPromptSnapshot(currentWordKey),
           },
@@ -1005,12 +1014,7 @@ export function useVoiceReview({
         stopReason: outcome.result.stopReason,
       });
 
-      const match = matchSingleWord({
-        spoken: transcript,
-        expected,
-        aliases: aliasesRef.current,
-        alternates: glossAlternatesRef.current,
-      });
+      const match = matchSingleWord({ spoken: transcript, expected, ...readWidenings() });
       void analytics.track(ANALYTICS_EVENTS.VOICE_MATCH, {
         matched: match.matched,
         method: match.method,
@@ -1040,6 +1044,7 @@ export function useVoiceReview({
       // Snapshot everything loggable except the resolution. The auto-known path
       // logs immediately; a miss stores it so accept/reject/retry can log with
       // the user's verdict.
+      const settings = readSettings();
       const buildAttemptCtx = (
         sug: VoiceResult['suggestion'],
       ): Omit<VoiceAttemptLog, 'resolution'> => ({
@@ -1079,12 +1084,12 @@ export function useVoiceReview({
           // a question that was never asked, and until this landed the two were
           // indistinguishable in the table.
           prompt: getPromptSnapshot(currentWordKey),
-          settings: settingsRef.current,
+          settings,
           recordingConfig: {
             ...DEFAULT_RECORDING_CONFIG,
-            energyGateEnabled: settingsRef.current.energyGateEnabled,
-            gainNormalizeEnabled: settingsRef.current.gainNormalizeEnabled,
-            iosRawMode: settingsRef.current.iosRawMode,
+            energyGateEnabled: settings.energyGateEnabled,
+            gainNormalizeEnabled: settings.gainNormalizeEnabled,
+            iosRawMode: settings.iosRawMode,
           },
           // What the energy gate actually saw. `peak_rms` is one number for a
           // whole window, and three separate gate regressions each needed a
@@ -1147,7 +1152,7 @@ export function useVoiceReview({
         // it. Keeping a tick here would buzz one answer twice.
         if (vague) {
           if (nearMatch) showToast(STRINGS.VOICE_NEAR_MATCH_TEMPLATE(match.normalizedSpoken));
-          onVagueAutoRef.current();
+          fireVagueAuto();
         } else {
           onKnownAutoRef.current();
         }
@@ -1181,7 +1186,7 @@ export function useVoiceReview({
         // The verdict carries the error haptic on its own animation frame, so
         // there is no direct call here. It is provisional — "I knew it" on the
         // panel below repaints the same card green and throws it.
-        onMissHeardRef.current();
+        fireMissHeard();
       } else {
         // Silence or a hallucinated transcript is the app failing, not a wrong
         // answer, so it must not feel like one — but it can't be silent either.
@@ -1210,7 +1215,7 @@ export function useVoiceReview({
       // the answer hidden (and unspoken), so "Try again" stays a real retry.
       if (heardReliable) {
         disclosedForKeyRef.current = currentWordKey;
-        onRevealAnswerRef.current();
+        fireRevealAnswer();
       }
     };
 
@@ -1253,7 +1258,6 @@ export function useVoiceReview({
     attempt,
     dispatch,
     showToast,
-    publishDebug,
   ]);
 
   const accept = useCallback((): void => {

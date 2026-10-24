@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useRef,
   useState,
@@ -387,14 +388,11 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
    */
   const [remountEpoch, setRemountEpoch] = useState(0);
   const wasGradingRef = useRef(false);
-  const isUpdatingRef = useRef(isUpdating);
-  useEffect(() => {
-    isUpdatingRef.current = isUpdating;
-  });
+  const isGrading = useEffectEvent(() => isUpdating);
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextState => {
       if (nextState === 'background') {
-        wasGradingRef.current = isUpdatingRef.current;
+        wasGradingRef.current = isGrading();
         return;
       }
       if (nextState !== 'active' || !wasGradingRef.current) return;

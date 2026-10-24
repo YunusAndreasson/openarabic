@@ -259,6 +259,78 @@ describe('disclosure', () => {
   });
 });
 
+test('callbacks replaced while an attempt is in flight are the ones that fire', async () => {
+  // The screen builds these inline, so every render hands over new ones, and
+  // the hook only calls them once the attempt it started has been graded.
+  let deliverFirstCapture!: (outcome: Awaited<ReturnType<Voice['arm']>>) => void;
+  jest
+    .mocked(voice.arm)
+    .mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          deliverFirstCapture = resolve;
+        }),
+    )
+    .mockResolvedValueOnce(capturedSpeech());
+  jest.mocked(voice.transcribe).mockResolvedValueOnce('table').mockResolvedValueOnce('book');
+  const stale = { onVagueAuto: jest.fn(), onRevealAnswer: jest.fn(), onMissHeard: jest.fn() };
+  const latest = { onVagueAuto: jest.fn(), onRevealAnswer: jest.fn(), onMissHeard: jest.fn() };
+  const view = renderHook(
+    ({ handlers }: { handlers: typeof stale }) =>
+      useVoiceReview({
+        expected: 'book',
+        currentWordKey: 'first',
+        rootId: null,
+        ready: true,
+        promptDoneKey: null,
+        handsFree: false,
+        stopAudio,
+        ...callbacks,
+        ...handlers,
+      }),
+    { initialProps: { handlers: stale } },
+  );
+
+  act(() => view.result.current.speakNow());
+  view.rerender({ handlers: latest });
+  // A heard wrong word marks the card and discloses the answer...
+  await act(async () => deliverFirstCapture(capturedSpeech()));
+  // ...so the right word on the retry is credited as vague.
+  await act(async () => view.result.current.retry());
+
+  expect(latest.onMissHeard).toHaveBeenCalledTimes(1);
+  expect(latest.onRevealAnswer).toHaveBeenCalledTimes(1);
+  expect(latest.onVagueAuto).toHaveBeenCalledTimes(1);
+  expect(stale.onMissHeard).not.toHaveBeenCalled();
+  expect(stale.onRevealAnswer).not.toHaveBeenCalled();
+  expect(stale.onVagueAuto).not.toHaveBeenCalled();
+});
+
+test('the debug HUD picks up the latest attempt when it is switched on mid-session', async () => {
+  let debugEnabled = false;
+  jest.mocked(useAppSelectorShallow).mockImplementation(selector =>
+    selector({
+      settings: { voiceEnabled: true, voiceDebugEnabled: debugEnabled },
+      voiceAliases: { byRoot: {} },
+    } as unknown as RootState),
+  );
+  jest.mocked(voice.transcribe).mockResolvedValueOnce('table');
+  jest.mocked(voice.arm).mockResolvedValueOnce(capturedSpeech());
+  const view = renderReview();
+
+  await act(async () => view.result.current.speakNow());
+  // Hidden instrumentation must not repaint the review screen...
+  expect(view.result.current.debug.transcript).toBe('');
+
+  // ...but a HUD switched on afterwards shows what was already measured.
+  debugEnabled = true;
+  await act(async () => view.rerender({ key: 'first' }));
+  expect(view.result.current.debug.transcript).toBe('table');
+  expect(view.result.current.debug.recorder).toMatchObject({ bufferCount: 12, gateUsed: 'vad' });
+  // The recorder stats, not the capture itself.
+  expect(view.result.current.debug.recorder).not.toHaveProperty('waveform');
+});
+
 test('a transient open failure still retries automatically', async () => {
   jest.useFakeTimers();
   jest.mocked(voice.arm).mockResolvedValueOnce({ ok: false, reason: 'error' });
