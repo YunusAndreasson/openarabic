@@ -8,9 +8,9 @@ import madinaFont from '@/assets/fonts/Madina.otf';
 import nastaliqFont from '@/assets/fonts/Nastaliq.ttf';
 import notoSansFont from '@/assets/fonts/NotoSans.ttf';
 import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
-import { resolveArabicFont, SKIA_FONT_FAMILY_MAP, type SkiaFontFamily } from '@/constants/fonts';
-import { clampArabicFontSize } from '@/constants/layout';
+import { SKIA_FONT_FAMILY_MAP, type SkiaFontFamily } from '@/constants/fonts';
 import { useAppSelector } from '@/store/hooks';
+import { selectArabicFont, selectArabicFontSize } from '@/store/settingsSlice';
 
 /**
  * The .ttf/.otf behind each Skia family, keyed by the family name itself.
@@ -106,15 +106,15 @@ export interface UseSkiaFontsResult {
  * text style (e.g. `fontStyle: { weight }`), not on an SkFont.
  */
 export const useSkiaFonts = (): UseSkiaFontsResult => {
-  const selectedFontName = useAppSelector(state => resolveArabicFont(state.settings.arabicFont));
-  // Clamped rather than `|| LARGE`: the fallback only caught 0/undefined, so a
-  // persisted size from outside the supported range — an older build's, or a
-  // corrupted one — was painted at face value.
-  const fontSize = useAppSelector(state => clampArabicFontSize(state.settings.arabicFontSize));
+  const selectedFontName = useAppSelector(selectArabicFont);
+  // Clamped (by the selector) rather than `|| LARGE`: the fallback only caught
+  // 0/undefined, so a persisted size from outside the supported range — an
+  // older build's, or a corrupted one — was painted at face value.
+  const fontSize = useAppSelector(selectArabicFontSize);
 
   const fontManager = useSyncExternalStore(subscribeToFontManager, getFontManagerSnapshot);
 
-  // No `|| 'Noto Sans Arabic'` fallback: `resolveArabicFont` has already
+  // No `|| 'Noto Sans Arabic'` fallback: `selectArabicFont` has already
   // narrowed the persisted name to an ArabicFontName, and the map is total over
   // those, so the lookup cannot miss. The fallback could only fire for a key the
   // type system no longer admits.

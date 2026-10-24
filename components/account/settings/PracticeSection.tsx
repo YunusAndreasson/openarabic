@@ -19,6 +19,7 @@ import {
   setAdaptiveNewWordPacingEnabled,
   setVoiceEnabled,
   setVoiceHandsFree,
+  selectVoiceEnabled,
   selectVoiceHandsFree,
 } from '@/store/settingsSlice';
 import type { ReminderTime } from '@/types/notifications.types';
@@ -63,7 +64,7 @@ export const PracticeSection = memo<PracticeSectionProps>(
     // Through the selector, not the raw field — see selectHapticsEnabled for
     // why a field added after a user's install rehydrates as `undefined`.
     const adaptiveNewWordPacingEnabled = useAppSelectorShallow(selectAdaptiveNewWordPacingEnabled);
-    const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+    const voiceEnabled = useAppSelectorShallow(selectVoiceEnabled);
     const voiceHandsFree = useAppSelectorShallow(selectVoiceHandsFree);
 
     const dailyLimitSummary = useDailyWordLimitSummary();
