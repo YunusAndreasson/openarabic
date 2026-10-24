@@ -29,8 +29,9 @@ export function SignUpForm(): JSX.Element {
   const fields = useAuthFormFields();
   const { password, passwordError, loading, signUpWithEmail } = fields;
 
+  // dismissTo, not push — see SignInForm: the cross-links must not stack.
   const handleSignIn = useCallback(() => {
-    router.push(ROUTE_PATHS.AUTH_SIGN_IN);
+    router.dismissTo(ROUTE_PATHS.AUTH_SIGN_IN);
   }, []);
 
   return (
