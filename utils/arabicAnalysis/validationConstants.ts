@@ -91,21 +91,3 @@ export const OVERLAP_REJECTION = {
    */
   CRITICAL_LENGTH: 2,
 } as const;
-
-/**
- * Word count thresholds for single-word rule
- */
-export const WORD_COUNT = {
-  /**
-   * Single-word threshold for color-coding
-   *
-   * Rationale: Educational principle - single English words should never have
-   * grammar color-coding applied. Color-coding is only valuable when showing
-   * how multi-word phrases are constructed from Arabic components.
-   *
-   * Examples:
-   * - "book" (1 word) → NO color-coding ✗
-   * - "his book" (2 words) → Color "his" to show possessive suffix ✓
-   */
-  SINGLE: 1,
-} as const;

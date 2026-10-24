@@ -25,6 +25,36 @@ function analyzeLikeUi(arabic: string, english: string): WordAnalysis {
   return analyzeArabicWord(arabic, processedEnglish);
 }
 
+/** The components an analysis paints, by their Arabic spelling. */
+interface DetectedComponents {
+  prefixes: string[];
+  suffix: string | null;
+  infix: string | null;
+  diacritic: string | null;
+}
+
+/**
+ * What the UI would paint for this analysis — scored by both benchmarks.
+ *
+ * Gated on hasComponents: when the analyzer says false, the UI paints nothing,
+ * so the benchmark must score nothing too — otherwise the metric drifts from
+ * user-visible truth (and the failure list reports phantom FPs: standalone
+ * particles like لَمْ whose detections never render). Components remain on the
+ * WordAnalysis for non-render consumers (debugging, analytics) but are
+ * invisible to scoring.
+ */
+function detectedComponents(analysis: WordAnalysis): DetectedComponents {
+  if (!analysis.hasComponents) {
+    return { prefixes: [], suffix: null, infix: null, diacritic: null };
+  }
+  return {
+    prefixes: analysis.prefixes.map(p => p.arabicMatch),
+    suffix: analysis.suffix?.arabicMatch ?? null,
+    infix: analysis.infix?.arabicMatch ?? null,
+    diacritic: analysis.diacritic?.arabicMatch ?? null,
+  };
+}
+
 /**
  * Ground truth test case for benchmark validation
  */
@@ -207,19 +237,12 @@ export function runBenchmark(cases: GroundTruthCase[]): BenchmarkResult {
 
   for (const testCase of cases) {
     const analysis = analyzeLikeUi(testCase.arabic, testCase.english);
-
-    // Gate on hasComponents: when the analyzer says false, the UI paints nothing,
-    // so the benchmark must score nothing too — otherwise the metric drifts from
-    // user-visible truth. Components remain on the WordAnalysis for non-render
-    // consumers (debugging, analytics) but are invisible to scoring.
-    const detectedPrefixes = analysis.hasComponents
-      ? analysis.prefixes.map(p => p.arabicMatch)
-      : [];
-    const detectedSuffix = analysis.hasComponents ? (analysis.suffix?.arabicMatch ?? null) : null;
-    const detectedInfix = analysis.hasComponents ? (analysis.infix?.arabicMatch ?? null) : null;
-    const detectedDiacritic = analysis.hasComponents
-      ? (analysis.diacritic?.arabicMatch ?? null)
-      : null;
+    const {
+      prefixes: detectedPrefixes,
+      suffix: detectedSuffix,
+      infix: detectedInfix,
+      diacritic: detectedDiacritic,
+    } = detectedComponents(analysis);
 
     // Compare prefixes
     const prefixResult = comparePrefixes(detectedPrefixes, testCase.expectedPrefixes);
@@ -291,12 +314,13 @@ export function runDetailedBenchmark(cases: GroundTruthCase[]): DetailedBenchmar
   const overall = runBenchmark(cases);
 
   // Group by category
+  const casesByCategory = Object.groupBy(cases, c => c.category);
   const byCategory: Record<GroundTruthCase['category'], BenchmarkResult> = {
-    prefix: runBenchmark(cases.filter(c => c.category === 'prefix')),
-    suffix: runBenchmark(cases.filter(c => c.category === 'suffix')),
-    infix: runBenchmark(cases.filter(c => c.category === 'infix')),
-    combined: runBenchmark(cases.filter(c => c.category === 'combined')),
-    none: runBenchmark(cases.filter(c => c.category === 'none')),
+    prefix: runBenchmark(casesByCategory.prefix ?? []),
+    suffix: runBenchmark(casesByCategory.suffix ?? []),
+    infix: runBenchmark(casesByCategory.infix ?? []),
+    combined: runBenchmark(casesByCategory.combined ?? []),
+    none: runBenchmark(casesByCategory.none ?? []),
   };
 
   // Pattern-level analysis
@@ -316,14 +340,34 @@ export function runDetailedBenchmark(cases: GroundTruthCase[]): DetailedBenchmar
   // Collect failures
   const failures: FailureCase[] = [];
 
+  // An affix detected where the case expects none: counted against its pattern
+  // and listed as a failure.
+  const recordFalsePositive = (
+    testCase: GroundTruthCase,
+    analysis: WordAnalysis,
+    type: 'prefix' | 'suffix',
+    pattern: string,
+  ): void => {
+    const current = metricFor(type, pattern);
+    current.detections++;
+    current.incorrect++;
+    current.precision = calculatePrecision(current.correct, current.incorrect);
+
+    failures.push({
+      testCase,
+      analysis,
+      type: 'false_positive',
+      details: `Detected ${type} '${pattern}' but should not have`,
+    });
+  };
+
   for (const testCase of cases) {
     const analysis = analyzeLikeUi(testCase.arabic, testCase.english);
-    // Same hasComponents gate as runBenchmark — without it the failure list reports
-    // phantom FPs (standalone particles like لَمْ whose detections never render).
-    const detectedPrefixes = analysis.hasComponents
-      ? analysis.prefixes.map(p => p.arabicMatch)
-      : [];
-    const detectedSuffix = analysis.hasComponents ? (analysis.suffix?.arabicMatch ?? null) : null;
+    const {
+      prefixes: detectedPrefixes,
+      suffix: detectedSuffix,
+      diacritic: detectedDiacritic,
+    } = detectedComponents(analysis);
 
     // Track prefix patterns
     for (const expected of testCase.expectedPrefixes) {
@@ -341,17 +385,7 @@ export function runDetailedBenchmark(cases: GroundTruthCase[]): DetailedBenchmar
     // Track false positive prefixes
     for (const detected of detectedPrefixes) {
       if (!testCase.expectedPrefixes.includes(detected)) {
-        const current = metricFor('prefix', detected);
-        current.detections++;
-        current.incorrect++;
-        current.precision = calculatePrecision(current.correct, current.incorrect);
-
-        failures.push({
-          testCase,
-          analysis,
-          type: 'false_positive',
-          details: `Detected prefix '${detected}' but should not have`,
-        });
+        recordFalsePositive(testCase, analysis, 'prefix', detected);
       }
     }
 
@@ -376,24 +410,11 @@ export function runDetailedBenchmark(cases: GroundTruthCase[]): DetailedBenchmar
 
     // Track false positive suffix
     if (detectedSuffix && !testCase.expectedSuffix) {
-      const current = metricFor('suffix', detectedSuffix);
-      current.detections++;
-      current.incorrect++;
-      current.precision = calculatePrecision(current.correct, current.incorrect);
-
-      failures.push({
-        testCase,
-        analysis,
-        type: 'false_positive',
-        details: `Detected suffix '${detectedSuffix}' but should not have`,
-      });
+      recordFalsePositive(testCase, analysis, 'suffix', detectedSuffix);
     }
 
     // Track diacritic hits and misses (only for labeled cases)
     if (testCase.expectedDiacritic !== undefined) {
-      const detectedDiacritic = analysis.hasComponents
-        ? (analysis.diacritic?.arabicMatch ?? null)
-        : null;
       if (testCase.expectedDiacritic && detectedDiacritic !== testCase.expectedDiacritic) {
         failures.push({
           testCase,

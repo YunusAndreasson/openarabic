@@ -4,6 +4,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import { normalizeForSearch } from '@/utils/searchNormalization';
 import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { isLeechWord } from '@/utils/leechUtils';
+import { isOneOf } from '@/utils/list';
 import {
   getMemoryHorizonDays,
   getWordHorizonBand,
@@ -104,10 +105,7 @@ export const DEPTH_BAND_SCOPES: Record<DepthBandKey, DepthScope> = {
  * for this scope" — see `isDictionaryScope`.
  */
 export function isNarrowScope(scope: string): scope is NarrowScope {
-  return (
-    (HORIZON_SCOPES as readonly string[]).includes(scope) ||
-    (DEPTH_SCOPES as readonly string[]).includes(scope)
-  );
+  return isOneOf(HORIZON_SCOPES, scope) || isOneOf(DEPTH_SCOPES, scope);
 }
 
 /**
@@ -127,7 +125,7 @@ export function isNarrowScope(scope: string): scope is NarrowScope {
  * it correctly opens under the default hardest-first sort rather than a band's.
  */
 export function isDictionaryScope(scope: string): scope is DictionaryScope {
-  return (PICKER_SCOPES as readonly string[]).includes(scope) || isNarrowScope(scope);
+  return isOneOf(PICKER_SCOPES, scope) || isNarrowScope(scope);
 }
 
 /** Direction applied when a field is first selected — the reading a learner wants most. */
@@ -144,12 +142,9 @@ const DEFAULT_DIRECTIONS: Record<DictionarySortField, SortDirection> = {
  */
 const SCOPE_PREDICATES: Record<DictionaryScope, (word: StudyWord) => boolean> = {
   all: () => true,
-  due: word => isDueWord(word),
-  // Wrapped, not passed by reference: `filter` hands the callback the index as a
-  // second argument, and `isLeechWord`'s second parameter is `minLapses` — so a
-  // bare reference made every word at index 0 or 1 a leech.
-  struggling: word => isLeechWord(word),
-  mastered: word => isMasteredWord(word),
+  due: isDueWord,
+  struggling: isLeechWord,
+  mastered: isMasteredWord,
   // Through `getWordHorizonBand`, never a bare stability comparison: the band
   // boundaries and the practised gate both live there, so a row in the memory
   // sheet and the list it opens count the same words by construction.
@@ -207,8 +202,8 @@ const NARROW_SCOPE_SORT: Record<
  * A word with no review behind it has no difficulty and no memory to compare.
  *
  * Ranking it anyway put the same word at opposite ends of the list depending on
- * the sort: a never-practised word is written with a *placeholder* difficulty of
- * 6.5 and stability of 0.4 (see `createInitialFSRSEntry`), so it landed
+ * the sort: a never-practised word is written with a *placeholder* difficulty
+ * and stability (`PLACEHOLDER_FSRS`, see `createInitialFSRSEntry`), so it landed
  * mid-table under "hardest first" and dead last under "strongest first" — an
  * order built from numbers that measure nothing. Grouping them keeps them
  * together at one known end, matching the empty meter and "New" dot the row

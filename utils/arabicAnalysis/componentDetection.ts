@@ -12,23 +12,19 @@ import {
 
 import { VALIDATION_CONFIG } from './constants';
 import { hasEnglishMatch } from './englishMatching';
-import { normalizeArabic } from './normalization';
+import { foldAlefVariants, normalizeArabic } from './normalization';
 import type { AnalyzedComponent } from './types';
 import {
   countConsonants,
   hasSubstantialStructure,
+  isFormWithSuffixPattern,
   isHighRiskPreposition,
   isHighRiskSuffix,
   isSubjectMarker,
 } from './validation';
 
-/** Normalize alef variants (إ/آ/ٱ → ا) for hamza-insensitive pattern comparison.
- * NOT أ — single-char prefix أ must stay distinct from prosthetic alef ا. */
-const ALEF_VARIANTS_REGEX = /[إآٱ]/g;
-
 /** Pre-compiled regex for "the" word boundary check in bracket injection */
 const THE_WORD_REGEX = /\bthe\b/;
-const normalizeAlef = (s: string): string => s.replace(ALEF_VARIANTS_REGEX, 'ا');
 
 /**
  * Words where ال is morphologically fused into the stem (proper nouns, relative
@@ -118,7 +114,7 @@ export function findComponent(
     if (type === ComponentType.PREFIX) {
       // Hamza-insensitive: normalize pattern alef variants to match normalizeArabic() output
       // Input arabic is already normalized (أ/إ/آ/ٱ → ا), so normalize pattern to match
-      matches = arabic.startsWith(normalizeAlef(pattern));
+      matches = arabic.startsWith(foldAlefVariants(pattern));
     } else if (type === ComponentType.SUFFIX) {
       matches = arabic.endsWith(pattern);
     } else if (type === ComponentType.INFIX) {
@@ -162,7 +158,7 @@ export function findComponent(
       matches &&
       type === ComponentType.PREFIX &&
       SHORTENED_PREPOSITION_FORMS.has(pattern) &&
-      arabic[normalizeAlef(pattern).length] !== 'ي'
+      arabic[foldAlefVariants(pattern).length] !== 'ي'
     ) {
       matches = false;
     }
@@ -242,9 +238,7 @@ export function findComponent(
           const potentialFa3eelPattern =
             pattern === 'ه' && remaining.length === 3 && remaining.charAt(2) === 'ي';
 
-          const isKnownPreposition = (
-            VALIDATION_CONFIG.PREPOSITIONS_WITH_SUFFIXES as readonly string[]
-          ).includes(remaining);
+          const isKnownPreposition = isFormWithSuffixPattern(remaining);
 
           // The relaxation now only fires when `remaining` is a known preposition
           // (إلي, علي, لدي) — those are the genuine ـيه stem+suffix cases (إِلَيْهِ

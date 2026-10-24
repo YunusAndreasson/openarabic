@@ -10,9 +10,9 @@ import {
   HORIZON_BAND_KEYS,
   HORIZON_BAND_LABELS,
   type HorizonBand,
-  type HorizonBandKey,
 } from '@/utils/memoryHorizon';
 import { BIN_COUNT, getHorizonBinIndex, getWordsPerDot } from '@/utils/horizonBandPath';
+import { tallyBands } from '@/utils/list';
 
 export interface MemoryHorizonDistribution {
   /** One entry per column, counting the practised words whose horizon falls in it. */
@@ -80,17 +80,14 @@ export function useMemoryHorizonDistribution(studyWords: StudyWord[]): MemoryHor
     const totalWords = studyWords.length;
     const practisedCount = horizons.length;
     const notStartedCount = totalWords - practisedCount;
+    const bands = tallyBands(horizons, HORIZON_BAND_KEYS, HORIZON_BAND_LABELS, getHorizonBand);
 
     if (practisedCount === 0) {
       return {
         bins: EMPTY_BINS(),
         maxBinCount: 0,
         wordsPerDot: 1,
-        bands: HORIZON_BAND_KEYS.map(key => ({
-          key,
-          label: HORIZON_BAND_LABELS[key],
-          count: 0,
-        })),
+        bands,
         medianDays: null,
         medianLabel: '',
         medianFraction: 0,
@@ -103,19 +100,9 @@ export function useMemoryHorizonDistribution(studyWords: StudyWord[]): MemoryHor
     }
 
     const bins = EMPTY_BINS();
-    const bandCounts: Record<HorizonBandKey, number> = {
-      days: 0,
-      weeks: 0,
-      months: 0,
-      year: 0,
-    };
-
     for (const days of horizons) {
       const index = getHorizonBinIndex(days);
       bins[index] = (bins[index] ?? 0) + 1;
-
-      const band = getHorizonBand(days);
-      if (band) bandCounts[band] += 1;
     }
 
     // Median, not mean. FSRS stability is heavily right-skewed — a handful of
@@ -136,11 +123,7 @@ export function useMemoryHorizonDistribution(studyWords: StudyWord[]): MemoryHor
       bins,
       maxBinCount,
       wordsPerDot: getWordsPerDot(maxBinCount),
-      bands: HORIZON_BAND_KEYS.map(key => ({
-        key,
-        label: HORIZON_BAND_LABELS[key],
-        count: bandCounts[key],
-      })),
+      bands,
       medianDays,
       medianLabel: formatHorizon(medianDays),
       medianFraction: getHorizonFraction(medianDays),

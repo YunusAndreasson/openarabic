@@ -11,7 +11,7 @@
 
 import { describe, expect, test } from '@jest/globals';
 
-import { shuffleArray } from '@/utils/list';
+import { isOneOf, seededRandom, shuffleArray, tallyBands } from '@/utils/list';
 
 describe('list utilities', () => {
   describe('shuffleArray', () => {
@@ -60,6 +60,60 @@ describe('list utilities', () => {
       // With 10 elements, we should get many different permutations
       // This is a statistical test - it could theoretically fail but is very unlikely
       expect(results.size).toBeGreaterThan(10);
+    });
+
+    test('is reproducible under an injected random source', () => {
+      // Pinned against the three hand-written Fisher-Yates loops this replaced
+      // (the explore rails' seeded one among them): same sequence, same order.
+      const items = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+      expect(shuffleArray(items, seededRandom(42))).toEqual([0, 7, 3, 5, 2, 1, 8, 9, 4, 6]);
+      expect(shuffleArray(items, seededRandom(7)).slice(0, 3)).toEqual([6, 5, 8]);
+    });
+
+    test('swaps undefined members like any other', () => {
+      const random = () => 0; // always swap with index 0
+      expect(shuffleArray([undefined, 1, 2], random)).toEqual([1, 2, undefined]);
+    });
+  });
+
+  describe('seededRandom', () => {
+    test('yields the same sequence for the same seed', () => {
+      const a = seededRandom(1);
+      const b = seededRandom(1);
+      const first = [a(), a(), a()];
+      expect([b(), b(), b()]).toEqual(first);
+      expect(first[0]).toBeCloseTo(0.6270739405881613, 15);
+      first.forEach(value => {
+        expect(value).toBeGreaterThanOrEqual(0);
+        expect(value).toBeLessThan(1);
+      });
+    });
+  });
+
+  describe('isOneOf', () => {
+    const SCOPES = ['all', 'due'] as const;
+
+    test('is true only for members', () => {
+      expect(isOneOf(SCOPES, 'due')).toBe(true);
+      expect(isOneOf(SCOPES, 'Due')).toBe(false);
+      expect(isOneOf(SCOPES, '')).toBe(false);
+    });
+  });
+
+  describe('tallyBands', () => {
+    const KEYS = ['low', 'high'] as const;
+    const LABELS = { low: 'Low', high: 'High' };
+    const bandOf = (n: number) => (n < 0 ? null : n < 10 ? 'low' : 'high');
+
+    test('counts every band in key order, zeros included, and skips the unbanded', () => {
+      expect(tallyBands([12, 3, -1, 5], KEYS, LABELS, bandOf)).toEqual([
+        { key: 'low', label: 'Low', count: 2 },
+        { key: 'high', label: 'High', count: 1 },
+      ]);
+      expect(tallyBands([], KEYS, LABELS, bandOf)).toEqual([
+        { key: 'low', label: 'Low', count: 0 },
+        { key: 'high', label: 'High', count: 0 },
+      ]);
     });
   });
 });

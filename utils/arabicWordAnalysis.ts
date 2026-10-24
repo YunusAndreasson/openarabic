@@ -51,7 +51,7 @@ import * as Sentry from '@sentry/react-native';
 import { ARABIC_SUFFIXES, ComponentType, GrammaticalRole } from '@/constants/arabicWordComponents';
 import type { ColoredSegment } from '@/types/vocabulary.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
-import { resolveColorName } from '@/utils/colorResolution';
+import { resolveColorName, shouldApplyColorCoding } from '@/utils/colorResolution';
 
 // Import from sub-modules
 import {
@@ -84,11 +84,7 @@ import {
   type AnalyzedComponent,
   type WordAnalysis,
 } from './arabicAnalysis';
-import {
-  MIN_REMAINING_LENGTH,
-  OVERLAP_REJECTION,
-  WORD_COUNT,
-} from './arabicAnalysis/validationConstants';
+import { MIN_REMAINING_LENGTH, OVERLAP_REJECTION } from './arabicAnalysis/validationConstants';
 
 /** Subject pronouns that indicate verb conjugation, not suffix attachment */
 const SUBJECT_PRONOUN_SET = new Set(['he', 'she', 'it', 'i', 'we', 'you', 'they']);
@@ -113,23 +109,16 @@ const OBJECT_POSSESSIVE_SET = new Set([
 const REGEX_ESCAPE_RE = /[.*+?^${}()|[\]\\]/g;
 const escapeRegex = (s: string): string => s.replace(REGEX_ESCAPE_RE, '\\$&');
 
-/** Cached word-boundary regexes for English token matching. Keyed by lowercased token.
- *  English vocabulary in component triggers is small and bounded, so these caches stay tiny. */
+/** Cached word-boundary regexes for English token matching, keyed by flags and lowercased
+ *  token. English vocabulary in component triggers is small and bounded, so the cache stays tiny. */
 const TOKEN_BOUNDARY_REGEX_CACHE = new Map<string, RegExp>();
-const TOKEN_BOUNDARY_REGEX_GLOBAL_CACHE = new Map<string, RegExp>();
-function getTokenBoundaryRegex(token: string): RegExp {
-  let re = TOKEN_BOUNDARY_REGEX_CACHE.get(token);
+/** `'u'` to test for a token, `'gu'` to count its occurrences with `String.match`. */
+function tokenBoundaryRegex(token: string, flags: 'u' | 'gu'): RegExp {
+  const key = `${flags}:${token}`;
+  let re = TOKEN_BOUNDARY_REGEX_CACHE.get(key);
   if (!re) {
-    re = new RegExp(`(^|[^\\p{L}])${escapeRegex(token)}([^\\p{L}]|$)`, 'u');
-    TOKEN_BOUNDARY_REGEX_CACHE.set(token, re);
-  }
-  return re;
-}
-function getTokenBoundaryRegexGlobal(token: string): RegExp {
-  let re = TOKEN_BOUNDARY_REGEX_GLOBAL_CACHE.get(token);
-  if (!re) {
-    re = new RegExp(`(^|[^\\p{L}])${escapeRegex(token)}([^\\p{L}]|$)`, 'gu');
-    TOKEN_BOUNDARY_REGEX_GLOBAL_CACHE.set(token, re);
+    re = new RegExp(`(^|[^\\p{L}])${escapeRegex(token)}([^\\p{L}]|$)`, flags);
+    TOKEN_BOUNDARY_REGEX_CACHE.set(key, re);
   }
   return re;
 }
@@ -172,8 +161,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   // Component detection still uses normalizedEnglish (unexpanded) to match actual text structure.
   // colorCodedTextUtils.ts handles contraction matching via bidirectional mapping (CONTRACTION_EXPANSIONS).
   const expandedEnglish = expandContractions(normalizedEnglish);
-  const wordCount = expandedEnglish.trim().split(/\s+/).length;
-  if (wordCount === WORD_COUNT.SINGLE && !hasBracketInjection) {
+  if (!shouldApplyColorCoding(expandedEnglish) && !hasBracketInjection) {
     // Only skip analysis if single word AND no bracket injection
     // If bracket injection is needed, callers will add "[the]" making it multi-word
     //
@@ -232,10 +220,12 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
       });
     });
 
-    const suffixEnglishWords = suffix.englishMatches
-      .filter(match => !match.includes(' ')) // Only single-word patterns
-      .map(match => match.toLowerCase());
-    const overlappingWords = suffixEnglishWords.filter(word => prefixEnglishWords.has(word));
+    const suffixEnglishWords = new Set(
+      suffix.englishMatches
+        .filter(match => !match.includes(' ')) // Only single-word patterns
+        .map(match => match.toLowerCase()),
+    );
+    const overlappingWords = [...suffixEnglishWords.intersection(prefixEnglishWords)];
 
     if (overlappingWords.length > 0) {
       // If any overlapping word appears ≥2 times in the English translation, the
@@ -441,7 +431,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   // Use the expanded form so contractions like "don't" still allow matches on 'not'.
   const lowerEnglish = expandContractions(normalizedEnglish).toLowerCase();
   const englishContainsAnyMatch = (matches: readonly string[]) =>
-    matches.some(m => getTokenBoundaryRegex(m.toLowerCase()).test(lowerEnglish));
+    matches.some(m => tokenBoundaryRegex(m.toLowerCase(), 'u').test(lowerEnglish));
 
   const isVisible = (c: AnalyzedComponent | undefined): c is AnalyzedComponent =>
     !!c && c.englishMatches.length > 0 && englishContainsAnyMatch(c.englishMatches);
@@ -458,7 +448,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   // show ت + وا both colored in Arabic but only one "you" painted in English (asymmetric).
   // یَشُقُّهَا "it splits it open" stays whole because English has two "it"s.
   const countOccurrences = (token: string) =>
-    (lowerEnglish.match(getTokenBoundaryRegexGlobal(token)) ?? []).length;
+    (lowerEnglish.match(tokenBoundaryRegex(token, 'gu')) ?? []).length;
   const remainingOccurrences = new Map<string, number>();
   const ensureToken = (t: string) => {
     if (!remainingOccurrences.has(t)) remainingOccurrences.set(t, countOccurrences(t));
@@ -693,9 +683,7 @@ export function computeColoredSegments(
   // the number of English component sections. An inherited diacritic shares its
   // parent's color, so it doesn't add a new distinct color — just reinforces the same one.
   const defaultColors = new Set([colors.arabicText, colors.text]);
-  const distinctArabicColors = new Set(
-    segments.map(s => s.color).filter(c => !defaultColors.has(c)),
-  ).size;
+  const distinctArabicColors = new Set(segments.map(s => s.color)).difference(defaultColors).size;
   const englishComponentCount = formatted.sections.filter(s => s.type === 'components').length;
 
   if (distinctArabicColors !== englishComponentCount) {

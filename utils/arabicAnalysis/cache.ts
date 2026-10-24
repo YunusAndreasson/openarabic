@@ -1,5 +1,5 @@
 /**
- * LRU Cache management for Arabic word analysis
+ * FIFO cache management for Arabic word analysis
  */
 
 import { CACHE_SIZE_LIMIT } from './constants';

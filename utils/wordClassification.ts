@@ -2,7 +2,7 @@ import { State } from 'ts-fsrs';
 
 import { MASTERY_MIN_STABILITY } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { normalizeTimestamp } from '@/utils/dateTimeUtils';
+import { timestampMs } from '@/utils/dateTimeUtils';
 
 /**
  * Simple classification for "hard" words based on FSRS lapses.
@@ -34,8 +34,7 @@ export function countReviewedToday(studyWords: StudyWord[], now: Date = new Date
     // today" against a total of one actual review.
     if ((word.fsrs_reps ?? 0) <= 0) return false;
 
-    const lastStr = normalizeTimestamp(word.fsrs_last_review);
-    const lastMs = lastStr ? Date.parse(lastStr) : 0;
+    const lastMs = timestampMs(word.fsrs_last_review);
     return Number.isFinite(lastMs) && lastMs >= startMs;
   }).length;
 }
@@ -52,11 +51,12 @@ export function countReviewedToday(studyWords: StudyWord[], now: Date = new Date
  *   - `+Infinity` for a missing or unparseable one — never due, which is the
  *     safe direction: it withholds a review rather than inventing one.
  *
- * `normalizeTimestamp` is not optional here. Postgres renders a whole-hour UTC
- * offset as `+00` and a `timestamp without time zone` with no offset at all,
- * and a raw `Date.parse` reads the latter as DEVICE-LOCAL — shifting every due
- * check by the device's offset, silently, in whichever direction the learner
- * happens to be from UTC. See the note on `normalizeTimestamp` itself.
+ * `timestampMs` (which normalizes first) is not optional here. Postgres renders
+ * a whole-hour UTC offset as `+00` and a `timestamp without time zone` with no
+ * offset at all, and a raw `Date.parse` reads the latter as DEVICE-LOCAL —
+ * shifting every due check by the device's offset, silently, in whichever
+ * direction the learner happens to be from UTC. See the note on
+ * `normalizeTimestamp` itself.
  */
 export function dueTimestampMs(word: StudyWord): number {
   // A NULL state is deliberately NOT treated as New. The four call sites this
@@ -68,9 +68,7 @@ export function dueTimestampMs(word: StudyWord): number {
   // also the correct one, and the chart now agrees with the queue beside it.
   if (word.fsrs_state === State.New) return Number.NEGATIVE_INFINITY;
 
-  const dueStr = normalizeTimestamp(word.fsrs_due);
-  const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
-
+  const dueMs = timestampMs(word.fsrs_due);
   return Number.isFinite(dueMs) ? dueMs : Number.POSITIVE_INFINITY;
 }
 
@@ -111,8 +109,8 @@ export function isDueWord(word: StudyWord): boolean {
  *
  * Not a formality, and NOT a null check. A brand-new study word is written with
  * *placeholder* FSRS values rather than empty ones — `createInitialFSRSEntry`
- * stamps stability 0.4, difficulty 6.5, and `fsrs_last_review` set to the moment
- * it was saved (that column is NOT NULL). Read naively, those columns claim
+ * stamps `PLACEHOLDER_FSRS`, and `fsrs_last_review` set to the moment it was
+ * saved (that column is NOT NULL). Read naively, those columns claim
  * "moderately hard, holds for a day, last reviewed just now" about a word the
  * learner has never once been asked, and every surface that ranks or draws FSRS
  * state repeats the claim. Gate on this first.
@@ -128,9 +126,9 @@ export function hasBeenPractised(word: StudyWord): boolean {
  * Is this word mastered? Graduated to Review AND held for at least
  * MASTERY_MIN_STABILITY days.
  *
- * THE definition of "mastered" for the whole app — the dictionary badge, the
- * memory stage ladder, the server's category filter and the completion
- * screen's "mastered this session" count all resolve to this one rule. Both
+ * THE definition of "mastered" for the whole app — the dictionary badge and
+ * the memory stage ladder resolve to this one rule, and the completion
+ * screen's "mastered this session" count to its MASTERY_MIN_STABILITY bar. Both
  * halves are named so a surface cannot quietly adopt its own bar (a
  * `Strength: Strong` at stability >= 7 drifted away from it once already).
  */

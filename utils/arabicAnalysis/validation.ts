@@ -2,6 +2,8 @@
  * Validation helper functions for Arabic word analysis
  */
 
+import { isOneOf } from '@/utils/list';
+
 import { VALIDATION_CONFIG } from './constants';
 
 /** Set of weak letters for O(1) lookup in countConsonants */
@@ -36,8 +38,16 @@ export function hasSubstantialStructure(
  * Check if a pattern is a subject marker prefix (ي، ت، ن، أ)
  */
 export function isSubjectMarker(pattern: string): boolean {
-  return VALIDATION_CONFIG.SUBJECT_MARKERS.includes(
-    pattern as (typeof VALIDATION_CONFIG.SUBJECT_MARKERS)[number],
+  return isOneOf(VALIDATION_CONFIG.SUBJECT_MARKERS, pattern);
+}
+
+/**
+ * Check if a pattern is a future-tense (س، سوف) or negation (لا، لم، لن) prefix
+ */
+export function isFutureOrNegationPrefix(pattern: string): boolean {
+  return (
+    isOneOf(VALIDATION_CONFIG.FUTURE_TENSE_PREFIXES, pattern) ||
+    isOneOf(VALIDATION_CONFIG.NEGATION_PREFIXES, pattern)
   );
 }
 
@@ -45,18 +55,14 @@ export function isSubjectMarker(pattern: string): boolean {
  * Check if a pattern is a high-risk suffix requiring validation
  */
 export function isHighRiskSuffix(pattern: string): boolean {
-  return VALIDATION_CONFIG.HIGH_RISK_SUFFIXES.includes(
-    pattern as (typeof VALIDATION_CONFIG.HIGH_RISK_SUFFIXES)[number],
-  );
+  return isOneOf(VALIDATION_CONFIG.HIGH_RISK_SUFFIXES, pattern);
 }
 
 /**
  * Check if a pattern is a high-risk preposition requiring validation
  */
 export function isHighRiskPreposition(pattern: string): boolean {
-  return VALIDATION_CONFIG.HIGH_RISK_PREPOSITIONS.includes(
-    pattern as (typeof VALIDATION_CONFIG.HIGH_RISK_PREPOSITIONS)[number],
-  );
+  return isOneOf(VALIDATION_CONFIG.HIGH_RISK_PREPOSITIONS, pattern);
 }
 
 /**
@@ -67,9 +73,7 @@ export function isHighRiskPreposition(pattern: string): boolean {
  * - على → عليّ (upon me) should use عل form
  */
 export function isFormWithSuffixPattern(arabicMatch: string): boolean {
-  return VALIDATION_CONFIG.PREPOSITIONS_WITH_SUFFIXES.includes(
-    arabicMatch as (typeof VALIDATION_CONFIG.PREPOSITIONS_WITH_SUFFIXES)[number],
-  );
+  return isOneOf(VALIDATION_CONFIG.PREPOSITIONS_WITH_SUFFIXES, arabicMatch);
 }
 
 /** Pre-computed shortened preposition forms (على/علي → عل, لدى/لدي → لد, إلى/إلي → إل) */

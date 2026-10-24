@@ -13,8 +13,22 @@ export const FSRS_BASE_KEY = 'fsrs-words';
 
 export const MIN_WORD_SPACING = 3;
 
-// Default values and scaling
-export const DEFAULT_FSRS_DIFFICULTY = 6.5;
+/**
+ * The FSRS values a never-reviewed study word carries — placeholders, not
+ * measurements.
+ *
+ * The `study_words` FSRS columns are not left empty for a new word: it is
+ * written with these (see `createResetFSRSUpdate`), and a word whose progress
+ * is reset gets them back. Read naively they state a difficulty and a memory
+ * for a word the learner has never been asked, so every surface that ranks or
+ * draws FSRS state gates on `hasBeenPractised` first.
+ */
+export const PLACEHOLDER_FSRS = {
+  /** On FSRS's 1–10 scale; also what a card is built with when the column is NULL. */
+  difficulty: 6.5,
+  /** Days. */
+  stability: 0.4,
+} as const;
 
 export const CRITICAL_RETRIEVABILITY_THRESHOLD = 0.7;
 
@@ -25,12 +39,10 @@ export const UNSTABLE_DIFFICULTY_THRESHOLD = 7.5;
  * Stability (in days) at which a word counts as "mastered", paired with
  * ts-fsrs state Review — see `isMasteredWord`, the predicate that owns the rule.
  *
- * Named because the bare `5` had four independent homes: the client predicate,
- * BOTH halves of the server's category filter (mastered `>= 5` / learning
- * `< 5`, which have to stay exact complements or a word belongs to neither
- * category), and a private `MASTERY_THRESHOLD` inside useSessionMetrics that
- * decides whether the completion screen congratulates you for mastering a word.
- * Four copies of one number, three of them invisible from the others.
+ * Named because the bare `5` had independent homes: the client predicate, both
+ * halves of a server-side category filter since removed, and a private
+ * `MASTERY_THRESHOLD` inside useSessionMetrics that decides whether the
+ * completion screen congratulates you for mastering a word.
  */
 export const MASTERY_MIN_STABILITY = 5;
 

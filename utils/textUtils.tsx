@@ -30,12 +30,10 @@ export const parseTextWithEmails = (
 ): string | (string | ReactElement)[] => {
   const parts: (string | { email: string; key: string })[] = [];
   let lastIndex = 0;
-  let match;
 
-  // Reset regex state
-  EMAIL_REGEX.lastIndex = 0;
-
-  while ((match = EMAIL_REGEX.exec(text)) !== null) {
+  // `matchAll` iterates a copy of the regex, so the shared /g instance keeps no
+  // `lastIndex` state between calls.
+  for (const match of text.matchAll(EMAIL_REGEX)) {
     const emailMatch = match[1];
     if (!emailMatch) continue;
 

@@ -87,17 +87,22 @@ jest.mock('ts-fsrs', () => ({
     })),
   })),
   generatorParameters: jest.fn((..._args: unknown[]) => ({})),
-  createEmptyCard: jest.fn((..._args: unknown[]) => ({
-    stability: 0,
-    difficulty: 0,
-    due: new Date(),
-    last_review: null,
-    reps: 0,
-    lapses: 0,
-    state: 0,
-    elapsed_days: 0,
-    scheduled_days: 0,
-  })),
+  // Applies the optional afterHandler, as the real one does: convertToFSRSCard
+  // builds a stored card by overriding the empty one through it.
+  createEmptyCard: jest.fn((_now?: unknown, afterHandler?: (card: object) => unknown) => {
+    const card = {
+      stability: 0,
+      difficulty: 0,
+      due: new Date(),
+      last_review: null,
+      reps: 0,
+      lapses: 0,
+      state: 0,
+      elapsed_days: 0,
+      scheduled_days: 0,
+    };
+    return afterHandler ? afterHandler(card) : card;
+  }),
   Rating: {
     Again: 1,
     Hard: 2,

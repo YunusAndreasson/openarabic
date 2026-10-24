@@ -11,6 +11,7 @@ import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import { handleError } from '@/utils/errorHandling';
 import { createResetFSRSUpdate } from '@/utils/fsrsInitializers';
+import { managedRequest } from '@/utils/supabaseHelpers';
 
 interface UseResetWordProgressResult {
   /** Confirm with the user (destructive), then reset the word's FSRS progress. */
@@ -32,7 +33,14 @@ export function useResetWordProgress(): UseResetWordProgressResult {
   const { mutate, isPending } = useMutation({
     mutationFn: async (rootId: RootId) => {
       if (!user?.id) throw new Error(STRINGS.PLEASE_SIGN_IN_TO_ADD_WORDS);
-      return studyWordsFSRSService.updateWordAndReview(user.id, rootId, createResetFSRSUpdate());
+      // Managed: the mutation cache reports a failure once, after the last
+      // retry, instead of the service reporting every attempt.
+      return studyWordsFSRSService.updateWordAndReview(
+        user.id,
+        rootId,
+        createResetFSRSUpdate(),
+        managedRequest(),
+      );
     },
     onSuccess: () => {
       if (user?.id) {

@@ -13,12 +13,7 @@
  */
 
 import type { ThemeColors } from '@/types/ui/theme.types';
-import {
-  convertFlatPalette,
-  convertTextHierarchyPalette,
-  convertThemedPalette,
-  withAlpha,
-} from '@/utils/colorUtils';
+import { convertFlatPalette, convertNestedPalette, withAlpha } from '@/utils/colorUtils';
 
 // =============================================================================
 // OKLCH PALETTE DEFINITIONS (Reverse-engineered from existing hex colors)
@@ -363,7 +358,7 @@ const pure = {
   transparent: 'transparent',
 } as const;
 
-const grammar = convertThemedPalette(grammarOKLCH);
+const grammar = convertNestedPalette(grammarOKLCH);
 
 const autumn = {
   ...convertFlatPalette(autumnOKLCH),
@@ -372,7 +367,7 @@ const autumn = {
   semantic: convertFlatPalette(autumnSemanticOKLCH),
 } as const;
 
-const textHierarchy = convertTextHierarchyPalette(textHierarchyOKLCH);
+const textHierarchy = convertNestedPalette(textHierarchyOKLCH);
 
 // =============================================================================
 // BASE PALETTE - Public API
@@ -487,6 +482,32 @@ const createGrammarColors = (variant: 'light' | 'dark' | 'sepia') => ({
 });
 
 // =============================================================================
+// CARD OVERLAY FACTORY
+// =============================================================================
+
+/**
+ * The scrim over a card's image and the text laid on it, for one theme.
+ *
+ * The gradient (pre-computed for performance) darkens toward the bottom for
+ * text readability on images, ending on the card surface itself. The overlay
+ * text stays light in every theme because it always sits on that scrim.
+ *
+ * @param darkest - The scrim's hue, faded in from fully transparent
+ * @param dark - The solid colour the scrim ends on
+ * @param white - The theme's white, for the overlay text
+ */
+const createCardOverlay = (darkest: string, dark: string, white: string) => ({
+  cardGradient: [
+    withAlpha(darkest, 0),
+    withAlpha(darkest, opacity.medium),
+    withAlpha(darkest, opacity.modal),
+    dark,
+  ] as const,
+  cardOverlayHeading: white,
+  cardOverlayAuthor: withAlpha(white, opacity.shadow),
+});
+
+// =============================================================================
 // THEME COLOR DEFINITIONS (Unchanged structure from original)
 // =============================================================================
 
@@ -572,17 +593,8 @@ const lightColors: ThemeColors = {
   chartThreshold: basePalette.charts.ui.threshold,
   chartAccent: basePalette.chartAccent.light,
 
-  // Card gradients - pre-computed for performance (dark gradient for text readability on images)
-  cardGradient: [
-    withAlpha(basePalette.sage.darkest, 0),
-    withAlpha(basePalette.sage.darkest, opacity.medium),
-    withAlpha(basePalette.sage.darkest, opacity.modal),
-    basePalette.sage.dark,
-  ] as const,
-
-  // Card overlay text colors (always light for readability on gradient)
-  cardOverlayHeading: basePalette.pure.white,
-  cardOverlayAuthor: withAlpha(basePalette.pure.white, opacity.shadow),
+  // Card image scrim and the text laid on it
+  ...createCardOverlay(basePalette.sage.darkest, basePalette.sage.dark, basePalette.pure.white),
 
   // Utility colors
   modalIndicator: basePalette.forest.lighter,
@@ -676,17 +688,8 @@ const darkColors: ThemeColors = {
   chartThreshold: basePalette.charts.ui.thresholdDark,
   chartAccent: basePalette.chartAccent.dark,
 
-  // Card gradients - pre-computed for performance
-  cardGradient: [
-    withAlpha(basePalette.sage.darkest, 0),
-    withAlpha(basePalette.sage.darkest, opacity.medium),
-    withAlpha(basePalette.sage.darkest, opacity.modal),
-    basePalette.sage.dark,
-  ] as const,
-
-  // Card overlay text colors (always light for readability on gradient)
-  cardOverlayHeading: basePalette.pure.white,
-  cardOverlayAuthor: withAlpha(basePalette.pure.white, opacity.shadow),
+  // Card image scrim and the text laid on it
+  ...createCardOverlay(basePalette.sage.darkest, basePalette.sage.dark, basePalette.pure.white),
 
   // Utility colors
   modalIndicator: basePalette.forest.light,
@@ -787,17 +790,12 @@ const sepiaColors: ThemeColors = {
   chartThreshold: basePalette.charts.ui.thresholdSepia,
   chartAccent: basePalette.chartAccent.sepia,
 
-  // Card gradients - pre-computed for performance (dark gradient for text readability on images)
-  cardGradient: [
-    withAlpha(basePalette.autumn.darkest, 0),
-    withAlpha(basePalette.autumn.darkest, opacity.medium),
-    withAlpha(basePalette.autumn.darkest, opacity.modal),
+  // Card image scrim and the text laid on it
+  ...createCardOverlay(
+    basePalette.autumn.darkest,
     basePalette.autumn.dark,
-  ] as const,
-
-  // Card overlay text colors (always light for readability on gradient)
-  cardOverlayHeading: basePalette.sepiaPure.white,
-  cardOverlayAuthor: withAlpha(basePalette.sepiaPure.white, opacity.shadow),
+    basePalette.sepiaPure.white,
+  ),
 
   // Utility colors
   modalIndicator: basePalette.autumn.lighter,

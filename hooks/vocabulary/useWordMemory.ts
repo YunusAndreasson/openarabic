@@ -5,6 +5,7 @@ import { OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { MILLISECONDS_PER_DAY, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
+import { fillTemplate } from '@/utils/fillTemplate';
 import { convertToFSRSCard } from '@/utils/fsrsCard';
 import { FSRS_INSTANCE, calculateRetrievability } from '@/utils/fsrsUtils';
 import {
@@ -102,10 +103,10 @@ export function useWordMemory(word: StudyWord | undefined): WordMemory | null {
     const base: WordMemory = {
       stage,
       horizonDays,
-      summaryLabel: STRINGS.WORD_MEMORY_SUMMARY.replace(
-        '{stage}',
-        MEMORY_STAGE_LABELS[stage],
-      ).replace('{horizon}', formatHorizon(horizonDays)),
+      summaryLabel: fillTemplate(STRINGS.WORD_MEMORY_SUMMARY, {
+        stage: MEMORY_STAGE_LABELS[stage],
+        horizon: formatHorizon(horizonDays),
+      }),
       recallNow: null,
       nextHorizonLabel: nextHorizonLabelFor(word, now),
       reps: word.fsrs_reps ?? 0,
@@ -174,9 +175,8 @@ export function useWordMemory(word: StudyWord | undefined): WordMemory | null {
  */
 function nextHorizonLabelFor(word: StudyWord, now: Date): string | null {
   try {
-    const preview = FSRS_INSTANCE.repeat(convertToFSRSCard(word), now);
-    const stability = preview[Rating.Good]?.card.stability;
-    if (stability == null || !Number.isFinite(stability) || stability <= 0) return null;
+    const { stability } = FSRS_INSTANCE.next(convertToFSRSCard(word), now, Rating.Good).card;
+    if (!Number.isFinite(stability) || stability <= 0) return null;
     return formatHorizon(stability);
   } catch {
     return null;

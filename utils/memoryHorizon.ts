@@ -18,6 +18,9 @@ import { State } from 'ts-fsrs';
 import { OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { clamp01 } from '@/utils/dateTimeUtils';
+import { fillTemplate } from '@/utils/fillTemplate';
+import type { Band } from '@/utils/list';
 import { hasBeenPractised, isMasteredWord } from '@/utils/wordClassification';
 
 /**
@@ -93,8 +96,7 @@ export function getMemoryHorizonDays(word: StudyWord): number | null {
  */
 export function getHorizonFraction(days: number | null): number {
   if (days == null || !Number.isFinite(days) || days <= 0) return 0;
-  const fraction = Math.log1p(days) / Math.log1p(OPTIMIZED_FSRS_CONFIG.maximum_interval);
-  return Math.min(1, Math.max(0, fraction));
+  return clamp01(Math.log1p(days) / Math.log1p(OPTIMIZED_FSRS_CONFIG.maximum_interval));
 }
 
 /**
@@ -111,14 +113,14 @@ export function formatHorizon(days: number | null): string {
     const months = Math.round(days / DAYS_PER_MONTH);
     return months === 1
       ? STRINGS.WORD_HORIZON_MONTH_ONE
-      : STRINGS.WORD_HORIZON_MONTHS.replace('{count}', String(months));
+      : fillTemplate(STRINGS.WORD_HORIZON_MONTHS, { count: months });
   }
 
   if (days >= DAYS_PER_WEEK) {
     const weeks = Math.round(days / DAYS_PER_WEEK);
     return weeks === 1
       ? STRINGS.WORD_HORIZON_WEEK_ONE
-      : STRINGS.WORD_HORIZON_WEEKS.replace('{count}', String(weeks));
+      : fillTemplate(STRINGS.WORD_HORIZON_WEEKS, { count: weeks });
   }
 
   // Below a day still reads as "1 day" rather than "0 days" — the word holds for
@@ -126,7 +128,7 @@ export function formatHorizon(days: number | null): string {
   const wholeDays = Math.max(1, Math.round(days));
   return wholeDays === 1
     ? STRINGS.WORD_HORIZON_DAY_ONE
-    : STRINGS.WORD_HORIZON_DAYS.replace('{count}', String(wholeDays));
+    : fillTemplate(STRINGS.WORD_HORIZON_DAYS, { count: wholeDays });
 }
 
 /**
@@ -135,7 +137,7 @@ export function formatHorizon(days: number | null): string {
  */
 export function getHorizonAccessibilityLabel(days: number | null): string {
   if (days == null) return STRINGS.WORD_HORIZON_A11Y_NONE;
-  return STRINGS.WORD_HORIZON_A11Y.replace('{horizon}', formatHorizon(days));
+  return fillTemplate(STRINGS.WORD_HORIZON_A11Y, { horizon: formatHorizon(days) });
 }
 
 // ---------------------------------------------------------------------------
@@ -184,11 +186,7 @@ export const HORIZON_BAND_HINTS: Record<HorizonBandKey, string> = {
   year: STRINGS.HORIZON_BAND_HINT_YEAR,
 };
 
-export interface HorizonBand {
-  key: HorizonBandKey;
-  label: string;
-  count: number;
-}
+export type HorizonBand = Band<HorizonBandKey>;
 
 /**
  * Which band a WORD falls in, or `null` when it has no horizon yet.
@@ -220,10 +218,10 @@ export function getHorizonBandsAccessibilityLabel(bands: readonly HorizonBand[])
   return bands
     .filter(band => band.count > 0)
     .map(band =>
-      STRINGS.HORIZON_BAND_COUNT_A11Y.replace('{count}', String(band.count)).replace(
-        '{band}',
-        band.label.toLowerCase(),
-      ),
+      fillTemplate(STRINGS.HORIZON_BAND_COUNT_A11Y, {
+        count: band.count,
+        band: band.label.toLowerCase(),
+      }),
     )
     .join(', ');
 }

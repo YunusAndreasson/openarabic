@@ -98,17 +98,16 @@ describe('isLeechWord', () => {
     expect(isLeechWord(leech(1, LEECH_MIN_LAPSES, 7))).toBe(true);
   });
 
-  test('a caller-supplied minLapses overrides the default', () => {
-    expect(isLeechWord(leech(1, 2, 7), 3)).toBe(false);
-    expect(isLeechWord(leech(1, 4, 7), 3)).toBe(true);
-  });
-
   test('is safe to hand straight to Array.filter', () => {
-    // `filter` passes the index as a second argument, which lands on the
-    // `minLapses` parameter — at index 0 that would make every word a leech.
-    // Call sites must wrap it; this pins the failure mode so the reason is on
-    // record.
+    // `filter` passes the index as a second argument. When `isLeechWord` took
+    // an optional `minLapses` there, index 0 made every word a leech; it takes
+    // one argument now, so a bare reference is the correct call.
     const clean = createTestWord({ fsrs_state: State.Review, fsrs_reps: 5, fsrs_lapses: 0 });
-    expect([clean].filter(word => isLeechWord(word))).toEqual([]);
+    const onceForgotten = createTestWord({
+      fsrs_state: State.Review,
+      fsrs_reps: 5,
+      fsrs_lapses: 1,
+    });
+    expect([clean, onceForgotten].filter(isLeechWord)).toEqual([]);
   });
 });

@@ -18,6 +18,7 @@
 
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
+import type { Band } from '@/utils/list';
 
 /**
  * Ordered LEAST-practised first, with `none` last.
@@ -78,11 +79,7 @@ export const DEPTH_BAND_HINTS: Record<DepthBandKey, string> = {
   none: STRINGS.DEPTH_BAND_HINT_NONE,
 };
 
-export interface DepthBand {
-  key: DepthBandKey;
-  label: string;
-  count: number;
-}
+export type DepthBand = Band<DepthBandKey>;
 
 /**
  * Grades this word has been given.

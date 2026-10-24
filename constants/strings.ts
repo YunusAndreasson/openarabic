@@ -424,6 +424,8 @@ export const STRINGS = {
   RESUMED_READING_TEMPLATE: 'Resuming at {percent}%',
   // Article section headings (for progress-based sorting)
   CONTINUE_READING: 'Continue reading',
+  /** An article's estimated reading time, in its metadata line. */
+  READING_TIME_MINUTES: '{minutes} min',
   MORE_FROM_AUTHOR: 'More from {author}',
   MORE_FROM_CATEGORY: 'More in {category}',
   SOURCE_BOOK: 'Source: {book}',
@@ -1286,7 +1288,6 @@ export const STRINGS = {
   FAILED_TO_LOAD_BOOKMARKS: "Couldn't load playlist. " + tryAgain,
   FAILED_TO_ADD_TO_READING_LIST: "Couldn't add to playlist. " + tryAgain,
   FAILED_TO_REMOVE_FROM_READING_LIST: "Couldn't remove from playlist. " + tryAgain,
-  FAILED_TO_CHECK_READING_LIST_STATUS: "Couldn't check playlist. " + tryAgain,
   ERROR_UPDATING_STUDY_LIST: "Couldn't update practice list. " + tryAgain,
   FAILED_TO_LOAD_STUDY_WORDS: "Couldn't load practice words. " + tryAgain,
   FAILED_TO_UPDATE_WORD_AND_REVIEW: "Couldn't save review. " + tryAgain,
