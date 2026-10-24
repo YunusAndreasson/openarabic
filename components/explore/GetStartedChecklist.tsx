@@ -11,7 +11,8 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG, checkPopEntering, fadeInStyle } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ONBOARDING_CONFIG, OnboardingStep } from '@/constants/onboarding';
-import { getArticleRoute, ROUTE_PATHS } from '@/constants/routes';
+import { ROUTE_PATHS } from '@/constants/routes';
+import { getArticleRoute } from '@/utils/routeBuilders';
 import { STRINGS } from '@/constants/strings';
 import type { OnboardingChecklistState } from '@/hooks/onboarding/useOnboardingChecklist';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
@@ -125,7 +126,7 @@ const GetStartedChecklistComponent = ({
 
       const starter = pickStarterArticle(articlesData, progressMap);
       if (starter) {
-        router.push(getArticleRoute(starter.id, starter.title, true));
+        router.push(getArticleRoute(starter.id, { disableAutoScroll: true }));
       }
     },
     [articlesData, progressMap, router],

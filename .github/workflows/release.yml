@@ -51,6 +51,12 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      # The typed-routes declarations (app.json `typedRoutes`) live in
+      # .expo/types, which the dev server writes and git ignores. Without them
+      # every Href typechecks as a plain string and no route is checked.
+      - name: Generate typed routes
+        run: npx expo customize tsconfig.json
+
       - name: Run validation
         run: yarn verify
 

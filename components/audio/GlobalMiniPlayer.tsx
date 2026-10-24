@@ -59,7 +59,7 @@ export const GlobalMiniPlayer = memo(function GlobalMiniPlayer({
   // screen — another article's reader included — opens it.
   const isOnArticleReader = pathname === `${ARTICLE_ROUTE_PREFIX}${article.id}`;
   const handleOpenArticle = () => {
-    router.push(getArticleRoute(article.id as ArticleId, article.title));
+    router.push(getArticleRoute(article.id as ArticleId));
   };
 
   return (

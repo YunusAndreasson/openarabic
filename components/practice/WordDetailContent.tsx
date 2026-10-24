@@ -10,11 +10,11 @@ import {
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { DisclosureChevron, TransparentHeaderButton } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
-import { getPracticeWordRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useSavedWordDetail } from '@/hooks/vocabulary/useSavedWordDetail';
 import type { RootId } from '@/types/branded.types';
 import { getNextReviewLabel } from '@/utils/fsrsUtils';
+import { getPracticeWordRoute } from '@/utils/routeBuilders';
 import { dismissSheetThenNavigate } from '@/utils/sheetNavigation';
 
 import { WordFsrsStats } from './WordFsrsStats';

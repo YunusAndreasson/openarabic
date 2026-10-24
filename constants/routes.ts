@@ -6,11 +6,11 @@ export const ROUTE_PATHS = {
   AUTH_SIGN_UP: '/auth/sign-up',
   AUTH_TERMS: '/auth/terms',
   AUTH_PRIVACY: '/auth/privacy',
-  TABS: '/(tabs)',
   EXPLORE_TAB: '/(tabs)/explore',
   EXPLORE_SEARCH: '/(tabs)/explore/search',
+  /** The category list. Open it through `getCategoryFilterRoute`. */
+  EXPLORE_FILTER: '/(tabs)/explore/filter',
   PRACTICE_TAB: '/(tabs)/practice',
-  PLAYLIST_TAB: '/(tabs)/playlist',
   ACCOUNT: '/(tabs)/account',
   ACCOUNT_HELP: '/(tabs)/account/help',
   ACCOUNT_FONT_SELECTOR: '/(tabs)/account/FontSelector',
@@ -22,6 +22,12 @@ export const ROUTE_PATHS = {
   LEGAL: '/(tabs)/account/legal',
 
   PRACTICE_DICTIONARY: '/(tabs)/practice/dictionary',
+  /**
+   * Word detail. Lives inside the practice stack (not at the root) so it pushes
+   * within the dictionary's modal instead of presenting behind it. Open it
+   * through `getPracticeWordRoute`.
+   */
+  PRACTICE_WORD: '/(tabs)/practice/word',
   PRACTICE_DUE_WORDS: '/due-words',
   PRACTICE_MEMORY_RETENTION: '/memory-retention',
   PRACTICE_REVIEW_DEPTH: '/review-depth',
@@ -35,7 +41,15 @@ export const ROUTE_PATHS = {
   WORD_DETAIL: '/word-detail',
 
   SLEEP_TIMER: '/sleep-timer',
+
+  /** The article reader, root-level so it presents over any tab. Open it through `getArticleRoute`. */
+  ARTICLE: '/article/[id]',
+  /** The review session, root-level for the same reason. */
+  REVIEW: '/review',
 } as const;
+
+/** What `usePathname` starts with while the article reader is showing. */
+export const ARTICLE_ROUTE_PREFIX = '/article/';
 
 type SheetDetents = NonNullable<NativeStackNavigationOptions['sheetAllowedDetents']>;
 
@@ -75,13 +89,3 @@ export const SHEET_ROUTES = {
 export const SHEET_ROUTE_PATHS: ReadonlySet<string> = new Set(
   Object.keys(SHEET_ROUTES).map(name => `/${name}`),
 );
-
-// Re-export route builders for backward compatibility
-export {
-  ARTICLE_ROUTE_PREFIX,
-  getArticleRoute,
-  getCategoryFilterRoute,
-  getPracticeReviewRoute,
-  getPracticeWordRoute,
-  getWordDetailRoute,
-} from '@/utils/routeBuilders';

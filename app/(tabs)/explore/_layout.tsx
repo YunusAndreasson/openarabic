@@ -11,13 +11,17 @@ import type { FilterParams } from '@/types/navigation.types';
 import { getCategoryDisplayName } from '@/utils/stringUtils';
 
 /**
- * Get display title for filter screen based on route params
+ * Get display title for filter screen based on route params.
+ *
+ * `name` arrives decoded — the router decodes the query string when it parses
+ * the URL. Decoding it a second time threw a URIError on any name with a
+ * literal `%` in it.
  */
 function getFilterTitle(params: FilterParams | undefined): string {
   const name = params?.name;
 
   if (name) {
-    return getCategoryDisplayName(decodeURIComponent(name));
+    return getCategoryDisplayName(name);
   }
 
   return STRINGS.CATEGORY;

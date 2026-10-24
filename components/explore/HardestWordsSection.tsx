@@ -4,7 +4,8 @@ import type { JSX } from 'react';
 
 import { SectionLabel } from '@/components/common';
 import { rootEnrichmentQueries } from '@/constants/queries';
-import { getWordDetailRoute, ROUTE_PATHS } from '@/constants/routes';
+import { ROUTE_PATHS } from '@/constants/routes';
+import { getWordDetailRoute } from '@/utils/routeBuilders';
 import { STRINGS } from '@/constants/strings';
 import { useWordsToRevisit } from '@/hooks/vocabulary/useWordsToRevisit';
 import type { StudyWord } from '@/types/vocabulary.types';

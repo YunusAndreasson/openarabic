@@ -39,6 +39,7 @@
 import { Platform } from 'react-native';
 
 import type * as NotificationsModule from 'expo-notifications';
+import type { Href } from 'expo-router';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { Colors } from '@/constants/colors';
@@ -121,7 +122,7 @@ let lastRoutedNotificationKey: string | null = null;
  */
 export function handleNotificationResponse(
   response: NotificationsModule.NotificationResponse,
-  navigate: ((path: string) => void) | null,
+  navigate: ((href: Href) => void) | null,
   { coldStart = false }: { coldStart?: boolean } = {},
 ): boolean {
   if (!Notifications || !navigate) return false;
@@ -157,7 +158,7 @@ export function handleNotificationResponse(
  * module-level navigation callback the root layout had to set and clear in
  * separate effects.
  */
-export function observeNotificationResponses(navigate: (path: string) => void): () => void {
+export function observeNotificationResponses(navigate: (href: Href) => void): () => void {
   if (!Notifications) return () => undefined;
 
   try {

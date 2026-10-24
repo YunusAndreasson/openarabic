@@ -55,14 +55,14 @@ describe('sheetNavigation', () => {
 
   describe('dismissSheetThenNavigate', () => {
     test('pops the sheet immediately and navigates only once it has gone', () => {
-      dismissSheetThenNavigate('/target');
+      dismissSheetThenNavigate('/review');
 
       expect(mockRouter.back).toHaveBeenCalledTimes(1);
       expect(mockRouter.push).not.toHaveBeenCalled();
 
       jest.runOnlyPendingTimers();
 
-      expect(mockRouter.push).toHaveBeenCalledWith('/target');
+      expect(mockRouter.push).toHaveBeenCalledWith('/review');
     });
   });
 
@@ -94,7 +94,7 @@ describe('sheetNavigation', () => {
 
   describe('the shared queue', () => {
     test('flushing is idempotent — both the listener and the timer call it', () => {
-      dismissSheetThenNavigate('/target');
+      dismissSheetThenNavigate('/review');
 
       flushPendingSheetNavigation();
       jest.runOnlyPendingTimers();
@@ -110,13 +110,13 @@ describe('sheetNavigation', () => {
     });
 
     test('a second request replaces the pending one instead of queuing two', () => {
-      dismissSheetThenNavigate('/first');
-      dismissAllThenNavigate('/second');
+      dismissSheetThenNavigate('/due-words');
+      dismissAllThenNavigate('/study-streak');
 
       jest.runOnlyPendingTimers();
 
       expect(mockRouter.push).toHaveBeenCalledTimes(1);
-      expect(mockRouter.push).toHaveBeenCalledWith('/second');
+      expect(mockRouter.push).toHaveBeenCalledWith('/study-streak');
     });
   });
 });

@@ -8,7 +8,7 @@ import type { FilterParams } from '@/types/navigation.types';
 
 import { FilteredArticleView } from '@/components/explore';
 import { articleQueries } from '@/constants/queries';
-import { getArticleRoute } from '@/constants/routes';
+import { getArticleRoute } from '@/utils/routeBuilders';
 import { STRINGS } from '@/constants/strings';
 
 export default function FilterScreen(): JSX.Element {
@@ -30,7 +30,7 @@ export default function FilterScreen(): JSX.Element {
 
   // Stable identity: FilteredArticleView's renderItem depends on this callback
   const handleArticlePress = useCallback((article: Article) => {
-    router.push(getArticleRoute(article.id, article.title));
+    router.push(getArticleRoute(article.id));
   }, []);
 
   // Both states stand in for a list that does not exist yet. Gated on

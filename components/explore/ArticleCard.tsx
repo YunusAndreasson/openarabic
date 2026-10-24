@@ -7,7 +7,7 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { GOLDEN_RATIO, LAYOUT, LINE_HEIGHT_MULTIPLIERS, TEXT_STYLES } from '@/constants/layout';
-import { getArticleRoute } from '@/constants/routes';
+import { getArticleRoute } from '@/utils/routeBuilders';
 import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
@@ -108,7 +108,7 @@ export function ArticleCard({
   const metadataText = getArticleMetadata(article);
 
   // Generate article route - featured articles start from beginning
-  const articleHref = getArticleRoute(article.id, article.title, isFeaturedArticle);
+  const articleHref = getArticleRoute(article.id, { disableAutoScroll: isFeaturedArticle });
 
   const handlePress = useCallback(() => {
     router.push(articleHref);

@@ -98,7 +98,9 @@ describe('GetStartedChecklist', () => {
     fireEvent.press(getByText('Read your first text'));
 
     expect(mockPush).toHaveBeenCalledTimes(1);
-    expect(String(mockPush.mock.calls[0]?.[0])).toContain('/article/7');
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ params: expect.objectContaining({ id: 7 }) }),
+    );
   });
 
   it('puts the card away from the close glyph in its header, without opening anything', () => {

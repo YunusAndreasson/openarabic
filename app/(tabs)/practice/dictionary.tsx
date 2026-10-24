@@ -21,7 +21,6 @@ import type { SettingsPickerOption } from '@/components/ui/SettingsPicker';
 import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { rootEnrichmentQueries } from '@/constants/queries';
-import { getPracticeWordRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
@@ -32,6 +31,7 @@ import { isDictionaryScope, isNarrowScope } from '@/hooks/vocabulary/useDictiona
 import type { DictionaryScope, PickerScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
+import { getPracticeWordRoute } from '@/utils/routeBuilders';
 import { formatWordCount } from '@/utils/wordCountText';
 
 /** What an empty scope says. `all` is unreachable here — it has its own CTA state. */

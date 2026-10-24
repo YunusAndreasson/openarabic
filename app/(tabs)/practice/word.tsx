@@ -150,7 +150,7 @@ export default function PracticeWordScreen(): JSX.Element {
     // `dismissAllThenNavigate`, not `push`: this screen sits inside the
     // dictionary's modal and the reader is itself a root-level modal, so the
     // stack has to be emptied before the reader can present.
-    dismissAllThenNavigate(getArticleRoute(article.id, article.title, true, sentenceId));
+    dismissAllThenNavigate(getArticleRoute(article.id, { disableAutoScroll: true, sentenceId }));
   };
 
   return (

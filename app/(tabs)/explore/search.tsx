@@ -7,11 +7,11 @@ import type { SearchBarCommands } from 'react-native-screens';
 import { SearchResultList } from '@/components/explore';
 import { ThemedView } from '@/components/primitives/ThemedView';
 import { LAYOUT } from '@/constants/layout';
-import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useArticleSearch } from '@/hooks/articles/useArticleSearch';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
+import { getArticleRoute } from '@/utils/routeBuilders';
 
 /**
  * Typed so `transitionEnd` is visible: it is a native-stack event, and the bare
@@ -85,7 +85,7 @@ export default function SearchScreen(): JSX.Element {
    */
   const handleArticlePress = useCallback((article: Article) => {
     searchBarRef.current?.blur();
-    router.push(getArticleRoute(article.id, article.title));
+    router.push(getArticleRoute(article.id));
   }, []);
 
   return (
