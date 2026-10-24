@@ -378,6 +378,7 @@ export const createAudioStatusMock = (overrides: Partial<AudioStatus> = {}): Aud
   reasonForWaitingToPlay: '',
   didJustFinish: false,
   error: null,
+  queue: null,
   ...overrides,
 });
 

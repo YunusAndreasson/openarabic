@@ -14,7 +14,6 @@ import {
 import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
-import type { ArticleId } from '@/types/branded.types';
 import {
   filterArticlesContainingRoots,
   getBeginnerArticles,
@@ -47,7 +46,6 @@ const startupFeaturedKey = () => featuredQueries.selection('global', 0).queryKey
 interface AppPreloaderResult {
   isLoaded: boolean;
   preloadAppData: () => Promise<void>;
-  prefetchArticle: (articleId: ArticleId) => Promise<boolean>;
   prefetchVocabularyData: () => Promise<boolean>;
   prefetchFeaturedArticles: () => Promise<boolean>;
 }
@@ -345,18 +343,6 @@ export const useAppPreloader = (): AppPreloaderResult => {
     }
   }, [preloadCriticalData]);
 
-  const prefetchArticle = useCallback(
-    async (articleId: ArticleId) => {
-      try {
-        await queryClient.query(articleQueries.detail(articleId));
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [queryClient],
-  );
-
   const prefetchVocabularyData = useCallback(async () => {
     if (!user?.id) return false;
 
@@ -380,7 +366,6 @@ export const useAppPreloader = (): AppPreloaderResult => {
   return {
     isLoaded,
     preloadAppData,
-    prefetchArticle,
     prefetchVocabularyData,
     prefetchFeaturedArticles,
   };

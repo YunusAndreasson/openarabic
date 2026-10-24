@@ -66,15 +66,6 @@ jest.mock('@/components/providers', () => ({
   }),
 }));
 
-jest.mock('@/hooks/audio/useAudioSubscription', () => ({
-  useAudioSubscription: () => ({
-    status: {
-      playing: false,
-      isLoading: false,
-      currentTrack: null,
-    },
-  }),
-}));
 jest.mock('@/services/audioPlayer', () => ({
   simpleAudioService: {
     stop: jest.fn(),

@@ -19,7 +19,7 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsTabBarHidden } from '@/hooks/ui/useTabBarAutoHide';
 import { updateMiniPlayerHeight } from '@/hooks/audio/useMiniPlayerHeight';
-import { withAlpha } from '@/utils/colorUtils';
+import { mixColors } from '@/utils/colorUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { formatAuthorCategory } from '@/utils/stringUtils';
@@ -76,6 +76,9 @@ export interface MiniPlayerProps {
 // Layout constants
 const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER;
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT;
+
+// How much tint goes into the quiet control fill.
+const QUIET_CONTROL_TINT = 0.12;
 
 function handleMiniPlayerLayout(event: LayoutChangeEvent): void {
   updateMiniPlayerHeight(event.nativeEvent.layout.height);
@@ -141,7 +144,13 @@ const MiniPlayerComponent = ({
 
   // A running timer is a setting that is on, not a warning: it fills with the
   // tint rather than the warning colour.
-  const quietButtonColor = withAlpha(colors.tint, 0.12);
+  //
+  // The quiet fill is mixed into elevation2, the card surface these controls
+  // sit on, rather than laid on as alpha. An alpha fill composites over
+  // whatever happens to be behind it — over the near-black dark page a
+  // low-alpha tint collapses to near-black — while the mix is the same colour
+  // resolved up front, opaque, wherever the control ends up.
+  const quietButtonColor = mixColors(colors.elevation2, colors.tint, QUIET_CONTROL_TINT);
   const timerButtonColor = isTimerActive ? colors.tint : quietButtonColor;
   const timerIconColor = isTimerActive ? colors.onTint : colors.tint;
   const containerStyle = useMemo(

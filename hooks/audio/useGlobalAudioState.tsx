@@ -1,22 +1,29 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { createContext, use, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
+import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
-import { useAudioProgressSubscription } from '@/hooks/audio/useAudioSubscription';
-import { isArticleAudioActive, isArticleAudioPaused } from '@/hooks/audio/articleAudioStatus';
-import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
+import {
+  audioQueuePosition,
+  currentAudioTrack,
+  isArticleAudioActive,
+  isArticleAudioPaused,
+  isAudioEnded,
+  isAudioLoading,
+  isAudioPlaying,
+  wholeSecondsDuration,
+  wholeSecondsPosition,
+} from '@/hooks/audio/articleAudioStatus';
+import { useAudioSelector } from '@/hooks/audio/useAudioSelector';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { usePlaylistScreen } from '@/hooks/playlist/usePlaylistScreen';
-import { simpleAudioService } from '@/services/audioPlayer';
-import type { Article } from '@/types/articles.types';
-import type { BookmarkItem } from '@/types/bookmark.types';
-import { handleError } from '@/utils/errorHandling';
-import { successFeedback } from '@/utils/haptics';
 import { useTimerCleanup } from '@/hooks/utils/useTimerCleanup';
+import { simpleAudioService } from '@/services/audioPlayer';
+import type { EnhancedAudioTrack } from '@/types/audio.types';
+import { createRequiredContext } from '@/utils/createRequiredContext';
+import { successFeedback } from '@/utils/haptics';
 
 // MiniPlayer-compatible article interface
 interface MiniPlayerArticle {
@@ -65,6 +72,58 @@ export interface AudioProgress {
   duration: number;
 }
 
+/** A single article — or anything else played outside a queue — is 1 of 1. */
+const SINGLE_TRACK_POSITION = { current: 1, total: 1 };
+
+/**
+ * The article track the MiniPlayer describes.
+ *
+ * FLICKER FIX: while a clip that is not an article (a word preview, a review
+ * prompt) loads or plays over it, the last article track is held instead of
+ * blanked, so the player does not flash empty on its way out. Only once nothing
+ * is playing or loading — a real stop — is it let go.
+ *
+ * Held in state, not a ref, so it can be read during render: the update below
+ * is the documented "store information from previous renders" pattern, and it
+ * settles in one extra render because a held track is always one the service
+ * itself published (a stable reference).
+ */
+function useHeldArticleTrack(
+  track: EnhancedAudioTrack | null,
+  busy: boolean,
+): EnhancedAudioTrack | null {
+  const [held, setHeld] = useState<EnhancedAudioTrack | null>(null);
+  const articleTrack = track?.articleId !== undefined ? track : null;
+  const shown = articleTrack ?? (busy ? held : null);
+  if (shown !== held) setHeld(shown);
+  return shown;
+}
+
+/**
+ * The MiniPlayer's view of a track's article, from whatever is already cached
+ * and the track's own metadata — never a fetch.
+ */
+function describeArticle(
+  track: EnhancedAudioTrack,
+  articleId: number,
+  queryClient: QueryClient,
+  userId: string | undefined,
+): MiniPlayerArticle {
+  const cachedArticle = queryClient.getQueryData(articleQueries.detail(track.articleId).queryKey);
+  const readingList = userId
+    ? queryClient.getQueryData(readingProgressQueries.readingList(userId).queryKey)
+    : undefined;
+  const readingListArticle = readingList?.find(i => i.article_id === articleId)?.articles;
+
+  return {
+    id: articleId,
+    title: cachedArticle?.title || track.title,
+    author: cachedArticle?.author.name || readingListArticle?.author.name || track.artist || '',
+    category: cachedArticle?.category.name || readingListArticle?.category.name || '',
+    image_url: cachedArticle?.image_url || readingListArticle?.image_url || track.imageUrl || '',
+  };
+}
+
 /**
  * Internal hook — owns the actual audio/sleep-timer state. Must be invoked
  * exactly once per app via `GlobalAudioStateProvider`. Components consume
@@ -75,16 +134,21 @@ export interface AudioProgress {
  */
 function useGlobalAudioStateInternal(): GlobalAudioState {
   const { user } = useAuth();
-  const audioPlayer = useSimpleAudioPlayer();
-  const { preconfigureAudioSession, stop: stopAudio } = audioPlayer;
   const queryClient = useQueryClient();
 
-  // Get reading list for queue tracking
-  const { sortedEnhancedTracks } = usePlaylistScreen();
+  // Each reading is a primitive or a reference the service published, so the
+  // provider re-renders only when one of them actually changes.
+  const playing = useAudioSelector(isAudioPlaying);
+  const isLoading = useAudioSelector(isAudioLoading);
+  const currentTrack = useAudioSelector(currentAudioTrack);
+  const playbackEnded = useAudioSelector(isAudioEnded);
+  const queue = useAudioSelector(audioQueuePosition);
 
   const { setTimer, clearTimer } = useTimerCleanup();
 
-  // Sleep timer integration
+  // Sleep timer integration. The completion callback closes over nothing that
+  // changes between renders, so it keeps its identity — and with it the
+  // timer's own handlers and its AppState listener.
   const sleepTimer = useSleepTimer(() => {
     successFeedback(); // Haptic feedback when timer completes
 
@@ -96,7 +160,7 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
     // below would find it not playing and leave it loaded, so a resume much
     // later would carry on past the timer. The timer ran out: end the session.
     if (isArticleAudioPaused(simpleAudioService.getStatus())) {
-      void stopAudio();
+      void simpleAudioService.stop();
       return;
     }
 
@@ -125,7 +189,7 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
           status.currentTrack?.id === trackAtExpiry &&
           isArticleAudioActive(status)
         ) {
-          void stopAudio();
+          void simpleAudioService.stop();
         }
       },
       30000,
@@ -139,20 +203,17 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
   // cancelling there meant the timer was silently gone when playback resumed,
   // so a "15 minutes" playlist played on all night. Playlist mode never
   // publishes 'ended' between tracks; the guard keeps it that way.
-  const { currentTrack } = audioPlayer;
-  const playbackEnded = audioPlayer.status?.playbackState === 'ended';
   useEffect(() => {
     if (!sleepTimer.state.isActive) return;
-    // Playlist mode guards BOTH arms. A track that fails to load publishes "no
+    // The queue guards BOTH arms. A track that fails to load publishes "no
     // current track" while the queue heals or skips it, and reading that as
     // the end of the session cancelled the timer on a playlist that then
-    // carried on. A stop or a finished queue leaves playlist mode first.
-    const sessionOver =
-      !simpleAudioService.getPlaylistInfo().isPlaylistMode && (!currentTrack || playbackEnded);
+    // carried on. A stop or a finished queue leaves the queue first.
+    const sessionOver = queue === null && (!currentTrack || playbackEnded);
     if (sessionOver) {
       sleepTimer.actions.cancelTimer();
     }
-  }, [currentTrack, playbackEnded, sleepTimer.state.isActive, sleepTimer.actions]);
+  }, [queue, currentTrack, playbackEnded, sleepTimer.state.isActive, sleepTimer.actions]);
 
   // A new timer supersedes the previous one's pending force-stop.
   const sleepEndTime = sleepTimer.state.endTime;
@@ -160,145 +221,22 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
     if (sleepEndTime > 0) clearTimer('forceStop');
   }, [sleepEndTime, clearTimer]);
 
-  // Get current article ID from audio player
-  const currentArticleId = audioPlayer.currentTrack?.articleId ?? null;
+  const articleTrack = useHeldArticleTrack(currentTrack, playing || isLoading);
+  const userId = user?.id;
 
-  // Avoid refetching current article here; rely on cache and track metadata for mini-player
+  // Action handlers. Each keeps its identity for the life of the provider, so
+  // the context value below changes only with the state it carries.
 
-  // Calculate queue position
-  const queuePosition = useMemo(() => {
-    if (!currentArticleId || sortedEnhancedTracks.length <= 1) {
-      return { current: 1, total: 1 };
-    }
-
-    const currentIndex = sortedEnhancedTracks.findIndex(
-      track => track.articleId === currentArticleId,
-    );
-
-    if (currentIndex === -1) {
-      return { current: 1, total: 1 }; // Single article not in playlist
-    }
-
-    return {
-      current: currentIndex + 1,
-      total: sortedEnhancedTracks.length,
-    };
-  }, [currentArticleId, sortedEnhancedTracks]);
-
-  // PLAYLIST SUPPORT: Get playlist information from the audio service
-  const playlistInfo = useMemo(() => {
-    // Recompute when playback state or current track changes so indices stay accurate
-    return simpleAudioService.getPlaylistInfo();
-  }, [audioPlayer.currentTrack?.id, audioPlayer.playing, audioPlayer.isLoading]);
-
-  // Enhanced queue position that considers actual playlist state
-  const enhancedQueuePosition = useMemo(() => {
-    if (playlistInfo.isPlaylistMode) {
-      return {
-        current: playlistInfo.currentIndex + 1,
-        total: playlistInfo.totalTracks,
-      };
-    }
-    return queuePosition;
-  }, [playlistInfo, queuePosition]);
-
-  // FLICKER FIX: Store last valid article to prevent null flashing during rapid state changes
-  const lastValidArticleRef = useRef<MiniPlayerArticle | null>(null);
-
-  // Format current article for mini-player with cache fallbacks (no waiting for fetch).
-  // Anti-flicker design: ref is read AND latched during this memo so the MiniPlayer doesn't show
-  // a blank state during transitions. Lifting to state would cause extra renders that defeat
-  // the latch (we'd reset to null between renders before the next data arrived).
-  // eslint-disable-next-line react-hooks/refs
-  const currentArticle = useMemo(() => {
-    if (!currentArticleId) {
-      // Only clear if we're truly stopping (not just transitioning states)
-      if (!audioPlayer.playing && !audioPlayer.isLoading) {
-        lastValidArticleRef.current = null;
-      }
-      return lastValidArticleRef.current;
-    }
-
-    const cachedArticle = queryClient.getQueryData<Article>(['article', currentArticleId]) ?? null;
-    const readingList = user?.id
-      ? (queryClient.getQueryData<BookmarkItem[]>(['readingList', user.id]) ?? null)
-      : null;
-    const readingListArticle =
-      readingList?.find(i => i.article_id === currentArticleId)?.articles ?? null;
-
-    const title = cachedArticle?.title || audioPlayer.currentTrack?.title || '';
-    const author = cachedArticle?.author.name || readingListArticle?.author.name || '';
-    const category = cachedArticle?.category.name || readingListArticle?.category.name || '';
-    const imageUrl =
-      cachedArticle?.image_url ||
-      readingListArticle?.image_url ||
-      audioPlayer.currentTrack?.imageUrl ||
-      '';
-
-    if (title || imageUrl) {
-      const article = {
-        id: currentArticleId,
-        title,
-        author,
-        category,
-        image_url: imageUrl,
-      };
-      lastValidArticleRef.current = article;
-      return article;
-    }
-
-    // Last resort: metadata-only fallback while loading
-    if (audioPlayer.currentTrack?.title && (audioPlayer.playing || audioPlayer.isLoading)) {
-      const article = {
-        id: currentArticleId,
-        title: audioPlayer.currentTrack.title,
-        author: 'Loading',
-        category: '',
-        image_url: '',
-      };
-      lastValidArticleRef.current = article;
-      return article;
-    }
-
-    // FLICKER FIX: Return last valid article instead of null during transitions
-    return lastValidArticleRef.current;
-  }, [
-    currentArticleId,
-    queryClient,
-    user?.id,
-    audioPlayer.currentTrack?.title,
-    audioPlayer.currentTrack?.imageUrl,
-    audioPlayer.playing,
-    audioPlayer.isLoading,
-  ]);
-
-  // Action handlers. Both are useCallback for the reason the `state` memo below
-  // gives: this hook is a compiler bail-out, and the context value must keep
-  // its identity between transport changes.
-
-  // Pause or resume the loaded article track in place. "Playing" includes a
-  // track still buffering, because that is what the button shows as Pause.
+  // Pause or resume the loaded article track in place. The service handles
+  // and reports its own failures.
   const handleTogglePause = useCallback(() => {
-    const status = simpleAudioService.getStatus();
-    const isLoading = !status.isLoaded || status.isBuffering;
-    try {
-      if (status.playing || isLoading) {
-        simpleAudioService.pause();
-        return;
-      }
-    } catch (error) {
-      void handleError(error, { toastMessage: STRINGS.AUDIO_PAUSE_FAILED });
-      return;
-    }
-    simpleAudioService.resume().catch((error: unknown) => {
-      void handleError(error, { toastMessage: STRINGS.AUDIO_RESUME_FAILED });
-    });
+    void simpleAudioService.togglePause();
   }, []);
 
   // Stops playback and clears the queue, which hides the MiniPlayer.
   const handleStop = useCallback(() => {
-    void stopAudio();
-  }, [stopAudio]);
+    void simpleAudioService.stop();
+  }, []);
 
   const handleTimerPress = useCallback(() => {
     router.push(ROUTE_PATHS.SLEEP_TIMER);
@@ -317,23 +255,33 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
   }, [sleepTimer.actions]);
 
   const handlePreconfigureAudioSession = useCallback(async () => {
-    await preconfigureAudioSession();
-  }, [preconfigureAudioSession]);
+    await simpleAudioService.preconfigureAudioSession();
+  }, []);
 
-  // Explicit useMemo rather than relying on React Compiler: the ref latch in
-  // the currentArticle memo makes this hook a compiler bail-out candidate, and
-  // a context value must not change identity on every 500ms position tick.
+  // A context value must not change identity on every 500ms position tick.
   const state = useMemo<GlobalAudioState>(
     () => ({
-      playing: audioPlayer.playing,
-      audioState: audioPlayer.playing
+      playing,
+      audioState: playing
         ? AUDIO_STATES.PLAYING
-        : audioPlayer.isLoading
+        : isLoading
           ? AUDIO_STATES.LOADING
           : AUDIO_STATES.IDLE,
-      isLoading: audioPlayer.isLoading,
-      currentArticle,
-      queuePosition: enhancedQueuePosition,
+      isLoading,
+      // Format current article for mini-player with cache fallbacks (no
+      // waiting for fetch). Re-read on every transport change, so an article
+      // or reading list that reached the cache after playback started is
+      // picked up.
+      currentArticle:
+        articleTrack?.articleId !== undefined
+          ? describeArticle(articleTrack, articleTrack.articleId, queryClient, userId)
+          : null,
+      // The queue position comes from the service, which knows whether this is
+      // a queue at all. Matching the track against the reading list instead
+      // put a single article played from the reader at its list position.
+      queuePosition: queue
+        ? { current: queue.index + 1, total: queue.total }
+        : SINGLE_TRACK_POSITION,
       isTimerActive: sleepTimer.state.isActive,
       sleepTimerEndTime: sleepTimer.state.endTime,
       onTogglePause: handleTogglePause,
@@ -344,10 +292,12 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
       preconfigureAudioSession: handlePreconfigureAudioSession,
     }),
     [
-      audioPlayer.playing,
-      audioPlayer.isLoading,
-      currentArticle,
-      enhancedQueuePosition,
+      playing,
+      isLoading,
+      articleTrack,
+      queryClient,
+      userId,
+      queue,
       sleepTimer.state.isActive,
       sleepTimer.state.endTime,
       handleTogglePause,
@@ -362,8 +312,16 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
   return state;
 }
 
-const GlobalAudioStateContext = createContext<GlobalAudioState | null>(null);
-const AudioProgressContext = createContext<AudioProgress | null>(null);
+const [GlobalAudioStateContext, useGlobalAudioState] = createRequiredContext<GlobalAudioState>(
+  'GlobalAudioStateContext',
+  'useGlobalAudioState must be used within GlobalAudioStateProvider',
+);
+const [AudioProgressContext, useAudioProgress] = createRequiredContext<AudioProgress>(
+  'AudioProgressContext',
+  'useAudioProgress must be used within GlobalAudioStateProvider',
+);
+
+export { useAudioProgress, useGlobalAudioState };
 
 /**
  * The playback clock, isolated in its own tiny component.
@@ -372,14 +330,17 @@ const AudioProgressContext = createContext<AudioProgress | null>(null);
  * deliberately a leaf: position ticks re-render this component and nothing
  * else, because `children` arrives as a prop and React bails out of
  * re-rendering an unchanged element. Merging it back into
- * `GlobalAudioStateProvider` would put the whole app-root hook body — reading
- * list queries, queue position, article lookups — back on the tick, which
- * during a review prompt means ten times a second.
+ * `GlobalAudioStateProvider` would put the whole app-root hook body — article
+ * lookups, sleep timer, queue position — back on the tick, which during a
+ * review prompt means ten times a second.
+ *
+ * Whole seconds: the MiniPlayer clock renders whole seconds, so a sub-second
+ * change is filtered here and never becomes a React commit — not for every
+ * native 500 ms status event, nor every 100 ms review event.
  */
 function AudioProgressProvider({ children }: { children: ReactNode }) {
-  const { status } = useAudioProgressSubscription();
-  const position = status.currentTime;
-  const duration = status.duration;
+  const position = useAudioSelector(wholeSecondsPosition, { position: true });
+  const duration = useAudioSelector(wholeSecondsDuration, { position: true });
   const progress = useMemo<AudioProgress>(() => ({ position, duration }), [position, duration]);
   return <AudioProgressContext value={progress}>{children}</AudioProgressContext>;
 }
@@ -391,20 +352,4 @@ export function GlobalAudioStateProvider({ children }: { children: ReactNode }) 
       <AudioProgressProvider>{children}</AudioProgressProvider>
     </GlobalAudioStateContext>
   );
-}
-
-export function useGlobalAudioState(): GlobalAudioState {
-  const ctx = use(GlobalAudioStateContext);
-  if (!ctx) {
-    throw new Error('useGlobalAudioState must be used within GlobalAudioStateProvider');
-  }
-  return ctx;
-}
-
-export function useAudioProgress(): AudioProgress {
-  const ctx = use(AudioProgressContext);
-  if (!ctx) {
-    throw new Error('useAudioProgress must be used within GlobalAudioStateProvider');
-  }
-  return ctx;
 }

@@ -10,8 +10,8 @@ jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
 }));
 
-jest.mock('@/hooks/app/useAppPreloader', () => ({
-  useAppPreloader: () => ({ prefetchArticle: mockPrefetchArticle }),
+jest.mock('@/hooks/articles/useArticlePrefetch', () => ({
+  useArticlePrefetch: () => mockPrefetchArticle,
 }));
 
 jest.mock('@/utils/haptics', () => ({

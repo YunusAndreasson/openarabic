@@ -7,10 +7,12 @@ import {
   setIsAudioActiveAsync,
   type AudioPlayer,
   type AudioPlayerOptions,
+  type AudioStatus as NativeAudioStatus,
 } from 'expo-audio';
 import { AppState, Platform } from 'react-native';
 
 import { STRINGS } from '@/constants/strings';
+import { isAudioLoading } from '@/hooks/audio/articleAudioStatus';
 import { audioCache } from '@/services/audioCache';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
@@ -89,6 +91,23 @@ class PlayerCreationError extends Error {
   }
 }
 
+/**
+ * The native player reported that the source itself failed to load — a corrupt
+ * cached file, a 404, an unsupported stream. Both platforms publish this as
+ * `status.error` (iOS on AVPlayerItem `.failed`, Android on onPlayerError).
+ *
+ * It is the same verdict as a ready timeout — a bad source, not a bad session —
+ * and handled the same way, but it is known the moment it happens. Waiting for
+ * the timeout instead held a dead source for the full 4/5/20 s before the cache
+ * invalidate-and-retry could even start.
+ */
+class SourceLoadError extends Error {
+  constructor(nativeMessage: string) {
+    super(`Audio source failed to load: ${nativeMessage}`);
+    this.name = 'SourceLoadError';
+  }
+}
+
 // How often the native player emits a status update. 500 ms is right for the
 // listening surfaces (a progress bar cannot use more), but it also bounds how
 // quickly `didJustFinish` can be observed — and the review screen gates the
@@ -123,19 +142,54 @@ const AUDIO_MODE_CONFIG = {
   shouldRouteThroughEarpiece: false,
 };
 
-// Reset audio status constant for consistent state clearing
+// The player-reported fields of an idle player. Every status shape this
+// service publishes — the initial one, a reset, a track starting to load — is
+// this plus what differs, so the three can no longer drift apart field by field.
 const RESET_AUDIO_STATUS = {
   playing: false,
   currentTime: 0,
   duration: 0,
   isLoaded: false,
   isBuffering: false,
-  playbackState: 'idle' as const,
-  timeControlStatus: 'paused' as const,
+  playbackState: 'idle',
+  timeControlStatus: 'paused',
   reasonForWaitingToPlay: '',
   didJustFinish: false,
   error: null,
+} as const satisfies NativeStatusFields;
+
+const INITIAL_STATUS: AudioStatus = { ...RESET_AUDIO_STATUS, currentTrack: null, queue: null };
+
+/**
+ * The native status as it actually arrives. expo-audio types
+ * `reasonForWaitingToPlay` as a string, but Android always sends null for it.
+ */
+type NativeStatusAsSent = Omit<NativeAudioStatus, 'reasonForWaitingToPlay'> & {
+  reasonForWaitingToPlay: string | null;
 };
+
+/** Seconds from native, which reports NaN/Infinity during a seek or a source swap. */
+function finiteSeconds(seconds: number): number {
+  return Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+}
+
+/** A native status update, as this service publishes it. */
+function toStatus(native: NativeStatusAsSent): NativeStatusFields {
+  return {
+    playing: native.playing,
+    currentTime: finiteSeconds(native.currentTime),
+    duration: finiteSeconds(native.duration),
+    isLoaded: native.isLoaded,
+    isBuffering: native.isBuffering,
+    playbackState: native.playbackState,
+    timeControlStatus: native.timeControlStatus,
+    reasonForWaitingToPlay: native.reasonForWaitingToPlay ?? '',
+    didJustFinish: native.didJustFinish,
+    // Published by expo-audio and previously discarded: a real reason the
+    // source failed, instead of inferring one from a ready timeout.
+    error: native.error,
+  };
+}
 
 /**
  * The fields that describe what the player is DOING, as opposed to where the
@@ -158,6 +212,9 @@ const TRANSPORT_KEYS = [
   'reasonForWaitingToPlay',
   'didJustFinish',
   'error',
+  // Compared by reference: the object is only replaced when the position in
+  // the queue actually changes (see queuePosition).
+  'queue',
 ] as const satisfies readonly (keyof AudioStatus)[];
 
 /** Per-subscription options for {@link SimpleAudioService.subscribe}. */
@@ -238,6 +295,13 @@ class SimpleAudioService {
   // instead of tearing down the newer call's live playback.
   private playGeneration = 0;
 
+  // PLAYBACK INTENT: whether the listener currently wants sound. play(),
+  // playPlaylist() and resume() set it; pause() and stop() clear it. A play
+  // waits for its source to load before it can start the native player, and a
+  // pause in that window used to be silently overridden by the deferred
+  // player.play() — so every deferred native play checks this first.
+  private wantsPlayback = false;
+
   // PLAYLIST SUPPORT: Add playlist state management
   private playlist: SourceTrackedAudioTrack[] = [];
   private currentPlaylistIndex = 0;
@@ -266,21 +330,9 @@ class SimpleAudioService {
   // APP STATE SUPPORT: Track app state for background audio handling
   private appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
 
-  // Current audio status — mirrors expo-audio's native AudioStatus shape
-  // (see https://docs.expo.dev/versions/v55.0.0/sdk/audio) plus currentTrack.
-  private status: AudioStatus = {
-    playing: false,
-    currentTime: 0,
-    duration: 0,
-    currentTrack: null,
-    isLoaded: false,
-    isBuffering: false,
-    playbackState: 'idle',
-    timeControlStatus: 'paused',
-    reasonForWaitingToPlay: '',
-    didJustFinish: false,
-    error: null,
-  };
+  // Current audio status — expo-audio's native AudioStatus fields plus
+  // currentTrack and queue (see AudioStatus).
+  private status: AudioStatus = INITIAL_STATUS;
 
   /**
    * Reset all status fields to default values
@@ -304,6 +356,22 @@ class SimpleAudioService {
     this.initialPlaylistLength = 0;
     this.consecutivePlaylistFailures = 0;
     this.resetSleepTimerExpired();
+    // The queue is part of the published status; a reset with nothing else
+    // to publish must still take it off screen.
+    if (this.status.queue !== null) this.updateStatus({});
+  }
+
+  /**
+   * Where the current track sits in the queue, or null outside one. Returns
+   * the published object itself while nothing about it has changed, so the
+   * reference only moves when the position does (see TRANSPORT_KEYS).
+   */
+  private queuePosition(): AudioQueuePosition | null {
+    if (!this.isPlaylistMode) return null;
+    const index = this.currentPlaylistIndex;
+    const total = this.playlist.length;
+    const published = this.status.queue;
+    return published?.index === index && published.total === total ? published : { index, total };
   }
 
   /**
@@ -375,8 +443,11 @@ class SimpleAudioService {
 
       await setAudioModeAsync(this.currentAudioMode());
 
-      // Set up AppState listener for background audio handling
-      this.setupAppStateListener();
+      // Set up the AppState listener for background audio handling — once.
+      // This method runs again on every return to the foreground, from inside
+      // that very listener, and re-registering there swapped the listener out
+      // in the middle of its own dispatch.
+      if (!this.appStateSubscription) this.setupAppStateListener();
 
       this.audioSessionConfigured = true;
     } catch (sessionError) {
@@ -464,11 +535,6 @@ class SimpleAudioService {
    * Set up AppState listener for background audio handling
    */
   private setupAppStateListener(): void {
-    // Remove existing listener if any
-    if (this.appStateSubscription) {
-      this.appStateSubscription.remove();
-    }
-
     this.appStateSubscription = AppState.addEventListener('change', nextAppState => {
       void (async () => {
         try {
@@ -557,6 +623,10 @@ class SimpleAudioService {
    * play() while we wait, the poll/timeout stop touching the (possibly
    * removed) player and the promise resolves quietly — the caller re-checks
    * its generation right after this await and aborts.
+   *
+   * Rejects with a SourceLoadError the moment the native player reports
+   * `status.error`, rather than sitting out the timeout on a source that has
+   * already failed.
    */
   private async waitForPlayerReady(
     generation: number,
@@ -590,83 +660,68 @@ class SimpleAudioService {
     // source on any slow network.
     const READY_TIMEOUT_MS = overrideTimeoutMs ?? (isRemoteSource ? 20000 : 5000);
 
-    return new Promise<void>((resolve, reject) => {
-      let settled = false;
+    const { promise, resolve, reject } = Promise.withResolvers<undefined>();
+    let settled = false;
+    const isSuperseded = (): boolean => generation !== this.playGeneration;
 
-      // Only this call's OWN resources are cleaned up here (timeout, poll,
-      // ready subscription). remove() is wrapped because the subscription may
-      // belong to a player a newer play() has already released.
-      const cleanup = (): void => {
-        clearTimeout(timeout);
-        clearInterval(poll);
-        try {
-          readySubscription.remove();
-        } catch {
-          // Player already released — nothing left to unsubscribe
-        }
-      };
+    // The one way out. Ready and superseded both resolve — a superseded caller
+    // re-checks its generation right after this await and aborts before
+    // touching the (newer) player — and only a failure of THIS call's source
+    // rejects. Only this call's OWN resources are cleaned up here (timeout,
+    // poll, ready subscription). remove() is wrapped because the subscription
+    // may belong to a player a newer play() has already released.
+    const settle = (failure?: Error): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      clearInterval(poll);
+      try {
+        readySubscription.remove();
+      } catch {
+        // Player already released — nothing left to unsubscribe
+      }
+      if (failure && !isSuperseded()) {
+        reject(failure);
+      } else {
+        resolve(undefined);
+      }
+    };
 
-      const resolveReady = (): void => {
-        if (settled) return;
-        settled = true;
-        cleanup();
-        resolve();
-      };
+    const timeout = setTimeout(() => {
+      settle(new Error(PLAYER_READY_TIMEOUT_MESSAGE));
+    }, READY_TIMEOUT_MS);
 
-      // Superseded by a newer play()/stop(): resolve quietly — the caller
-      // re-checks its generation after this await and aborts before touching
-      // the (newer) player.
-      const resolveSuperseded = (): void => {
-        if (settled) return;
-        settled = true;
-        cleanup();
-        resolve();
-      };
+    // Poll isLoaded so we resolve the moment the freshly-created player finishes
+    // loading, even when its initial "loaded" status event is never emitted
+    // (a known race for a new AudioPlayer on a cached/local source). Without
+    // this the event-only wait intermittently sits out the full 5s timeout,
+    // delaying first playback — and, in Practice, the mic arming / "Listening…".
+    // Generation-guarded: once superseded the poll stops instead of reading
+    // a removed player.
+    //
+    // One frame rather than 50 ms: review audio is preloaded into native
+    // memory before the session starts, so the load it is waiting on resolves
+    // almost immediately and the interval was rounding that up to as much as
+    // 50 ms on every prompt and every revealed answer. The poll only lives
+    // for the duration of the load, so a tighter tick costs a handful of
+    // extra `isLoaded` reads and nothing else.
+    const poll = setInterval(() => {
+      if (isSuperseded() || isLoadedSafe()) settle();
+    }, READY_POLL_INTERVAL_MS);
 
-      const timeout = setTimeout(() => {
-        if (settled) return;
-        if (generation !== this.playGeneration) {
-          resolveSuperseded();
-          return;
-        }
-        settled = true;
-        cleanup();
-        reject(new Error(PLAYER_READY_TIMEOUT_MESSAGE));
-      }, READY_TIMEOUT_MS);
-
-      const readySubscription = player.addListener(
-        PLAYBACK_STATUS_UPDATE,
-        (status: { isLoaded?: boolean; playbackState?: string }) => {
-          if (status.isLoaded === true || status.playbackState === 'ready') resolveReady();
-        },
-      );
-
-      // Poll isLoaded so we resolve the moment the freshly-created player finishes
-      // loading, even when its initial "loaded" status event is never emitted
-      // (a known race for a new AudioPlayer on a cached/local source). Without
-      // this the event-only wait intermittently sits out the full 5s timeout,
-      // delaying first playback — and, in Practice, the mic arming / "Listening…".
-      // Generation-guarded: once superseded the poll stops instead of reading
-      // a removed player.
-      //
-      // One frame rather than 50 ms: review audio is preloaded into native
-      // memory before the session starts, so the load it is waiting on resolves
-      // almost immediately and the interval was rounding that up to as much as
-      // 50 ms on every prompt and every revealed answer. The poll only lives
-      // for the duration of the load, so a tighter tick costs a handful of
-      // extra `isLoaded` reads and nothing else.
-      const poll = setInterval(() => {
-        if (generation !== this.playGeneration) {
-          resolveSuperseded();
-          return;
-        }
-        if (isLoadedSafe()) resolveReady();
-      }, READY_POLL_INTERVAL_MS);
-
-      // Close the race where loading completed between the check above and the
-      // listener/poll being attached.
-      if (isLoadedSafe()) resolveReady();
+    const readySubscription = player.addListener(PLAYBACK_STATUS_UPDATE, status => {
+      if (status.error) {
+        settle(new SourceLoadError(status.error));
+      } else if (status.isLoaded || status.playbackState === 'ready') {
+        settle();
+      }
     });
+
+    // Close the race where loading completed between the check above and the
+    // listener/poll being attached.
+    if (isLoadedSafe()) settle();
+
+    return promise;
   }
 
   /**
@@ -684,20 +739,9 @@ class SimpleAudioService {
     updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS,
     keepAudioSessionActive = false,
   ): AudioPlayer {
-    if (this.currentPlayer) {
-      try {
-        this.currentPlayer.pause();
-      } catch {
-        // Ignore pause errors
-      }
-      try {
-        this.currentPlayer.remove();
-      } catch {
-        // Ignore remove errors
-      }
-      this.currentPlayer = null;
-      this.lockScreenActive = false;
-    }
+    // The lock-screen entry is not cleared here — only a real stop does that
+    // (stopInternal). Between tracks the next player takes it over.
+    this.disposeCurrentPlayer();
 
     const playerOptions: AudioPlayerOptions = {
       updateInterval: updateIntervalMs,
@@ -720,6 +764,7 @@ class SimpleAudioService {
    * @param options - Playback options for optimization
    */
   async play(track: EnhancedAudioTrack, options: AudioPlayOptions = {}): Promise<boolean> {
+    this.wantsPlayback = true;
     // Superseded plays report false too — the caller's attempt did not play,
     // but the newer call that superseded it owns any error handling.
     return (await this.playCore(track, options)) === 'success';
@@ -798,16 +843,9 @@ class SimpleAudioService {
       // FLICKER FIX: Skip loading state for playlist starts (audio is cached, loads instantly)
       if (!options.skipLoadingState) {
         this.updateStatus({
-          playing: false,
+          ...RESET_AUDIO_STATUS,
           currentTrack: this.currentTrack,
-          currentTime: 0,
-          duration: 0,
-          isLoaded: false,
           isBuffering: true,
-          playbackState: 'idle',
-          timeControlStatus: 'paused',
-          reasonForWaitingToPlay: '',
-          didJustFinish: false,
         });
       }
 
@@ -833,6 +871,23 @@ class SimpleAudioService {
         // A newer play()/stop() already disposed our player via
         // createFreshPlayer/stopInternal — nothing of ours is left to clean.
         return 'superseded';
+      }
+
+      if (!this.wantsPlayback) {
+        // Paused while the source loaded (the MiniPlayer shows Pause for a
+        // loading track). Starting the player now would override that pause, so
+        // the track is published loaded and holding still instead — resume()
+        // starts it from here. Published explicitly: the native "loaded" event
+        // is not guaranteed (see waitForPlayerReady), and without it the status
+        // would still read as loading.
+        this.updateStatus({
+          playing: false,
+          currentTrack: this.currentTrack,
+          isLoaded: true,
+          isBuffering: false,
+        });
+        this.preloadNextTrack();
+        return 'success';
       }
 
       // A synchronous throw here (e.g. a session conflict) is a real failure
@@ -890,27 +945,23 @@ class SimpleAudioService {
 
       // Destroy player on error so retry gets a fresh one
       if (this.currentPlayer) {
-        try {
-          this.currentPlayer.pause();
-          this.currentPlayer.remove();
-        } catch {
-          // Ignore cleanup errors
-        }
-        this.currentPlayer = null;
+        this.disposeCurrentPlayer();
         this.currentTrack = null;
       }
       this.stopEventSubscription();
 
       // CRITICAL FIX: Try to recover from audio session corruption (only on first
-      // attempt). Skipped for ready timeouts — those are a source problem
-      // (corrupt file / dead URL), and replaying the same source would just burn
-      // another 5s to fail again; the caller's cache-invalidate retry handles it.
-      const isReadyTimeout =
-        error instanceof Error && error.message === PLAYER_READY_TIMEOUT_MESSAGE;
+      // attempt). Skipped for a source that failed to load — a ready timeout or
+      // a native load error: those are a source problem (corrupt file / dead
+      // URL), and replaying the same source would just burn another 5s to fail
+      // again; the caller's cache-invalidate retry handles it.
+      const isSourceFailure =
+        error instanceof SourceLoadError ||
+        (error instanceof Error && error.message === PLAYER_READY_TIMEOUT_MESSAGE);
       // Terminal for this device: resetting the session only hands the retry
       // the same constructor that just rejected.
       const isUnplayable = error instanceof PlayerCreationError;
-      if (!options.isRetry && !isReadyTimeout && !isUnplayable) {
+      if (!options.isRetry && !isSourceFailure && !isUnplayable) {
         try {
           await this.resetAudioSession();
           if (isSuperseded()) {
@@ -930,15 +981,15 @@ class SimpleAudioService {
         }
       }
 
-      // No toast for ready timeouts: the self-healing lanes — review
+      // No toast for a failed source: the self-healing lanes — review
       // (useReview.playAudio) and playlist (playPlaylistTrack) — invalidate
       // the cached file and retry on failure, and toasting before that
       // resolves would flash an error over audio that is about to work.
       // Single-shot callers without self-heal fail quietly too; the playlist
       // lane surfaces exactly one toast itself if it ultimately stops.
       void handleError(error, {
-        showToast: !isReadyTimeout,
-        toastMessage: 'Failed to start audio playback',
+        showToast: !isSourceFailure,
+        toastMessage: STRINGS.AUDIO_PLAY_FAILED,
       });
       return isUnplayable ? 'unplayable' : 'failure';
     }
@@ -955,6 +1006,7 @@ class SimpleAudioService {
       return false;
     }
 
+    this.wantsPlayback = true;
     try {
       this.playlistGeneration++;
       this.playlist = [...tracks];
@@ -1002,13 +1054,7 @@ class SimpleAudioService {
       }
       return outcome === 'success';
     } catch (error) {
-      this.isPlaylistMode = false;
-      this.playlist = [];
-      this.currentPlaylistIndex = 0;
-      this.onPlaylistTrackComplete = null;
-      this.initialPlaylistLength = 0;
-      this.consecutivePlaylistFailures = 0;
-      this.resetSleepTimerExpired();
+      this.resetPlaylistState();
       throw error;
     }
   }
@@ -1230,12 +1276,18 @@ class SimpleAudioService {
   }
 
   /**
-   * Stop playback
+   * Stop playback and drop the queue.
+   *
+   * Same contract as play(): never rejects. A failure is reported here, once,
+   * and the call resolves `false` — so a caller that fires and forgets (the
+   * MiniPlayer, sign-out, a sleep timer) cannot be left with an unhandled
+   * rejection or have its own flow aborted by one.
    */
-  async stop(): Promise<void> {
+  async stop(): Promise<boolean> {
     // GENERATION GUARD: invalidate any in-flight play() so it aborts silently
     // instead of resurrecting player/status state after this stop.
     this.playGeneration++;
+    this.wantsPlayback = false;
     try {
       // IMMEDIATE FEEDBACK: Update status immediately when stop is called
       this.updateStatus({ playing: false });
@@ -1246,11 +1298,17 @@ class SimpleAudioService {
       await this.stopInternal();
       // RESET: Clear all progress and track data when stopping
       this.resetStatus();
+      return true;
     } catch (stopError) {
       // RESET: Even on error, ensure all progress is cleared
       this.resetStatus();
-      // Re-throw to make the error visible
-      throw new Error(`Failed to stop audio playback: ${toError(stopError).message}`);
+      void handleError(
+        new Error(`Failed to stop audio playback: ${toError(stopError).message}`, {
+          cause: stopError,
+        }),
+        { toastMessage: STRINGS.AUDIO_STOP_FAILED },
+      );
+      return false;
     }
   }
 
@@ -1282,14 +1340,28 @@ class SimpleAudioService {
    * Android's listener on every play-state change), and that same native update
    * is what refreshes the lock-screen entry — so the app, the lock screen and
    * the headphone buttons all read one source instead of two that can race.
+   *
+   * Also holds a track that is still loading: the play waiting on it sees the
+   * pause and does not start the player (see wantsPlayback).
+   *
+   * Never throws: a failure is reported here, and the result says whether the
+   * track is now held — the same contract as play().
    */
-  pause(): void {
+  pause(): boolean {
     const player = this.currentPlayer;
-    if (!player || this.currentTrack?.articleId === undefined) return;
+    if (!player || this.currentTrack?.articleId === undefined) return false;
+    this.wantsPlayback = false;
     try {
       player.pause();
+      return true;
     } catch (pauseError) {
-      throw new Error(`Failed to pause audio playback: ${toError(pauseError).message}`);
+      void handleError(
+        new Error(`Failed to pause audio playback: ${toError(pauseError).message}`, {
+          cause: pauseError,
+        }),
+        { toastMessage: STRINGS.AUDIO_PAUSE_FAILED },
+      );
+      return false;
     }
   }
 
@@ -1306,12 +1378,16 @@ class SimpleAudioService {
    * owns the player), or a stop()/play() that superseded this call while the
    * session was activating. Like pause(), it lets the native status report the
    * new `playing` state.
+   *
+   * Never rejects: a failure is reported here and resolves `false`, like play().
    */
   async resume(): Promise<boolean> {
     const player = this.currentPlayer;
-    if (!player || this.currentTrack?.articleId === undefined) return false;
+    const track = this.currentTrack;
+    if (!player || track?.articleId === undefined) return false;
     if (this.status.playbackState === 'ended' || this.isAdvancingTrack) return false;
 
+    this.wantsPlayback = true;
     const generation = this.playGeneration;
     try {
       await this.safeActivateAudioSession({
@@ -1323,11 +1399,39 @@ class SimpleAudioService {
       // configured flag; this re-applies the category before playing again.
       await this.configureAudioSession();
       if (generation !== this.playGeneration || player !== this.currentPlayer) return false;
+      // Paused again while the session was activating. TypeScript still sees
+      // the `true` assigned above; pause() can clear it during the awaits.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!this.wantsPlayback) return false;
       player.play();
+      // A queue track paused while it loaded was never started, so it never
+      // took the lock screen (that happens after the first play — see
+      // playCore). Without it Android stops the backgrounded playback.
+      if (this.isPlaylistMode && !this.lockScreenActive) {
+        this.activateLockScreen(track);
+      }
       return true;
     } catch (resumeError) {
-      throw new Error(`Failed to resume audio playback: ${toError(resumeError).message}`);
+      void handleError(
+        new Error(`Failed to resume audio playback: ${toError(resumeError).message}`, {
+          cause: resumeError,
+        }),
+        { toastMessage: STRINGS.AUDIO_RESUME_FAILED },
+      );
+      return false;
     }
+  }
+
+  /**
+   * Pause the loaded article track, or resume it from where it stopped.
+   * "Playing" includes a track still loading, because that is what the
+   * MiniPlayer shows as Pause. Resolves whether the toggle took effect; never
+   * rejects.
+   */
+  async togglePause(): Promise<boolean> {
+    const { status } = this;
+    if (status.playing || isAudioLoading(status)) return this.pause();
+    return this.resume();
   }
 
   /**
@@ -1426,23 +1530,11 @@ class SimpleAudioService {
     // Subscribe to native playback status updates
     this.eventSubscription = this.currentPlayer.addListener(
       PLAYBACK_STATUS_UPDATE,
-      (nativeStatus: {
-        playing?: boolean;
-        currentTime?: number;
-        duration?: number;
-        isLoaded?: boolean;
-        isBuffering?: boolean;
-        playbackState?: string;
-        timeControlStatus?: string;
-        reasonForWaitingToPlay?: string;
-        didJustFinish?: boolean;
-        error?: string | null;
-        mediaServicesDidReset?: boolean;
-      }) => {
+      nativeStatus => {
         try {
-          const currentTime = nativeStatus.currentTime ?? 0;
-          const duration = nativeStatus.duration ?? 0;
-          const didJustFinish = nativeStatus.didJustFinish ?? false;
+          // Guards NaN/Infinity from native — observed during seek/replace.
+          const status = toStatus(nativeStatus);
+          const { didJustFinish } = status;
 
           // iOS only: the system media daemon crashed and took the audio
           // session with it. expo-audio reloads the source itself, but our
@@ -1456,10 +1548,6 @@ class SimpleAudioService {
               mark('player.mediaServicesDidReset');
             }
           }
-
-          // Guard against NaN/Infinity from native — observed during seek/replace.
-          const safeCurrentTime = Number.isFinite(currentTime) ? Math.max(0, currentTime) : 0;
-          const safeDuration = Number.isFinite(duration) ? Math.max(0, duration) : 0;
 
           // PLAYLIST SUPPORT: Use native didJustFinish for track completion
           if (this.isPlaylistMode && didJustFinish) {
@@ -1497,36 +1585,19 @@ class SimpleAudioService {
             // Single track has finished playing, reset status but keep player for potential replay
             this.stopEventSubscription();
             this.updateStatus({
+              ...status,
               playing: false,
-              currentTime: safeDuration,
-              duration: safeDuration,
-              isLoaded: nativeStatus.isLoaded ?? false,
+              currentTime: status.duration,
               isBuffering: false,
               playbackState: 'ended',
-              timeControlStatus: nativeStatus.timeControlStatus ?? 'paused',
-              reasonForWaitingToPlay: nativeStatus.reasonForWaitingToPlay ?? '',
-              didJustFinish: true,
-              error: nativeStatus.error ?? null,
             });
             return;
           }
 
-          // Native updateInterval (500ms) caps emission rate; the hook layer dedupes
-          // identical values via setState(prev => prev). No JS throttle needed here.
-          this.updateStatus({
-            playing: nativeStatus.playing ?? false,
-            currentTime: safeCurrentTime,
-            duration: safeDuration,
-            isLoaded: nativeStatus.isLoaded ?? false,
-            isBuffering: nativeStatus.isBuffering ?? false,
-            playbackState: nativeStatus.playbackState ?? 'unknown',
-            timeControlStatus: nativeStatus.timeControlStatus ?? 'paused',
-            reasonForWaitingToPlay: nativeStatus.reasonForWaitingToPlay ?? '',
-            didJustFinish,
-            // Published by expo-audio and previously discarded: a real reason
-            // the source failed, instead of inferring one from a ready timeout.
-            error: nativeStatus.error ?? null,
-          });
+          // Native updateInterval (500ms) caps emission rate, and the transport
+          // channel only fires when a transport field changes (see
+          // TRANSPORT_KEYS). No JS throttle needed here.
+          this.updateStatus(status);
         } catch {
           // Stop subscription on error
           this.stopEventSubscription();
@@ -1585,33 +1656,44 @@ class SimpleAudioService {
    */
   private async stopInternal(): Promise<void> {
     this.stopEventSubscription();
+    this.disposeCurrentPlayer({ clearLockScreen: true });
+    this.currentTrack = null;
+  }
 
-    if (this.currentPlayer) {
-      const player = this.currentPlayer;
-      this.currentPlayer = null;
+  /**
+   * Release the current native player, if there is one.
+   *
+   * Every step has its own try/catch so pause() and remove() always run even
+   * if an earlier one throws (e.g. when the native side has already torn the
+   * player down — native reads on a removed SharedObject throw). Otherwise the
+   * native AudioPlayer leaks and continues holding the iOS audio session.
+   *
+   * `clearLockScreen` is for a real stop only: between tracks the next player
+   * takes the lock-screen entry over (see createFreshPlayer).
+   */
+  private disposeCurrentPlayer({ clearLockScreen = false } = {}): void {
+    const player = this.currentPlayer;
+    if (!player) return;
+    this.currentPlayer = null;
+    this.lockScreenActive = false;
 
-      // Per-call try/catch so pause()+remove() always run even if
-      // clearLockScreenControls() throws (e.g. when the native side has
-      // already torn the player down). Otherwise the native AudioPlayer
-      // leaks and continues holding the iOS audio session.
+    if (clearLockScreen) {
       try {
         player.clearLockScreenControls();
       } catch {
         // Lock screen teardown failed — proceed with player release
       }
-      this.lockScreenActive = false;
-      try {
-        player.pause();
-      } catch {
-        // Pause failed — still attempt remove
-      }
-      try {
-        player.remove();
-      } catch {
-        // Player remove failed — native side may already be detached
-      }
     }
-    this.currentTrack = null;
+    try {
+      player.pause();
+    } catch {
+      // Pause failed — still attempt remove
+    }
+    try {
+      player.remove();
+    } catch {
+      // Player remove failed — native side may already be detached
+    }
   }
 
   /**
@@ -1623,7 +1705,7 @@ class SimpleAudioService {
    */
   private updateStatus(updates: Partial<AudioStatus>): void {
     const previous = this.status;
-    this.status = { ...previous, ...updates };
+    this.status = { ...previous, ...updates, queue: this.queuePosition() };
 
     this.notify(this.positionListeners);
 
@@ -1686,32 +1768,44 @@ class SimpleAudioService {
     // Reset internal state to prevent stale references
     this.audioSessionConfigured = false;
     this.lockScreenActive = false;
-    this.isPlaylistMode = false;
-    this.playlist = [];
-    this.currentPlaylistIndex = 0;
-    this.onPlaylistTrackComplete = null;
-    this.initialPlaylistLength = 0;
-    this.consecutivePlaylistFailures = 0;
+    this.wantsPlayback = false;
+    this.resetPlaylistState();
   }
 }
 
-// Mirrors expo-audio's native AudioStatus shape (see expo-audio docs) plus currentTrack.
-// Field names match the native event payload so there's no translation layer.
-export interface AudioStatus {
-  playing: boolean;
-  currentTime: number;
-  duration: number;
-  currentTrack: EnhancedAudioTrack | null;
-  isLoaded: boolean;
-  isBuffering: boolean;
-  playbackState: string;
-  timeControlStatus: string;
-  reasonForWaitingToPlay: string;
-  didJustFinish: boolean;
-  /** Playback error message from the native player, or null. Cleared when a
-   *  new source loads or playback resumes. */
-  error: string | null;
+/** The fields of expo-audio's own status this service publishes, under their own names. */
+type NativeStatusFields = Pick<
+  NativeAudioStatus,
+  | 'playing'
+  | 'currentTime'
+  | 'duration'
+  | 'isLoaded'
+  | 'isBuffering'
+  | 'playbackState'
+  | 'timeControlStatus'
+  | 'reasonForWaitingToPlay'
+  | 'didJustFinish'
+  // Playback error message from the native player, or null. Cleared when a
+  // new source loads or playback resumes.
+  | 'error'
+>;
+
+/** Where the playing track sits in its queue: `index` is zero-based. */
+export interface AudioQueuePosition {
+  readonly index: number;
+  readonly total: number;
 }
+
+/**
+ * The service's published status: expo-audio's native fields with no
+ * translation layer, plus what only the service knows — the track it is on and,
+ * for a queue, where that track sits in it.
+ */
+export type AudioStatus = NativeStatusFields & {
+  currentTrack: EnhancedAudioTrack | null;
+  /** Null outside a queue (a single track, a review prompt, a word preview). */
+  queue: AudioQueuePosition | null;
+};
 
 // Export singleton instance
 export const simpleAudioService = new SimpleAudioService();

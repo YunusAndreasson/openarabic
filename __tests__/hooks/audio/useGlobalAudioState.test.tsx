@@ -9,6 +9,10 @@
  * - Flicker prevention during state transitions
  * - Memory cleanup (timeouts, listeners)
  *
+ * The provider reads the service's status through useAudioSelector, so state
+ * is driven by what the mocked service's getStatus() returns; a rerender reads
+ * it again, as a notification would.
+ *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
  * - ✅ jest.mocked() for type-safe mocking
@@ -17,12 +21,15 @@
 
 // Mock dependencies BEFORE imports
 jest.mock('@/hooks/auth/useAuth');
-jest.mock('@/hooks/audio/useSimpleAudioPlayer');
 jest.mock('@/hooks/audio/useSleepTimer');
-jest.mock('@/hooks/playlist/usePlaylistScreen');
 jest.mock('@/services/audioPlayer');
 jest.mock('@/utils/haptics');
-jest.mock('@tanstack/react-query');
+// The real module otherwise: the query factories the provider takes its cache
+// keys from are built with it.
+jest.mock('@tanstack/react-query', () => ({
+  ...jest.requireActual<object>('@tanstack/react-query'),
+  useQueryClient: jest.fn(),
+}));
 
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
@@ -34,45 +41,61 @@ import {
   useGlobalAudioState,
 } from '@/hooks/audio/useGlobalAudioState';
 import { AUDIO_STATES } from '@/constants/audio';
+import type { AudioStatus } from '@/services/audioPlayer';
+import type { EnhancedAudioTrack } from '@/types/audio.types';
+import { articleId } from '@/__tests__/helpers/ids';
+import { createAudioStatusMock } from '@/__tests__/helpers/serviceMocks';
 
 const { useAuth } = require('@/hooks/auth/useAuth');
-const { useSimpleAudioPlayer } = require('@/hooks/audio/useSimpleAudioPlayer');
 const { useSleepTimer } = require('@/hooks/audio/useSleepTimer');
-const { usePlaylistScreen } = require('@/hooks/playlist/usePlaylistScreen');
 const { simpleAudioService } = require('@/services/audioPlayer');
 const { successFeedback } = require('@/utils/haptics');
 const { useQueryClient } = require('@tanstack/react-query');
 
+/** An article track, as the playlist and the reader build them. */
+const ARTICLE_TRACK: EnhancedAudioTrack = {
+  id: 'article-1',
+  articleId: articleId(1),
+  audioUrl: 'file:///a.mp3',
+  title: 'Article',
+};
+
 /** An article track mid-play, as the service reports it. */
-const PLAYING_ARTICLE_STATUS = {
-  currentTime: 0,
-  duration: 0,
+const PLAYING_ARTICLE_STATUS: Partial<AudioStatus> = {
   playing: true,
   isLoaded: true,
   isBuffering: false,
   playbackState: 'playing',
-  currentTrack: { id: 'article-1', articleId: 1, audioUrl: 'file:///a.mp3', title: 'Article' },
+  currentTrack: ARTICLE_TRACK,
 };
 
+/** What the service reports from here on. */
+function setStatus(overrides: Partial<AudioStatus> = {}): void {
+  jest.mocked(simpleAudioService.getStatus).mockReturnValue(createAudioStatusMock(overrides));
+}
+
 describe('useGlobalAudioState Hook', () => {
-  const mockStop = jest.fn();
-  const mockPreconfigureAudioSession = jest.fn();
   const mockStartTimer = jest.fn();
   const mockCancelTimer = jest.fn();
+  // One object for every render, as the (compiled) hook returns.
+  const mockSleepTimerActions = { startTimer: mockStartTimer, cancelTimer: mockCancelTimer };
   const mockGetQueryData = jest.fn((..._args: unknown[]) => null);
-  const mockMarkSleepTimerExpired = jest.fn();
-  const mockGetPlaylistInfo = jest.fn();
+  let timerCallback: (() => void) | undefined;
+
+  /** A running sleep timer whose completion the test fires itself. */
+  const useActiveSleepTimer = (endTime = Date.now() + 60000): void => {
+    jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
+      timerCallback = onComplete;
+      return { state: { isActive: true, endTime }, actions: mockSleepTimerActions } as any;
+    });
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    timerCallback = undefined;
 
-    // The playback clock reads the service's position channel directly, not the
-    // transport status the rest of the provider uses — the whole point of the
-    // split is that play-head ticks never reach those consumers.
-    jest
-      .mocked(simpleAudioService.getStatus)
-      .mockReturnValue({ currentTime: 0, duration: 0 } as any);
+    setStatus();
     jest.mocked(simpleAudioService.subscribe).mockReturnValue(jest.fn());
 
     // Mock useAuth
@@ -80,45 +103,17 @@ describe('useGlobalAudioState Hook', () => {
       user: { id: 'test-user' },
     } as any);
 
-    // Mock useSimpleAudioPlayer
-    jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-      playing: false,
-      isLoading: false,
-      currentTime: 0,
-      duration: 0,
-      currentTrack: null,
-      stop: mockStop,
-      preconfigureAudioSession: mockPreconfigureAudioSession,
-    } as any);
-
     // Mock useSleepTimer
     jest.mocked(useSleepTimer).mockImplementation(
-      (onComplete: () => void) =>
+      () =>
         ({
           state: {
             isActive: false,
             endTime: 0,
           },
-          actions: {
-            startTimer: mockStartTimer,
-            cancelTimer: mockCancelTimer,
-          },
-          onComplete, // Store for testing
+          actions: mockSleepTimerActions,
         }) as any,
     );
-
-    // Mock usePlaylistScreen
-    jest.mocked(usePlaylistScreen).mockReturnValue({
-      sortedEnhancedTracks: [],
-    } as any);
-
-    // Mock simpleAudioService
-    simpleAudioService.markSleepTimerExpired = mockMarkSleepTimerExpired;
-    simpleAudioService.getPlaylistInfo = mockGetPlaylistInfo.mockReturnValue({
-      isPlaylistMode: false,
-      currentIndex: 0,
-      totalTracks: 0,
-    });
 
     // Mock QueryClient
     jest.mocked(useQueryClient).mockReturnValue({
@@ -148,20 +143,7 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('reflects playing state from audio player', () => {
-      jest
-        .mocked(simpleAudioService.getStatus)
-        .mockReturnValue({ currentTime: 30, duration: 120 } as any);
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: true,
-        isLoading: false,
-        currentTrack: {
-          id: 'track-1',
-          articleId: 1,
-          title: 'Test Article',
-        },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
+      setStatus({ ...PLAYING_ARTICLE_STATUS, currentTime: 30.6, duration: 120.2 });
 
       const { result } = renderHook(() => ({ ...useGlobalAudioState(), ...useAudioProgress() }), {
         wrapper: GlobalAudioStateProvider,
@@ -169,20 +151,13 @@ describe('useGlobalAudioState Hook', () => {
 
       expect(result.current.playing).toBeTruthy();
       expect(result.current.audioState).toBe(AUDIO_STATES.PLAYING);
+      // The clock is in whole seconds, all the MiniPlayer shows.
       expect(result.current.position).toBe(30);
       expect(result.current.duration).toBe(120);
     });
 
     test('reflects loading state from audio player', () => {
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: false,
-        isLoading: true,
-        currentTime: 0,
-        duration: 0,
-        currentTrack: null,
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
+      setStatus({ currentTrack: ARTICLE_TRACK, isLoaded: false, isBuffering: true });
 
       const { result } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
@@ -202,19 +177,34 @@ describe('useGlobalAudioState Hook', () => {
       expect(result.current.sleepTimerEndTime).toBe(0);
     });
 
-    test('initializes with default queue position', () => {
-      const { result } = renderHook(() => useGlobalAudioState(), {
+    test('keeps the same context value when nothing it carries changes', () => {
+      setStatus(PLAYING_ARTICLE_STATUS);
+      const { result, rerender } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
       });
+      const first = result.current;
 
-      expect(result.current.queuePosition).toEqual({
-        current: 1,
-        total: 1,
-      });
+      // A play-head tick: the transport readings are unchanged.
+      setStatus({ ...PLAYING_ARTICLE_STATUS, currentTime: 12 });
+      rerender(undefined);
+
+      expect(result.current).toBe(first);
     });
   });
 
   describe('Play/Pause Actions', () => {
+    test('onTogglePause hands the toggle to the service', () => {
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
+
+      act(() => {
+        result.current.onTogglePause();
+      });
+
+      expect(simpleAudioService.togglePause).toHaveBeenCalledTimes(1);
+    });
+
     test('onStop stops audio playback', () => {
       const { result } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
@@ -224,7 +214,7 @@ describe('useGlobalAudioState Hook', () => {
         result.current.onStop();
       });
 
-      expect(mockStop).toHaveBeenCalledTimes(1);
+      expect(simpleAudioService.stop).toHaveBeenCalledTimes(1);
     });
 
     test('preconfigureAudioSession calls audio player method', async () => {
@@ -236,7 +226,7 @@ describe('useGlobalAudioState Hook', () => {
         await result.current.preconfigureAudioSession();
       });
 
-      expect(mockPreconfigureAudioSession).toHaveBeenCalledTimes(1);
+      expect(simpleAudioService.preconfigureAudioSession).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -286,19 +276,7 @@ describe('useGlobalAudioState Hook', () => {
 
   describe('Sleep Timer Completion', () => {
     test('timer completion triggers haptic feedback', () => {
-      let timerCallback: (() => void) | undefined;
-
-      jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
-        timerCallback = onComplete;
-        return {
-          state: { isActive: true, endTime: Date.now() + 60000 },
-          actions: {
-            startTimer: mockStartTimer,
-            cancelTimer: mockCancelTimer,
-          },
-        } as any;
-      });
-
+      useActiveSleepTimer();
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
       // Simulate timer completion
@@ -310,48 +288,19 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('timer completion marks sleep timer as expired', () => {
-      let timerCallback: (() => void) | undefined;
-
-      jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
-        timerCallback = onComplete;
-        return {
-          state: { isActive: true, endTime: Date.now() + 60000 },
-          actions: {
-            startTimer: mockStartTimer,
-            cancelTimer: mockCancelTimer,
-          },
-        } as any;
-      });
-
+      useActiveSleepTimer();
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
       act(() => {
         timerCallback?.();
       });
 
-      expect(mockMarkSleepTimerExpired).toHaveBeenCalledTimes(1);
+      expect(simpleAudioService.markSleepTimerExpired).toHaveBeenCalledTimes(1);
     });
 
     test('timer completion sets force-stop timeout for 30 seconds (playlist mode)', () => {
-      let timerCallback: (() => void) | undefined;
-
-      jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
-        timerCallback = onComplete;
-        return {
-          state: { isActive: true, endTime: Date.now() + 60000 },
-          actions: {
-            startTimer: mockStartTimer,
-            cancelTimer: mockCancelTimer,
-          },
-        } as any;
-      });
-
-      mockGetPlaylistInfo.mockReturnValue({
-        isPlaylistMode: true,
-        currentIndex: 0,
-        totalTracks: 5,
-      });
-      jest.mocked(simpleAudioService.getStatus).mockReturnValue(PLAYING_ARTICLE_STATUS as any);
+      useActiveSleepTimer();
+      setStatus({ ...PLAYING_ARTICLE_STATUS, queue: { index: 0, total: 5 } });
 
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
@@ -360,7 +309,7 @@ describe('useGlobalAudioState Hook', () => {
       });
 
       // Should not stop immediately
-      expect(mockStop).not.toHaveBeenCalled();
+      expect(simpleAudioService.stop).not.toHaveBeenCalled();
 
       // Fast-forward 30 seconds
       act(() => {
@@ -368,7 +317,7 @@ describe('useGlobalAudioState Hook', () => {
       });
 
       // Should now force stop since the track is still playing
-      expect(mockStop).toHaveBeenCalledTimes(1);
+      expect(simpleAudioService.stop).toHaveBeenCalledTimes(1);
     });
 
     // Regression test: the force-stop used to gate on isPlaylistMode alone, so
@@ -376,25 +325,8 @@ describe('useGlobalAudioState Hook', () => {
     // all — nothing else checks sleepTimerExpired for that lane. See
     // hooks/audio/useGlobalAudioState.tsx's forceStop comment.
     test('force-stop timeout also fires for a single track (not playlist mode) if still playing', () => {
-      let timerCallback: (() => void) | undefined;
-
-      jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
-        timerCallback = onComplete;
-        return {
-          state: { isActive: true, endTime: Date.now() + 60000 },
-          actions: {
-            startTimer: mockStartTimer,
-            cancelTimer: mockCancelTimer,
-          },
-        } as any;
-      });
-
-      mockGetPlaylistInfo.mockReturnValue({
-        isPlaylistMode: false,
-        currentIndex: 0,
-        totalTracks: 0,
-      });
-      jest.mocked(simpleAudioService.getStatus).mockReturnValue(PLAYING_ARTICLE_STATUS as any);
+      useActiveSleepTimer();
+      setStatus(PLAYING_ARTICLE_STATUS);
 
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
@@ -403,28 +335,15 @@ describe('useGlobalAudioState Hook', () => {
         jest.advanceTimersByTime(30000);
       });
 
-      expect(mockStop).toHaveBeenCalledTimes(1);
+      expect(simpleAudioService.stop).toHaveBeenCalledTimes(1);
     });
 
     // A paused track never reaches an end for the expired timer to act on, and
     // the 30-second check used to require `playing`, so a pause left the
     // session loaded past the timer for a later resume to carry on.
     test('a timer that runs out while paused stops at once', () => {
-      let timerCallback: (() => void) | undefined;
-
-      jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
-        timerCallback = onComplete;
-        return {
-          state: { isActive: true, endTime: Date.now() + 60000 },
-          actions: {
-            startTimer: mockStartTimer,
-            cancelTimer: mockCancelTimer,
-          },
-        } as any;
-      });
-      jest
-        .mocked(simpleAudioService.getStatus)
-        .mockReturnValue({ ...PLAYING_ARTICLE_STATUS, playing: false } as any);
+      useActiveSleepTimer();
+      setStatus({ ...PLAYING_ARTICLE_STATUS, playing: false });
 
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
@@ -432,58 +351,30 @@ describe('useGlobalAudioState Hook', () => {
         timerCallback?.();
       });
 
-      expect(mockStop).toHaveBeenCalledTimes(1);
+      expect(simpleAudioService.stop).toHaveBeenCalledTimes(1);
     });
 
     test('a pause inside the grace window still ends in a stop', () => {
-      let timerCallback: (() => void) | undefined;
-
-      jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
-        timerCallback = onComplete;
-        return {
-          state: { isActive: true, endTime: Date.now() + 60000 },
-          actions: {
-            startTimer: mockStartTimer,
-            cancelTimer: mockCancelTimer,
-          },
-        } as any;
-      });
-      jest.mocked(simpleAudioService.getStatus).mockReturnValue(PLAYING_ARTICLE_STATUS as any);
+      useActiveSleepTimer();
+      setStatus(PLAYING_ARTICLE_STATUS);
 
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
       act(() => {
         timerCallback?.();
       });
-      expect(mockStop).not.toHaveBeenCalled();
+      expect(simpleAudioService.stop).not.toHaveBeenCalled();
 
-      jest
-        .mocked(simpleAudioService.getStatus)
-        .mockReturnValue({ ...PLAYING_ARTICLE_STATUS, playing: false } as any);
+      setStatus({ ...PLAYING_ARTICLE_STATUS, playing: false });
       act(() => {
         jest.advanceTimersByTime(30000);
       });
 
-      expect(mockStop).toHaveBeenCalledTimes(1);
+      expect(simpleAudioService.stop).toHaveBeenCalledTimes(1);
     });
 
     test('force-stop timeout does not fire if playback already stopped naturally', () => {
-      let timerCallback: (() => void) | undefined;
-
-      jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
-        timerCallback = onComplete;
-        return {
-          state: { isActive: true, endTime: Date.now() + 60000 },
-          actions: {
-            startTimer: mockStartTimer,
-            cancelTimer: mockCancelTimer,
-          },
-        } as any;
-      });
-
-      jest
-        .mocked(simpleAudioService.getStatus)
-        .mockReturnValue({ currentTime: 0, duration: 0, playing: false } as any);
+      useActiveSleepTimer();
 
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
@@ -493,22 +384,11 @@ describe('useGlobalAudioState Hook', () => {
       });
 
       // Track already finished naturally within the grace window — no redundant stop.
-      expect(mockStop).not.toHaveBeenCalled();
+      expect(simpleAudioService.stop).not.toHaveBeenCalled();
     });
 
     test('clears previous force-stop timeout before setting new one', () => {
-      let timerCallback: (() => void) | undefined;
-
-      jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
-        timerCallback = onComplete;
-        return {
-          state: { isActive: true, endTime: Date.now() + 60000 },
-          actions: {
-            startTimer: mockStartTimer,
-            cancelTimer: mockCancelTimer,
-          },
-        } as any;
-      });
+      useActiveSleepTimer();
 
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
@@ -533,45 +413,21 @@ describe('useGlobalAudioState Hook', () => {
       });
 
       // Should not have called stop yet (first timeout was cleared)
-      expect(mockStop).not.toHaveBeenCalled();
+      expect(simpleAudioService.stop).not.toHaveBeenCalled();
     });
   });
 
   describe('Auto-Cancel Sleep Timer', () => {
     test('auto-cancels timer when audio stops', async () => {
-      jest.mocked(useSleepTimer).mockReturnValue({
-        state: { isActive: true, endTime: Date.now() + 120000 },
-        actions: {
-          startTimer: mockStartTimer,
-          cancelTimer: mockCancelTimer,
-        },
-      } as any);
-
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: true,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: { id: 'track-1' },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
+      useActiveSleepTimer(Date.now() + 120000);
+      setStatus({ ...PLAYING_ARTICLE_STATUS, currentTime: 30, duration: 120 });
 
       const { rerender } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
       });
 
       // Audio stops
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: false,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: null,
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
-
+      setStatus();
       rerender(undefined);
 
       await waitFor(() => {
@@ -580,23 +436,9 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('does not auto-cancel when audio is loading', () => {
-      jest.mocked(useSleepTimer).mockReturnValue({
-        state: { isActive: true, endTime: Date.now() + 120000 },
-        actions: {
-          startTimer: mockStartTimer,
-          cancelTimer: mockCancelTimer,
-        },
-      } as any);
-
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: false,
-        isLoading: true, // Still loading — only ever true with a track loading
-        currentTime: 0,
-        duration: 0,
-        currentTrack: { id: 'track-1' },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
+      useActiveSleepTimer(Date.now() + 120000);
+      // Still loading — only ever true with a track loading
+      setStatus({ currentTrack: ARTICLE_TRACK, isLoaded: false, isBuffering: true });
 
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
@@ -606,24 +448,18 @@ describe('useGlobalAudioState Hook', () => {
     test('does not auto-cancel when playback is merely paused', () => {
       // A lock-screen, headphone or phone-call pause: loaded, not playing.
       // Cancelling here lost the timer, and the playlist played on all night.
-      jest.mocked(useSleepTimer).mockReturnValue({
-        state: { isActive: true, endTime: Date.now() + 120000 },
-        actions: {
-          startTimer: mockStartTimer,
-          cancelTimer: mockCancelTimer,
-        },
-      } as any);
+      useActiveSleepTimer(Date.now() + 120000);
+      setStatus({ ...PLAYING_ARTICLE_STATUS, playing: false, playbackState: 'paused' });
 
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: false,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: { id: 'track-1' },
-        status: { playbackState: 'paused' },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
+      renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
+
+      expect(mockCancelTimer).not.toHaveBeenCalled();
+    });
+
+    test('does not auto-cancel while a queue heals or skips a failed track', () => {
+      // A failed track publishes "no current track" with the queue still on.
+      useActiveSleepTimer(Date.now() + 120000);
+      setStatus({ currentTrack: null, queue: { index: 1, total: 4 } });
 
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
@@ -631,24 +467,14 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('auto-cancels when a single article plays to its end', async () => {
-      jest.mocked(useSleepTimer).mockReturnValue({
-        state: { isActive: true, endTime: Date.now() + 120000 },
-        actions: {
-          startTimer: mockStartTimer,
-          cancelTimer: mockCancelTimer,
-        },
-      } as any);
-
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
+      useActiveSleepTimer(Date.now() + 120000);
+      setStatus({
+        ...PLAYING_ARTICLE_STATUS,
         playing: false,
-        isLoading: false,
         currentTime: 120,
         duration: 120,
-        currentTrack: { id: 'track-1' },
-        status: { playbackState: 'ended' },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
+        playbackState: 'ended',
+      });
 
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
@@ -658,24 +484,6 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('does not auto-cancel when timer is not active', () => {
-      jest.mocked(useSleepTimer).mockReturnValue({
-        state: { isActive: false, endTime: 0 },
-        actions: {
-          startTimer: mockStartTimer,
-          cancelTimer: mockCancelTimer,
-        },
-      } as any);
-
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: false,
-        isLoading: false,
-        currentTime: 0,
-        duration: 0,
-        currentTrack: null,
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
-
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
       expect(mockCancelTimer).not.toHaveBeenCalled();
@@ -694,20 +502,11 @@ describe('useGlobalAudioState Hook', () => {
       });
     });
 
-    test('returns default position for single article not in playlist', () => {
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: true,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: { id: 'track-1', articleId: 999 },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
-
-      jest.mocked(usePlaylistScreen).mockReturnValue({
-        sortedEnhancedTracks: [{ articleId: 1 }, { articleId: 2 }, { articleId: 3 }],
-      } as any);
+    test('a single article played outside a queue is 1 of 1, even when it is on the reading list', () => {
+      // The position used to be found by matching the track against the
+      // reading list, which put an article started from the reader at its
+      // list position.
+      setStatus(PLAYING_ARTICLE_STATUS);
 
       const { result } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
@@ -719,56 +518,33 @@ describe('useGlobalAudioState Hook', () => {
       });
     });
 
-    test('calculates position from reading list queue', () => {
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: true,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: { id: 'track-1', articleId: 2 },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
-
-      jest.mocked(usePlaylistScreen).mockReturnValue({
-        sortedEnhancedTracks: [{ articleId: 1 }, { articleId: 2 }, { articleId: 3 }],
-      } as any);
+    test('uses the queue position the service publishes', () => {
+      setStatus({ ...PLAYING_ARTICLE_STATUS, queue: { index: 2, total: 10 } });
 
       const { result } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
       });
 
       expect(result.current.queuePosition).toEqual({
-        current: 2,
-        total: 3,
+        current: 3, // index + 1
+        total: 10,
       });
     });
 
-    test('uses playlist info when in playlist mode', () => {
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: true,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: { id: 'track-1', articleId: 5 },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
-
-      mockGetPlaylistInfo.mockReturnValue({
-        isPlaylistMode: true,
-        currentIndex: 2,
-        totalTracks: 10,
-      });
-
-      const { result } = renderHook(() => useGlobalAudioState(), {
+    test('follows the queue as it advances', () => {
+      setStatus({ ...PLAYING_ARTICLE_STATUS, queue: { index: 0, total: 3 } });
+      const { result, rerender } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
       });
 
-      expect(result.current.queuePosition).toEqual({
-        current: 3, // currentIndex + 1
-        total: 10,
+      setStatus({
+        ...PLAYING_ARTICLE_STATUS,
+        currentTrack: { ...ARTICLE_TRACK, id: 'article-2', articleId: articleId(2) },
+        queue: { index: 1, total: 3 },
       });
+      rerender(undefined);
+
+      expect(result.current.queuePosition).toEqual({ current: 2, total: 3 });
     });
   });
 
@@ -782,15 +558,7 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('resolves article from cache', () => {
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: true,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: { id: 'track-1', articleId: 1 },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
+      setStatus(PLAYING_ARTICLE_STATUS);
 
       mockGetQueryData.mockImplementation((key: any) => {
         if (JSON.stringify(key) === JSON.stringify(['article', 1])) {
@@ -819,15 +587,7 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('falls back to reading list when cache is empty', () => {
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: true,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: { id: 'track-1', articleId: 1 },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
+      setStatus(PLAYING_ARTICLE_STATUS);
 
       mockGetQueryData.mockImplementation((key: any) => {
         if (JSON.stringify(key) === JSON.stringify(['readingList', 'test-user'])) {
@@ -853,7 +613,7 @@ describe('useGlobalAudioState Hook', () => {
 
       expect(result.current.currentArticle).toEqual({
         id: 1,
-        title: '',
+        title: 'Article',
         author: 'RL Author',
         category: 'RL Category',
         image_url: 'https://example.com/rl.jpg',
@@ -861,20 +621,15 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('falls back to track metadata when cache and reading list are empty', () => {
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: true,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
+      setStatus({
+        ...PLAYING_ARTICLE_STATUS,
         currentTrack: {
-          id: 'track-1',
-          articleId: 1,
+          ...ARTICLE_TRACK,
           title: 'Track Metadata Title',
+          artist: 'Track Author',
           imageUrl: 'https://example.com/track.jpg',
         },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
+      });
 
       mockGetQueryData.mockReturnValue(null);
 
@@ -882,26 +637,41 @@ describe('useGlobalAudioState Hook', () => {
         wrapper: GlobalAudioStateProvider,
       });
 
-      // When track has title/imageUrl, uses track metadata with empty author (no cache data)
+      // The track carries its author as `artist` (it is what the lock screen shows).
       expect(result.current.currentArticle).toEqual({
         id: 1,
         title: 'Track Metadata Title',
-        author: '',
+        author: 'Track Author',
         category: '',
         image_url: 'https://example.com/track.jpg',
       });
     });
 
-    test('preserves last valid article during transitions (flicker prevention)', () => {
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: true,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: { id: 'track-1', articleId: 1 },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
+    test('picks up an article that reaches the cache after playback started', () => {
+      setStatus({ ...PLAYING_ARTICLE_STATUS, isLoaded: false, isBuffering: true });
+      const { result, rerender } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
+      expect(result.current.currentArticle?.category).toBe('');
+
+      mockGetQueryData.mockImplementation((key: any) =>
+        JSON.stringify(key) === JSON.stringify(['article', 1])
+          ? {
+              title: 'Article',
+              author: { name: 'Author' },
+              category: { name: 'Category' },
+              image_url: 'https://example.com/image.jpg',
+            }
+          : null,
+      );
+      setStatus(PLAYING_ARTICLE_STATUS);
+      rerender(undefined);
+
+      expect(result.current.currentArticle?.category).toBe('Category');
+    });
+
+    test('holds the article while a clip that is not an article plays over it (flicker prevention)', () => {
+      setStatus(PLAYING_ARTICLE_STATUS);
 
       mockGetQueryData.mockImplementation((key: any) => {
         if (JSON.stringify(key) === JSON.stringify(['article', 1])) {
@@ -923,17 +693,12 @@ describe('useGlobalAudioState Hook', () => {
       const validArticle = result.current.currentArticle;
       expect(validArticle).not.toBeNull();
 
-      // Transition to loading state (currentTrack becomes null temporarily)
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: false,
-        isLoading: true,
-        currentTime: 0,
-        duration: 0,
-        currentTrack: null,
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
-
+      // A word preview starts loading in the article's place.
+      setStatus({
+        currentTrack: { id: 'word-1-ar', audioUrl: 'file:///word.mp3', title: 'كتب' },
+        isLoaded: false,
+        isBuffering: true,
+      });
       rerender(undefined);
 
       // Should preserve last valid article (no flicker)
@@ -941,15 +706,7 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('clears last valid article when truly stopped', () => {
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: true,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: { id: 'track-1', articleId: 1 },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
+      setStatus(PLAYING_ARTICLE_STATUS);
 
       mockGetQueryData.mockImplementation((key: any) => {
         if (JSON.stringify(key) === JSON.stringify(['article', 1])) {
@@ -971,16 +728,7 @@ describe('useGlobalAudioState Hook', () => {
       expect(result.current.currentArticle).not.toBeNull();
 
       // Fully stop (not playing, not loading, no track)
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: false,
-        isLoading: false,
-        currentTime: 0,
-        duration: 0,
-        currentTrack: null,
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
-
+      setStatus();
       rerender(undefined);
 
       // Should clear article
@@ -990,18 +738,8 @@ describe('useGlobalAudioState Hook', () => {
 
   describe('Memory Management', () => {
     test('cleans up force-stop timeout on unmount', () => {
-      let timerCallback: (() => void) | undefined;
-
-      jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
-        timerCallback = onComplete;
-        return {
-          state: { isActive: true, endTime: Date.now() + 60000 },
-          actions: {
-            startTimer: mockStartTimer,
-            cancelTimer: mockCancelTimer,
-          },
-        } as any;
-      });
+      useActiveSleepTimer();
+      setStatus(PLAYING_ARTICLE_STATUS);
 
       const { unmount } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
@@ -1021,7 +759,7 @@ describe('useGlobalAudioState Hook', () => {
       });
 
       // Should not crash or call stop (timeout was cleaned up)
-      expect(mockStop).not.toHaveBeenCalled();
+      expect(simpleAudioService.stop).not.toHaveBeenCalled();
     });
 
     test('does not throw on unmount', () => {
@@ -1047,56 +785,12 @@ describe('useGlobalAudioState Hook', () => {
       expect(result.current.currentArticle).toBeNull();
     });
 
-    test('handles empty reading list', () => {
-      jest.mocked(usePlaylistScreen).mockReturnValue({
-        sortedEnhancedTracks: [],
-      } as any);
-
-      const { result } = renderHook(() => useGlobalAudioState(), {
-        wrapper: GlobalAudioStateProvider,
-      });
-
-      expect(result.current.queuePosition).toEqual({
-        current: 1,
-        total: 1,
-      });
-    });
-
-    test('handles single-item reading list', () => {
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
+    test('a track that is not an article never becomes the current article', () => {
+      setStatus({
         playing: true,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: { id: 'track-1', articleId: 1 },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
-
-      jest.mocked(usePlaylistScreen).mockReturnValue({
-        sortedEnhancedTracks: [{ articleId: 1 }],
-      } as any);
-
-      const { result } = renderHook(() => useGlobalAudioState(), {
-        wrapper: GlobalAudioStateProvider,
+        isLoaded: true,
+        currentTrack: { id: 'review-1', audioUrl: 'file:///review.mp3', title: 'Prompt' },
       });
-
-      expect(result.current.queuePosition).toEqual({
-        current: 1,
-        total: 1,
-      });
-    });
-
-    test('handles invalid article ID (non-numeric)', () => {
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: true,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: { id: 'track-1', articleId: 'invalid' as any },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
 
       const { result } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
@@ -1105,22 +799,12 @@ describe('useGlobalAudioState Hook', () => {
       expect(result.current.currentArticle).toBeNull();
     });
 
-    test('handles null article ID', () => {
-      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        playing: true,
-        isLoading: false,
-        currentTime: 30,
-        duration: 120,
-        currentTrack: { id: 'track-1', articleId: null },
-        stop: mockStop,
-        preconfigureAudioSession: mockPreconfigureAudioSession,
-      } as any);
+    test('throws a clear error outside the provider', () => {
+      jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
-      const { result } = renderHook(() => useGlobalAudioState(), {
-        wrapper: GlobalAudioStateProvider,
-      });
-
-      expect(result.current.currentArticle).toBeNull();
+      expect(() => renderHook(() => useGlobalAudioState())).toThrow(
+        'useGlobalAudioState must be used within GlobalAudioStateProvider',
+      );
     });
   });
 });

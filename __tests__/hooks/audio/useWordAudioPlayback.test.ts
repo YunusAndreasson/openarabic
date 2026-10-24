@@ -10,19 +10,17 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { describe, expect, test, jest, beforeEach } from '@jest/globals';
 
+import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import type { WordAudioData } from '@/utils/audioUtils';
 
-// Mock dependencies
-const mockPlay = jest.fn(async (..._args: unknown[]) => undefined);
-jest.mock('@/hooks/audio/useSimpleAudioPlayer', () => ({
-  useSimpleAudioPlayer: () => ({
-    play: mockPlay,
-  }),
-}));
-
-jest.mock('@/hooks/common/useMountSafety', () => ({
-  useMountSafety: () => ({ current: true }),
+// Mock dependencies. The hook only issues commands, so it calls the service
+// directly rather than subscribing to its status.
+const mockPlay = jest.fn(async (..._args: unknown[]) => true);
+jest.mock('@/services/audioPlayer', () => ({
+  simpleAudioService: {
+    play: (...args: unknown[]) => mockPlay(...args),
+  },
 }));
 
 const mockHandleError = jest.fn();
@@ -52,7 +50,7 @@ describe('useWordAudioPlayback', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGenerateWordAudioTrack.mockResolvedValue(mockTrack);
-    mockPlay.mockResolvedValue(undefined);
+    mockPlay.mockResolvedValue(true);
   });
 
   describe('Basic Functionality', () => {
@@ -123,9 +121,23 @@ describe('useWordAudioPlayback', () => {
       expect(mockHandleError).toHaveBeenCalledWith(
         error,
         expect.objectContaining({
-          toastMessage: 'Word audio playback failed',
+          toastMessage: STRINGS.WORD_AUDIO_PLAY_FAILED,
         }),
       );
+    });
+  });
+
+  describe('Unmount', () => {
+    test('does not play a word whose screen went away while its audio resolved', async () => {
+      const { result, unmount } = renderHook(() => useWordAudioPlayback());
+      const playWordAudio = result.current;
+      unmount();
+
+      await act(async () => {
+        await playWordAudio(mockWord);
+      });
+
+      expect(mockPlay).not.toHaveBeenCalled();
     });
   });
 

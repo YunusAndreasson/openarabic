@@ -1,17 +1,6 @@
-import { useSyncExternalStore } from 'react';
-
-import { isArticleAudioActive } from '@/hooks/audio/articleAudioStatus';
-import { simpleAudioService } from '@/services/audioPlayer';
+import { nowPlayingArticleId } from '@/hooks/audio/articleAudioStatus';
+import { useAudioSelector } from '@/hooks/audio/useAudioSelector';
 import type { ArticleId } from '@/types/branded.types';
-
-function subscribeToAudioTransport(onStoreChange: () => void): () => void {
-  return simpleAudioService.subscribe(() => onStoreChange());
-}
-
-function getNowPlayingArticleId(): ArticleId | null {
-  const status = simpleAudioService.getStatus();
-  return isArticleAudioActive(status) ? (status.currentTrack?.articleId ?? null) : null;
-}
 
 /**
  * The article the audio player is on — playing, buffering or paused — or null.
@@ -22,9 +11,5 @@ function getNowPlayingArticleId(): ArticleId | null {
  * on each of them. This re-renders its caller only when the article changes.
  */
 export function useNowPlayingArticleId(): ArticleId | null {
-  return useSyncExternalStore(
-    subscribeToAudioTransport,
-    getNowPlayingArticleId,
-    getNowPlayingArticleId,
-  );
+  return useAudioSelector(nowPlayingArticleId);
 }

@@ -5,21 +5,22 @@
  * - @jest/globals explicit imports
  * - jest.mocked() for type-safe mocking
  * - renderHook from @testing-library/react-native
+ *
+ * The provider reads the service's status through useAudioSelector, so state
+ * is driven here by what the mocked service's getStatus() returns.
  */
 
-import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
-import { renderHook, act, waitFor } from '@testing-library/react-native';
+import { describe, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { renderHook, act } from '@testing-library/react-native';
 
-// Mock dependencies BEFORE imports
+// Mock dependencies BEFORE imports. The real module otherwise: the query
+// factories the provider takes its cache keys from are built with it.
 jest.mock('@tanstack/react-query', () => ({
+  ...jest.requireActual<object>('@tanstack/react-query'),
   useQueryClient: jest.fn((..._args: unknown[]) => ({
     getQueryData: jest.fn(),
     setQueryData: jest.fn(),
   })),
-}));
-
-jest.mock('@/hooks/audio/useSimpleAudioPlayer', () => ({
-  useSimpleAudioPlayer: jest.fn(),
 }));
 
 jest.mock('@/hooks/audio/useSleepTimer', () => ({
@@ -30,22 +31,15 @@ jest.mock('@/hooks/auth/useAuth', () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock('@/hooks/playlist/usePlaylistScreen', () => ({
-  usePlaylistScreen: jest.fn(),
-}));
-
 jest.mock('@/services/audioPlayer', () => ({
   simpleAudioService: {
     markSleepTimerExpired: jest.fn(),
     getPlaylistInfo: jest.fn(),
     preconfigureAudioSession: jest.fn(),
-    // The playback clock subscribes to the service's position channel directly
-    // (AudioProgressProvider), rather than reading a position off the transport
-    // status the rest of the provider uses.
-    getStatus: jest.fn((..._args: unknown[]) => ({ currentTime: 0, duration: 0 })),
+    getStatus: jest.fn(),
     subscribe: jest.fn((..._args: unknown[]) => jest.fn()),
-    pause: jest.fn(),
-    resume: jest.fn(async (..._args: unknown[]) => true),
+    togglePause: jest.fn(async (..._args: unknown[]) => true),
+    stop: jest.fn(async (..._args: unknown[]) => true),
   },
 }));
 
@@ -63,36 +57,21 @@ import {
   useAudioProgress,
   useGlobalAudioState,
 } from '@/hooks/audio/useGlobalAudioState';
-import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { usePlaylistScreen } from '@/hooks/playlist/usePlaylistScreen';
 import { simpleAudioService } from '@/services/audioPlayer';
+import { articleId } from '@/__tests__/helpers/ids';
+import { createAudioStatusMock } from '@/__tests__/helpers/serviceMocks';
 
 const mockUseQueryClient = jest.mocked(useQueryClient);
-const mockUseSimpleAudioPlayer = jest.mocked(useSimpleAudioPlayer);
 const mockUseSleepTimer = jest.mocked(useSleepTimer);
 const mockUseAuth = jest.mocked(useAuth);
-const mockUsePlaylistScreen = jest.mocked(usePlaylistScreen);
 const mockSimpleAudioService = jest.mocked(simpleAudioService);
 
 describe('useGlobalAudioState', () => {
   const mockQueryClient = {
     getQueryData: jest.fn(),
     setQueryData: jest.fn(),
-  };
-
-  const mockAudioPlayer = {
-    playing: false,
-    audioState: 'idle',
-    isLoading: false,
-    currentTrack: null,
-    currentTime: 0,
-    duration: 0,
-    play: jest.fn(),
-    pause: jest.fn(),
-    stop: jest.fn(),
-    preconfigureAudioSession: jest.fn(async (..._args: unknown[]) => undefined),
   };
 
   const mockSleepTimer = {
@@ -118,7 +97,6 @@ describe('useGlobalAudioState', () => {
     // Reset query client mock after clearAllMocks
     mockUseQueryClient.mockReturnValue(mockQueryClient as never);
 
-    mockUseSimpleAudioPlayer.mockReturnValue(mockAudioPlayer as never);
     mockUseSleepTimer.mockReturnValue(mockSleepTimer);
     mockUseAuth.mockReturnValue({
       user: mockUser,
@@ -128,16 +106,10 @@ describe('useGlobalAudioState', () => {
       refreshSession: jest.fn(),
       isAuthenticated: true,
     } as never);
-    mockUsePlaylistScreen.mockReturnValue({
-      sortedEnhancedTracks: [],
-      isLoading: false,
-    } as never);
-    mockSimpleAudioService.getStatus.mockReturnValue({ currentTime: 0, duration: 0 } as never);
-    mockSimpleAudioService.getPlaylistInfo.mockReturnValue({
-      isPlaylistMode: false,
-      currentIndex: 0,
-      totalTracks: 0,
-    });
+    mockSimpleAudioService.getStatus.mockReturnValue(createAudioStatusMock());
+    mockSimpleAudioService.subscribe.mockReturnValue(jest.fn());
+    mockSimpleAudioService.togglePause.mockResolvedValue(true);
+    mockSimpleAudioService.stop.mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -177,12 +149,10 @@ describe('useGlobalAudioState', () => {
   });
 
   describe('Queue position', () => {
-    test('should return correct queue position', () => {
-      mockSimpleAudioService.getPlaylistInfo.mockReturnValue({
-        isPlaylistMode: true,
-        currentIndex: 2,
-        totalTracks: 5,
-      });
+    test('is the position the service publishes for its queue', () => {
+      mockSimpleAudioService.getStatus.mockReturnValue(
+        createAudioStatusMock({ queue: { index: 2, total: 5 } }),
+      );
 
       const { result } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
@@ -191,17 +161,18 @@ describe('useGlobalAudioState', () => {
       expect(result.current.queuePosition.current).toBe(3); // 1-indexed
       expect(result.current.queuePosition.total).toBe(5);
     });
+
+    test('is 1 of 1 outside a queue', () => {
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
+
+      expect(result.current.queuePosition).toEqual({ current: 1, total: 1 });
+    });
   });
 
   describe('Actions', () => {
-    test('onTogglePause pauses a playing article track in place', () => {
-      mockSimpleAudioService.getStatus.mockReturnValue({
-        currentTime: 12,
-        duration: 60,
-        playing: true,
-        isLoaded: true,
-        isBuffering: false,
-      } as never);
+    test('onTogglePause hands the toggle to the service', () => {
       const { result } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
       });
@@ -210,31 +181,10 @@ describe('useGlobalAudioState', () => {
         result.current.onTogglePause();
       });
 
-      expect(mockSimpleAudioService.pause).toHaveBeenCalledTimes(1);
-      expect(mockSimpleAudioService.resume).not.toHaveBeenCalled();
-      expect(mockAudioPlayer.stop).not.toHaveBeenCalled();
-    });
-
-    test('onTogglePause resumes a paused track instead of restarting it', () => {
-      mockSimpleAudioService.getStatus.mockReturnValue({
-        currentTime: 12,
-        duration: 60,
-        playing: false,
-        isLoaded: true,
-        isBuffering: false,
-      } as never);
-      // resetMocks strips the factory's implementation before every test.
-      mockSimpleAudioService.resume.mockResolvedValue(true);
-      const { result } = renderHook(() => useGlobalAudioState(), {
-        wrapper: GlobalAudioStateProvider,
-      });
-
-      act(() => {
-        result.current.onTogglePause();
-      });
-
-      expect(mockSimpleAudioService.resume).toHaveBeenCalledTimes(1);
-      expect(mockSimpleAudioService.pause).not.toHaveBeenCalled();
+      // Pause or resume is the service's call: it alone knows a loading track
+      // from a paused one, and it reports its own failures.
+      expect(mockSimpleAudioService.togglePause).toHaveBeenCalledTimes(1);
+      expect(mockSimpleAudioService.stop).not.toHaveBeenCalled();
     });
 
     test('onStop stops playback and clears the queue', () => {
@@ -246,7 +196,7 @@ describe('useGlobalAudioState', () => {
         result.current.onStop();
       });
 
-      expect(mockAudioPlayer.stop).toHaveBeenCalledTimes(1);
+      expect(mockSimpleAudioService.stop).toHaveBeenCalledTimes(1);
     });
 
     test('should provide onTimerPress that navigates to the sleep-timer route', () => {
@@ -300,24 +250,25 @@ describe('useGlobalAudioState', () => {
         await result.current.preconfigureAudioSession();
       });
 
-      expect(mockAudioPlayer.preconfigureAudioSession).toHaveBeenCalled();
+      expect(mockSimpleAudioService.preconfigureAudioSession).toHaveBeenCalled();
     });
   });
 
   describe('Current article mapping', () => {
     test('should map currentTrack to MiniPlayer format', () => {
-      const mockTrack = {
-        id: 'track-1',
-        articleId: 123,
-        title: 'Test Article',
-        imageUrl: 'https://example.com/image.jpg',
-      };
-
-      mockUseSimpleAudioPlayer.mockReturnValue({
-        ...mockAudioPlayer,
-        currentTrack: mockTrack,
-        playing: true, // Mark as playing so article is shown
-      } as never);
+      mockSimpleAudioService.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          currentTrack: {
+            id: 'track-1',
+            articleId: articleId(123),
+            audioUrl: 'https://example.com/audio.mp3',
+            title: 'Test Article',
+            imageUrl: 'https://example.com/image.jpg',
+          },
+          playing: true, // Mark as playing so article is shown
+          isLoaded: true,
+        }),
+      );
 
       const { result } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,

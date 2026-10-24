@@ -5,12 +5,13 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 
 const AudioErrorFallback = memo(function AudioErrorFallback() {
   return (
     <View style={styles.errorContainer}>
       <ThemedText colorName="secondary" type="caption" style={styles.errorText}>
-        Audio unavailable
+        {STRINGS.AUDIO_UNAVAILABLE}
       </ThemedText>
     </View>
   );

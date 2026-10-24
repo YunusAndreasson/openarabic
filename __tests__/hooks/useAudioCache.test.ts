@@ -44,7 +44,7 @@ describe('useAudioCache', () => {
   });
 
   test('returns cache size from the service', async () => {
-    (audioCache.getCacheSize as jest.Mock).mockResolvedValueOnce(123);
+    (audioCache.getCacheSize as jest.Mock).mockReturnValueOnce(123);
     const { result } = renderHook(() => useAudioCache());
 
     await expect(result.current.getCacheSize()).resolves.toBe(123);
@@ -52,7 +52,9 @@ describe('useAudioCache', () => {
   });
 
   test('returns 0 when getCacheSize throws', async () => {
-    (audioCache.getCacheSize as jest.Mock).mockRejectedValueOnce(new Error('oops'));
+    (audioCache.getCacheSize as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('oops');
+    });
     const { result } = renderHook(() => useAudioCache());
 
     const size = await result.current.getCacheSize();
@@ -62,7 +64,7 @@ describe('useAudioCache', () => {
 
   test('handles concurrent clearCache and getCacheSize calls', async () => {
     (audioCache.clearCache as jest.Mock).mockResolvedValueOnce(undefined);
-    (audioCache.getCacheSize as jest.Mock).mockResolvedValueOnce(42);
+    (audioCache.getCacheSize as jest.Mock).mockReturnValueOnce(42);
 
     const { result } = renderHook(() => useAudioCache());
 
@@ -77,46 +79,39 @@ describe('useAudioCache', () => {
     expect(audioCache.getCacheSize).toHaveBeenCalledTimes(1);
   });
 
-  test('returns 0 if getCacheSize resolves to a non-number', async () => {
-    (audioCache.getCacheSize as jest.Mock).mockResolvedValueOnce('not-a-number');
+  test('returns 0 if getCacheSize returns a non-number', async () => {
+    (audioCache.getCacheSize as jest.Mock).mockReturnValueOnce('not-a-number');
     const { result } = renderHook(() => useAudioCache());
 
     const size = await result.current.getCacheSize();
     expect(size).toBe(0);
   });
 
-  test('returns 0 if getCacheSize resolves to null or undefined', async () => {
-    (audioCache.getCacheSize as jest.Mock).mockResolvedValueOnce(null);
+  test('returns 0 if getCacheSize returns null or undefined', async () => {
+    (audioCache.getCacheSize as jest.Mock).mockReturnValueOnce(null);
     const { result } = renderHook(() => useAudioCache());
     expect(await result.current.getCacheSize()).toBe(0);
 
-    (audioCache.getCacheSize as jest.Mock).mockResolvedValueOnce(undefined);
+    (audioCache.getCacheSize as jest.Mock).mockReturnValueOnce(undefined);
     expect(await result.current.getCacheSize()).toBe(0);
   });
 
-  test('does not update state after unmount', async () => {
-    let resolvePromise: (value: number) => void;
-    const promise = new Promise<number>(resolve => {
-      resolvePromise = resolve;
-    });
-
-    (audioCache.getCacheSize as jest.Mock).mockReturnValueOnce(promise);
+  test('still resolves when the screen unmounts before reading it', async () => {
+    (audioCache.getCacheSize as jest.Mock).mockReturnValueOnce(99);
     const { result, unmount } = renderHook(() => useAudioCache());
 
     const sizePromise = result.current.getCacheSize();
     unmount();
 
-    // Resolve the promise after unmount
-    resolvePromise!(99);
-
-    // The promise should still resolve without causing issues
     await expect(sizePromise).resolves.toBe(99);
   });
 
   test('recovers from getCacheSize error on retry', async () => {
     (audioCache.getCacheSize as jest.Mock)
-      .mockRejectedValueOnce(new Error('fail'))
-      .mockResolvedValueOnce(77);
+      .mockImplementationOnce(() => {
+        throw new Error('fail');
+      })
+      .mockReturnValueOnce(77);
 
     const { result } = renderHook(() => useAudioCache());
 

@@ -234,4 +234,32 @@ describe('useSleepTimer', () => {
     expect(result.current.state.isActive).toBeTruthy();
     expect(onComplete).not.toHaveBeenCalled();
   });
+
+  // The app-root provider re-renders on every transport change, and the
+  // listener used to depend on the timer state and the completion callback —
+  // so it was torn down and re-added on each of those renders.
+  test('registers its AppState listener once, whatever re-renders it', () => {
+    const { result, rerender } = renderHook(
+      ({ onComplete }: { onComplete: () => void }) => useSleepTimer(onComplete),
+      { initialProps: { onComplete: jest.fn() } },
+    );
+    const latestOnComplete = jest.fn();
+
+    act(() => {
+      result.current.actions.startTimer(5);
+    });
+    rerender({ onComplete: jest.fn() });
+    rerender({ onComplete: latestOnComplete });
+
+    expect(AppState.addEventListener).toHaveBeenCalledTimes(1);
+
+    // It still acts on the latest state through that one listener.
+    act(() => {
+      jest.setSystemTime(Date.now() + 6 * 60 * 1000);
+    });
+    act(() => {
+      getAppStateListener()('active');
+    });
+    expect(result.current.state.isActive).toBeFalsy();
+  });
 });

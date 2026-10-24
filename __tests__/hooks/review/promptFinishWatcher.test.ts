@@ -32,6 +32,7 @@ const IDLE: AudioStatus = {
   timeControlStatus: 'paused',
   reasonForWaitingToPlay: '',
   didJustFinish: false,
+  queue: null,
 };
 
 /** Replays a real player's status stream into the watcher. */
