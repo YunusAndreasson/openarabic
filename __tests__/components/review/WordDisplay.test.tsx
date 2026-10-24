@@ -56,7 +56,10 @@ jest.mock('@/utils/haptics', () => ({
 }));
 
 // Mock ToastType enum
+// Partial: the component's import graph (settingsSlice, via the Arabic font
+// size hook) reads other enums at module init, so a whole-module stub breaks it.
 jest.mock('@/types/enums', () => ({
+  ...jest.requireActual<typeof import('@/types/enums')>('@/types/enums'),
   ToastType: {
     INFO: 'info',
   },
