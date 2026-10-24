@@ -8,7 +8,7 @@
  */
 
 /** Upper bound on a synthesised error message, so one can never carry a payload. */
-export const MAX_THROWN_VALUE_LENGTH = 200;
+const MAX_THROWN_VALUE_LENGTH = 200;
 
 /**
  * Describe a thrown non-Error WITHOUT serialising its contents.
@@ -19,7 +19,7 @@ export const MAX_THROWN_VALUE_LENGTH = 200;
  * issue whose title and stack frames were article JSON. Shape-only descriptions
  * keep such errors groupable and the payload out of the message.
  */
-export function describeThrownValue(value: unknown): string {
+function describeThrownValue(value: unknown): string {
   if (typeof value === 'string') return value.slice(0, MAX_THROWN_VALUE_LENGTH);
   if (value === null) return 'Non-Error thrown: null';
   if (value === undefined) return 'Non-Error thrown: undefined';
