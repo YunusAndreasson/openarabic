@@ -8,7 +8,14 @@
 const React = require('react');
 const { View } = require('react-native');
 
-const Host = ({ children, style }) => React.createElement(View, { style }, children);
+// `colorScheme` is carried as a prop so a test can assert which appearance the
+// native content was told to draw in.
+const Host = ({ children, style, colorScheme }) =>
+  React.createElement(
+    View,
+    { style, testID: 'native-host', nativeColorScheme: colorScheme },
+    children,
+  );
 
 const Toggle = ({ isOn }) =>
   React.createElement(View, { testID: 'native-switch', nativeSwitchValue: isOn });

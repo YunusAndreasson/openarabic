@@ -8,7 +8,7 @@
  */
 
 import { render } from '@testing-library/react-native';
-import { describe, expect, jest, test } from '@jest/globals';
+import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 
 import { Toggle } from '@/components/ui/Toggle';
@@ -16,6 +16,11 @@ import { Toggle } from '@/components/ui/Toggle';
 jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
+
+const mockNativeColorScheme = jest.fn<() => 'light' | 'dark'>();
+jest.mock('@/hooks/theme/useThemeDetection', () => ({
+  useNativeColorScheme: () => mockNativeColorScheme(),
+}));
 
 // The switch is hidden from accessibility on purpose; queries skip such
 // elements unless asked.
@@ -34,6 +39,10 @@ function flattenStyle(style: unknown): Record<string, unknown> {
 }
 
 describe('Toggle', () => {
+  beforeEach(() => {
+    mockNativeColorScheme.mockReturnValue('dark');
+  });
+
   test('draws the native switch in the state it is given', () => {
     const { getByTestId, rerender } = render(<Toggle value={false} />);
     expect(getByTestId('native-switch', HIDDEN).props.nativeSwitchValue).toBe(false);
@@ -49,5 +58,17 @@ describe('Toggle', () => {
     expect(flattenStyle(wrapper.props.style).pointerEvents).toBe('none');
     expect(wrapper.props.accessibilityElementsHidden).toBe(true);
     expect(wrapper.props.importantForAccessibility).toBe('no-hide-descendants');
+  });
+
+  // SwiftUI follows the OS appearance unless the host is told otherwise, and
+  // the app's theme is its own setting: on a phone set to Light, the dark
+  // theme's switches drew in light-appearance chrome.
+  test("draws in the app theme's appearance, not the OS one", () => {
+    const { getByTestId, rerender } = render(<Toggle value />);
+    expect(getByTestId('native-host', HIDDEN).props.nativeColorScheme).toBe('dark');
+
+    mockNativeColorScheme.mockReturnValue('light');
+    rerender(<Toggle value />);
+    expect(getByTestId('native-host', HIDDEN).props.nativeColorScheme).toBe('light');
   });
 });

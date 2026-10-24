@@ -1,24 +1,26 @@
 import { Icon, type IconName } from '@/components/ui/Icon';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { ComponentType } from 'react';
 import type { AccessibilityState, Insets, StyleProp, ViewStyle } from 'react-native';
-import { Pressable as RNPressable, StyleSheet, View } from 'react-native';
+import { Pressable as RNPressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ICON_BUTTON_SIZES } from '@/constants/iconButton';
 import { LAYOUT } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { useNativeColorScheme } from '@/hooks/theme/useThemeDetection';
 import { useButtonPress, type HapticType } from '@/hooks/ui/useButtonPress';
 import { useReduceTransparency } from '@/hooks/ui/useReduceTransparency';
 import type { PressableLikeProps } from '@/types/ui/base.types';
 
-// Resolved once: `isLiquidGlassAvailable()` is a native capability check, not
-// state, so it cannot change for the life of the process. It is only half the
-// question though — it reports that the components EXIST, and stays true for a
-// user running Reduce Transparency. See `onGlass` below.
-const GLASS_AVAILABLE = isLiquidGlassAvailable();
-const AnimatedView = Animated.createAnimatedComponent(View);
+// Resolved once: both are native capability checks, not state, so neither can
+// change for the life of the process. `isLiquidGlassAvailable()` reports that
+// the components EXIST; `isGlassEffectAPIAvailable()` that the API behind them
+// does too, which some iOS 26 betas lacked — a GlassView there crashes
+// (expo/expo#40911). Even together they are only half the question: both stay
+// true for a user running Reduce Transparency. See `onGlass` below.
+const GLASS_AVAILABLE = isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
 
 export interface GlassIconButtonProps {
   /** Icon name from Ionicons */
@@ -83,6 +85,10 @@ export const GlassIconButton = ({
   testID,
 }: GlassIconButtonProps) => {
   const colors = useColors();
+  // The glass follows the OS appearance unless told otherwise, and the app's
+  // theme is its own setting (default Dark): on a phone set to Light, the
+  // reader's buttons drew light glass under dark-theme glyphs.
+  const colorScheme = useNativeColorScheme();
   // Reduce Transparency takes the glass path off the table: iOS flattens the
   // material for that user, and `isInteractive` has correspondingly little to
   // show for a press. Branching on availability alone therefore handed the
@@ -128,17 +134,18 @@ export const GlassIconButton = ({
     >
       {onGlass ? (
         <GlassView
+          colorScheme={colorScheme}
           style={[ICON_BUTTON_SIZES.medium.container, styles.button, surfaceStyle]}
           isInteractive
         >
           <Icon color={resolvedIconColor} name={icon} size={iconSize} />
         </GlassView>
       ) : (
-        <AnimatedView
+        <Animated.View
           style={[ICON_BUTTON_SIZES.medium.container, styles.button, surfaceStyle, animatedStyle]}
         >
           <Icon color={resolvedIconColor} name={icon} size={iconSize} />
-        </AnimatedView>
+        </Animated.View>
       )}
     </PressableComponent>
   );

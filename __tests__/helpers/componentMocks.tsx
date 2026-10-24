@@ -136,6 +136,7 @@ export const useColorsMockFactory = (overrides: Partial<typeof mockColors> = {})
 /** @internal Reached through a jest.mock require(); knip cannot see it. */
 export const useThemeDetectionMockFactory = (isDarkMode = false) => ({
   useIsDarkMode: () => isDarkMode,
+  useNativeColorScheme: () => (isDarkMode ? 'dark' : 'light'),
 });
 
 // ============================================================================
