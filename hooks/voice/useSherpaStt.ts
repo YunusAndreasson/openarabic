@@ -33,8 +33,10 @@ import { PARAKEET_MODEL_ID } from '@/constants/voiceModel';
 import { analytics } from '@/services/analytics';
 import { prepareHotwordFiles } from '@/services/voiceHotwordFiles';
 import { countHotwords } from '@/utils/voiceHotwords';
+import { withTimeout } from '@/utils/async';
 import { span as diagSpan } from '@/utils/reviewDiagnostics';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
+import { toError } from '@/utils/toError';
 
 /** Silence fed through the engine once at load to force the ONNX graph to
  *  build. Half a second at 16 kHz — enough to execute the full pipeline,
@@ -51,26 +53,15 @@ export async function createEngineWithTimeout(
   timeoutMs = VOICE_ENGINE_LOAD_TIMEOUT_MS,
 ): Promise<SttEngine> {
   const pending = create();
-  let timer!: ReturnType<typeof setTimeout>;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      // Native creation cannot be cancelled. If it eventually returns after
-      // the UI has failed closed, release that orphan rather than leaking
-      // ~100 MB.
-      void pending.then(engine => engine.destroy()).catch(() => undefined);
-      reject(
-        new EngineLoadTimeoutError(
-          `Voice engine did not load within ${Math.round(timeoutMs / 1000)} seconds`,
-        ),
-      );
-    }, timeoutMs);
+  return withTimeout(pending, timeoutMs, () => {
+    // Native creation cannot be cancelled. If it eventually returns after
+    // the UI has failed closed, release that orphan rather than leaking
+    // ~100 MB.
+    void pending.then(engine => engine.destroy()).catch(() => undefined);
+    throw new EngineLoadTimeoutError(
+      `Voice engine did not load within ${Math.round(timeoutMs / 1000)} seconds`,
+    );
   });
-
-  try {
-    return await Promise.race([pending, timeout]);
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 /**
@@ -124,11 +115,7 @@ async function createEngine(
       // A build that timed out is still running natively. Starting the unbiased
       // one behind it would double the wait rather than rescue it.
       if (err instanceof EngineLoadTimeoutError) throw err;
-      voiceBreadcrumb(
-        'voice.hotwords.failed',
-        { message: err instanceof Error ? err.message : String(err) },
-        'warning',
-      );
+      voiceBreadcrumb('voice.hotwords.failed', { message: toError(err).message }, 'warning');
     }
   }
   return { engine: await createEngineWithTimeout(() => createSTT(base)), hotwordCount: 0 };
@@ -233,11 +220,7 @@ function useSherpaStt({
           );
           endWarmup();
         } catch (warmErr) {
-          voiceBreadcrumb(
-            'voice.warmup.failed',
-            { message: warmErr instanceof Error ? warmErr.message : String(warmErr) },
-            'warning',
-          );
+          voiceBreadcrumb('voice.warmup.failed', { message: toError(warmErr).message }, 'warning');
         }
         if (cancelled) return;
 
@@ -258,7 +241,7 @@ function useSherpaStt({
         if (!cancelled) {
           setReady(false);
           setWarming(false);
-          const error = err instanceof Error ? err : new Error(String(err));
+          const error = toError(err);
           setError(error);
           void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_FAILED, {
             modelId: PARAKEET_MODEL_ID,

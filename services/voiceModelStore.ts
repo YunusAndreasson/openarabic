@@ -52,7 +52,9 @@ import {
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { PARAKEET_MODEL_ID } from '@/constants/voiceModel';
 import { analytics } from '@/services/analytics';
+import { createExternalStore } from '@/utils/createExternalStore';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
+import { toError } from '@/utils/toError';
 
 export type VoiceModelState =
   /** Not probed yet this app run. */
@@ -104,15 +106,16 @@ const PROGRESS_BANDS = {
   extractEnd: 0.99,
 } as const;
 
-const listeners = new Set<() => void>();
-
-let snapshot: VoiceModelSnapshot = {
+const INITIAL_SNAPSHOT: VoiceModelSnapshot = {
   state: 'unknown',
   progress: 0,
   localPath: null,
   error: null,
   errorKind: null,
 };
+
+/** `let` only so the test seam can start every suite from a clean store. */
+let store = createExternalStore(INITIAL_SNAPSHOT);
 
 /**
  * The dedupe. The sherpa library does NOT dedupe: two concurrent
@@ -134,22 +137,16 @@ let netInfoUnsubscribe: (() => void) | null = null;
 let blockedUntilExplicitRetry = false;
 
 function emit(next: Partial<VoiceModelSnapshot>): void {
-  snapshot = { ...snapshot, ...next };
-  listeners.forEach(listener => {
-    listener();
-  });
+  store.update(current => ({ ...current, ...next }));
 }
 
 /** Stable reference between changes — a fresh object per call would spin `useSyncExternalStore`. */
 export function getVoiceModelSnapshot(): VoiceModelSnapshot {
-  return snapshot;
+  return store.get();
 }
 
 export function subscribeVoiceModel(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
+  return store.subscribe(listener);
 }
 
 /**
@@ -168,7 +165,7 @@ function isUnmetered(state: NetInfoState): boolean {
 }
 
 function classifyError(error: unknown): VoiceModelErrorKind {
-  const message = error instanceof Error ? error.message : String(error);
+  const { message } = toError(error);
   if (/insufficient disk space/i.test(message)) return 'disk-space';
   if (/unknown model id/i.test(message)) return 'unknown-model';
   if (/network|timeout|econn|fetch|socket/i.test(message)) return 'network';
@@ -226,8 +223,8 @@ export async function probeVoiceModel(): Promise<VoiceModelSnapshot> {
   try {
     const downloaded = await isModelDownloadedByCategory(ModelCategory.Stt, PARAKEET_MODEL_ID);
     if (!downloaded) {
-      if (snapshot.state === 'unknown') emit({ state: 'absent' });
-      return snapshot;
+      if (store.get().state === 'unknown') emit({ state: 'absent' });
+      return store.get();
     }
     const localPath = await getLocalModelPathByCategory(ModelCategory.Stt, PARAKEET_MODEL_ID);
     if (localPath) {
@@ -237,7 +234,7 @@ export async function probeVoiceModel(): Promise<VoiceModelSnapshot> {
     // A failed probe means "still unknown", not "failed" — the fetch path is
     // what decides failure, and it reports a reason the UI can act on.
   }
-  return snapshot;
+  return store.get();
 }
 
 /**
@@ -251,7 +248,8 @@ export function requestVoiceModel(opts: {
   reason: VoiceModelRequestReason;
 }): Promise<VoiceModelSnapshot> {
   if (inFlight) return inFlight;
-  if (snapshot.state === 'ready') return Promise.resolve(snapshot);
+  const current = store.get();
+  if (current.state === 'ready') return Promise.resolve(current);
 
   const run = async (): Promise<VoiceModelSnapshot> => {
     const already = await probeVoiceModel();
@@ -266,7 +264,7 @@ export function requestVoiceModel(opts: {
         trigger: opts.reason,
       });
       waitForWifi(opts.reason);
-      return snapshot;
+      return store.get();
     }
 
     stopWaitingForWifi();
@@ -295,8 +293,9 @@ export function requestVoiceModel(opts: {
       // many callbacks inside that same visible percent; publishing each one
       // invalidates every useSyncExternalStore subscriber for no UI change.
       // Store the visible precision so snapshot identity also stays stable.
-      const visibleProgress = Math.round(Math.max(snapshot.progress, banded) * 100) / 100;
-      if (snapshot.state === state && snapshot.progress === visibleProgress) return;
+      const shown = store.get();
+      const visibleProgress = Math.round(Math.max(shown.progress, banded) * 100) / 100;
+      if (shown.state === state && shown.progress === visibleProgress) return;
       emit({
         state,
         // Monotonic: the two phases each count 0→100, and a bar that goes
@@ -331,10 +330,10 @@ export function requestVoiceModel(opts: {
         errorKind: null,
       });
       voiceBreadcrumb('voice.model.fetch.ready', { durationMs: Date.now() - startedAt });
-      return snapshot;
+      return store.get();
     } catch (error) {
       const errorKind = classifyError(error);
-      const message = error instanceof Error ? error.message : String(error);
+      const { message } = toError(error);
       // A full disk is not a transient fault. Auto-retrying it burns battery
       // and can never succeed, so it waits for a deliberate tap.
       blockedUntilExplicitRetry = errorKind === 'disk-space';
@@ -347,7 +346,7 @@ export function requestVoiceModel(opts: {
       });
       voiceBreadcrumb('voice.model.fetch.failed', { errorKind, message }, 'warning');
       if (!blockedUntilExplicitRetry) waitForWifi(opts.reason);
-      return snapshot;
+      return store.get();
     }
   };
 
@@ -374,7 +373,7 @@ export function allowMeteredVoiceModelDownload(): Promise<VoiceModelSnapshot> {
 /** Explicit retry after a failure the learner has had a chance to fix. */
 export function retryVoiceModel(): Promise<VoiceModelSnapshot> {
   blockedUntilExplicitRetry = false;
-  if (snapshot.state === 'failed') emit({ state: 'absent', error: null, errorKind: null });
+  if (store.get().state === 'failed') emit({ state: 'absent', error: null, errorKind: null });
   return requestVoiceModel({ reason: 'user' });
 }
 
@@ -391,9 +390,8 @@ export async function deleteVoiceModel(): Promise<void> {
 /** Test seam — module state is deliberately process-wide, so suites must reset it. */
 export function __resetVoiceModelStoreForTests(): void {
   stopWaitingForWifi();
-  listeners.clear();
+  store = createExternalStore(INITIAL_SNAPSHOT);
   inFlight = null;
   meteredAllowed = false;
   blockedUntilExplicitRetry = false;
-  snapshot = { state: 'unknown', progress: 0, localPath: null, error: null, errorKind: null };
 }
