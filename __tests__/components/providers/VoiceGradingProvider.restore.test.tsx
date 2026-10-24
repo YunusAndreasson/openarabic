@@ -2,10 +2,14 @@ import { act, renderHook } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { AudioManager } from 'react-native-audio-api';
 
-import { VoiceGradingProvider, useVoiceGrading } from '@/components/providers/VoiceGradingProvider';
+import {
+  VoiceGradingProvider,
+  meterLevel,
+  useVoiceGrading,
+} from '@/components/providers/VoiceGradingProvider';
 import { useParakeetStt } from '@/hooks/voice/useSherpaStt';
 import { useVoiceModel } from '@/hooks/voice/useVoiceModel';
-import { VoiceCaptureSession } from '@/lib/voice/recording';
+import { MicPermissionDeniedError, VoiceCaptureSession } from '@/lib/voice/recording';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { useAppSelectorShallow } from '@/store/hooks';
 import type { RootState } from '@/store/store';
@@ -357,5 +361,146 @@ test('rejected native reset uses the established grant and disables subsequent d
   await act(async () => {
     release();
     await result.current.setPlaybackPriority(true);
+  });
+});
+
+function renderProvider() {
+  return renderHook(() => useVoiceGrading(), {
+    wrapper: ({ children }: { children: ReactNode }) => (
+      <VoiceGradingProvider>{children}</VoiceGradingProvider>
+    ),
+  });
+}
+
+describe('holders', () => {
+  test('a release that runs twice does not release another holder', async () => {
+    const { result } = renderProvider();
+    let first!: () => void;
+    let second!: () => void;
+    await act(async () => {
+      first = result.current.acquireSession();
+      second = result.current.acquireSession();
+      await result.current.setPlaybackPriority(true);
+    });
+    await act(async () => {
+      first();
+      // A double cleanup (Fast Refresh, an effect torn down twice) must not
+      // count twice, or the other screen's microphone goes with it.
+      first();
+      await result.current.setPlaybackPriority(true);
+    });
+    expect(AudioManager.observeAudioInterruptions).not.toHaveBeenCalledWith(false);
+
+    await act(async () => {
+      second();
+      await result.current.setPlaybackPriority(true);
+    });
+    expect(AudioManager.observeAudioInterruptions).toHaveBeenLastCalledWith(false);
+  });
+
+  test('the recognizer outlives its last holder by the linger, and no longer', () => {
+    const { result } = renderProvider();
+    const retainedNow = () => jest.mocked(useParakeetStt).mock.lastCall?.[0].retained;
+    expect(retainedNow()).toBe(false);
+
+    let practiceTab!: () => void;
+    let review!: () => void;
+    act(() => {
+      practiceTab = result.current.acquireEngine();
+      review = result.current.acquireEngine();
+    });
+    expect(retainedNow()).toBe(true);
+
+    act(() => {
+      review();
+      review();
+      jest.advanceTimersByTime(120_000);
+    });
+    // The Practice tab still holds it.
+    expect(retainedNow()).toBe(true);
+
+    act(() => practiceTab());
+    // Practice → review → Practice must not rebuild it...
+    expect(retainedNow()).toBe(true);
+    act(() => {
+      jest.advanceTimersByTime(120_000);
+    });
+    // ...but someone who moved on to reading gets the memory back.
+    expect(retainedNow()).toBe(false);
+  });
+});
+
+describe('arm refusals', () => {
+  test('a second arm while the first is still opening is refused as busy', async () => {
+    const { result, release } = await reviewAfterPrompt();
+    let second!: Promise<unknown>;
+    await act(async () => {
+      void result.current.arm();
+      second = result.current.arm();
+      await result.current.setPlaybackPriority(false);
+    });
+    await expect(second).resolves.toEqual({ ok: false, reason: 'busy' });
+    await act(async () => {
+      await result.current.cancel();
+      release();
+      await result.current.setPlaybackPriority(true);
+    });
+  });
+
+  test('a recognizer that is not ready refuses the window', async () => {
+    jest.mocked(useParakeetStt).mockReturnValue({
+      isReady: false,
+      isWarming: true,
+      hotwordCount: 0,
+      error: null,
+      transcribe: jest.fn(),
+    });
+    const { result, release } = await reviewAfterPrompt();
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await result.current.arm();
+    });
+    expect(outcome).toEqual({ ok: false, reason: 'not-ready' });
+    expect(capture.beginWindow).not.toHaveBeenCalled();
+    await act(async () => {
+      release();
+      await result.current.setPlaybackPriority(true);
+    });
+  });
+
+  test('a refused microphone reports permission, with what open() said', async () => {
+    const { result, release } = await reviewAfterPrompt();
+    capture.open.mockImplementation(async () => {
+      // The module is mocked, so the class carries no message of its own.
+      const refused = new MicPermissionDeniedError();
+      refused.message = 'Microphone permission denied';
+      throw refused;
+    });
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await result.current.arm();
+    });
+    expect(outcome).toEqual({
+      ok: false,
+      reason: 'permission',
+      message: 'Microphone permission denied',
+    });
+    await act(async () => {
+      release();
+      await result.current.setPlaybackPriority(true);
+    });
+  });
+});
+
+describe('meterLevel', () => {
+  test('scales against the decayed loudest buffer, never below the floor', () => {
+    // A buffer louder than anything so far becomes the reference: a full bar.
+    expect(meterLevel(0.1, 0.02)).toEqual({ level: 1, peak: 0.1 });
+    // Quieter speech after it reads against the decayed peak, on a sqrt curve.
+    const after = meterLevel(0.025, 0.1);
+    expect(after.peak).toBeCloseTo(0.0985);
+    expect(after.level).toBeCloseTo(Math.sqrt(0.025 / 0.0985));
+    // A silent room's noise is not amplified into a meter that claims speech.
+    expect(meterLevel(0.001, 0)).toEqual({ level: Math.sqrt(0.001 / 0.02), peak: 0.02 });
   });
 });
