@@ -1,11 +1,12 @@
-import NetInfo from '@react-native-community/netinfo';
 import * as Crypto from 'expo-crypto';
 import { Directory, File, Paths } from 'expo-file-system';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { delay, withTimeout } from '@/utils/async';
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
+import { isKnownOffline } from '@/utils/network';
 import { countDiag, isSessionActive, mark } from '@/utils/reviewDiagnostics';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
 
@@ -33,8 +34,7 @@ export interface GetAudioOptions {
 }
 
 class AudioCacheManager {
-  private static instance: AudioCacheManager;
-  private cacheDir = `${Paths.cache.uri}audio/`;
+  private readonly cacheDir = new Directory(Paths.cache, 'audio');
   // In-memory cache to reduce file system checks
   private memoryCache = new Map<string, { path: string; timestamp: number }>();
   private readonly MEMORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -66,8 +66,8 @@ class AudioCacheManager {
   // function of the URL, so it can be memoized for the process lifetime.
   private cacheKeys = new Map<string, string>();
 
-  private constructor() {
-    void this.ensureCacheDirectoryExists();
+  constructor() {
+    this.ensureCacheDirectoryExists();
   }
 
   /**
@@ -82,9 +82,8 @@ class AudioCacheManager {
 
     // Directory#list() is synchronous and throws when the directory is
     // missing — a missing cache dir simply has nothing to sweep.
-    const cacheDir = new Directory(this.cacheDir);
-    if (cacheDir.exists) {
-      for (const entry of cacheDir.list()) {
+    if (this.cacheDir.exists) {
+      for (const entry of this.cacheDir.list()) {
         entry.delete();
       }
       this.memoryCache.clear();
@@ -125,24 +124,16 @@ class AudioCacheManager {
     }
   }
 
-  static getInstance(): AudioCacheManager {
-    if (!AudioCacheManager.instance) {
-      AudioCacheManager.instance = new AudioCacheManager();
-    }
-    return AudioCacheManager.instance;
-  }
-
   /**
-   * Ensure the cache directory exists
+   * Ensure the cache directory exists. Synchronous, like every Directory#create:
+   * it throws rather than rejects, and `idempotent` makes an existing directory
+   * a no-op instead of an error.
    */
-  private async ensureCacheDirectoryExists(): Promise<void> {
+  private ensureCacheDirectoryExists(): void {
     try {
-      const cacheDir = new Directory(this.cacheDir);
-      if (!cacheDir.exists) {
-        cacheDir.create();
-      }
+      this.cacheDir.create({ intermediates: true, idempotent: true });
     } catch (error) {
-      await handleError(error, { showToast: false });
+      void handleError(error, { showToast: false });
     }
   }
 
@@ -171,7 +162,6 @@ class AudioCacheManager {
   private async getCachedFilePath(url: string): Promise<string | null> {
     try {
       const cacheKey = await this.generateCacheKey(url);
-      const cachedFilePath = `${this.cacheDir}${cacheKey}`;
 
       // Check memory cache first for better performance
       const memoryEntry = this.memoryCache.get(cacheKey);
@@ -184,13 +174,13 @@ class AudioCacheManager {
         this.memoryCache.delete(cacheKey);
       }
 
-      const cachedFile = new File(cachedFilePath);
+      const cachedFile = new File(this.cacheDir, cacheKey);
       if (cachedFile.exists) {
-        if ((cachedFile.size ?? 0) > 0) {
+        if (cachedFile.size > 0) {
           // Update memory cache
-          this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
+          this.memoryCache.set(cacheKey, { path: cachedFile.uri, timestamp: Date.now() });
           this.evictIfNeeded();
-          return cachedFilePath;
+          return cachedFile.uri;
         }
         // Zero-byte artifact from an interrupted write — purge and re-download
         try {
@@ -234,10 +224,10 @@ class AudioCacheManager {
    * valid cache hit forever (the "this word never plays" bug).
    */
   private async cacheAudio(url: string, quick: boolean = false): Promise<string> {
-    await this.ensureCacheDirectoryExists();
+    this.ensureCacheDirectoryExists();
 
     const cacheKey = await this.generateCacheKey(url);
-    const cachedFilePath = `${this.cacheDir}${cacheKey}`;
+    const cachedFile = new File(this.cacheDir, cacheKey);
 
     const maxRetries = quick ? 0 : 2; // patient: 2 retries = 3 total attempts
     const timeoutMs = quick ? this.QUICK_DOWNLOAD_TIMEOUT_MS : this.DOWNLOAD_TIMEOUT_MS;
@@ -245,56 +235,56 @@ class AudioCacheManager {
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       const tempFile = new File(
-        `${cachedFilePath}.tmp-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+        this.cacheDir,
+        `${cacheKey}.tmp-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
       );
-      const abortController = new AbortController();
-      // Armed only once the transfer is about to start (below). Armed here it
-      // also counted the retry backoff and the wait for a background slot, so a
-      // download queued behind a preload burst could be aborted before it had
-      // sent a byte — and spend every retry that way.
-      let abortTimer: ReturnType<typeof setTimeout> | undefined;
       const attemptStartedAt = Date.now();
 
       try {
-        // Check network before retry (skip check on first attempt for efficiency)
+        // Check network before retry (skip check on first attempt for efficiency).
+        // Only a device KNOWN to be offline skips it: NetInfo reports `null`
+        // while it has not yet determined the state (just after resume), and
+        // treating that as offline spent both retries without sending a byte.
         if (attempt > 0) {
-          const netState = await NetInfo.fetch();
-          // `=== false`, not falsy: NetInfo reports `null` while it has not yet
-          // determined the state (just after resume), and treating that as
-          // offline spent both retries without sending a byte.
-          if (netState.isConnected === false) {
+          if (await isKnownOffline()) {
             throw new Error('No network connection available');
           }
           // Exponential backoff: 1s, 2s
-          await new Promise<void>(resolve => setTimeout(resolve, 1000 * attempt));
+          await delay(1000 * attempt);
         }
 
         if (!quick) await this.acquireBackgroundDownloadSlot();
-        abortTimer = setTimeout(() => abortController.abort(), timeoutMs);
         try {
           await File.downloadFileAsync(url, tempFile, {
             idempotent: true,
-            signal: abortController.signal,
+            // Armed only once the transfer is about to start. Armed earlier it
+            // also counted the retry backoff and the wait for a background
+            // slot, so a download queued behind a preload burst could be
+            // aborted before it had sent a byte — and spend every retry that
+            // way. Its reason is not a string, so expo-file-system rejects with
+            // its own AbortError ("The operation was aborted."), which the
+            // retry classification below reads as a network error.
+            signal: AbortSignal.timeout(timeoutMs),
           });
         } finally {
           if (!quick) this.releaseBackgroundDownloadSlot();
         }
 
-        if (!tempFile.exists || (tempFile.size ?? 0) <= 0) {
+        if (!tempFile.exists || tempFile.size <= 0) {
           throw new Error('Download failed - file is missing or empty after download');
         }
 
-        await tempFile.move(new File(cachedFilePath), { overwrite: true });
+        await tempFile.move(cachedFile, { overwrite: true });
 
         // Update memory cache
-        this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
+        this.memoryCache.set(cacheKey, { path: cachedFile.uri, timestamp: Date.now() });
         this.evictIfNeeded();
         if (isSessionActive()) {
           const ms = Date.now() - attemptStartedAt;
           countDiag({ networkDownloads: 1, networkMs: ms });
           mark('cache.download.ok', { url: basename(url), ms, attempt, quick });
         }
-        return cachedFilePath;
+        return cachedFile.uri;
       } catch (error) {
         try {
           if (tempFile.exists) tempFile.delete();
@@ -327,8 +317,6 @@ class AudioCacheManager {
           throw lastError;
         }
         // Continue to retry for network errors
-      } finally {
-        clearTimeout(abortTimer);
       }
     }
 
@@ -371,15 +359,7 @@ class AudioCacheManager {
         // attempts ahead of it, so it joins on its own budget and otherwise
         // falls back to the remote URL — what a quick miss returns anyway. The
         // patient download carries on and fills the cache for next time.
-        let quickTimer: ReturnType<typeof setTimeout> | undefined;
-        const quickBudget = new Promise<string>(resolve => {
-          quickTimer = setTimeout(() => resolve(url), this.QUICK_DOWNLOAD_TIMEOUT_MS);
-        });
-        try {
-          return await Promise.race([pendingDownload, quickBudget]);
-        } finally {
-          clearTimeout(quickTimer);
-        }
+        return await withTimeout(pendingDownload, this.QUICK_DOWNLOAD_TIMEOUT_MS, () => url);
       }
 
       // A miss during a live review session means the preloader did not get
@@ -401,10 +381,7 @@ class AudioCacheManager {
         this.pendingDownloads.delete(url);
       }
     } catch (error) {
-      await handleError(error, {
-        showToast: false,
-        toastMessage: 'Audio caching failed. The app may experience slower audio loading.',
-      });
+      await handleError(error, { showToast: false });
       // Return original URL on failed download as fallback
       return url;
     }
@@ -462,7 +439,7 @@ class AudioCacheManager {
       }
       const cacheKey = await this.generateCacheKey(url);
       this.memoryCache.delete(cacheKey);
-      const cachedFile = new File(`${this.cacheDir}${cacheKey}`);
+      const cachedFile = new File(this.cacheDir, cacheKey);
       if (cachedFile.exists) {
         cachedFile.delete();
       }
@@ -476,10 +453,9 @@ class AudioCacheManager {
    */
   async clearCache(): Promise<void> {
     try {
-      const cacheDir = new Directory(this.cacheDir);
-      if (cacheDir.exists) {
-        cacheDir.delete();
-        await this.ensureCacheDirectoryExists();
+      if (this.cacheDir.exists) {
+        this.cacheDir.delete();
+        this.ensureCacheDirectoryExists();
       }
       // Clear memory cache and pending downloads
       this.memoryCache.clear();
@@ -491,33 +467,14 @@ class AudioCacheManager {
   }
 
   /**
-   * Get cache size in bytes
+   * Cache size in bytes. The directory reports its own total — null when it
+   * does not exist or cannot be read — synchronously, like the rest of the
+   * Directory API.
    */
-  async getCacheSize(): Promise<number> {
-    try {
-      const cacheDir = new Directory(this.cacheDir);
-      if (!cacheDir.exists) {
-        return 0;
-      }
-
-      // Directory#list() is synchronous in the SDK 57 API
-      const items = cacheDir.list();
-
-      const totalSize = items.reduce((size: number, item) => {
-        // Only count files, not directories
-        if ('size' in item && item.exists && item.size !== null) {
-          return size + item.size;
-        }
-        return size;
-      }, 0);
-
-      return totalSize;
-    } catch (error) {
-      await handleError(error);
-      return 0;
-    }
+  getCacheSize(): number {
+    return this.cacheDir.size ?? 0;
   }
 }
 
 // Export singleton instance
-export const audioCache = AudioCacheManager.getInstance();
+export const audioCache = new AudioCacheManager();

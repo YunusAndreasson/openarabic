@@ -11,8 +11,9 @@ export function useAudioCache() {
   });
 
   const getCacheSize = withErrorHandlingDefault(
+    // Async only to satisfy the wrapper; the directory reports its size synchronously.
     async () => {
-      const size = await audioCache.getCacheSize();
+      const size = audioCache.getCacheSize();
       // Ensure we always return a valid number, default to 0 for invalid values
       return typeof size === 'number' && !Number.isNaN(size) && size >= 0 ? size : 0;
     },
