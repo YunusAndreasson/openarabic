@@ -312,8 +312,13 @@ export const STRINGS = {
   MINI_PLAYER_RESUME_A11Y: 'Resume',
   /** A hint, not a label: the title is what is announced, this says what a tap does. */
   MINI_PLAYER_OPEN_ARTICLE_HINT: 'Opens the article',
+  AUDIO_PLAY_FAILED: "Couldn't play audio. " + tryAgain,
   AUDIO_PAUSE_FAILED: "Couldn't pause audio. " + tryAgain,
   AUDIO_RESUME_FAILED: "Couldn't resume audio. " + tryAgain,
+  AUDIO_STOP_FAILED: "Couldn't stop audio. " + tryAgain,
+  WORD_AUDIO_PLAY_FAILED: "Couldn't play this word. " + tryAgain,
+  /** Shown in place of an audio control that crashed (AudioErrorBoundary). */
+  AUDIO_UNAVAILABLE: 'Audio unavailable',
   // Timer controls
   SLEEP_TIMER: 'Sleep timer',
   SET_TIMER: 'Set timer',
@@ -448,6 +453,7 @@ export const STRINGS = {
   PLAYLIST_EMPTY_SEED_CTA: 'Add beginner articles',
   // Practice tab empty state - one-tap quick start
   PLAY_ALL: 'Play all',
+  PLAY_ALL_NOTHING_TO_PLAY: 'No articles to play',
   STUDY_LIST_EMPTY_TITLE: 'No words yet',
   STUDY_LIST_EMPTY_HINT:
     'Tap any word while reading and save it — reviews are scheduled so it sticks',

@@ -1,28 +1,16 @@
-import { useSyncExternalStore } from 'react';
-
 import { LAYOUT } from '@/constants/layout';
+import { createExternalStore } from '@/utils/createExternalStore';
 
 // Transient layout state, shared by the visible player and the scrolling
 // screens it covers. Audio position updates never touch this subscription.
-let playerHeight = LAYOUT.CARD.HEIGHT.MINI_PLAYER;
-const listeners = new Set<() => void>();
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-const getHeight = () => playerHeight;
+const playerHeight = createExternalStore<number>(LAYOUT.CARD.HEIGHT.MINI_PLAYER);
 
 export function updateMiniPlayerHeight(height: number): void {
   const next = Math.max(LAYOUT.CARD.HEIGHT.MINI_PLAYER, Math.ceil(height));
-  if (!Number.isFinite(next) || next === playerHeight) return;
-  playerHeight = next;
-  listeners.forEach(listener => listener());
+  if (!Number.isFinite(next)) return;
+  playerHeight.set(next);
 }
 
 export function useMiniPlayerHeight(): number {
-  return useSyncExternalStore(subscribe, getHeight, getHeight);
+  return playerHeight.useValue();
 }
