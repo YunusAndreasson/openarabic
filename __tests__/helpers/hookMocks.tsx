@@ -26,7 +26,7 @@ import type { SessionMetrics } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 import { createTestQueryClient } from './testUtils';
-import { setupTestStore, type TestRootState } from './testStore';
+import { setupTestStore, type TestPreloadedState } from './testStore';
 
 // ============================================================================
 // AUTH HOOKS
@@ -215,30 +215,29 @@ export const createOpacityAnimationMock = (
  * const { result } = renderHook(() => useMyHook(), { wrapper });
  *
  * @example
- * // With Redux store
- * const { wrapper } = createHookTestWrapper({ withRedux: true });
+ * // With a real Redux store (returned, for dispatching and reading state)
+ * const { wrapper, store } = createHookTestWrapper({ withRedux: true });
  *
  * @example
- * // With preloaded Redux state
+ * // With preloaded Redux state, merged per slice onto the initial state
  * const { wrapper } = createHookTestWrapper({
  *   withRedux: true,
- *   preloadedState: { theme: { mode: 'dark' } }
+ *   preloadedState: { settings: { dailyWordLimit: 0 } },
  * });
  */
 export function createHookTestWrapper(options?: {
   withRedux?: boolean;
-  preloadedState?: Partial<TestRootState>;
+  preloadedState?: TestPreloadedState;
 }) {
   const queryClient = createTestQueryClient();
+  // One store for the wrapper's lifetime: built inside it, every re-render of
+  // the hook under test started again from the preloaded state.
+  const store = options?.withRedux ? setupTestStore(options.preloadedState) : undefined;
 
   const wrapper = ({ children }: { children: React.ReactNode }) => {
     const content = <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-
-    if (options?.withRedux) {
-      return <Provider store={setupTestStore(options.preloadedState)}>{content}</Provider>;
-    }
-    return content;
+    return store ? <Provider store={store}>{content}</Provider> : content;
   };
 
-  return { wrapper, queryClient };
+  return { wrapper, queryClient, store };
 }

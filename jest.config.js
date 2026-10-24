@@ -64,7 +64,8 @@ module.exports = {
     // in jest.setup.js, which is the richer of the two mocks that used to coexist
     // (this mapper's target lacked useDerivedValue/useAnimatedReaction/interpolateColor).
     '@sentry/react-native': '<rootDir>/__mocks__/sentry-react-native.js',
-    'react-redux': '<rootDir>/__mocks__/react-redux.js',
+    // Anchored, so the stub can load the real build through a subpath.
+    '^react-redux$': '<rootDir>/__mocks__/react-redux.js',
     'expo-image': '<rootDir>/__mocks__/expo-image.js',
     '@react-native-vector-icons/ionicons':
       '<rootDir>/__mocks__/react-native-vector-icons-ionicons.js',

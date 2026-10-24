@@ -14,12 +14,14 @@
  * For full integration testing, see the testStore helper which is tested elsewhere.
  */
 
-import { renderHook } from '@testing-library/react-native';
+import { act, renderHook } from '@testing-library/react-native';
 import React, { type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
 import { Theme } from '@/constants/colors';
 import { useAppDispatch, useAppSelector, useAppSelectorShallow } from '../../store/hooks';
+import { setArabicFontSize } from '../../store/settingsSlice';
+import { setTheme } from '../../store/themeSlice';
 import { setupTestStore } from '../helpers/testStore';
 
 describe('Redux hooks', () => {
@@ -105,6 +107,27 @@ describe('Redux hooks', () => {
 
       expect(result.current).toHaveProperty('theme');
       expect(result.current).toHaveProperty('font');
+    });
+
+    // The point of the hook: an object selector must not hand back a new
+    // object (and re-render) when the store changes somewhere else.
+    test('keeps the selected object until a selected value changes', () => {
+      const { Wrapper, store } = createWrapper();
+      const { result } = renderHook(
+        () => useAppSelectorShallow(state => ({ theme: state.theme.theme })),
+        { wrapper: Wrapper },
+      );
+      const first = result.current;
+
+      act(() => {
+        store.dispatch(setArabicFontSize(store.getState().settings.arabicFontSize + 2));
+      });
+      expect(result.current).toBe(first);
+
+      act(() => {
+        store.dispatch(setTheme(Theme.Sepia));
+      });
+      expect(result.current).toEqual({ theme: Theme.Sepia });
     });
 
     test('selector function is called with state', () => {
