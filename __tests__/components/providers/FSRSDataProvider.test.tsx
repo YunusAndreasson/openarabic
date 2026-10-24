@@ -1,171 +1,133 @@
 /**
- * Component Tests
- *
- * Modern Jest 29 Patterns:
- * - ✅ @jest/globals explicit imports
- * - Note: test.concurrent() used where tests are independent
- * - Note: jest.mocked() used for type-safe mocking where needed
- */
-
-/**
  * FSRSDataProvider Tests
  *
- * Tests the FSRSDataProvider component which provides vocabulary/FSRS data context.
- * This wraps useFSRSQueries hook and provides study words data to the app.
+ * The provider exposes the user's full word list (`fsrsQueries.all`), and it
+ * keeps the review session's due entry observed at the app root without
+ * reading it — see the provider for why that keep-alive is load-bearing.
  */
 
+import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+import type { QueryClient } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react-native';
 import React from 'react';
-import { renderHook } from '@testing-library/react-native';
 
+import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { rootId } from '@/__tests__/helpers/ids';
 import { FSRSDataProvider, useFSRSData } from '@/components/providers/FSRSDataProvider';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
+import { fsrsQueries } from '@/constants/queries';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import type { StudyWord } from '@/types/vocabulary.types';
 
-// Mock the underlying hook
-const mockUseFSRSQueries = jest.fn();
-
-jest.mock('@/hooks/vocabulary/useFSRSQueries', () => ({
-  useFSRSQueries: (props: unknown) => mockUseFSRSQueries(props),
+jest.mock('@/services/studyWordsFSRS', () => ({
+  studyWordsFSRSService: { getFSRSWords: jest.fn() },
 }));
 
+const getFSRSWords = jest.mocked(studyWordsFSRSService.getFSRSWords);
+
+const ALL_WORDS: StudyWord[] = [
+  createTestWord({ root_id: rootId(1) }),
+  createTestWord({ root_id: rootId(2) }),
+];
+
 describe('FSRSDataProvider', () => {
+  let queryClient: QueryClient;
+
+  const wrapperFor =
+    (userId: string | undefined) =>
+    ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>
+        <FSRSDataProvider userId={userId}>{children}</FSRSDataProvider>
+      </QueryClientProvider>
+    );
+
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Default mock implementation
-    mockUseFSRSQueries.mockReturnValue({
-      allWords: [],
-      isLoading: false,
-      error: null,
-    });
+    queryClient = createTestQueryClient();
+    getFSRSWords.mockImplementation(async (_userId, options) =>
+      options?.onlyDue ? [ALL_WORDS[0]!] : ALL_WORDS,
+    );
   });
 
-  describe('Provider Setup', () => {
-    test('should provide FSRS data context to children', () => {
-      const testWords = [
-        { id: '1', word: 'مرحبا', translation: 'hello' },
-        { id: '2', word: 'شكرا', translation: 'thank you' },
-      ];
+  test('provides the full word list', async () => {
+    const { result } = renderHook(() => useFSRSData(), { wrapper: wrapperFor('user-1') });
 
-      mockUseFSRSQueries.mockReturnValue({
-        allWords: testWords,
-        isLoading: false,
-        error: null,
-      });
-
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <FSRSDataProvider userId="test-user-123">{children}</FSRSDataProvider>
-      );
-
-      const { result } = renderHook(() => useFSRSData(), { wrapper });
-
-      expect(result.current).toBeDefined();
-      expect(result.current.studyWords).toEqual(testWords);
-      expect(result.current.isLoading).toBeFalsy();
-      expect(result.current.error).toBeNull();
-    });
-
-    test('should pass userId to useFSRSQueries', () => {
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <FSRSDataProvider userId="user-456">{children}</FSRSDataProvider>
-      );
-
-      renderHook(() => useFSRSData(), { wrapper });
-
-      expect(mockUseFSRSQueries).toHaveBeenCalledWith({ userId: 'user-456' });
-    });
-
-    test('should handle loading state', () => {
-      mockUseFSRSQueries.mockReturnValue({
-        allWords: undefined,
-        isLoading: true,
-        error: null,
-      });
-
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <FSRSDataProvider userId="test-user">{children}</FSRSDataProvider>
-      );
-
-      const { result } = renderHook(() => useFSRSData(), { wrapper });
-
-      expect(result.current.isLoading).toBeTruthy();
-      expect(result.current.studyWords).toBeUndefined();
-    });
-
-    test('should handle error state', () => {
-      const testError = new Error('Failed to load words');
-
-      mockUseFSRSQueries.mockReturnValue({
-        allWords: undefined,
-        isLoading: false,
-        error: testError,
-      });
-
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <FSRSDataProvider userId="test-user">{children}</FSRSDataProvider>
-      );
-
-      const { result } = renderHook(() => useFSRSData(), { wrapper });
-
-      expect(result.current.error).toEqual(testError);
-      expect(result.current.isLoading).toBeFalsy();
-    });
-
-    test('should handle undefined userId', () => {
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <FSRSDataProvider userId={undefined}>{children}</FSRSDataProvider>
-      );
-
-      renderHook(() => useFSRSData(), { wrapper });
-
-      expect(mockUseFSRSQueries).toHaveBeenCalledWith({ userId: undefined });
-    });
+    await waitFor(() => expect(result.current.studyWords).toEqual(ALL_WORDS));
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
   });
 
-  describe('useFSRSData Hook', () => {
-    test('should throw error when used outside provider', () => {
-      // Suppress console.error for this expected error
-      const originalError = console.error;
-      console.error = jest.fn();
+  test('keeps the review session’s due entry observed, without reading it', async () => {
+    renderHook(() => useFSRSData(), { wrapper: wrapperFor('user-1') });
 
-      expect(() => {
-        renderHook(() => useFSRSData());
-      }).toThrow('useFSRSData must be used within an FSRSDataProvider');
+    const dueKey = fsrsQueries.due('user-1', DEFAULT_SESSION_COOLDOWN_HOURS).queryKey;
+    await waitFor(() => expect(queryClient.getQueryData(dueKey)).toEqual([ALL_WORDS[0]]));
+    // Observed, so an invalidation refetches it straight away.
+    expect(queryClient.getQueryCache().find({ queryKey: dueKey })?.getObserversCount()).toBe(1);
 
-      console.error = originalError;
-    });
-
-    test('should return context value when used inside provider', () => {
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <FSRSDataProvider userId="test-user">{children}</FSRSDataProvider>
-      );
-
-      const { result } = renderHook(() => useFSRSData(), { wrapper });
-
-      expect(result.current).toHaveProperty('studyWords');
-      expect(result.current).toHaveProperty('isLoading');
-      expect(result.current).toHaveProperty('error');
-    });
+    getFSRSWords.mockClear();
+    await fsrsQueries.invalidateAll(queryClient, 'user-1');
+    expect(getFSRSWords).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ onlyDue: true }),
+      expect.anything(),
+    );
   });
 
-  describe('Memoization', () => {
-    test('should memoize context value', () => {
-      mockUseFSRSQueries.mockReturnValue({
-        allWords: [],
-        isLoading: false,
-        error: null,
-      });
-
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <FSRSDataProvider userId="test-user">{children}</FSRSDataProvider>
-      );
-
-      const { result, rerender } = renderHook(() => useFSRSData(), { wrapper });
-
-      const firstValue = result.current;
-      rerender(undefined);
-      const secondValue = result.current;
-
-      // Same reference means memoization is working
-      expect(firstValue).toBe(secondValue);
+  test('loading and error are the word list’s own, not the due entry’s', async () => {
+    getFSRSWords.mockImplementation(async (_userId, options) => {
+      if (options?.onlyDue) throw new Error('due failed');
+      return ALL_WORDS;
     });
+
+    const { result } = renderHook(() => useFSRSData(), { wrapper: wrapperFor('user-1') });
+
+    await waitFor(() => expect(result.current.studyWords).toEqual(ALL_WORDS));
+    expect(result.current.error).toBeNull();
+  });
+
+  test('a word-list failure is the context’s error', async () => {
+    getFSRSWords.mockImplementation(async (_userId, options) => {
+      if (options?.onlyDue) return [];
+      throw Object.assign(new Error('Failed to load words'), { status: 403 });
+    });
+
+    const { result } = renderHook(() => useFSRSData(), { wrapper: wrapperFor('user-1') });
+
+    await waitFor(() => expect(result.current.error).toBeInstanceOf(Error));
+    expect(result.current.studyWords).toBeUndefined();
+  });
+
+  test('fetches nothing without a user', () => {
+    const { result } = renderHook(() => useFSRSData(), { wrapper: wrapperFor(undefined) });
+
+    expect(getFSRSWords).not.toHaveBeenCalled();
+    expect(result.current.studyWords).toBeUndefined();
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  test('throws when used outside the provider', () => {
+    const originalError = console.error;
+    console.error = jest.fn();
+
+    expect(() => {
+      renderHook(() => useFSRSData());
+    }).toThrow('useFSRSData must be used within an FSRSDataProvider');
+
+    console.error = originalError;
+  });
+
+  test('memoizes the context value', async () => {
+    const { result, rerender } = renderHook(() => useFSRSData(), {
+      wrapper: wrapperFor('user-1'),
+    });
+    await waitFor(() => expect(result.current.studyWords).toEqual(ALL_WORDS));
+
+    const firstValue = result.current;
+    rerender(undefined);
+
+    expect(result.current).toBe(firstValue);
   });
 });

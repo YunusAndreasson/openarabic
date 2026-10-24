@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import {
   useCallback,
@@ -21,6 +21,7 @@ import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
 import { logPromptSilent } from '@/services/voiceTelemetry';
 import { useAppSelectorShallow } from '@/store/hooks';
+import { selectVoiceEnabled } from '@/store/settingsSlice';
 
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth';
@@ -59,6 +60,7 @@ import {
   span as diagSpan,
   startDiagSession,
 } from '@/utils/reviewDiagnostics';
+import { dismissOrReplace } from '@/utils/sheetNavigation';
 import { generateStorageUrl } from '@/utils/storageUtils';
 
 /** Time tracking for one review session. Local to this hook — nothing else
@@ -226,6 +228,21 @@ export interface PlayAudioDetail {
 
 /** Used when no caller supplied one — the prompt plays on the current session. */
 const NO_PLAYBACK_PRIORITY = (): Promise<void> => Promise.resolve();
+
+/**
+ * Tell the rest of the app a session that graded something is over: stamp the
+ * completion (the due cooldown and the reminder planner both read it) and
+ * refresh the streak it may have extended.
+ *
+ * One place, called once per session from `finalizeSession` after the writes
+ * have settled. It used to be done twice on a natural finish — the completion
+ * screen did it on mount, racing the last grade's write, and the Continue that
+ * followed did it again.
+ */
+function markReviewSessionComplete(queryClient: QueryClient, userId: string): void {
+  queryClient.setQueryData(fsrsQueries.lastCompletedAtKey(userId), Date.now());
+  void studyStreakQueries.invalidateAll(queryClient, userId);
+}
 
 const TRANSITION_DELAYS = {
   /**
@@ -399,7 +416,7 @@ export function useReview({
   // about to open on a word that was never read. Read through an Effect Event
   // (below) so the prompt effect doesn't re-run just because a setting
   // changed mid-card.
-  const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  const voiceEnabled = useAppSelectorShallow(selectVoiceEnabled);
   // Defaults to a no-op so a caller that does not care (and every test) needs
   // no provider. Plain closure — safe for the non-effect callers below
   // (revealMeaningPassive, enterRestudy, handleReplayAudio), which already
@@ -700,7 +717,7 @@ export function useReview({
       // Reported rather than inferred: a play-time cache miss and a cache
       // self-heal both cost seconds, and from the outside they look identical
       // to a player that simply refused to load.
-      const detail: PlayAudioDetail = { cacheMissed: preloaded === null, healed: false };
+      const detail: PlayAudioDetail = { cacheMissed: preloaded === undefined, healed: false };
       const report = (started: boolean): boolean => {
         onResolved?.(detail);
         return started;
@@ -1331,11 +1348,14 @@ export function useReview({
    * path: commit a grade still waiting on the fade, settle the writes, then let
    * the practice screen refetch behind them.
    *
-   * Idempotent. `handleClose` calls it for the ✕ button; the unmount cleanup
-   * calls it for exits that never reach `handleClose` — Android's back button
-   * and back gesture, or a parent navigation — which previously persisted the
-   * grade but left every ['fsrs-words'] entry untouched, so the practice
-   * screen kept showing pre-session counts for up to the 60s staleTime.
+   * Idempotent, so it runs once per session whichever path gets there first. A
+   * session that runs out of cards is finalized the moment its completion
+   * screen shows (see the effect below `finalizeSession`). `handleClose` calls
+   * it for the ✕ button; the unmount cleanup calls it for exits that never
+   * reach `handleClose` — Android's back button and back gesture, or a parent
+   * navigation — which previously persisted the grade but left every
+   * ['fsrs-words'] entry untouched, so the practice screen kept showing
+   * pre-session counts for up to the 60s staleTime.
    *
    * A restudy hold is a second flavour of "decided but unwritten": tapping
    * "Forgot" already committed the learner to the grade — the hold only buys
@@ -1387,24 +1407,22 @@ export function useReview({
     try {
       void flushPendingWrites()
         .then(() => {
-          invalidateQueries();
-
-          // CompletionScreen's useReviewCompletion is the only thing that sets
-          // lastCompletedAtKey and refreshes the streak, and it only mounts on
-          // the natural "ran out of due cards" path — an early exit (✕ button,
-          // Android back) never reaches it, so the streak and the due-cooldown
-          // window silently stayed on yesterday's values. Every exit owes the
-          // rest of the app the same freshness natural completion does.
+          // Every exit owes the rest of the app the same freshness: the stamp
+          // and the streak used to be refreshed only by the completion screen,
+          // so an early exit (✕ button, Android back) left the streak and the
+          // due-cooldown window on yesterday's values.
           //
           // Only for a session that graded something. Opening review and
           // closing it again is not a completed session, and stamping one
           // started the cooldown anyway — which the reminder planner reads as
-          // "just practised" and drops the next slot for. useReviewCompletion
-          // has always held the same line.
-          if (user?.id && hadGrades) {
-            queryClient.setQueryData(fsrsQueries.lastCompletedAtKey(user.id), Date.now());
-            void studyStreakQueries.invalidateAll(queryClient, user.id);
-          }
+          // "just practised" and drops the next slot for.
+          //
+          // Stamped BEFORE the FSRS refresh: the due query applies the cooldown
+          // by reading the stamp, and its refetch starts inside
+          // `invalidateQueries()`. The other order had that refetch read the
+          // previous session's stamp on every early exit.
+          if (user?.id && hadGrades) markReviewSessionComplete(queryClient, user.id);
+          invalidateQueries();
         })
         .catch(handleError);
     } catch (error) {
@@ -1412,12 +1430,27 @@ export function useReview({
     }
   }, [commitPendingGrade, flushPendingWrites, invalidateQueries, queryClient, user]);
 
-  // Held in a ref so the unmount cleanup can call it without taking it as a
-  // dependency — that effect must stay mount/unmount-only (see its own note).
-  const finalizeSessionRef = useRef(finalizeSession);
+  // The effects below call the latest finalizeSession without taking it as a
+  // dependency — the unmount cleanup's effect must stay mount/unmount-only (see
+  // its own note). `finalizeSession` itself stays a callback: handleClose calls
+  // it, and an Effect Event may only be called from an effect.
+  const finalizeFromEffect = useEffectEvent(finalizeSession);
+
+  // A session that ran out of cards is over the moment the completion screen
+  // shows, not when the learner leaves it. Finalizing here is what gives that
+  // screen a streak that counts today's session: the streak query does not
+  // refetch on mount, and the screen used to refresh it itself — racing the
+  // last grade's write, then refreshing everything a second time on Continue.
+  //
+  // Gated on the condition the screen shows itself on (app/review.tsx), which
+  // also means the last grade's processFeedback has settled. finalizeSession
+  // may run this early because it holds nothing an exit must wait for — no
+  // audio, no navigation, no analytics, only the commit/flush/refresh — so the
+  // Continue and the unmount that follow fall through it.
   useEffect(() => {
-    finalizeSessionRef.current = finalizeSession;
-  }, [finalizeSession]);
+    if (!isComplete || isUpdatingUI) return;
+    runWhenIdle(() => finalizeFromEffect());
+  }, [isComplete, isUpdatingUI]);
 
   const handleClose = () => {
     closingRef.current = true;
@@ -1452,14 +1485,14 @@ export function useReview({
       () => {
         if (onClose) {
           onClose();
-        } else if (fromRemember || !router.canDismiss()) {
-          // `canDismiss` is false when the session is the only screen on the
-          // stack — opened from a reminder notification or a link while the app
-          // was closed. `dismiss()` is a no-op there, which left the ✕ and the
-          // completion screen's "Continue" both doing nothing.
+        } else if (fromRemember) {
           router.replace(ROUTE_PATHS.PRACTICE_TAB);
         } else {
-          router.dismiss();
+          // Replaces instead when the session is the only screen on the stack
+          // (opened from a reminder or a link while the app was closed), where
+          // `dismiss()` left the ✕ and the completion screen's "Continue" both
+          // doing nothing.
+          dismissOrReplace(ROUTE_PATHS.PRACTICE_TAB);
         }
       },
       100,
@@ -1479,7 +1512,7 @@ export function useReview({
       // and back gesture, or a parent navigation. Idempotent, so the ✕ path
       // (which already finalized) falls straight through.
       closingRef.current = true;
-      finalizeSessionRef.current();
+      finalizeFromEffect();
 
       if (
         sessionStarted.current &&

@@ -6,6 +6,7 @@ import { AppState } from 'react-native';
 import { SUPABASE_ANON_KEY, SUPABASE_REQUEST_TIMEOUT_MS, SUPABASE_URL } from '@/constants/supabase';
 import type { Database } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
+import { toError } from '@/utils/toError';
 
 /**
  * `fetch` with a deadline, for every Supabase request.
@@ -54,6 +55,15 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
   },
   global: {
     fetch: fetchWithTimeout,
+  },
+  // TanStack Query is the one retry layer. postgrest-js also retries every
+  // failed GET three times on its own (1/2/4 s) by default, inside a single
+  // queryFn attempt — so a failing read cost up to sixteen HTTP requests, and
+  // its retries ran on while offline, where the query layer's policy
+  // (`utils/queryRetry.ts`) already stops. Direct callers outside TanStack —
+  // the background task — now get one attempt per call.
+  db: {
+    retry: false,
   },
 });
 
@@ -120,11 +130,7 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
   try {
     sessionResult = await supabase.auth.getSession();
   } catch (err) {
-    await reportAuthFailure(
-      err instanceof Error ? err : new Error(String(err)),
-      'Auth_Check_Error',
-      'error',
-    );
+    await reportAuthFailure(toError(err), 'Auth_Check_Error', 'error');
     throw err;
   }
 

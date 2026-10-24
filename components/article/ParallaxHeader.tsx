@@ -1,6 +1,6 @@
 import { EnhancedImage } from '@/components/ui';
 import { memo, useMemo } from 'react';
-import { StyleSheet, useWindowDimensions } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -8,7 +8,6 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Canvas, LinearGradient, Rect, vec } from 'react-native-skia';
 
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -36,13 +35,18 @@ const STATIC_STYLES = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  gradientOverlay: {
+  // The bottom 60% of the hero.
+  imageGradient: {
     position: 'absolute',
-    top: 0,
+    top: '40%',
     left: 0,
     right: 0,
     bottom: 0,
   },
+});
+
+const linearGradient = (stops: readonly string[]) => ({
+  backgroundImage: `linear-gradient(to bottom, ${stops.join(', ')})`,
 });
 
 interface ParallaxHeaderProps {
@@ -99,14 +103,16 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
   );
 
   // Enhanced gradient for better text visibility (theme-aware via colors.gradientOverlay)
-  const imageGradientColors = useMemo(() => {
-    return createImageGradientColors(colors);
-  }, [colors]);
+  const imageGradientStyle = useMemo(
+    () => [STATIC_STYLES.imageGradient, linearGradient(createImageGradientColors(colors))],
+    [colors],
+  );
 
-  // Background gradient colors for smooth transition to content
-  const backgroundGradientColors = useMemo(() => {
-    return createBackgroundGradientColors(colors);
-  }, [colors]);
+  // Background gradient for a smooth transition to content
+  const backgroundGradientStyle = useMemo(
+    () => [StyleSheet.absoluteFill, linearGradient(createBackgroundGradientColors(colors))],
+    [colors],
+  );
 
   // Animated parallax and pull-to-stretch effect
   const animatedImageStyle = useAnimatedStyle(() => {
@@ -139,25 +145,12 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
       <Animated.View style={[imageSectionStyle, animatedImageStyle]}>
         <EnhancedImage {...imageProps} />
 
-        {/* Both gradients in ONE canvas (one Skia surface) - Skia for Android stability.
-            Image gradient covers the bottom 60% for summary legibility; the background
-            transition gradient draws on top across the full header. */}
-        <Canvas style={STATIC_STYLES.gradientOverlay} pointerEvents="none">
-          <Rect x={0} y={headerHeight * 0.4} width={windowWidth} height={headerHeight * 0.6}>
-            <LinearGradient
-              start={vec(0, headerHeight * 0.4)}
-              end={vec(0, headerHeight)}
-              colors={[...imageGradientColors]}
-            />
-          </Rect>
-          <Rect x={0} y={0} width={windowWidth} height={headerHeight}>
-            <LinearGradient
-              start={vec(0, 0)}
-              end={vec(0, headerHeight)}
-              colors={[...backgroundGradientColors]}
-            />
-          </Rect>
-        </Canvas>
+        {/* Static scrims, so the platform's own gradients rather than a Skia
+            canvas (a GPU surface of its own) — the same as ArticleCard's. The
+            image gradient covers the bottom 60% for summary legibility; the
+            background transition draws on top of it across the full header. */}
+        <View style={imageGradientStyle} />
+        <View style={backgroundGradientStyle} />
       </Animated.View>
     </Animated.View>
   );

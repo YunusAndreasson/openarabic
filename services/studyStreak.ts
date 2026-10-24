@@ -3,7 +3,7 @@ import { supabase } from '@/services/supabase';
 import { parseSupabaseTimestamp, toLocalDateString } from '@/utils/dateTimeUtils';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { mergeStudyDays } from '@/utils/studyDayLedger';
-import { executeQuery } from '@/utils/supabaseHelpers';
+import { fetchAllPages, type RequestOptions } from '@/utils/supabaseHelpers';
 
 const errorConfig = {
   activity: createServiceErrorConfig('study_session_activity', 'load', {
@@ -60,6 +60,14 @@ function parseDayKey(key: string): Date {
   return new Date(year, month - 1, day);
 }
 
+/** Today's and yesterday's local day keys — the two days a streak is still alive on. */
+function recentDayKeys(): { todayKey: string; yesterdayKey: string } {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  return { todayKey: toLocalDateString(today), yesterdayKey: toLocalDateString(yesterday) };
+}
+
 /** Is `day` the calendar day immediately after `previous`? */
 function isNextDay(previous: Date, day: Date): boolean {
   const next = new Date(previous);
@@ -81,17 +89,16 @@ function isNextDay(previous: Date, day: Date): boolean {
  * Day arithmetic goes through `setDate` + `toLocalDateString` rather than
  * millisecond differences: a local day is 23 or 25 hours across a DST
  * transition, so `diff === ONE_DAY_MS` drops a day twice a year.
+ *
+ * The streak query's `select` (`studyStreakQueries.streak`).
  */
-function calculateStreakFromDayKeys(dayKeys: Set<string>): ReadingStreak {
+export function calculateStreakFromDayKeys(dayKeys: Set<string>): ReadingStreak {
   if (dayKeys.size === 0) return { ...EMPTY_STREAK };
 
   const sortedKeys = Array.from(dayKeys).sort();
   const mostRecentKey = sortedKeys.at(-1) ?? '';
 
-  const todayKey = toLocalDateString(new Date());
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayKey = toLocalDateString(yesterday);
+  const { todayKey, yesterdayKey } = recentDayKeys();
 
   // Anchor on the latest day that is not in the future. A key can be ahead of
   // today's local date: a review just after midnight in Tokyo is keyed to that
@@ -99,7 +106,7 @@ function calculateStreakFromDayKeys(dayKeys: Set<string>): ReadingStreak {
   // anchoring on the newest key then showed a 0-day streak until the local
   // date caught up (as does a clock set ahead and back). Keys are YYYY-MM-DD,
   // so string order is date order.
-  const anchorKey = sortedKeys.filter(key => key <= todayKey).pop() ?? '';
+  const anchorKey = sortedKeys.findLast(key => key <= todayKey) ?? '';
 
   // Yesterday still counts: the streak must not evaporate at midnight, before
   // the learner has had today to keep it alive.
@@ -154,15 +161,6 @@ function buildActivityWindow(dayKeys: Set<string>, days: number): DailyReadingAc
 }
 export class ReadingStreakService {
   /**
-   * Calculate reading streak from daily activity data
-   */
-  static calculateStreak(activities: DailyReadingActivity[]): ReadingStreak {
-    return calculateStreakFromDayKeys(
-      new Set(activities.filter(day => day.hasActivity).map(day => day.date)),
-    );
-  }
-
-  /**
    * Calculate streak periods for visualization
    */
   static calculateStreakPeriods(activities: DailyReadingActivity[]): StreakPeriod[] {
@@ -207,19 +205,39 @@ export class ReadingStreakService {
     // Mark the most recent period as active if it's current
     if (periods.length > 0) {
       const lastPeriod = periods.at(-1);
-      const todayStr = toLocalDateString(new Date());
+      const { todayKey, yesterdayKey } = recentDayKeys();
 
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = toLocalDateString(yesterday);
-
-      if (lastPeriod && (lastPeriod.endDate === todayStr || lastPeriod.endDate === yesterdayStr)) {
+      if (lastPeriod && (lastPeriod.endDate === todayKey || lastPeriod.endDate === yesterdayKey)) {
         lastPeriod.isActive = true;
       }
     }
 
     return periods;
   }
+}
+
+/**
+ * The streak chart's data: a `days`-long window plus the full-history metrics —
+ * the history query's `select` (`studyStreakQueries.history`).
+ *
+ * The metrics come from the full day set and the chart from a `days`-long
+ * window of it, so this screen and the practice card report the same streak
+ * however long each chooses to draw.
+ */
+export function buildStudyHistory(dayKeys: Set<string>, days: number): StreakHistoryData {
+  const dailyActivity = buildActivityWindow(dayKeys, days);
+  const streakPeriods = ReadingStreakService.calculateStreakPeriods(dailyActivity);
+  const streak = calculateStreakFromDayKeys(dayKeys);
+
+  return {
+    dailyActivity,
+    streakPeriods,
+    metrics: {
+      currentStreak: streak.currentStreak,
+      longestStreak: streak.longestStreak,
+      totalReadingDays: streak.totalReadingDays,
+    },
+  };
 }
 
 /**
@@ -230,7 +248,8 @@ export class StudySessionStreakService {
   /**
    * Every LOCAL calendar day the user actually reviewed a word, over their whole
    * history — the single source of truth behind both the streak numbers and the
-   * chart.
+   * chart. One query (`studyStreakQueries.studyDays`) holds it; the streak and
+   * the history are `select`s of it, so the full paged scan runs once for both.
    *
    * Gated on `fsrs_reps > 0`, which is the only honest "has been reviewed" test:
    * `createInitialFSRSEntry` / `createResetFSRSUpdate` stamp `fsrs_last_review`
@@ -245,100 +264,50 @@ export class StudySessionStreakService {
    * review overwrites `fsrs_last_review`, so re-reviewing a word erases the day
    * it previously contributed and the derived numbers can go DOWN. The merge is
    * what makes current / longest / total monotone.
+   *
+   * Failures propagate deliberately. The streak read used to catch everything
+   * and return a zeroed streak, which React Query then cached as a SUCCESS — so
+   * one flaky request overwrote a live 43-day streak with "0", and because no
+   * error ever reached the query layer its `retry` never fired and the 0 simply
+   * stayed. Telling a learner their streak is gone is the single most
+   * destructive thing this screen can get wrong, and a network blip is not
+   * evidence of it; an all-blank chart with zeroed metrics is the same false
+   * claim about the learner's history. The case the old comment worried about —
+   * "no study_words yet" — does not throw: it returns no rows, and an empty day
+   * set already yields a zero streak through the normal path. Letting a real
+   * failure throw keeps the last good value on screen, lets the query retry,
+   * and lets the streak sheet reach its error state.
    */
-  private static async fetchStudyDayKeys(userId: string): Promise<Set<string>> {
+  static async fetchStudyDayKeys(
+    userId: string,
+    request: RequestOptions = {},
+  ): Promise<Set<string>> {
     // Paged rather than a single `.select()`: PostgREST silently truncates an
     // unbounded request at its implicit 1000-row default, which would drop a
-    // heavy learner's older reviews out of the streak calculation.
-    const PAGE_SIZE = 1000;
+    // heavy learner's older reviews out of the streak calculation. Ordered by
+    // `root_id` — unique per user — because pages of an unordered read have no
+    // stable boundary: a row could appear on two pages or on none, and a day
+    // kept alive by one word could fall out of the streak.
+    const rows = await fetchAllPages(
+      (from, to, signal) =>
+        supabase
+          .from('study_words')
+          .select('fsrs_last_review')
+          .eq('user_id', userId)
+          .gt('fsrs_reps', 0)
+          .order('root_id')
+          .range(from, to)
+          .abortSignal(signal),
+      { errorConfig: { ...errorConfig.activity, analyticsProperties: { userId } }, request },
+    );
+
     const dayKeys = new Set<string>();
-
-    for (let offset = 0; ; offset += PAGE_SIZE) {
-      const page = await executeQuery(
-        () =>
-          supabase
-            .from('study_words')
-            .select('fsrs_last_review')
-            .eq('user_id', userId)
-            .gt('fsrs_reps', 0)
-            .range(offset, offset + PAGE_SIZE - 1),
-        {
-          ...errorConfig.activity,
-          analyticsProperties: { userId },
-        },
-      );
-
-      for (const record of page ?? []) {
-        const reviewedAt = parseSupabaseTimestamp(record?.fsrs_last_review);
-        if (reviewedAt) dayKeys.add(toLocalDateString(reviewedAt));
-      }
-
-      if (!page || page.length < PAGE_SIZE) break;
+    for (const record of rows) {
+      const reviewedAt = parseSupabaseTimestamp(record.fsrs_last_review);
+      if (reviewedAt) dayKeys.add(toLocalDateString(reviewedAt));
     }
 
     return mergeStudyDays(dayKeys);
-  }
-
-  /**
-   * Day-by-day activity for the streak chart: exactly `days` buckets ending
-   * today. Display only — the streak metrics are NOT derived from this window.
-   */
-  static async getDailyStudySessionActivity(
-    userId: string,
-    days: number = 30,
-  ): Promise<DailyReadingActivity[]> {
-    return buildActivityWindow(await this.fetchStudyDayKeys(userId), days);
-  }
-
-  /**
-   * Get study session streak info, computed over the user's full history.
-   *
-   * Failures propagate deliberately. This used to catch everything and return a
-   * zeroed streak, which React Query then cached as a SUCCESS — so one flaky
-   * request overwrote a live 43-day streak with "0", and because no error ever
-   * reached the query layer its `retry` never fired and the 0 simply stayed.
-   * Telling a learner their streak is gone is the single most destructive thing
-   * this screen can get wrong, and a network blip is not evidence of it.
-   *
-   * The case the old comment worried about — "no study_words yet" — does not
-   * throw: it returns no rows, and an empty day set already yields a zero
-   * streak through the normal path. So the catch could only ever fire on a real
-   * failure, which is exactly when zero is a lie. Letting it throw keeps the
-   * last good value on screen and lets the query retry.
-   */
-  static async getStudySessionStreak(userId: string): Promise<ReadingStreak> {
-    return calculateStreakFromDayKeys(await this.fetchStudyDayKeys(userId));
-  }
-
-  /**
-   * Get complete study session streak history data for visualization.
-   *
-   * The metrics come from the full day set and the chart from a `days`-long
-   * window of it, so this screen and the practice card report the same streak
-   * however long each chooses to draw.
-   */
-  static async getStudySessionHistory(
-    userId: string,
-    days: number = 30,
-  ): Promise<StreakHistoryData> {
-    // Throws on failure for the same reason getStudySessionStreak does: an
-    // all-blank chart with zeroed metrics is a claim about the learner's
-    // history, and a failed request has nothing to say about it. The screen has
-    // an error state; this should reach it.
-    const dayKeys = await this.fetchStudyDayKeys(userId);
-    const dailyActivity = buildActivityWindow(dayKeys, days);
-    const streakPeriods = ReadingStreakService.calculateStreakPeriods(dailyActivity);
-    const streak = calculateStreakFromDayKeys(dayKeys);
-
-    return {
-      dailyActivity,
-      streakPeriods,
-      metrics: {
-        currentStreak: streak.currentStreak,
-        longestStreak: streak.longestStreak,
-        totalReadingDays: streak.totalReadingDays,
-      },
-    };
   }
 }
 

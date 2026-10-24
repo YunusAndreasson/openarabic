@@ -1,5 +1,5 @@
 import { memo, useCallback } from 'react';
-import { Alert, Linking, Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import * as Application from 'expo-application';
 import { router } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
@@ -11,6 +11,8 @@ import { STRINGS } from '@/constants/strings';
 import { handleError } from '@/utils/errorHandling';
 import { errorFeedback, successFeedback } from '@/utils/haptics';
 import { resetOnboarding } from '@/utils/onboardingStorage';
+import { openExternalUrl } from '@/utils/openExternalUrl';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 /**
  * Where "Rate OpenArabic" goes: the App Store's write-a-review page on iOS (the
@@ -24,7 +26,9 @@ function getWriteReviewUrl(): string | null {
     return listingUrl ? `${listingUrl}?action=write-review` : null;
   }
   const packageName = Application.applicationId;
-  return packageName ? STRINGS.PLAY_STORE_LISTING_URL.replace('{package}', packageName) : null;
+  return packageName
+    ? fillTemplate(STRINGS.PLAY_STORE_LISTING_URL, { package: packageName })
+    : null;
 }
 
 const WRITE_REVIEW_URL = getWriteReviewUrl();
@@ -69,19 +73,13 @@ export const SupportSection = memo<SupportSectionProps>(({ onContactSupportPress
     ]);
   }, [resetAllTutorials]);
 
-  const handleRateApp = async (url: string) => {
-    try {
-      await Linking.openURL(url);
-    } catch (error) {
-      void handleError(error, {
-        analyticsEventName: 'Store_Review_Request_Failed',
-        sentryTags: { location: 'account', action: 'store_review' },
-        sentryExtra: { url },
-        showToast: true,
-        sentrySeverity: 'warning',
-      });
-    }
-  };
+  const handleRateApp = (url: string) =>
+    openExternalUrl(url, {
+      analyticsEventName: 'Store_Review_Request_Failed',
+      sentryTags: { location: 'account', action: 'store_review' },
+      showToast: true,
+      sentrySeverity: 'warning',
+    });
 
   return (
     <SettingsSection title={STRINGS.HELP_SECTION}>

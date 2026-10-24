@@ -4,7 +4,7 @@
  * Tests the background tasks service which handles background fetch for due words.
  * This service is a thin wrapper around Expo Background Task APIs.
  *
- * Focus: Error handling, availability checking, graceful degradation
+ * Focus: Error handling, graceful degradation
  * Note: TaskManager.defineTask runs at module level and is hard to test
  *
  * Modern Jest 29 Patterns:
@@ -39,7 +39,8 @@ jest.mock('expo-notifications', () => ({
 // backgroundTasks imports the notification service (module init registers the
 // expo notification handler) and the prefs mirror (AsyncStorage) — stub both.
 jest.mock('@/services/notificationService', () => ({
-  syncSmartNotifications: jest.fn(async (..._args: unknown[]) => 0),
+  setAppBadgeCount: jest.fn(async (..._args: unknown[]) => true),
+  syncReminderPlan: jest.fn(async (..._args: unknown[]) => 0),
 }));
 
 jest.mock('@/utils/smartReminderPrefs', () => ({
@@ -85,31 +86,27 @@ describe('backgroundTasks service', () => {
   });
 
   describe('registerBackgroundTasks', () => {
-    test('should register task when available', async () => {
-      mockGetStatusAsync.mockResolvedValue(1); // Available
+    test('registers straight away: the module checks availability itself', async () => {
+      // registerTaskAsync returns early when the status is Restricted or the
+      // task is already registered, so a getStatusAsync pre-check was a
+      // second native round trip for the same answer.
       mockRegisterTaskAsync.mockResolvedValue(undefined);
 
       await registerBackgroundTasks();
 
-      expect(mockGetStatusAsync).toHaveBeenCalled();
+      expect(mockGetStatusAsync).not.toHaveBeenCalled();
       expect(mockRegisterTaskAsync).toHaveBeenCalledWith('background-due-words-calculation', {
         minimumInterval: 15,
       });
     });
 
-    test('should skip registration when background task unavailable', async () => {
-      mockGetStatusAsync.mockResolvedValue(2); // Unavailable
-
-      await registerBackgroundTasks();
-
-      expect(mockGetStatusAsync).toHaveBeenCalled();
-      expect(mockRegisterTaskAsync).not.toHaveBeenCalled();
-    });
-
-    test('should silently ignore "not configured" errors', async () => {
-      mockGetStatusAsync.mockResolvedValue(1);
+    test('should silently ignore the module\'s "not configured" error', async () => {
+      // The message expo-background-task throws (ios/BackgorundTaskExceptions.swift)
+      // when the build lacks the `processing` background mode.
       mockRegisterTaskAsync.mockRejectedValue(
-        new Error('Background Fetch has not been configured'),
+        new Error(
+          "Background Task has not been configured. To enable it, add `process` to `UIBackgroundModes` in the application's Info.plist file",
+        ),
       );
 
       await registerBackgroundTasks();
@@ -119,7 +116,6 @@ describe('backgroundTasks service', () => {
     });
 
     test('should silently ignore UIBackgroundModes errors', async () => {
-      mockGetStatusAsync.mockResolvedValue(1);
       mockRegisterTaskAsync.mockRejectedValue(
         new Error('UIBackgroundModes not configured in Info.plist'),
       );
@@ -130,7 +126,6 @@ describe('backgroundTasks service', () => {
     });
 
     test('should log other errors with warning severity', async () => {
-      mockGetStatusAsync.mockResolvedValue(1);
       const unexpectedError = new Error('Unexpected error');
       mockRegisterTaskAsync.mockRejectedValue(unexpectedError);
 
@@ -167,15 +162,7 @@ describe('backgroundTasks service', () => {
   });
 
   describe('Error handling patterns', () => {
-    test('should treat background tasks as optional feature', async () => {
-      // Multiple scenarios where background tasks fail gracefully
-      mockGetStatusAsync.mockResolvedValue(2); // Unavailable
-      await registerBackgroundTasks();
-      expect(mockRegisterTaskAsync).not.toHaveBeenCalled();
-    });
-
     test('should never throw errors to caller', async () => {
-      mockGetStatusAsync.mockRejectedValue(new Error('Test'));
       mockRegisterTaskAsync.mockRejectedValue(new Error('Test'));
       mockUnregisterTaskAsync.mockRejectedValue(new Error('Test'));
 

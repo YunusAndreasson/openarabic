@@ -1,9 +1,8 @@
-import { skipToken, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
-import { articleQueries, fsrsQueries, gated } from '@/constants/queries';
-import { articlesService } from '@/services/articles';
+import { articleQueries, fsrsQueries, gated, skipUnless } from '@/constants/queries';
 import type { Article } from '@/types/articles.types';
 import type { RootId } from '@/types/branded.types';
 import { getArticlesByDueWords } from '@/utils/articleUtils';
@@ -36,12 +35,12 @@ export function useArticlesByDueWords(
   // Fallback: fetch all study words if no due words (for better recommendations)
   // Second gate beyond the user id: only reach for the full list when the due
   // query came back empty.
-  const { data: allStudyWords = [], isLoading: isLoadingAllWords } = useQuery({
-    ...gated(
-      id => fsrsQueries.allWithCooldown(id, DEFAULT_SESSION_COOLDOWN_HOURS),
-      userId && dueWords.length === 0 ? userId : undefined,
+  const { data: allStudyWords = [], isLoading: isLoadingAllWords } = useQuery(
+    skipUnless(
+      dueWords.length === 0,
+      gated(id => fsrsQueries.allWithCooldown(id, DEFAULT_SESSION_COOLDOWN_HOURS), userId),
     ),
-  });
+  );
 
   // Use due words if available, otherwise fallback to all study words
   const wordsToUse = useMemo(() => {
@@ -55,10 +54,9 @@ export function useArticlesByDueWords(
 
   // Use optimized articles query with word stats (shared cache with other hooks)
   const shouldFetchArticles = !!userId && wordsToUse.length > 0 && limit > 0;
-  const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery({
-    ...articleQueries.withStats(),
-    queryFn: shouldFetchArticles ? () => articlesService.getArticlesWithWordStats() : skipToken,
-  });
+  const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery(
+    skipUnless(shouldFetchArticles, articleQueries.withStats()),
+  );
 
   // Process and sort articles by words count
   const sortedArticles = useMemo(() => {

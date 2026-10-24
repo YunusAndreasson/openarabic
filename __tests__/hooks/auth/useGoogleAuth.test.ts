@@ -4,7 +4,7 @@
  *
  * google-signin (v13+) RESOLVES `{ type: 'cancelled' }` when the user backs out
  * of the account picker instead of throwing, so the cancel has to be turned
- * into a cancellation here or it reads as a failed sign-in.
+ * into a `null` result here or it reads as a failed sign-in.
  */
 
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
@@ -18,6 +18,12 @@ jest.mock('@sentry/react-native', () => ({
 jest.mock('@/utils/errorHandling', () => ({
   authBreadcrumb: jest.fn(),
 }));
+jest.mock('@/utils/network', () => ({
+  isKnownOffline: jest.fn(async () => false),
+}));
+jest.mock('@/utils/async', () => ({
+  delay: jest.fn(async () => undefined),
+}));
 jest.mock('@/hooks/auth/useOAuthProvider', () => ({
   useOAuthProvider: jest.fn(),
 }));
@@ -26,7 +32,8 @@ import { captureException } from '@sentry/react-native';
 
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
 import { useOAuthProvider, type OAuthProviderConfig } from '@/hooks/auth/useOAuthProvider';
-import { isCancellationError } from '@/utils/authUtils';
+import { authBreadcrumb } from '@/utils/errorHandling';
+import { isKnownOffline } from '@/utils/network';
 
 /** The provider config useGoogleAuth registered on its last render. */
 function renderGoogleProvider(): OAuthProviderConfig {
@@ -36,12 +43,21 @@ function renderGoogleProvider(): OAuthProviderConfig {
   return config;
 }
 
-function nativeModule(signInResult: unknown) {
+/**
+ * The library module as executeSignIn receives it: the `GoogleSignin` entry
+ * point plus the response helpers, which mirror the library's own.
+ */
+function googleLibrary(signIn: () => Promise<unknown>) {
   return {
-    hasPlayServices: jest.fn(async () => true),
-    signIn: jest.fn(async () => signInResult),
+    GoogleSignin: {
+      hasPlayServices: jest.fn(async () => true),
+      signIn: jest.fn(signIn),
+    },
+    isCancelledResponse: (response: { type: string }) => response.type === 'cancelled',
   };
 }
+
+const resolvesWith = (signInResult: unknown) => googleLibrary(async () => signInResult);
 
 describe('useGoogleAuth executeSignIn', () => {
   beforeEach(() => {
@@ -49,16 +65,15 @@ describe('useGoogleAuth executeSignIn', () => {
     jest
       .mocked(useOAuthProvider)
       .mockReturnValue({ signIn: jest.fn(async () => {}), loading: false });
+    jest.mocked(isKnownOffline).mockResolvedValue(false);
   });
 
-  it('turns a cancelled account picker into a silent cancellation', async () => {
+  it('turns a cancelled account picker into a null result, not an error', async () => {
     const { executeSignIn } = renderGoogleProvider();
 
-    const error = await executeSignIn(nativeModule({ type: 'cancelled', data: null })).catch(
-      (e: unknown) => e,
-    );
-
-    expect(isCancellationError(error)).toBe(true);
+    await expect(
+      executeSignIn(resolvesWith({ type: 'cancelled', data: null })),
+    ).resolves.toBeNull();
     expect(captureException).not.toHaveBeenCalled();
   });
 
@@ -66,7 +81,7 @@ describe('useGoogleAuth executeSignIn', () => {
     const { executeSignIn } = renderGoogleProvider();
 
     const result = await executeSignIn(
-      nativeModule({
+      resolvesWith({
         type: 'success',
         data: { idToken: 'id-token', user: { email: 'a@b.c', name: null } },
       }),
@@ -75,16 +90,56 @@ describe('useGoogleAuth executeSignIn', () => {
     expect(result).toEqual({ idToken: 'id-token', userInfo: { email: 'a@b.c', name: undefined } });
   });
 
-  it('still reports a success that carries no ID token, without the email', async () => {
+  it('fails a success that carries no ID token, leaving the email off the trail', async () => {
     const { executeSignIn } = renderGoogleProvider();
 
     await expect(
       executeSignIn(
-        nativeModule({ type: 'success', data: { idToken: null, user: { email: 'a@b.c' } } }),
+        resolvesWith({ type: 'success', data: { idToken: null, user: { email: 'a@b.c' } } }),
       ),
     ).rejects.toThrow('Google Sign-In failed');
 
-    expect(captureException).toHaveBeenCalledTimes(1);
-    expect(JSON.stringify(jest.mocked(captureException).mock.calls[0])).not.toContain('a@b.c');
+    // Reported once, by useOAuthProvider — not here as well.
+    expect(captureException).not.toHaveBeenCalled();
+    expect(JSON.stringify(jest.mocked(authBreadcrumb).mock.calls)).not.toContain('a@b.c');
+  });
+
+  it('retries INTERNAL_ERROR once, which the native module rejects as the string "8"', async () => {
+    const { executeSignIn } = renderGoogleProvider();
+    const signIn = jest
+      .fn<() => Promise<unknown>>()
+      .mockRejectedValueOnce(Object.assign(new Error('internal'), { code: '8' }))
+      .mockResolvedValueOnce({
+        type: 'success',
+        data: { idToken: 'second-try', user: { email: 'a@b.c', name: 'A' } },
+      });
+
+    const result = await executeSignIn(googleLibrary(signIn));
+
+    expect(signIn).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(expect.objectContaining({ idToken: 'second-try' }));
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('does not retry while the device is known to be offline', async () => {
+    const { executeSignIn } = renderGoogleProvider();
+    jest.mocked(isKnownOffline).mockResolvedValue(true);
+    const signIn = jest
+      .fn<() => Promise<unknown>>()
+      .mockRejectedValue(Object.assign(new Error('internal'), { code: '8' }));
+
+    await expect(executeSignIn(googleLibrary(signIn))).rejects.toThrow(
+      'No network connection available',
+    );
+    expect(signIn).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry any other failure', async () => {
+    const { executeSignIn } = renderGoogleProvider();
+    const failure = Object.assign(new Error('developer error'), { code: '10' });
+    const signIn = jest.fn<() => Promise<unknown>>().mockRejectedValue(failure);
+
+    await expect(executeSignIn(googleLibrary(signIn))).rejects.toBe(failure);
+    expect(signIn).toHaveBeenCalledTimes(1);
   });
 });

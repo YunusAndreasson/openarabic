@@ -3,11 +3,11 @@ import { StyleSheet, useWindowDimensions } from 'react-native';
 
 import { BaseCard, SnapRail } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Icon } from '@/components/ui';
+import { DisclosureChevron } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 import { WordRailCard } from './WordRailCard';
 
@@ -41,12 +41,11 @@ interface WordRailProps {
  * it is the same shape as the `SeeAllRow` that ends the revisit sheet.
  */
 const SeeAllCard = ({ count, onPress }: SeeAllTarget) => {
-  const colors = useColors();
-  const label = STRINGS.WORDS_TO_REVISIT_SEE_ALL.replace('{count}', String(count));
+  const label = fillTemplate(STRINGS.WORDS_TO_REVISIT_SEE_ALL, { count });
 
   return (
     <BaseCard
-      accessibilityLabel={STRINGS.HARDEST_WORDS_SEE_ALL_A11Y.replace('{count}', String(count))}
+      accessibilityLabel={fillTemplate(STRINGS.HARDEST_WORDS_SEE_ALL_A11Y, { count })}
       accessibilityRole="button"
       contentStyle={styles.seeAllContent}
       style={styles.card}
@@ -60,11 +59,7 @@ const SeeAllCard = ({ count, onPress }: SeeAllTarget) => {
       <ThemedText align="center" colorName="secondaryText" numberOfLines={2} type="caption">
         {label}
       </ThemedText>
-      <Icon
-        color={colors.textTertiary}
-        name="chevron-forward"
-        size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
-      />
+      <DisclosureChevron />
     </BaseCard>
   );
 };
@@ -76,11 +71,11 @@ SeeAllCard.displayName = 'SeeAllCard';
  * `ArticleRail`.
  *
  * Not a variant of `ArticleRail`: that component is typed to `Article`, builds
- * `PlaylistItemCard`s and prefetches article bodies on press-in, none of which
- * a word has. What the two genuinely share is the scroll recipe below, and it
- * is copied verbatim so the two rails on Explore behave identically under the
- * finger — same `decelerationRate`, same single-interval snap, same full-bleed
- * padding on `contentContainerStyle` rather than on the container.
+ * article rows and prefetches article bodies on press-in, none of which a word
+ * has. What the two genuinely share is the scroll recipe, and it lives in
+ * `SnapRail`, so the two rails on Explore behave identically under the finger —
+ * same `decelerationRate`, same single-interval snap, same full-bleed padding on
+ * `contentContainerStyle` rather than on the container.
  *
  * Full-bleed is load-bearing on this tab: Explore's scroll view has NO
  * horizontal padding, deliberately, so each section supplies its own 12px inset

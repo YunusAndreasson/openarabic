@@ -2,10 +2,6 @@ import type { UseQueryResult } from '@tanstack/react-query';
 
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { MILLISECONDS_PER_HOUR } from '@/utils/dateTimeUtils';
-
-/** Static review enrichment stays fresh for the lifetime of an app session. */
-export const REVIEW_CHUNK_STALE_TIME_MS = MILLISECONDS_PER_HOUR;
 
 export interface ReviewChunkQueryInputs {
   rootIds: RootId[];

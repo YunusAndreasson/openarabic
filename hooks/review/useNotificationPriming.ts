@@ -5,7 +5,7 @@ import { useVoiceOfferEligible } from '@/hooks/review/useVoicePriming';
 import { analytics } from '@/services/analytics';
 import { ensurePermissions, getPermissionStatus } from '@/services/notificationService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setReminderTime } from '@/store/settingsSlice';
+import { remindersToggled } from '@/store/settingsSlice';
 import {
   loadNotificationPromptState,
   recordAccepted,
@@ -128,11 +128,11 @@ export function useNotificationPriming(): UseNotificationPrimingResult {
 
     if (granted) {
       // useSmartNotifications watches this setting and schedules the plan.
-      dispatch(setReminderTime({ ...reminderTime, enabled: true }));
+      dispatch(remindersToggled(true));
     }
     // OS-denied: hide silently — no follow-up alert on a celebration screen.
     setShowPrimingCard(false);
-  }, [dispatch, reminderTime]);
+  }, [dispatch]);
 
   const decline = useCallback((): void => {
     void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_DECLINED);

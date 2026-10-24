@@ -1,9 +1,9 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { Article, ArticleRow, SearchCorpusSentence } from '@/types/articles.types';
-import type { ArticleId, AuthorId, CategoryId } from '@/types/branded.types';
+import type { ArticleId } from '@/types/branded.types';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
-import { executeQuery } from '@/utils/supabaseHelpers';
+import { executeQuery, fetchAllPages, type RequestOptions } from '@/utils/supabaseHelpers';
 import { mapToArticle, mapToArticles } from '@/utils/typeMappers';
 
 const errorConfig = {
@@ -26,13 +26,6 @@ const errorConfig = {
     analyticsEventName: 'Articles_Search_Corpus_Load_Error',
   }),
 };
-
-/**
- * PostgREST silently truncates an unbounded `.select()` at its implicit
- * 1000-row default, so the corpus is paged. Same page size, and the same
- * reason, as `services/studyStreak.ts` and `services/studyWordsFSRS.ts`.
- */
-const SEARCH_CORPUS_PAGE_SIZE = 1000;
 
 const SEARCH_CORPUS_COLUMNS = 'article_id, position, arabic, english';
 
@@ -124,103 +117,59 @@ const ARTICLES_WITH_WORD_STATS = `
   )
 `;
 
-interface GetArticlesOptions {
-  categoryId?: CategoryId;
-  authorId?: AuthorId;
-  limit?: number;
-  offset?: number;
-  minDifficulty?: number;
-  maxDifficulty?: number;
-  includeWordStats?: boolean;
-  sortBy?: 'created_at' | 'difficulty_level' | 'title';
-  sortOrder?: 'asc' | 'desc';
-}
-
 export const articlesService = {
-  // Optimized method for getting articles with different detail levels
-  async getArticles(options: GetArticlesOptions = {}): Promise<Article[]> {
-    const {
-      categoryId,
-      authorId,
-      limit = 1000,
-      offset = 0,
-      minDifficulty,
-      maxDifficulty,
-      includeWordStats = false,
-      sortBy = 'created_at',
-      sortOrder = 'desc',
-    } = options;
-
-    // ADDED: Validate API parameters to prevent invalid queries
-    if (limit < 0 || limit > 10000) {
-      throw new Error(`Invalid limit: ${limit}. Must be between 0 and 10000`);
-    }
-    if (offset < 0) {
-      throw new Error(`Invalid offset: ${offset}. Must be non-negative`);
-    }
-    if (minDifficulty !== undefined && (minDifficulty < 1 || minDifficulty > 5)) {
-      throw new Error(`Invalid minDifficulty: ${minDifficulty}. Must be between 1 and 5`);
-    }
-    if (maxDifficulty !== undefined && (maxDifficulty < 1 || maxDifficulty > 5)) {
-      throw new Error(`Invalid maxDifficulty: ${maxDifficulty}. Must be between 1 and 5`);
-    }
-    if (
-      minDifficulty !== undefined &&
-      maxDifficulty !== undefined &&
-      minDifficulty > maxDifficulty
-    ) {
-      throw new Error(`Invalid difficulty range: min (${minDifficulty}) > max (${maxDifficulty})`);
-    }
-
-    const columns = includeWordStats ? ARTICLES_WITH_WORD_STATS : CARD_VIEW_COLUMNS;
-    let query = supabase.from('articles').select(columns).eq('published', true);
-
-    // Apply filters
-    if (categoryId) query = query.eq('category_id', categoryId);
-    if (authorId) query = query.eq('author_id', authorId);
-    if (minDifficulty) query = query.gte('difficulty_level', minDifficulty);
-    if (maxDifficulty) query = query.lte('difficulty_level', maxDifficulty);
-
-    // Apply sorting
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-
-    // Apply pagination
-    if (limit > 0) {
-      query = query.range(offset, offset + limit - 1);
-    }
-
-    const data = await executeQuery(() => query.overrideTypes<ArticleRow[], { merge: false }>(), {
-      ...errorConfig.load,
-      analyticsProperties: {
-        ...(categoryId !== undefined && { categoryId }),
-        ...(authorId !== undefined && { authorId }),
-        limit,
-        offset,
+  /**
+   * The published library in the card-view shape, newest first.
+   *
+   * Paged: PostgREST truncates a response at 1000 rows without saying so, and
+   * this used to be one request capped at exactly that — a library past 1000
+   * articles would have lost its oldest ones without an error. `id` breaks
+   * `created_at` ties, which pages must not split.
+   */
+  async getArticles(request: RequestOptions = {}): Promise<Article[]> {
+    const rows = await fetchAllPages(
+      (from, to, signal) =>
+        supabase
+          .from('articles')
+          .select(CARD_VIEW_COLUMNS)
+          .eq('published', true)
+          .order('created_at', { ascending: false })
+          .order('id')
+          .range(from, to)
+          .abortSignal(signal)
+          .overrideTypes<ArticleRow[], { merge: false }>(),
+      {
+        errorConfig: offset => ({ ...errorConfig.load, analyticsProperties: { offset } }),
+        request,
       },
-    });
+    );
 
-    return mapToArticles(data ?? []);
+    return mapToArticles(rows);
   },
 
   // Optimized method for getting articles with word statistics for due words analysis
-  async getArticlesWithWordStats(): Promise<Article[]> {
-    const data = await executeQuery(
-      () =>
+  //
+  // Paged for the same reason as getArticles: it was a single unbounded
+  // request, so the 1000-row cap applied to it as well.
+  async getArticlesWithWordStats(request: RequestOptions = {}): Promise<Article[]> {
+    const rows = await fetchAllPages(
+      (from, to, signal) =>
         supabase
           .from('articles')
           .select(ARTICLES_WITH_WORD_STATS)
           .eq('published', true)
-          .order('created_at', {
-            ascending: false,
-          })
+          .order('created_at', { ascending: false })
+          .order('id')
+          .range(from, to)
+          .abortSignal(signal)
           .overrideTypes<ArticleRow[], { merge: false }>(),
-      errorConfig.loadWithStats,
+      { errorConfig: errorConfig.loadWithStats, request },
     );
 
-    return mapToArticles(data ?? []);
+    return mapToArticles(rows);
   },
 
-  async getArticleById(id: ArticleId): Promise<Article> {
+  async getArticleById(id: ArticleId, request: RequestOptions = {}): Promise<Article> {
     const data = await executeQuery(
       () =>
         supabase
@@ -229,11 +178,12 @@ export const articlesService = {
           .eq('id', id)
           .eq('published', true)
           .maybeSingle()
-          .overrideTypes<ArticleRow, { merge: false }>(),
+          .overrideTypes<ArticleRow | null, { merge: false }>(),
       {
         ...errorConfig.loadById,
         analyticsProperties: { id },
       },
+      request,
     );
 
     if (!data) {
@@ -254,7 +204,7 @@ export const articlesService = {
         supabase
           .from('articles')
           .select(DETAIL_VIEW_COLUMNS)
-          .in('id', ids as number[]) // Cast branded type to number[] for Supabase query
+          .in('id', ids)
           .eq('published', true)
           .overrideTypes<ArticleRow[], { merge: false }>(),
       {
@@ -263,7 +213,7 @@ export const articlesService = {
       },
     );
 
-    return mapToArticles(data ?? []);
+    return mapToArticles(data);
   },
 
   /**
@@ -276,39 +226,35 @@ export const articlesService = {
    * learners actually type. Folding happens locally instead
    * (`utils/searchNormalization.ts`), which also makes search work offline.
    *
-   * ~5.5k rows / ~1 MB. Held in memory for the session and deliberately not
-   * persisted: the `articles` query-key prefix is excluded from
-   * `PERSIST_KEYS` (`utils/queryPersistence.ts`) because a payload this size
-   * threatens Android's 2 MB CursorWindow.
+   * ~5.5k rows / ~1 MB, so paged (PostgREST truncates every response at 1000
+   * rows); `(article_id, position)` is unique, so the pages cannot overlap.
+   * Held in memory for the session and deliberately not persisted: the
+   * `articles` query-key prefix is excluded from `PERSIST_KEYS`
+   * (`utils/queryPersistence.ts`) because a payload this size threatens
+   * Android's 2 MB CursorWindow.
    *
    * Unpublished articles are not filtered out here. There is no `published`
    * column on `article_sentences`, and adding the join would buy nothing: a hit
    * is only ever surfaced by joining back to the published catalogue, which
    * drops them anyway.
    */
-  async getSearchCorpus(): Promise<SearchCorpusSentence[]> {
-    const sentences: SearchCorpusSentence[] = [];
-
-    for (let offset = 0; ; offset += SEARCH_CORPUS_PAGE_SIZE) {
-      const page = await executeQuery(
-        () =>
-          supabase
-            .from('article_sentences')
-            .select(SEARCH_CORPUS_COLUMNS)
-            .order('article_id', { ascending: true })
-            .order('position', { ascending: true })
-            .range(offset, offset + SEARCH_CORPUS_PAGE_SIZE - 1)
-            .overrideTypes<SearchCorpusSentence[], { merge: false }>(),
-        {
+  getSearchCorpus(request: RequestOptions = {}): Promise<SearchCorpusSentence[]> {
+    return fetchAllPages(
+      (from, to, signal) =>
+        supabase
+          .from('article_sentences')
+          .select(SEARCH_CORPUS_COLUMNS)
+          .order('article_id', { ascending: true })
+          .order('position', { ascending: true })
+          .range(from, to)
+          .abortSignal(signal),
+      {
+        errorConfig: offset => ({
           ...errorConfig.loadSearchCorpus,
           analyticsProperties: { offset },
-        },
-      );
-
-      sentences.push(...page);
-      if (page.length < SEARCH_CORPUS_PAGE_SIZE) break;
-    }
-
-    return sentences;
+        }),
+        request,
+      },
+    );
   },
 };

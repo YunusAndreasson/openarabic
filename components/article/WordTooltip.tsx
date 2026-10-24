@@ -4,6 +4,7 @@ import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'reac
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { TIMING_CONSTANTS } from '@/constants/animation';
 import { FONTS } from '@/constants/fonts';
 import { getElevation } from '@/constants/elevation';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
@@ -24,18 +25,10 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 // Module-level constants - zero per-render allocations
 // Quick fade-in — short enough that the transparency flash is imperceptible
-const ENTER_ANIMATION = FadeIn.duration(100);
+const ENTER_ANIMATION = FadeIn.duration(TIMING_CONSTANTS.TOOLTIP_FADE_IN);
 
 const STATIC_STYLES = StyleSheet.create({
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
-  },
+  overlay: StyleSheet.absoluteFill,
   tooltip: {
     position: 'absolute',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,

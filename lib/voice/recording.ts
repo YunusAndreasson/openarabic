@@ -37,6 +37,7 @@ import { Platform } from 'react-native';
 import { AudioManager, AudioRecorder, type AudioBuffer } from 'react-native-audio-api';
 
 import { mark as diagMark, recordPromptToMic, span as diagSpan } from '@/utils/reviewDiagnostics';
+import { toError } from '@/utils/toError';
 
 interface AudioReadyEvent {
   buffer: AudioBuffer;
@@ -957,9 +958,7 @@ export class VoiceCaptureSession {
       endSession();
     } catch (sessionErr) {
       endSession({ failed: true });
-      diagMark('mic.session.configure.failed', {
-        message: sessionErr instanceof Error ? sessionErr.message : String(sessionErr),
-      });
+      diagMark('mic.session.configure.failed', { message: toError(sessionErr).message });
       // Surface the real error from start() below.
     }
 
@@ -1052,9 +1051,7 @@ export class VoiceCaptureSession {
         this.speechGate = null;
         this.gateUsed = 'energy';
         this.vadSpeaking = false;
-        diagMark('mic.gate.startFailed', {
-          message: err instanceof Error ? err.message : String(err),
-        });
+        diagMark('mic.gate.startFailed', { message: toError(err).message });
       }
     }
 
@@ -1151,7 +1148,7 @@ export class VoiceCaptureSession {
         try {
           this.speechGate?.insert(samples);
         } catch (err) {
-          this.releaseGate(err instanceof Error ? err.message : String(err));
+          this.releaseGate(toError(err).message);
         }
       }
     }

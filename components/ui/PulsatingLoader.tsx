@@ -1,10 +1,11 @@
 import { StyleSheet, View } from 'react-native';
-import Animated, { useReducedMotion } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
-import { TIMING_CONSTANTS } from '@/constants/animation';
+import { BREATHE_HALF_PERIOD, breatheStyle } from '@/constants/animation';
 import { getElevation } from '@/constants/elevation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { useMotionStyle } from '@/hooks/animations/useMotionStyle';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 
@@ -34,7 +35,7 @@ const MIN_BORDER_WIDTH = 3; // Minimum border width in pixels
 const BORDER_WIDTH_SCALE = 0.06; // Border width as percentage of loader size
 
 /**
- * The largest the circle ever gets — must match the keyframe below.
+ * The largest the circle ever gets — the top of its breath below.
  *
  * The container reserves it, rather than being sized to `size` exactly. The
  * circle scales past its box on every pulse otherwise, which is invisible for a
@@ -47,17 +48,15 @@ export const MAX_PULSE_SCALE = 1.2;
 /** Hoisted so the prop keeps a stable identity across renders. */
 const ACCESSIBILITY_BUSY = { busy: true } as const;
 
+/** The smallest the circle gets, at the bottom of its breath. */
+const MIN_PULSE_SCALE = 0.8;
+
 // Reanimated v4 CSS keyframe animation — replaces useEffect + withRepeat + withTiming
-const pulsateStyle = {
-  animationName: {
-    '0%': { transform: [{ scale: 0.8 }] },
-    '100%': { transform: [{ scale: 1.2 }] },
-  },
-  animationDuration: `${TIMING_CONSTANTS.PULSATE_DURATION / 2}ms`,
-  animationIterationCount: 'infinite' as const,
-  animationDirection: 'alternate' as const,
-  animationTimingFunction: 'ease-in-out',
-} as ReanimatedCSSAnimationStyle;
+const pulsateStyle = breatheStyle(
+  { transform: [{ scale: MIN_PULSE_SCALE }] },
+  { transform: [{ scale: MAX_PULSE_SCALE }] },
+  BREATHE_HALF_PERIOD.LOADER,
+);
 
 /**
  * The same wait, breathed rather than zoomed, for a learner who has asked for
@@ -70,24 +69,22 @@ const pulsateStyle = {
  * Cross-Fade Transitions". So the pulse keeps its rhythm and its meaning on the
  * one channel the setting is not about.
  *
- * Reanimated will not do this for us. `withTiming` and the layout builders both
- * default to `ReduceMotion.System`, but the CSS API has no reduced-motion
- * handling at all in 4.5 — see the note on ReviewFlipCard's CARD_ENTRANCE.
+ * This is the app's rule, not just this loader's: see `useMotionStyle`, which
+ * picks between the two. Reanimated will not do it for us — `withTiming` and
+ * the layout builders default to `ReduceMotion.System`, but the CSS API still
+ * has no reduced-motion handling in 4.7.
  *
  * Held at MAX_PULSE_SCALE so the ring is the size the container already
  * reserves, rather than jumping a size smaller than the layout expects.
  */
-const pulsateReducedStyle = {
-  animationName: {
-    '0%': { opacity: LAYOUT.OPACITY.SUBTLE },
-    '100%': { opacity: LAYOUT.OPACITY.FULL },
-  },
-  animationDuration: `${TIMING_CONSTANTS.PULSATE_DURATION / 2}ms`,
-  animationIterationCount: 'infinite' as const,
-  animationDirection: 'alternate' as const,
-  animationTimingFunction: 'ease-in-out',
+const pulsateReducedStyle: ReanimatedCSSAnimationStyle = {
+  ...breatheStyle(
+    { opacity: LAYOUT.OPACITY.SUBTLE },
+    { opacity: LAYOUT.OPACITY.FULL },
+    BREATHE_HALF_PERIOD.LOADER,
+  ),
   transform: [{ scale: MAX_PULSE_SCALE }],
-} as ReanimatedCSSAnimationStyle;
+};
 
 /**
  * A pulsating circle loader component for smooth loading states
@@ -100,7 +97,7 @@ export function PulsatingLoader({
   const colors = useColors();
   const box = size * MAX_PULSE_SCALE;
   const announced = accessibilityLabel !== null;
-  const reduceMotion = useReducedMotion();
+  const pulse = useMotionStyle(pulsateStyle, pulsateReducedStyle);
 
   return (
     <View
@@ -122,7 +119,7 @@ export function PulsatingLoader({
       <Animated.View
         style={[
           getElevation(colors, 'HAIRLINE'),
-          reduceMotion ? pulsateReducedStyle : pulsateStyle,
+          pulse,
           {
             width: size,
             height: size,

@@ -1,9 +1,18 @@
-import { createContext, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { useProvideAuth } from '@/hooks/auth/useProvideAuth';
 import type { AuthResult } from '@/types/auth.types';
+import { createRequiredContext } from '@/utils/createRequiredContext';
 
-export const AuthContext = createContext<AuthResult | null>(null);
+/**
+ * `AuthContext` stays exported for the one reader that may sit outside the
+ * provider and wants `null` there (useTutorialManager); everything else reads
+ * through `useAuth`, which throws instead.
+ */
+export const [AuthContext, useAuthContext] = createRequiredContext<AuthResult>(
+  'AuthContext',
+  'useAuth must be used within an AuthProvider. Check that AuthProvider wraps your component tree.',
+);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const auth = useProvideAuth();

@@ -41,7 +41,7 @@ export const UNICODE_FORMAT_REGEX = /[\u200B-\u200F\u202A-\u202E\uFEFF]/g;
 export const NON_WORD_REGEX = /[^\w\s]/g;
 export const WHITESPACE_REGEX = /\s+/;
 
-/** Maximum cache size for LRU eviction */
+/** Maximum cache size before FIFO eviction (see `cacheWithFifoEviction`) */
 export const CACHE_SIZE_LIMIT = 500;
 
 /**

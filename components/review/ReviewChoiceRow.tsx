@@ -2,6 +2,7 @@ import type { ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ReviewActionButton } from '@/components/review/ReviewActionButton';
+import type { SolidColorName } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -10,7 +11,15 @@ import { useColors } from '@/hooks/theme/useColors';
  * nothing), so it must not borrow a grade's hue: amber means "Barely" in the
  * grade bar that occupies this same band.
  */
-type ReviewChoiceTone = 'negative' | 'intermediate' | 'positive' | 'neutral';
+export type ReviewChoiceTone = 'negative' | 'intermediate' | 'positive' | 'neutral';
+
+/** The theme ink each tone paints with — also what the grades tutorial shows. */
+export const REVIEW_CHOICE_TONE_COLOR = {
+  negative: 'error',
+  intermediate: 'warning',
+  positive: 'success',
+  neutral: 'secondaryText',
+} as const satisfies Record<ReviewChoiceTone, SolidColorName>;
 
 type ReviewChoice = Omit<
   ComponentProps<typeof ReviewActionButton>,
@@ -43,17 +52,11 @@ const styles = StyleSheet.create({
  */
 export const ReviewChoiceRow = ({ choices }: ReviewChoiceRowProps) => {
   const colors = useColors();
-  const toneColors: Record<ReviewChoiceTone, string> = {
-    negative: colors.error,
-    intermediate: colors.warning,
-    positive: colors.success,
-    neutral: colors.secondaryText,
-  };
 
   return (
     <View style={styles.row}>
       {choices.map(({ tone, ...choice }) => (
-        <ReviewActionButton key={tone} {...choice} color={toneColors[tone]} />
+        <ReviewActionButton key={tone} {...choice} color={colors[REVIEW_CHOICE_TONE_COLOR[tone]]} />
       ))}
     </View>
   );

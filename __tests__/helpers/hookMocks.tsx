@@ -26,7 +26,7 @@ import type { SessionMetrics } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 import { createTestQueryClient } from './testUtils';
-import { setupTestStore, type TestRootState } from './testStore';
+import { setupTestStore, type TestPreloadedState } from './testStore';
 
 // ============================================================================
 // AUTH HOOKS
@@ -41,7 +41,6 @@ const createAuthMockDefaults = () => ({
   signIn: jest.fn(async (..._args: unknown[]) => undefined),
   signUp: jest.fn(async (..._args: unknown[]) => undefined),
   signOut: jest.fn(async (..._args: unknown[]) => undefined),
-  refreshSession: jest.fn(async (..._args: unknown[]) => undefined),
 });
 
 export const createAuthMock = (
@@ -56,7 +55,7 @@ export const createAuthMock = (
 // ============================================================================
 
 /**
- * Creates mock return value for useSimpleAudioPlayer hook
+ * Creates a mock of the audio playback commands (play / stop / preconfigure)
  */
 const createAudioPlayerMockDefaults = () => ({
   play: jest.fn(async (..._args: unknown[]) => true),
@@ -149,7 +148,6 @@ const sessionMetricsDefaults = (metrics: Partial<SessionMetrics> = {}) => ({
     ...metrics,
   },
   updateMetrics: jest.fn(),
-  resetMetrics: jest.fn(),
 });
 
 export const createSessionMetricsMock = (
@@ -217,30 +215,32 @@ export const createOpacityAnimationMock = (
  * const { result } = renderHook(() => useMyHook(), { wrapper });
  *
  * @example
- * // With Redux store
- * const { wrapper } = createHookTestWrapper({ withRedux: true });
+ * // With a real Redux store (returned, for dispatching and reading state)
+ * const { wrapper, store } = createHookTestWrapper({ withRedux: true });
  *
  * @example
- * // With preloaded Redux state
+ * // With preloaded Redux state, merged per slice onto the initial state
  * const { wrapper } = createHookTestWrapper({
  *   withRedux: true,
- *   preloadedState: { theme: { mode: 'dark' } }
+ *   preloadedState: { settings: { dailyWordLimit: 0 } },
  * });
  */
 export function createHookTestWrapper(options?: {
   withRedux?: boolean;
-  preloadedState?: Partial<TestRootState>;
+  preloadedState?: TestPreloadedState;
 }) {
   const queryClient = createTestQueryClient();
+  // One store for the wrapper's lifetime: built inside it, every re-render of
+  // the hook under test started again from the preloaded state.
+  const store = options?.withRedux ? setupTestStore(options.preloadedState) : undefined;
 
   const wrapper = ({ children }: { children: React.ReactNode }) => {
     const content = <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-
-    if (options?.withRedux) {
-      return <Provider store={setupTestStore(options.preloadedState)}>{content}</Provider>;
-    }
-    return content;
+    return store ? <Provider store={store}>{content}</Provider> : content;
   };
 
-  return { wrapper, queryClient };
+  return { wrapper, queryClient, store };
 }
+
+/** The wrapper `createHookTestWrapper` returns, for a suite that rebuilds it per test. */
+export type HookTestWrapper = ReturnType<typeof createHookTestWrapper>['wrapper'];

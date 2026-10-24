@@ -33,6 +33,10 @@ export const STRINGS = {
   ARABIC_FONT: 'Arabic text',
   ARABIC_TEXT_VALUE: '{font} · {size}',
   FONT_SIZE: 'Font size',
+  FONT_SIZE_VALUE: '{size}px',
+  FONT_SIZE_VALUE_A11Y: '{size} pixels',
+  // The small and the large letter either side of the font-size slider
+  FONT_SIZE_SAMPLE_LETTER: 'A',
   // Shared bilingual label
   BILINGUAL_LABEL: 'English + Arabic',
   AUDIO_LANGUAGE: 'Audio language',
@@ -293,6 +297,14 @@ export const STRINGS = {
   // so this app doesn't have to.
   MAKER_BYLINE: 'Made by Yunus Andreasson',
   MAKER_PROJECTS_URL: 'https://andreassonphoto.com/projects',
+  // The version lines at the foot of Settings (BrandFooter). "embedded" means no
+  // over-the-air update has been applied: the app runs the bundle in the binary.
+  APP_VERSION: 'Version {version}',
+  APP_VERSION_WITH_BUILD: 'Version {version} ({build})',
+  OTA_EMBEDDED: 'OTA embedded · {channel}',
+  OTA_UPDATE: 'OTA {id} · {channel}',
+  OTA_CHANNEL_UNKNOWN: 'unknown',
+  COPYRIGHT: '© {year} OpenArabic',
   // App Store Review
   RATE_APP: 'Rate OpenArabic',
   PLAY_STORE_LISTING_URL: 'https://play.google.com/store/apps/details?id={package}',
@@ -312,8 +324,13 @@ export const STRINGS = {
   MINI_PLAYER_RESUME_A11Y: 'Resume',
   /** A hint, not a label: the title is what is announced, this says what a tap does. */
   MINI_PLAYER_OPEN_ARTICLE_HINT: 'Opens the article',
+  AUDIO_PLAY_FAILED: "Couldn't play audio. " + tryAgain,
   AUDIO_PAUSE_FAILED: "Couldn't pause audio. " + tryAgain,
   AUDIO_RESUME_FAILED: "Couldn't resume audio. " + tryAgain,
+  AUDIO_STOP_FAILED: "Couldn't stop audio. " + tryAgain,
+  WORD_AUDIO_PLAY_FAILED: "Couldn't play this word. " + tryAgain,
+  /** Shown in place of an audio control that crashed (AudioErrorBoundary). */
+  AUDIO_UNAVAILABLE: 'Audio unavailable',
   // Timer controls
   SLEEP_TIMER: 'Sleep timer',
   SET_TIMER: 'Set timer',
@@ -424,6 +441,8 @@ export const STRINGS = {
   RESUMED_READING_TEMPLATE: 'Resuming at {percent}%',
   // Article section headings (for progress-based sorting)
   CONTINUE_READING: 'Continue reading',
+  /** An article's estimated reading time, in its metadata line. */
+  READING_TIME_MINUTES: '{minutes} min',
   MORE_FROM_AUTHOR: 'More from {author}',
   MORE_FROM_CATEGORY: 'More in {category}',
   SOURCE_BOOK: 'Source: {book}',
@@ -448,6 +467,7 @@ export const STRINGS = {
   PLAYLIST_EMPTY_SEED_CTA: 'Add beginner articles',
   // Practice tab empty state - one-tap quick start
   PLAY_ALL: 'Play all',
+  PLAY_ALL_NOTHING_TO_PLAY: 'No articles to play',
   STUDY_LIST_EMPTY_TITLE: 'No words yet',
   STUDY_LIST_EMPTY_HINT:
     'Tap any word while reading and save it — reviews are scheduled so it sticks',
@@ -523,6 +543,7 @@ export const STRINGS = {
   ENTER_PASSWORD: 'Enter your password',
   NO_INTERNET_CONNECTION: 'No internet connection. Check your connection and try again.',
   PASSWORD_USE_AT_LEAST_TEMPLATE: 'Use at least {minLength} characters',
+  NEW_PASSWORD_HINT_TEMPLATE: 'Enter a password with at least {minLength} characters',
   SHOW_PASSWORD: 'Show password',
   HIDE_PASSWORD: 'Hide password',
   FORGOT_PASSWORD: 'Forgot password?',
@@ -1163,6 +1184,10 @@ export const STRINGS = {
     'Permanently deletes all reading positions and progress. This cannot be undone.',
   READING_PROGRESS_RESET_SUCCESSFULLY: 'Reading progress reset',
   FAILED_TO_RESET_READING_PROGRESS: "Couldn't reset reading progress. " + tryAgain,
+  /** The reset's alert when no user is signed in. */
+  NO_USER_ID_AVAILABLE: 'No user ID available',
+  /** Toast when saving the reader's position fails. */
+  FAILED_TO_UPDATE_READING_PROGRESS: 'Failed to update reading progress',
   // Notifications
   ENABLE_NOTIFICATIONS: 'Enable notifications',
   TURN_ON_NOTIFICATIONS:
@@ -1281,14 +1306,12 @@ export const STRINGS = {
   FAILED_TO_LOAD_BOOKMARKS: "Couldn't load playlist. " + tryAgain,
   FAILED_TO_ADD_TO_READING_LIST: "Couldn't add to playlist. " + tryAgain,
   FAILED_TO_REMOVE_FROM_READING_LIST: "Couldn't remove from playlist. " + tryAgain,
-  FAILED_TO_CHECK_READING_LIST_STATUS: "Couldn't check playlist. " + tryAgain,
   ERROR_UPDATING_STUDY_LIST: "Couldn't update practice list. " + tryAgain,
   FAILED_TO_LOAD_STUDY_WORDS: "Couldn't load practice words. " + tryAgain,
   FAILED_TO_UPDATE_WORD_AND_REVIEW: "Couldn't save review. " + tryAgain,
   FAILED_TO_TOGGLE_STUDY_WORD: "Couldn't update word. " + tryAgain,
   FAILED_TO_ADD_COMMON_WORDS: "Couldn't add words. " + tryAgain,
   FAILED_TO_ADD_BEGINNER_ARTICLES: "Couldn't add articles. " + tryAgain,
-  FAILED_TO_DELETE_WORD: "Couldn't delete word. " + tryAgain,
   FAILED_TO_LOAD_ALL_ROOTS: "Couldn't load roots. " + tryAgain,
   FAILED_TO_LOAD_PRACTICE_DATA: "Couldn't load practice data. " + tryAgain,
   FAILED_TO_LOAD_SENTENCES: "Couldn't load sentences. " + tryAgain,
@@ -1347,6 +1370,16 @@ export const STRINGS = {
   },
   GRAMMAR_LEGEND_SINGLE_WORD_NOTE:
     'A single word like "house" is never coloured: the colours show how the parts of a phrase line up with its English, and one word has nothing to line up.',
+  /** The worked phrases under the guide: the English each is coloured against, and its parts. */
+  GRAMMAR_EXAMPLES: {
+    AND_THE_HOUSE: { english: 'and the house', breakdown: 'و (and) + ال (the) + root word' },
+    WITH_MY_BOOK: { english: 'with my book', breakdown: 'ب (with) + root + ي (my)' },
+    SO_THEY_SAID: { english: 'so they said', breakdown: 'ف (so) + root + وا (they/plural)' },
+    TO_THE_MUSLIMS: {
+      english: 'to the Muslims',
+      breakdown: 'ل (to) + ال (the) + root + ين (plural)',
+    },
+  },
   HELP_SEARCH_PLACEHOLDER: 'Search help',
   HELP_SEARCH_CLEAR: 'Clear search',
   HELP_SEARCH_RESULTS_SINGULAR: 'result',

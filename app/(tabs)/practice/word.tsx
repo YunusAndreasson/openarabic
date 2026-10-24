@@ -1,6 +1,6 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,80 +20,80 @@ import { WordFsrsStats } from '@/components/practice/WordFsrsStats';
 import { WordHeroText } from '@/components/practice/WordHeroText';
 import { SkiaColoredArabic } from '@/components/common/SkiaColoredArabic';
 import { PulsatingLoader } from '@/components/ui';
-import {
-  LAYOUT,
-  MIN_TOUCH_TARGET,
-  getArabicHeroFontSize,
-  getArabicHeroTextStyle,
-  getCompactArabicFontSize,
-} from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, getCompactArabicFontSize } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
-import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
-import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
-import {
-  useFSRSQueries,
-  useResetWordProgress,
-  useRootEnrichment,
-  useSentencesByWord,
-  useWordMemory,
-} from '@/hooks/vocabulary';
+import { useResetWordProgress, useSentencesByWord } from '@/hooks/vocabulary';
+import { useSavedWordDetail } from '@/hooks/vocabulary/useSavedWordDetail';
 import type { SentenceArticle } from '@/services/sentences';
 import type { RootId } from '@/types/branded.types';
-import type { StudyWord } from '@/types/vocabulary.types';
-import { toWordAudioData } from '@/utils/audioUtils';
-import { handleError } from '@/utils/errorHandling';
 import { getNextReviewLabel } from '@/utils/fsrsUtils';
 import { getArticleRoute, getPracticeWordRoute } from '@/utils/routeBuilders';
+import { useRootIdParam } from '@/utils/routeParams';
 import { getWordUsage, type WordForm } from '@/utils/wordUsage';
 import { dismissAllThenNavigate } from '@/utils/sheetNavigation';
-import { getRootLemma } from '@/utils/stringUtils';
 
 const SENTENCE_EXAMPLES_LIMIT = 5;
 
+/** Stands in for the word while there is none to show: a spinner, or why not. */
+function WordPlaceholder({ message }: { readonly message?: string }): JSX.Element {
+  return (
+    <ThemedView style={styles.container}>
+      <View style={styles.loadingContainer}>
+        {message === undefined ? (
+          <LoadingState />
+        ) : (
+          <ThemedText align="center" colorName="secondaryText" type="body">
+            {message}
+          </ThemedText>
+        )}
+      </View>
+    </ThemedView>
+  );
+}
+
 export default function PracticeWordScreen(): JSX.Element {
+  const rootId = useRootIdParam();
+
+  // The app always pushes this screen with a real id, but a deep link can
+  // carry anything. Without a usable one the screen says the link is broken,
+  // rather than claiming a word is missing from the list after a lookup.
+  if (rootId === undefined) {
+    return <WordPlaceholder message={STRINGS.WORD_SHEET_INVALID_LINK} />;
+  }
+
+  return <PracticeWordDetail rootId={rootId} />;
+}
+
+function PracticeWordDetail({ rootId }: { readonly rootId: RootId }): JSX.Element {
   const router = useRouter();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
-  const { rootId: rootIdParam } = useLocalSearchParams<{ rootId?: string }>();
-  const rootId = Number(rootIdParam) as RootId;
 
-  // Debounced like every other Arabic surface, so dragging the size slider does
-  // not re-render the headword on every tick.
-  const readingFontSize = useDebouncedArabicFontSize(100);
-  const heroFontSize = getArabicHeroFontSize(readingFontSize);
+  // The word itself, its memory, enrichment, hero style and audio — shared with
+  // the root-level word sheet (WordDetailContent), so the two cannot disagree.
+  // The word is held after a remove so the screen stays rendered while it
+  // dismisses (the optimistic cache update deletes the word first).
+  const {
+    word,
+    isLoading,
+    error,
+    memory,
+    enrichment,
+    arabicText,
+    englishText,
+    readingFontSize,
+    heroArabicStyle,
+    canOpenFamilyMember,
+    playAudio,
+  } = useSavedWordDetail(rootId);
   // The "Seen as" forms use the dense-row cap, not the hero size: six of them
   // wrap across two lines, and at hero size two would fill the screen.
   const formFontSize = getCompactArabicFontSize(readingFontSize);
-  const heroArabicStyle = useMemo(() => getArabicHeroTextStyle(heroFontSize), [heroFontSize]);
 
-  const { allWords, isLoading, error } = useFSRSQueries({ userId: user?.id });
-  const { toggleRootMutation } = useStudyWordMutations();
-  const toggleRoot = toggleRootMutation.mutateAsync;
+  const { handleRootPress } = useStudyWordMutations();
   const { confirmReset } = useResetWordProgress();
-
-  // Hold the last seen word so the sheet stays rendered while it dismisses
-  // after a remove (the optimistic cache update deletes the word first).
-  // Guarded set-state during render is the sanctioned "storing information
-  // from previous renders" pattern.
-  const found = useMemo(
-    () => allWords?.find(candidate => candidate.root_id === rootId),
-    [allWords, rootId],
-  );
-  const [word, setWord] = useState<StudyWord | undefined>(found);
-  if (found && found !== word) {
-    setWord(found);
-  }
-
-  const memory = useWordMemory(word);
-
-  // Keyed off the ROUTE param, not the resolved word: the id is known
-  // synchronously on mount, so this is already in flight while the study-word
-  // list is still loading rather than starting a round trip behind it.
-  const enrichment = useRootEnrichment(rootId);
 
   const {
     sentences,
@@ -105,22 +105,13 @@ export default function PracticeWordScreen(): JSX.Element {
     enabled: !!word?.root_id,
   });
 
-  const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
-
-  const handlePlayAudio = useCallback(async () => {
-    const audio = word && toWordAudioData(word);
-    if (!audio) return;
-    await playWordAudio(audio);
-  }, [word, playWordAudio]);
-
   const handleResetProgress = useCallback(() => {
     if (!word) return;
     confirmReset(word.root_id);
   }, [word, confirmReset]);
 
   const handleRemove = useCallback(() => {
-    if (!user?.id || !word) return;
-    const userId = user.id;
+    if (!word) return;
     const wordRootId = word.root_id;
     Alert.alert(STRINGS.REMOVE_WORD_TITLE, STRINGS.REMOVE_WORD_CONFIRM, [
       { text: STRINGS.CANCEL, style: 'cancel' },
@@ -128,20 +119,16 @@ export default function PracticeWordScreen(): JSX.Element {
         text: STRINGS.REMOVE,
         style: 'destructive',
         onPress: () => {
-          // Optimistic cache update removes the word immediately; failures
-          // revert the cache and surface a toast.
-          toggleRoot({ userId, rootId: wordRootId, intent: 'remove' }).catch(error =>
-            handleError(error, {
-              showToast: true,
-              toastMessage: STRINGS.FAILED_TO_DELETE_WORD,
-              captureSentry: !__DEV__,
-            }),
-          );
+          // Explicit intent, so a stale cache can never turn this into a
+          // re-add. The optimistic cache update removes the word at once; a
+          // failure reverts it and is reported once, by the mutation's own
+          // onError (toast and Sentry).
+          void handleRootPress(wordRootId, 'remove');
           router.back();
         },
       },
     ]);
-  }, [user, word, toggleRoot, router]);
+  }, [word, handleRootPress, router]);
 
   // Distinguish "still fetching" from "not in the list" from "the fetch
   // failed" — all three used to render the same "not in your practice list"
@@ -149,35 +136,17 @@ export default function PracticeWordScreen(): JSX.Element {
   // read as a correct answer about a word that was never there. Mirrors the
   // three-way gate `BottomSheetStateHandler` gives the root-level word sheet.
   if (!word) {
-    return (
-      <ThemedView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          {isLoading ? (
-            <LoadingState />
-          ) : (
-            <ThemedText align="center" colorName="secondaryText" type="body">
-              {error ? STRINGS.WORD_SHEET_ERROR : STRINGS.WORD_NOT_FOUND}
-            </ThemedText>
-          )}
-        </View>
-      </ThemedView>
-    );
+    if (isLoading) return <WordPlaceholder />;
+    return <WordPlaceholder message={error ? STRINGS.WORD_SHEET_ERROR : STRINGS.WORD_NOT_FOUND} />;
   }
 
-  const { arabicText, englishText } = getRootLemma(word);
   const nextReviewLabel = getNextReviewLabel(word.fsrs_due);
 
   // Part of speech and the inflected forms, both read off the examples already
   // loaded above. `roots` has neither column; the corpus is the only source.
   const usage = getWordUsage({ rootId: word.root_id, lemma: arabicText, sentences });
 
-  // A family member is tappable only when the learner has that word saved: this
-  // screen renders WORD_NOT_FOUND for anything outside the practice list, so a
-  // link to an unsaved word is a dead end. The check is handed to the component
-  // PER MEMBER — it used to be an all-or-nothing prop, which meant one saved
-  // member made all five look pressable.
-  const savedRootIds = new Set((allWords ?? []).map(saved => saved.root_id));
-  const canOpenFamilyMember = (memberRootId: RootId) => savedRootIds.has(memberRootId);
+  // A family member opens only when it is saved too: see `canOpenFamilyMember`.
   const handleOpenFamilyMember = (memberRootId: RootId) => {
     router.push(getPracticeWordRoute(memberRootId));
   };
@@ -190,7 +159,7 @@ export default function PracticeWordScreen(): JSX.Element {
     // `dismissAllThenNavigate`, not `push`: this screen sits inside the
     // dictionary's modal and the reader is itself a root-level modal, so the
     // stack has to be emptied before the reader can present.
-    dismissAllThenNavigate(getArticleRoute(article.id, article.title, true, sentenceId));
+    dismissAllThenNavigate(getArticleRoute(article.id, { disableAutoScroll: true, sentenceId }));
   };
 
   return (
@@ -200,9 +169,9 @@ export default function PracticeWordScreen(): JSX.Element {
       style={styles.container}
     >
       {/* The header said the literal word "Word" above whichever word you had
-          opened. `setOptions` merges, so the layout's CloseButton and its
-          fallback title both stay. */}
-      <Stack.Screen options={{ title: englishText || STRINGS.WORD_DETAIL_TITLE }} />
+          opened. Stack.Title sets the title alone, so the layout's CloseButton
+          and the rest of its header options stay. */}
+      <Stack.Title>{englishText || STRINGS.WORD_DETAIL_TITLE}</Stack.Title>
       <ScrollView
         testID="dictionary-word-content"
         style={styles.scrollView}
@@ -237,7 +206,7 @@ export default function PracticeWordScreen(): JSX.Element {
           englishText={englishText}
           partOfSpeech={usage.partOfSpeech}
           transliteration={enrichment?.headwordTransliteration}
-          onPlayAudio={() => void handlePlayAudio()}
+          onPlayAudio={playAudio}
         />
 
         {/* The one thing on this screen that shows the model rather than a

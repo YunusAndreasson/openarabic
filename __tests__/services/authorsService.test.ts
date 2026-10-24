@@ -25,62 +25,66 @@ jest.mock('../../utils/errorHandling', () => ({
 const fromMock = jest.mocked(supabase.from);
 const mockHandleError = jest.mocked(handleError);
 
+/** select → eq → order, resolving to `response`. */
+const createAuthorsBuilder = (response: unknown) => {
+  const builder: any = {
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    order: jest.fn(async (..._args: unknown[]) => response),
+  };
+  return builder;
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
 
 describe('authorsService', () => {
   describe('getUniqueAuthors', () => {
-    test('returns authors that have published articles', async () => {
-      const allAuthors = [
+    // One request: the empty `articles!inner()` embed keeps only authors with a
+    // published article and adds no column. It replaced a second request that
+    // read every published article's author_id — capped at 1000 rows.
+    test('asks for authors with a published article, by name, in one request', async () => {
+      const authors = [
         { id: 1, name: 'Ali' },
-        { id: 2, name: 'Bilal' },
         { id: 3, name: 'Omar' },
       ];
-      const articleAuthors = [{ author_id: 1 }, { author_id: 3 }];
-
-      // Mock first call for authors table
-      const authorsBuilder: any = {
-        select: jest.fn().mockReturnThis(),
-        order: jest.fn(async (..._args: unknown[]) => ({ data: allAuthors, error: null })),
-      };
-
-      // Mock second call for articles table
-      const articlesBuilder: any = {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn(async (..._args: unknown[]) => ({ data: articleAuthors, error: null })),
-      };
-
-      fromMock.mockReturnValueOnce(authorsBuilder).mockReturnValueOnce(articlesBuilder);
+      const builder = createAuthorsBuilder({ data: authors, error: null });
+      fromMock.mockReturnValue(builder);
 
       const result = await authorsService.getUniqueAuthors();
 
+      expect(fromMock).toHaveBeenCalledTimes(1);
       expect(fromMock).toHaveBeenCalledWith('authors');
-      expect(fromMock).toHaveBeenCalledWith('articles');
-      // Should only return authors with articles (ids 1 and 3)
-      expect(result).toEqual([
-        { id: 1, name: 'Ali' },
-        { id: 3, name: 'Omar' },
-      ]);
+      expect(builder.select).toHaveBeenCalledWith('id, name, articles!inner()');
+      expect(builder.eq).toHaveBeenCalledWith('articles.published', true);
+      expect(builder.order).toHaveBeenCalledWith('name', { ascending: true });
+      expect(result).toEqual(authors);
       expect(mockHandleError).not.toHaveBeenCalled();
     });
 
     test('returns empty array when no authors exist', async () => {
-      const authorsBuilder: any = {
-        select: jest.fn().mockReturnThis(),
-        order: jest.fn(async (..._args: unknown[]) => ({ data: [], error: null })),
-      };
-
-      const articlesBuilder: any = {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn(async (..._args: unknown[]) => ({ data: [], error: null })),
-      };
-
-      fromMock.mockReturnValueOnce(authorsBuilder).mockReturnValueOnce(articlesBuilder);
+      fromMock.mockReturnValue(createAuthorsBuilder({ data: [], error: null }));
 
       const result = await authorsService.getUniqueAuthors();
 
       expect(result).toEqual([]);
+    });
+
+    test('reports a failure with the authors toast', async () => {
+      fromMock.mockReturnValue(
+        createAuthorsBuilder({
+          data: null,
+          error: { message: 'boom', code: '', details: '', hint: '' },
+          status: 500,
+        }),
+      );
+
+      await expect(authorsService.getUniqueAuthors()).rejects.toThrow('boom');
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ analyticsEventName: 'Authors_Load_Error' }),
+      );
     });
   });
 });

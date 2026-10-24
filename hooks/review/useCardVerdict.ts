@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
 import {
   cancelAnimation,
+  ReduceMotion,
   useAnimatedReaction,
   useSharedValue,
   withDelay,
@@ -194,6 +195,14 @@ export const useCardVerdict = (): CardVerdictResult => {
    * not a second outcome, and neither is the reset to zero on a card change. A
    * miss settling to RESIDUAL (below the threshold) correctly re-arms it for
    * the next card.
+   *
+   * Which is why both level sequences below run on `ReduceMotion.Never`. With
+   * the OS setting on, Reanimated's `withSequence` skips every step but the
+   * last and `withDelay` skips its delay, so a pass went 0 → 0 and a miss
+   * 0 → RESIDUAL: the level never crossed this threshold, and a Reduce Motion
+   * learner got no grade haptic and no ring. The ring is an opacity change,
+   * which the app does not gate (see useMotionStyle); the wince below is real
+   * movement and keeps the system setting.
    */
   useAnimatedReaction(
     () => {
@@ -246,8 +255,14 @@ export const useCardVerdict = (): CardVerdictResult => {
         // A miss holds. The card is not leaving — it stays for the restudy hold
         // — so the ring settles to a low steady red instead of decaying away,
         // and reads as "this is the one you missed" for as long as you study it.
+        // Never, not System — see the haptic reaction above. Children inherit
+        // the sequence's setting.
         verdictLevel.set(
-          withSequence(withTiming(1, VERDICT.IGNITE), withTiming(VERDICT.RESIDUAL, VERDICT.SETTLE)),
+          withSequence(
+            ReduceMotion.Never,
+            withTiming(1, VERDICT.IGNITE),
+            withTiming(VERDICT.RESIDUAL, VERDICT.SETTLE),
+          ),
         );
         // The wince belongs to the recognizer's verdict only. A "Forgot" the
         // learner reported is an honest answer, and shaking the card at it read
@@ -270,9 +285,11 @@ export const useCardVerdict = (): CardVerdictResult => {
 
       // Correct and Almost both leave. Hold at full strength for the rest of
       // the beat, then release on CARD_EXIT's own duration so the verdict and
-      // the card's departure land on the same frame.
+      // the card's departure land on the same frame. Never reduced, like the
+      // miss above: the delay inherits it too, so the beat survives.
       verdictLevel.set(
         withSequence(
+          ReduceMotion.Never,
           withTiming(1, VERDICT.IGNITE),
           withDelay(
             Math.max(0, VERDICT.BEAT - VERDICT.IGNITE.duration),

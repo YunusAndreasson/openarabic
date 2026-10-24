@@ -15,9 +15,6 @@
  * - Note: No test.concurrent() - tests share mock state and need isolation
  */
 
-// Unmock React Query to test real hook behavior
-jest.unmock('@tanstack/react-query');
-
 import { useEffect, useRef } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
@@ -354,6 +351,7 @@ describe('useFSRS Hook', () => {
         expect(studyWordsFSRSService.getFSRSWords).toHaveBeenCalledWith(
           userId,
           expect.objectContaining({ sessionCooldownHours: cooldownHours }),
+          expect.objectContaining({ managed: true }),
         );
       });
     });
@@ -448,6 +446,7 @@ describe('useFSRS Hook', () => {
             fsrs_state: expect.any(Number),
             fsrs_reps: expect.any(Number),
           }),
+          expect.objectContaining({ managed: true }),
         );
       });
     });
@@ -490,6 +489,7 @@ describe('useFSRS Hook', () => {
             fsrs_state: State.Learning,
             fsrs_last_review: expect.any(String),
           }),
+          expect.objectContaining({ managed: true }),
         );
       });
     });
@@ -554,6 +554,7 @@ describe('useFSRS Hook', () => {
           'test-user',
           1,
           expect.objectContaining({ fsrs_stability: expect.closeTo(expectedStability, 3) }),
+          expect.objectContaining({ managed: true }),
         );
 
         if (expectComplete) {
@@ -977,6 +978,7 @@ describe('useFSRS Hook', () => {
           'test-user',
           1,
           expect.any(Object),
+          expect.objectContaining({ managed: true }),
         );
       });
     });

@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { Fragment, memo, useCallback } from 'react';
 
 import { SectionLabel } from '@/components/common';
-import { getArticleRoute } from '@/constants/routes';
+import { getArticleRoute } from '@/utils/routeBuilders';
 import type { LeadRail } from '@/hooks/explore/useExploreRails';
 import type { Article } from '@/types/articles.types';
 
@@ -24,7 +24,7 @@ const ContinueReadingSectionComponent = ({ rail }: ContinueReadingSectionProps) 
   const handleArticlePress = useCallback(
     (article: Article) => {
       // `disableAutoScroll` is the inverse of resuming
-      router.push(getArticleRoute(article.id, article.title, !resumes));
+      router.push(getArticleRoute(article.id, { disableAutoScroll: !resumes }));
     },
     [router, resumes],
   );

@@ -1,50 +1,54 @@
+import type { Href } from 'expo-router';
+
+import { ROUTE_PATHS } from '@/constants/routes';
 import type { ArticleId, CategoryId, RootId } from '@/types/branded.types';
 
-// Inlined to avoid require cycle: routes.ts -> routeBuilders.ts -> routes.ts
-const PRACTICE_REVIEW_PATH = '/review';
-const PRACTICE_WORD_PATH = '/(tabs)/practice/word';
-const WORD_DETAIL_PATH = '/word-detail';
+/*
+ * Href objects, not hand-built query strings. Expo Router fills the dynamic
+ * segment from `params`, URI-encodes the rest into the query string and drops
+ * the nullish ones, so the URLs are the ones these builders used to spell out;
+ * `satisfies Href` checks each pathname against the generated route list.
+ */
 
-/** Path prefix of the article reader route (`/article/[id]`). */
-export const ARTICLE_ROUTE_PREFIX = '/article/';
+interface ArticleRouteOptions {
+  /**
+   * Open at the top. The reader otherwise resumes at the learner's last-read
+   * sentence, which is the wrong place to land from a card that starts a text
+   * or from one word somewhere inside it.
+   */
+  readonly disableAutoScroll?: boolean;
+  /** The sentence to bring into view. */
+  readonly sentenceId?: number;
+}
 
 export const getArticleRoute = (
   id: ArticleId,
-  headerTitle?: string,
-  disableAutoScroll?: boolean,
-  sentenceId?: number,
-): string => {
-  const base = `${ARTICLE_ROUTE_PREFIX}${id}`;
-  const params: string[] = [];
+  { disableAutoScroll, sentenceId }: ArticleRouteOptions = {},
+) =>
+  ({
+    pathname: ROUTE_PATHS.ARTICLE,
+    params: {
+      id,
+      // The reader tests `=== 'true'`; left out rather than 'false'.
+      disableAutoScroll: disableAutoScroll ? 'true' : undefined,
+      sentenceId,
+    },
+  }) satisfies Href;
 
-  if (headerTitle) {
-    params.push(`headerTitle=${encodeURIComponent(headerTitle)}`);
-  }
-
-  if (disableAutoScroll) {
-    params.push('disableAutoScroll=true');
-  }
-  if (sentenceId !== undefined) {
-    params.push(`sentenceId=${sentenceId}`);
-  }
-
-  if (params.length === 0) return base;
-  return `${base}?${params.join('&')}`;
-};
-
-export const getCategoryFilterRoute = (categoryId: CategoryId, name?: string): string => {
-  const base = `/(tabs)/explore/filter`;
-  const params = [`id=${categoryId}`];
-  if (name) params.push(`name=${encodeURIComponent(name)}`);
-  return `${base}?${params.join('&')}`;
-};
+export const getCategoryFilterRoute = (id: CategoryId, name?: string) =>
+  ({
+    pathname: ROUTE_PATHS.EXPLORE_FILTER,
+    // An empty name is left out, as it always was: the screen titles itself
+    // "Category" without one.
+    params: { id, name: name || undefined },
+  }) satisfies Href;
 
 /**
  * Word detail. Lives inside the practice stack (not at the root) so it pushes
  * within the dictionary's modal instead of presenting behind it.
  */
-export const getPracticeWordRoute = (rootId: RootId): string =>
-  `${PRACTICE_WORD_PATH}?rootId=${rootId}`;
+export const getPracticeWordRoute = (rootId: RootId) =>
+  ({ pathname: ROUTE_PATHS.PRACTICE_WORD, params: { rootId } }) satisfies Href;
 
 /**
  * The word sheet, at the ROOT of the navigator rather than inside a tab.
@@ -55,23 +59,5 @@ export const getPracticeWordRoute = (rootId: RootId): string =>
  * `formSheet` alongside `/words-to-revisit` and presents over whichever tab the
  * learner is on.
  */
-export const getWordDetailRoute = (rootId: RootId): string =>
-  `${WORD_DETAIL_PATH}?rootId=${rootId}`;
-
-export const getPracticeReviewRoute = (
-  params?: Partial<{
-    rootId: RootId;
-    mode: 'new' | 'random' | 'spaced';
-    count: number;
-    fromRemember: string;
-  }>,
-): string => {
-  const queryParts: string[] = [];
-  if (params?.rootId) queryParts.push(`rootId=${params.rootId}`);
-  if (params?.mode) queryParts.push(`mode=${params.mode}`);
-  if (params?.count) queryParts.push(`count=${params.count}`);
-  if (params?.fromRemember)
-    queryParts.push(`fromRemember=${encodeURIComponent(params.fromRemember)}`);
-  const query = queryParts.join('&');
-  return query ? `${PRACTICE_REVIEW_PATH}?${query}` : PRACTICE_REVIEW_PATH;
-};
+export const getWordDetailRoute = (rootId: RootId) =>
+  ({ pathname: ROUTE_PATHS.WORD_DETAIL, params: { rootId } }) satisfies Href;

@@ -1,18 +1,17 @@
-import { Icon } from '@/components/ui';
+import { GlyphButton } from '@/components/ui';
 import { memo, useMemo } from 'react';
 import type { LayoutRectangle, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-// Gesture-handler Pressable — see FloatingActionButtons for why. The article
-// screen's RNGH background-tap wrapper swallows JS-responder touchables, which
-// is why this card's close button did nothing at all.
-import { Pressable } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
 
 import { BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
+// Gesture-handler's: this card sits inside the reader's tap detector, which
+// left a react-native close button here doing nothing at all.
+import { ReaderPressable } from '@/components/article/ReaderPressable';
 import { SkiaSentenceWords } from '@/components/article/SkiaSentenceWords';
 import { FONTS } from '@/constants/fonts';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { RootId } from '@/types/branded.types';
@@ -103,7 +102,7 @@ const ArticleSentenceInternal = function ArticleSentence({
       ...styles.englishText,
       fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
       color: colors.englishText,
-      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.LOOSE,
     }),
     [colors.englishText],
   );
@@ -123,16 +122,12 @@ const ArticleSentenceInternal = function ArticleSentence({
           </ThemedText>
 
           {onDismissTutorial && (
-            <Pressable
-              onPress={onDismissTutorial}
-              // The glyph is small; the target is not. This is the control the
-              // learner reaches for to get the hint out of the way.
-              hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-              accessibilityRole="button"
+            <GlyphButton
               accessibilityLabel={STRINGS.ONBOARDING_SKIP}
-            >
-              <Icon name="close" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.textTertiary} />
-            </Pressable>
+              icon="close"
+              PressableComponent={ReaderPressable}
+              onPress={onDismissTutorial}
+            />
           )}
         </BaseCard>
       )}

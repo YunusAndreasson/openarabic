@@ -10,10 +10,7 @@
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#040D07",
     "primaryColor": "#568066",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "ios": {
       "icon": {
         "light": "./assets/images/icon.png",
@@ -23,24 +20,15 @@
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
       "buildNumber": "281",
+      "deploymentTarget": "17.0",
       "appStoreUrl": "https://apps.apple.com/app/openarabic/id1594031029",
       "usesAppleSignIn": true,
       "entitlements": {
-        "com.apple.developer.applesignin": [
-          "Default"
-        ]
+        "com.apple.developer.applesignin": ["Default"]
       },
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio",
-          "processing",
-          "fetch"
-        ],
+        "UIBackgroundModes": ["audio", "processing"],
         "ITSAppUsesNonExemptEncryption": false,
-        "BGTaskSchedulerPermittedIdentifiers": [
-          "openarabic.backgroundtask",
-          "openarabic.backgroundfetch"
-        ],
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select screenshots for issue reports or profile photos.",
         "NSCameraUsageDescription": "This app needs access to your camera to let you take a profile photo for your account.",
         "NSMicrophoneUsageDescription": "Open Arabic uses the microphone to grade your spoken English answer. Audio is transcribed on your device and never leaves it.",
@@ -51,28 +39,19 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": [
-              "CA92.1"
-            ]
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
-            "NSPrivacyAccessedAPITypeReasons": [
-              "C617.1",
-              "DDA9.1"
-            ]
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1", "DDA9.1"]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
-            "NSPrivacyAccessedAPITypeReasons": [
-              "35F9.1"
-            ]
+            "NSPrivacyAccessedAPITypeReasons": ["35F9.1"]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
-            "NSPrivacyAccessedAPITypeReasons": [
-              "E174.1"
-            ]
+            "NSPrivacyAccessedAPITypeReasons": ["E174.1"]
           }
         ],
         "NSPrivacyCollectedDataTypes": [
@@ -157,9 +136,7 @@
         "android.permission.VIBRATE",
         "com.google.android.gms.permission.AD_ID"
       ],
-      "blockedPermissions": [
-        "android.permission.CAMERA"
-      ]
+      "blockedPermissions": ["android.permission.CAMERA"]
     },
     "plugins": [
       "expo-router",
@@ -312,7 +289,7 @@
         {
           "recordAudioAndroid": false,
           "enableBackgroundPlayback": true,
-          "_comment": "Audio recording disabled - app only uses playback. Background playback enabled for lock screen controls."
+          "_comment": "expo-audio only plays (and switches the session to .playAndRecord while the voice recorder is armed, see services/audioPlayer.ts). The recording itself is react-native-audio-api's AudioRecorder (lib/voice/recording.ts), and RECORD_AUDIO is declared in android.permissions, so expo-audio's own copy stays off. Background playback enabled for lock screen controls."
         }
       ],
       "./plugins/withRemoveExpoAudioBootReceiver.js",
@@ -322,27 +299,18 @@
       [
         "react-native-audio-api",
         {
-          "iosMicrophonePermission": "Open Arabic uses the microphone to grade your spoken English answer. Audio is transcribed on your device and never leaves it.",
           "iosBackgroundMode": false,
           "androidForegroundService": false,
           "androidPermissions": []
         }
       ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "This app needs access to your photo library to let you select a profile photo for your account.",
-          "cameraPermission": "This app needs access to your camera to let you take a profile photo for your account.",
-          "microphonePermission": "This app needs access to your microphone for audio recording features."
-        }
-      ],
+      "expo-image-picker",
       [
         "@react-native-google-signin/google-signin",
         {
           "iosUrlScheme": "com.googleusercontent.apps.989500653316-f244cgfpisfpmhpgedcs3sdof3sirgdv"
         }
       ],
-      "@sentry/react-native",
       "expo-asset",
       "expo-background-task",
       [
@@ -370,7 +338,7 @@
       [
         "expo-build-properties",
         {
-          "_comment_deployment_target": "react-native-executorch's ExecutorchLib.xcframework declares :ios => '17.0', which is above the Expo default (16.4 as of SDK 58), so CocoaPods refuses to integrate it without this. It is the FSMN voice-activity detector behind hands-free answering (hooks/voice/useSpeechGate.ts) that pulls it in. The cost is real and deliberate: iOS 16 devices no longer get updates. Removing the VAD is what it takes to lower this again.",
+          "_comment_deployment_target": "Why expo.ios.deploymentTarget is 17.0 (it lives there, not here: this plugin's own ios.deploymentTarget is deprecated since SDK 56). react-native-executorch's ExecutorchLib.xcframework declares :ios => '17.0', which is above the Expo default (16.4 as of SDK 58), so CocoaPods refuses to integrate it without this. It is the FSMN voice-activity detector behind hands-free answering (hooks/voice/useSpeechGate.ts) that pulls it in. The cost is real and deliberate: iOS 16 devices no longer get updates. Removing the VAD is what it takes to lower this again.",
           "_comment": "MMKV/MMKVCore arrive transitively via @kesha-antonov/react-native-background-downloader, whose podspec floats 'MMKV >= 1.2.0'. With no Podfile.lock in the repo (CNG), every EAS build re-resolves pods, so on 2026-08-02 it picked up MMKVCore 2.4.1 (published 2026-07-30), which calls memset_s — C11 Annex K, which Apple's libc does not implement — and the iOS build failed to compile AESCrypt.cpp. Pinning BOTH is required: MMKV 2.4.0 declares 'MMKVCore ~> 2.4.0', which would still admit 2.4.1. Drop this once upstream ships a fix.",
           "_comment_android_r8": "SDK 58 turns on R8 minification for release builds. Every native dependency ships its own consumer keep rules except @kesha-antonov/react-native-background-downloader, which persists RNBGDTaskConfig with Gson reflection (a TypeToken over Map<Long, RNBGDTaskConfig>); R8 would rename those fields and strip the generic signature, so saved downloads would fail to restore after a restart.",
           "_comment_android_min_sdk": "react-native-skia 3 (Graphite/Dawn) ships Android binaries built for API 26, and its library manifest declares Vulkan 1.1 as a required feature. Both stay: Play then stops serving the app to Android 7.x and to devices without Vulkan 1.1, where every Skia canvas, the reader's Arabic included, would be blank.",
@@ -379,7 +347,6 @@
             "extraProguardRules": "-keep class com.eko.** { *; }\n-keepattributes Signature\n-keep class * extends com.google.gson.reflect.TypeToken"
           },
           "ios": {
-            "deploymentTarget": "17.0",
             "extraPods": [
               {
                 "name": "MMKVCore",

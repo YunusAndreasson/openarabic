@@ -21,14 +21,14 @@ import reducer, {
   setAudioShuffleEnabled,
   setDailyWordLimit,
   setHapticsEnabled,
-  setReminderTime,
+  reminderClockSet,
+  remindersToggled,
   setVoiceEnabled,
   setVoiceOfferDismissed,
   setWordTapShowsTooltip,
   type SettingsState,
 } from '../../store/settingsSlice';
-import { AudioLanguage, DisplayLanguage } from '@/types/enums';
-import type { ReminderTime } from '@/types/notifications.types';
+import { AudioLanguage } from '@/types/enums';
 import { defaultPreloadedState } from '@/__tests__/helpers/testStore';
 
 describe('settingsSlice reducers', () => {
@@ -46,7 +46,6 @@ describe('settingsSlice reducers', () => {
       arabicFontSize: 20,
       audioLanguagePreference: AudioLanguage.ENGLISH_ARABIC,
       audioShuffleEnabled: false,
-      displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH,
       dailyWordLimit: 10,
       adaptiveNewWordPacingEnabled: true,
       wordTapShowsTooltip: false,
@@ -54,25 +53,22 @@ describe('settingsSlice reducers', () => {
     };
   });
 
-  describe('setReminderTime', () => {
-    test('sets reminder time with enabled true', () => {
-      const newReminderTime: ReminderTime = {
-        hour: 8,
-        minute: 30,
-        enabled: true,
-      };
-      const state = reducer(initialState, setReminderTime(newReminderTime));
-      expect(state.reminderTime).toEqual(newReminderTime);
+  describe('reminder events', () => {
+    test('toggling reminders keeps the chosen time', () => {
+      const timed = reducer(initialState, reminderClockSet({ hour: 8, minute: 30 }));
+
+      const on = reducer(timed, remindersToggled(true));
+      expect(on.reminderTime).toEqual({ hour: 8, minute: 30, enabled: true });
+
+      const off = reducer(on, remindersToggled(false));
+      expect(off.reminderTime).toEqual({ hour: 8, minute: 30, enabled: false });
     });
 
-    test('sets reminder time with enabled false', () => {
-      const newReminderTime: ReminderTime = {
-        hour: 22,
-        minute: 0,
-        enabled: false,
-      };
-      const state = reducer(initialState, setReminderTime(newReminderTime));
-      expect(state.reminderTime).toEqual(newReminderTime);
+    test('setting the time keeps whether reminders are on', () => {
+      const on = reducer(initialState, remindersToggled(true));
+
+      const state = reducer(on, reminderClockSet({ hour: 22, minute: 15 }));
+      expect(state.reminderTime).toEqual({ hour: 22, minute: 15, enabled: true });
     });
   });
 
@@ -174,10 +170,10 @@ describe('settingsSlice reducers', () => {
     });
 
     test('defaults to true when rehydrated from a pre-flag install (key absent)', () => {
-      // Regression: persistConfig has no version/migrate, so redux-persist's
-      // autoMergeLevel1 leaves this key `undefined` for every install that
-      // predates the field. A bare truthiness read silently disables pacing;
-      // the selector must fall back to the documented `true` default instead.
+      // Regression: before persistConfig merged two levels deep, redux-persist
+      // left this key `undefined` for every install that predated the field. A
+      // bare truthiness read silently disabled pacing; the selector falls back
+      // to the documented `true` default instead.
       expect(selectAdaptiveNewWordPacingEnabled({ settings: {} })).toBe(true);
     });
   });
@@ -258,7 +254,7 @@ describe('settingsSlice reducers', () => {
 
   // Speak-the-answer ships ON. The offer card and its dismissal flag remain for
   // the installed base, whose persisted `voiceEnabled: false` survives
-  // rehydration untouched — they are what those two booleans are still for.
+  // rehydration — they are what those two booleans are still for.
   describe('speak-the-answer offer', () => {
     const defaults = () => reducer(undefined, { type: '@@INIT' });
 
@@ -281,8 +277,8 @@ describe('settingsSlice reducers', () => {
     });
 
     it('an existing install that turned voice off stays off', () => {
-      // redux-persist reconciles with autoMergeLevel1, so a stored `false` wins
-      // over the new default. This is why the flip needs no migration.
+      // A stored `false` wins over the new default on rehydrate (see
+      // persistConfig.test.ts, which runs the real reconciler).
       const off = reducer(defaults(), setVoiceEnabled(false));
       expect(off.voiceEnabled).toBe(false);
       expect(reducer(off, { type: '@@OTHER' }).voiceEnabled).toBe(false);

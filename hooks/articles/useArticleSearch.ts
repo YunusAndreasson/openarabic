@@ -230,8 +230,6 @@ export function useArticleSearch(query: string): UseArticleSearchResult {
   const { data: entries } = useQuery({
     ...articleQueries.all(),
     select: buildMetadataIndex,
-    refetchOnMount: false,
-    refetchOnReconnect: true,
   });
 
   const {

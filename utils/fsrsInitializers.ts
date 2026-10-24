@@ -1,11 +1,10 @@
 import { State } from 'ts-fsrs';
 
+import { PLACEHOLDER_FSRS } from '@/constants/fsrs';
 import type { TablesInsert } from '@/types/database.types';
 import type { FSRSWordUpdate } from '@/types/fsrs.types';
 
 // FSRS default values that comply with database constraints
-const INITIAL_FSRS_DIFFICULTY = 6.5; // Must be between 1 and 10, use standard FSRS default
-const INITIAL_FSRS_STABILITY = 0.4; // Default FSRS initial stability
 const INITIAL_FSRS_SCHEDULED_DAYS = 0;
 const INITIAL_FSRS_LEARNING_STEPS = 0;
 const INITIAL_FSRS_REPS = 0;
@@ -25,8 +24,8 @@ export function createResetFSRSUpdate(now: Date = new Date()): FSRSWordUpdate {
 
   return {
     fsrs_due: iso, // Due immediately, like a new word
-    fsrs_stability: INITIAL_FSRS_STABILITY,
-    fsrs_difficulty: INITIAL_FSRS_DIFFICULTY,
+    fsrs_stability: PLACEHOLDER_FSRS.stability,
+    fsrs_difficulty: PLACEHOLDER_FSRS.difficulty,
     fsrs_scheduled_days: INITIAL_FSRS_SCHEDULED_DAYS,
     fsrs_learning_steps: INITIAL_FSRS_LEARNING_STEPS,
     fsrs_reps: INITIAL_FSRS_REPS,

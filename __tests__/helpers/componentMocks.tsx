@@ -136,6 +136,7 @@ export const useColorsMockFactory = (overrides: Partial<typeof mockColors> = {})
 /** @internal Reached through a jest.mock require(); knip cannot see it. */
 export const useThemeDetectionMockFactory = (isDarkMode = false) => ({
   useIsDarkMode: () => isDarkMode,
+  useNativeColorScheme: () => (isDarkMode ? 'dark' : 'light'),
 });
 
 // ============================================================================
@@ -245,6 +246,7 @@ export const createReanimatedMock = () => {
     withRepeat: <T,>(value: T) => value,
     // CSS transition easing helpers
     cubicBezier: () => 'cubic-bezier(mock)',
+    ReduceMotion: { System: 'system', Always: 'always', Never: 'never' },
     // Utilities
     runOnJS: (fn: Function) => fn,
     interpolate: (value: number) => value,

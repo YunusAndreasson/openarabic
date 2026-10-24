@@ -4,6 +4,7 @@ import {
   matchSingleWord,
   normalize,
   phoneticFold,
+  suggestAfterMiss,
 } from '@/utils/voiceMatching';
 
 describe('voiceMatching', () => {
@@ -603,5 +604,60 @@ describe('matchSingleWord — shared head prefix rescues a long gloss', () => {
       const r = matchSingleWord({ spoken: 'mercy', expected: 'mercy', alternates: [] });
       expect(r.credit).toBe('known');
     });
+  });
+});
+
+describe('matchSingleWord — a result matches exactly when it earns credit', () => {
+  it.each([
+    ['book', 'book'],
+    ['books', 'book'],
+    ['knowledg', 'knowledge'],
+    ['were eager', 'eager'],
+    ['Please', 'place'],
+    ['table', 'book'],
+    ['thank you', 'book'],
+    ['', 'book'],
+  ])('%j for %j', (spoken, expected) => {
+    const r = matchSingleWord({ spoken, expected });
+    expect(r.matched).toBe(r.credit !== 'unknown');
+  });
+});
+
+/**
+ * What a miss tells the learner. A hearing failure is the app's, so it must
+ * never read as a wrong answer; only a real, clearly different word leans on
+ * "No, I missed it".
+ */
+describe('suggestAfterMiss', () => {
+  it('suggests a retry for a hallucinated stock phrase', () => {
+    expect(suggestAfterMiss(matchSingleWord({ spoken: 'Thank you.', expected: 'book' }))).toEqual({
+      heardReliable: false,
+      suggestion: 'retry',
+    });
+  });
+
+  it('suggests a retry for silence or a one-letter hedge', () => {
+    for (const spoken of ['', 'a']) {
+      expect(suggestAfterMiss(matchSingleWord({ spoken, expected: 'book' }))).toEqual({
+        heardReliable: false,
+        suggestion: 'retry',
+      });
+    }
+  });
+
+  it('leans Unknown for a clearly different word', () => {
+    // "bee" vs "date" scores 0.25, well under the clean-miss line.
+    expect(suggestAfterMiss(matchSingleWord({ spoken: 'bee', expected: 'date' }))).toEqual({
+      heardReliable: true,
+      suggestion: 'unknown',
+    });
+  });
+
+  it('leaves a close miss to the learner', () => {
+    // "boom" vs "book" scores 0.75: too short for the edit budget, too far for
+    // the fuzzy floor, and close enough that the recognizer may be the one wrong.
+    const match = matchSingleWord({ spoken: 'boom', expected: 'book' });
+    expect(match.matched).toBe(false);
+    expect(suggestAfterMiss(match)).toEqual({ heardReliable: true, suggestion: null });
   });
 });

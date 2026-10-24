@@ -1,8 +1,9 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 
 import { SettingsCard, SettingsSection } from '@/components/account';
 import { THEME_MODE_LABELS } from '@/constants/themeOptions';
 import { STRINGS } from '@/constants/strings';
+import { useCurrentTheme } from '@/hooks/theme/useThemeDetection';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { selectHapticsEnabled, setHapticsEnabled } from '@/store/settingsSlice';
 
@@ -25,16 +26,13 @@ interface AppSectionProps {
 export const AppSection = memo<AppSectionProps>(
   ({ onThemePress, onClearCachePress, cacheSizeText }) => {
     const dispatch = useAppDispatch();
-    const currentTheme = useAppSelectorShallow(state => state.theme.theme);
+    const currentTheme = useCurrentTheme();
     // Through the selector, not the raw field: the flag is absent from state
     // persisted before it existed, and reading it directly rendered this toggle
     // as off for every such install (while haptics were, correctly, on).
     const hapticsEnabled = useAppSelectorShallow(selectHapticsEnabled);
 
-    const currentThemeText = useMemo(
-      () => (currentTheme ? THEME_MODE_LABELS[currentTheme] : STRINGS.THEME_MODE_DARK),
-      [currentTheme],
-    );
+    const currentThemeText = THEME_MODE_LABELS[currentTheme];
 
     const handleHapticsToggle = useCallback(
       (enabled: boolean) => {

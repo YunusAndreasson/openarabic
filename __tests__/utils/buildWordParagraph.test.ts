@@ -1,7 +1,7 @@
 import { Skia } from 'react-native-skia';
 
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { buildWordParagraph } from '@/utils/skiaParagraphBuilder';
+import { buildWordParagraph, hasGrammarColour } from '@/utils/skiaParagraphBuilder';
 
 const COLORS = { text: '#eeeeee', arabicText: '#1a1a1a' };
 const FONTS = {
@@ -109,11 +109,48 @@ describe('buildWordParagraph', () => {
     expect(runs).toEqual([{ color: '#1a1a1a', text: 'كِتَاب' }]);
   });
 
+  // SkiaColoredArabic's caller-chosen ink: it used to build its own copy of
+  // this paragraph just to change the plain colour.
+  test('paints the plain run in the colour the caller asks for', () => {
+    const runs = recordRuns();
+
+    buildWordParagraph({ word: word({}), colors: COLORS, plainColor: '#c0ffee', ...FONTS });
+
+    expect(runs).toEqual([{ color: '#c0ffee', text: 'كِتَاب' }]);
+  });
+
+  test('a plain colour never repaints the grammar colours', () => {
+    const runs = recordRuns();
+
+    buildWordParagraph({
+      word: word({
+        word_form: 'فَإِذَا',
+        coloredSegments: [{ text: 'فَإِذَا', color: '#8fb397', type: 'prefix' }],
+      }),
+      colors: COLORS,
+      plainColor: '#c0ffee',
+      ...FONTS,
+    });
+
+    expect(runs).toEqual([{ color: '#8fb397', text: 'فَإِذَا' }]);
+  });
+
   test('an empty word builds no paragraph rather than an invisible one', () => {
     recordRuns();
 
     expect(
       buildWordParagraph({ word: word({ word_form: '' }), colors: COLORS, ...FONTS }),
     ).toBeNull();
+  });
+});
+
+describe('hasGrammarColour', () => {
+  test('is false for no segments, and for segments in the plain text colours only', () => {
+    expect(hasGrammarColour([], COLORS)).toBe(false);
+    expect(hasGrammarColour([{ color: '#eeeeee' }, { color: '#1a1a1a' }], COLORS)).toBe(false);
+  });
+
+  test('is true as soon as one segment carries a grammar colour', () => {
+    expect(hasGrammarColour([{ color: '#1a1a1a' }, { color: '#7c3aed' }], COLORS)).toBe(true);
   });
 });

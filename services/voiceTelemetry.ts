@@ -10,12 +10,25 @@
 import * as Application from 'expo-application';
 import { Platform } from 'react-native';
 
-import type { RecordingStopReason, VoiceArmFailureReason } from '@/lib/voice/recording';
+import {
+  PARAKEET_MODEL_ID,
+  VOICE_DECODING_METHOD,
+  VOICE_HOTWORD_DECODING_METHOD,
+} from '@/constants/voiceModel';
+import {
+  DEFAULT_RECORDING_CONFIG,
+  type RecordingResult,
+  type RecordingStopReason,
+  type VoiceArmFailureReason,
+} from '@/lib/voice/recording';
 import type { RootId } from '@/types/branded.types';
 import { supabase } from '@/services/supabase';
 import type { Json } from '@/types/database.types';
+import type { ArmStages } from '@/utils/armTelemetry';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
-import type { MatchMethod, VoiceSuggestion } from '@/utils/voiceMatching';
+import type { PromptSnapshot } from '@/utils/promptTelemetry';
+import { toError } from '@/utils/toError';
+import type { MatchMethod, SingleWordMatchResult, VoiceSuggestion } from '@/utils/voiceMatching';
 
 /**
  * `arm_failed` rows describe an attempt that never produced audio, so most of
@@ -78,15 +91,20 @@ export interface VoiceArmFailureLog {
   reason: VoiceArmFailureReason;
   message: string | null;
   /** From the dead window, when there was one: 'watchdog' means the
-   *  first-buffer deadline fired with nothing at all. */
-  stopReason: RecordingStopReason | null;
-  durationMs: number | null;
-  bufferCount: number | null;
+   *  first-buffer deadline fired with nothing at all. No caller has one today:
+   *  every arm failure is decided before a window opens. Defaults to null. */
+  stopReason?: RecordingStopReason | null;
+  /** Defaults to null, for the same reason as `stopReason`. */
+  durationMs?: number | null;
+  /** Defaults to null, for the same reason as `stopReason`. */
+  bufferCount?: number | null;
   /** Tap → mic actually capturing, in ms. The number the learner feels, as
-   *  opposed to `first_buffer_ms`, which starts at the window instead. */
-  tapToCapturingMs: number | null;
-  /** True if the stream had been force-reopened since the prompt ended. */
-  streamRefreshed: boolean;
+   *  opposed to `first_buffer_ms`, which starts at the window instead. A failed
+   *  arm never captured, so this defaults to null. */
+  tapToCapturingMs?: number | null;
+  /** True if the stream had been force-reopened since the prompt ended.
+   *  Nothing tracks that yet; defaults to false. */
+  streamRefreshed?: boolean;
   meta: Record<string, unknown>;
 }
 
@@ -144,24 +162,144 @@ export async function logVoiceArmFailure(log: VoiceArmFailureLog): Promise<void>
     expected: log.expected,
     resolution: 'arm_failed',
     attemptIndex: log.attemptIndex,
-    durationMs: log.durationMs,
-    stopReason: log.stopReason,
-    bufferCount: log.bufferCount,
+    durationMs: log.durationMs ?? null,
+    stopReason: log.stopReason ?? null,
+    bufferCount: log.bufferCount ?? null,
     meta: {
       ...log.meta,
       armReason: log.reason,
       armMessage: log.message,
-      tapToCapturingMs: log.tapToCapturingMs,
-      streamRefreshed: log.streamRefreshed,
+      tapToCapturingMs: log.tapToCapturingMs ?? null,
+      streamRefreshed: log.streamRefreshed ?? false,
     },
   });
+}
+
+/** What asked for a microphone window: the learner's tap, hands-free arming
+ *  after the prompt, the result panel's retry, or the transient-failure ladder
+ *  finishing a request nobody had to repeat. */
+export type VoiceArmTrigger = 'tap' | 'auto' | 'retry' | 'ladder';
+
+/** Everything one graded voice attempt's row is built from. */
+export interface VoiceAttemptInput {
+  rootId: RootId | null;
+  /** Raw recognizer output, before normalization. */
+  transcript: string;
+  match: SingleWordMatchResult;
+  suggestion: VoiceSuggestion;
+  /** The arm request this attempt came out of (the hook's `attempt` counter). */
+  attemptIndex: number;
+  recording: RecordingResult;
+  /** Tap → mic capturing, ms; null when no tap time was recorded. */
+  tapToCapturingMs: number | null;
+  /** Transient arm failures this card climbed before the window opened. */
+  armAttempts: number;
+  /** What asked for the window; null is an arm nobody asked for. */
+  armTrigger: VoiceArmTrigger | null;
+  /** An earlier miss on this card already showed and played the answer. */
+  answerDisclosed: boolean;
+  armStages: ArmStages;
+  prompt: PromptSnapshot | null;
+  /** The Advanced recording toggles as they stood for this attempt. */
+  settings: {
+    energyGateEnabled: boolean;
+    gainNormalizeEnabled: boolean;
+    iosRawMode: boolean;
+    debugEnabled: boolean;
+  };
+  /** Phrases the engine that produced this transcript was biased toward. */
+  hotwordCount: number;
+}
+
+/**
+ * The row for one graded attempt, minus its resolution — the auto-pass path
+ * logs it straight away, and a miss holds it until the learner's verdict on
+ * the result panel says how it resolved.
+ */
+export function buildVoiceAttemptLog(
+  input: VoiceAttemptInput,
+): Omit<VoiceAttemptLog, 'resolution'> {
+  const { match, recording, settings } = input;
+  return {
+    rootId: input.rootId,
+    expected: match.normalizedExpected,
+    transcript: input.transcript,
+    normalizedSpoken: match.normalizedSpoken,
+    matched: match.matched,
+    matchMethod: match.method,
+    similarity: match.similarity,
+    suggestion: input.suggestion,
+    attemptIndex: input.attemptIndex,
+    durationMs: recording.durationMs,
+    stopReason: recording.stopReason,
+    heardSpeech: recording.heardSpeech,
+    peakRms: recording.peakRms,
+    bufferCount: recording.bufferCount,
+    firstBufferMs: recording.firstBufferMs,
+    stopDecidedAtMs: recording.stopDecidedAtMs,
+    modelId: PARAKEET_MODEL_ID,
+    meta: {
+      // Free: this row is written anyway, one per resolved attempt. Adds no
+      // volume and gives the latency distribution the HUD can only show one
+      // card at a time — `tapToCapturingMs` is what the learner waits,
+      // where `first_buffer_ms` starts counting only once the window opens.
+      tapToCapturingMs: input.tapToCapturingMs,
+      armAttempts: input.armAttempts,
+      armTrigger: input.armTrigger,
+      // A retry after the answer was shown: its match is capped at vague.
+      answerDisclosed: input.answerDisclosed,
+      // Where the ~1.1 s between the tap and the microphone went. Only
+      // ~150 ms of it is the recorder; the rest was unattributed until this.
+      armStages: input.armStages,
+      streamRefreshed: false,
+      // What the learner actually heard before answering. A miss on a card
+      // whose prompt was cut (or never played) is not a mishearing — it is
+      // a question that was never asked, and until this landed the two were
+      // indistinguishable in the table.
+      prompt: input.prompt,
+      settings,
+      recordingConfig: {
+        ...DEFAULT_RECORDING_CONFIG,
+        energyGateEnabled: settings.energyGateEnabled,
+        gainNormalizeEnabled: settings.gainNormalizeEnabled,
+        iosRawMode: settings.iosRawMode,
+      },
+      // What the energy gate actually saw. `peak_rms` is one number for a
+      // whole window, and three separate gate regressions each needed a
+      // fresh device session to diagnose because of it — the envelope and
+      // the room measurement are what make a row self-explaining. Rounded
+      // integers, ~160 of them at most.
+      gate: {
+        // WHICH detector decided, never inferred from the config: the VAD is
+        // skipped before its model lands and handed back mid-window on a bad
+        // capture rate, so a row that assumed 'vad' would be a guess.
+        used: recording.gateUsed,
+        // Null travels as null: a dead-mic row must stay distinguishable
+        // from one that measured a quiet room. See RecordingResult.
+        noiseFloorDb: recording.noiseFloorDb === null ? null : Math.round(recording.noiseFloorDb),
+        speechMs: recording.speechMs,
+        levelsDb: recording.levelsDb,
+      },
+      // Rows written before 2026-08-17 claim `modified_beam_search` here. That
+      // was never true — see the decoding note in useSherpaStt.ts. Treat the
+      // field as valid only from this value onward.
+      //
+      // `hotwords` is the phrase count the engine that produced THIS
+      // transcript was built with, which is what a bias-on / bias-off
+      // comparison has to segment on.
+      decoding: {
+        method: input.hotwordCount > 0 ? VOICE_HOTWORD_DECODING_METHOD : VOICE_DECODING_METHOD,
+        hotwords: input.hotwordCount,
+      },
+    },
+  };
 }
 
 export async function logVoiceAttempt(log: VoiceAttemptLog): Promise<void> {
   try {
     // Cached session read (no network); RLS needs the authenticated user id.
     const { data } = await supabase.auth.getSession();
-    const userId = data.session?.user?.id;
+    const userId = data.session?.user.id;
     if (!userId) return;
 
     const { error } = await supabase.from('voice_grading_attempts').insert({
@@ -193,10 +331,6 @@ export async function logVoiceAttempt(log: VoiceAttemptLog): Promise<void> {
       voiceBreadcrumb('voice.telemetry.insert.failed', { message: error.message }, 'warning');
     }
   } catch (err) {
-    voiceBreadcrumb(
-      'voice.telemetry.error',
-      { message: err instanceof Error ? err.message : String(err) },
-      'warning',
-    );
+    voiceBreadcrumb('voice.telemetry.error', { message: toError(err).message }, 'warning');
   }
 }

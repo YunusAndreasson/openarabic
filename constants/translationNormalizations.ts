@@ -11,6 +11,8 @@
  * We normalize ALL of these to consistently show "so indeed".
  */
 
+import { foldAlefVariants } from '@/utils/arabicAnalysis/normalization';
+
 /**
  * Represents a single normalization rule for Arabic word combinations
  */
@@ -223,8 +225,8 @@ export const TRANSLATION_NORMALIZATION_RULES: TranslationNormalizationRule[] = [
  */
 export const NORMALIZATION_MAP = new Map<string, string>(
   TRANSLATION_NORMALIZATION_RULES.map(rule => [
-    // Normalize alef variants to match normalizeArabic() output (إ/آ/ٱ only, NOT أ)
-    rule.arabic.replace(/[إآٱ]/g, 'ا'),
+    // Folded the way normalizeArabic() folds the text it is looked up by
+    foldAlefVariants(rule.arabic),
     rule.normalizedEnglish,
   ]),
 );

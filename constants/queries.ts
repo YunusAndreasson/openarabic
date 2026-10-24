@@ -12,9 +12,14 @@
  * - Simplified cache invalidation (75% less code)
  * - Better IntelliSense and autocomplete
  * - Official TanStack Query v5 pattern
+ *
+ * Every queryFn hands its service a `managedRequest`, so a failure is reported
+ * once by the query cache (app/_layout.tsx) after the last retry, not by the
+ * service on every attempt. The heavy paged reads also pass TanStack's `signal`,
+ * so a cancelled or superseded fetch stops downloading pages.
  */
 
-import { queryOptions, skipToken, type Query, type QueryClient } from '@tanstack/react-query';
+import { queryOptions, skipToken, type QueryClient } from '@tanstack/react-query';
 
 /**
  * Unique session identifier generated once per app launch.
@@ -26,25 +31,47 @@ import { queryOptions, skipToken, type Query, type QueryClient } from '@tanstack
  */
 export const APP_SESSION_ID = Date.now();
 
+import {
+  DEFAULT_SESSION_COOLDOWN_HOURS,
+  FSRS_BASE_KEY,
+  isSessionCooldownActive,
+} from '@/constants/fsrs';
 import { articlesService } from '@/services/articles';
-import { enhancedAudioService } from '@/services/audioPlaylist';
+import { buildReadingListTracks, READING_LIST_TRACKS_ERROR_REPORT } from '@/services/audioPlaylist';
 import { authorsService } from '@/services/authors';
 import { bookmarkService } from '@/services/bookmark';
 import { categoriesService } from '@/services/categories';
 import { readingProgressService } from '@/services/readingProgress';
 import { rootEnrichmentService } from '@/services/rootEnrichment';
-import { StudySessionStreakService } from '@/services/studyStreak';
+import {
+  buildStudyHistory,
+  calculateStreakFromDayKeys,
+  StudySessionStreakService,
+} from '@/services/studyStreak';
 import { sentencesService } from '@/services/sentences';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import type { Article } from '@/types/articles.types';
 import type { ArticleId, RootId } from '@/types/branded.types';
-import { MILLISECONDS_PER_HOUR } from '@/utils/dateTimeUtils';
+import type { AudioLanguage } from '@/types/enums';
+import type { StudyWord } from '@/types/vocabulary.types';
+import { MILLISECONDS_PER_DAY, MILLISECONDS_PER_HOUR } from '@/utils/dateTimeUtils';
+import { filterDueWords } from '@/utils/newWordPacing';
+import { retryWhileOnline } from '@/utils/queryRetry';
+import { managedRequest } from '@/utils/supabaseHelpers';
 
 /**
- * Predicate for invalidateQueries: skip queries whose queryFn is `skipToken`.
- * Without this, invalidating a key that matches a disabled (skipToken) query
- * forces a refetch and throws "Attempted to invoke queryFn when set to skipToken".
+ * The query, or the same query disabled with `skipToken` unless `condition`
+ * holds — for a gate beyond the signed-in user (see {@link gated}).
+ *
+ * The disabled query keeps the factory's key, so it still shows whatever that
+ * cache entry already holds; only the fetch is withheld.
  */
-const isFetchableQuery = (query: Query): boolean => query.options.queryFn !== skipToken;
+export function skipUnless<TConfig extends { queryFn?: unknown }>(
+  condition: boolean,
+  config: TConfig,
+): TConfig {
+  return condition ? config : { ...config, queryFn: skipToken };
+}
 
 /**
  * A query that only runs once there is a signed-in user.
@@ -62,8 +89,7 @@ export function gated<TConfig extends { queryFn?: unknown }>(
   factory: (userId: string) => TConfig,
   userId: string | undefined,
 ): TConfig {
-  const config = factory(userId ?? '');
-  return userId ? config : { ...config, queryFn: skipToken };
+  return skipUnless(!!userId, factory(userId ?? ''));
 }
 
 /**
@@ -71,10 +97,20 @@ export function gated<TConfig extends { queryFn?: unknown }>(
  * Centralized cache times and query defaults for consistent data fetching
  */
 
+/**
+ * How long a persisted cache may be restored after it was written
+ * (`utils/queryPersistence.ts`), and the app-wide `gcTime`. One value for both:
+ * the persisted cache holds only what is still in memory, so a `gcTime` shorter
+ * than the persister's `maxAge` would quietly cut every persisted entry short
+ * (TanStack's persistQueryClient guidance). Two literals kept equal by a comment
+ * was how that could drift.
+ */
+export const PERSISTED_CACHE_MAX_AGE_MS = 7 * MILLISECONDS_PER_DAY;
+
 // Base query configuration defaults
 export const QUERY_DEFAULTS = {
   STALE_TIME: 300000, // 5 minutes - default for most data
-  GC_TIME: 1000 * 60 * 60 * 24 * 7, // 7 days - match persistence maxAge
+  GC_TIME: PERSISTED_CACHE_MAX_AGE_MS,
   MAX_RETRIES: 3,
   MUTATION_MAX_RETRIES: 2,
   MAX_RETRY_DELAY: 30000, // 30 seconds
@@ -100,12 +136,16 @@ export const CACHE_TIMES = {
   // For articles (never update once written)
   ARTICLES: {
     staleTime: Infinity, // Articles never change once written
-    gcTime: 86400000, // 24 hours
+    gcTime: MILLISECONDS_PER_DAY,
   },
   // For categories and authors (never change)
   STATIC: {
     staleTime: Infinity, // Static data does not change; prevent re-fetches
-    gcTime: 172800000, // 48 hours
+    gcTime: 2 * MILLISECONDS_PER_DAY,
+  },
+  // Static review enrichment stays fresh for the lifetime of an app session.
+  REVIEW_CHUNK: {
+    staleTime: MILLISECONDS_PER_HOUR,
   },
 } as const;
 
@@ -117,11 +157,18 @@ export const CACHE_TIMES = {
 export const PRACTICE_DUE_WORDS_LIMIT = 100;
 
 /**
- * Query key for session completion timestamp (client-only, not fetched from
- * server). Hoisted so the `due` queryFn can read it without self-referencing
- * `fsrsQueries` inside its own initializer.
+ * Session completion timestamp (client-only, never fetched from the server).
+ *
+ * Tagged through `queryOptions` so every `getQueryData`/`setQueryData` on it is
+ * typed `number` without a generic at the call. Hoisted so the `due` queryFn
+ * can read it without self-referencing `fsrsQueries` inside its own
+ * initializer.
  */
-const lastCompletedAtKey = (userId: string) => ['fsrs-words', userId, 'lastCompletedAt'] as const;
+const lastCompletedAt = (userId: string) =>
+  queryOptions<number>({
+    queryKey: [FSRS_BASE_KEY, userId, 'lastCompletedAt'],
+    queryFn: skipToken,
+  });
 
 /**
  * FSRS vocabulary queries
@@ -134,11 +181,12 @@ export const fsrsQueries = {
    */
   all: (userId: string) =>
     queryOptions({
-      queryKey: ['fsrs-words', userId] as const,
-      queryFn: () => studyWordsFSRSService.getFSRSWords(userId, { forStats: false }),
+      queryKey: [FSRS_BASE_KEY, userId] as const,
+      queryFn: ({ signal }) =>
+        studyWordsFSRSService.getFSRSWords(userId, { forStats: false }, managedRequest(signal)),
       enabled: !!userId,
       ...CACHE_TIMES.MEDIUM,
-      retry: 3,
+      retry: retryWhileOnline(3),
     }),
 
   /**
@@ -147,16 +195,20 @@ export const fsrsQueries = {
    */
   allWithCooldown: (userId: string, cooldownHours: number) =>
     queryOptions({
-      queryKey: ['fsrs-words', userId, 'all', 'cooldown', cooldownHours] as const,
-      queryFn: () =>
-        studyWordsFSRSService.getFSRSWords(userId, {
-          forStats: true,
-          sessionCooldownHours: cooldownHours,
-          limit: 1000,
-        }),
+      queryKey: [FSRS_BASE_KEY, userId, 'all', 'cooldown', cooldownHours] as const,
+      queryFn: ({ signal }) =>
+        studyWordsFSRSService.getFSRSWords(
+          userId,
+          {
+            forStats: true,
+            sessionCooldownHours: cooldownHours,
+            limit: 1000,
+          },
+          managedRequest(signal),
+        ),
       enabled: !!userId,
       ...CACHE_TIMES.MEDIUM,
-      retry: 3,
+      retry: retryWhileOnline(3),
     }),
 
   /**
@@ -176,49 +228,84 @@ export const fsrsQueries = {
    */
   due: (userId: string, sessionCooldownHours?: number, limit?: number) =>
     queryOptions({
-      queryKey: ['fsrs-words', userId, 'due', sessionCooldownHours ?? null, limit ?? null] as const,
-      queryFn: ({ client }) => {
-        const lastCompletedAt = client.getQueryData<number>(lastCompletedAtKey(userId));
+      queryKey: [
+        FSRS_BASE_KEY,
+        userId,
+        'due',
+        sessionCooldownHours ?? null,
+        limit ?? null,
+      ] as const,
+      queryFn: ({ client, signal }) => {
         const recentlyCompleted =
           sessionCooldownHours !== undefined &&
-          typeof lastCompletedAt === 'number' &&
-          Date.now() - lastCompletedAt < sessionCooldownHours * MILLISECONDS_PER_HOUR;
+          isSessionCooldownActive(
+            client.getQueryData(lastCompletedAt(userId).queryKey),
+            sessionCooldownHours,
+            Date.now(),
+          );
 
-        return studyWordsFSRSService.getFSRSWords(userId, {
-          onlyDue: true,
-          ...(recentlyCompleted ? { sessionCooldownHours } : {}),
-          ...(limit !== undefined ? { limit } : {}),
-        });
+        return studyWordsFSRSService.getFSRSWords(
+          userId,
+          {
+            onlyDue: true,
+            ...(recentlyCompleted ? { sessionCooldownHours } : {}),
+            ...(limit !== undefined ? { limit } : {}),
+          },
+          managedRequest(signal),
+        );
       },
       enabled: !!userId,
       ...CACHE_TIMES.SHORT,
-      retry: 2,
+      retry: retryWhileOnline(2),
     }),
 
   /**
    * Query key for session completion timestamp (client-only, not fetched from server)
    * Used to temporarily apply cooldown after completing a review session
    */
-  lastCompletedAtKey,
+  lastCompletedAtKey: (userId: string) => lastCompletedAt(userId).queryKey,
 
   /**
    * Prefix matching every due-words cache entry regardless of its
    * cooldown/limit variant (both are encoded in the key). For cache-only
    * reads that need "any" due list, e.g. the add-gate backlog check.
    */
-  duePrefix: (userId: string) => ['fsrs-words', userId, 'due'] as const,
+  duePrefix: (userId: string) => [FSRS_BASE_KEY, userId, 'due'] as const,
 
   /**
    * Invalidate all FSRS queries for a user
    * Use after: completing practice session, adding/removing words
+   *
+   * No predicate is needed to spare the disabled (`skipToken`) entries:
+   * TanStack 5's refetch already skips disabled queries.
    */
   invalidateAll: (queryClient: QueryClient, userId: string) => {
-    return queryClient.invalidateQueries({
-      queryKey: ['fsrs-words', userId],
-      predicate: isFetchableQuery,
-    });
+    return queryClient.invalidateQueries({ queryKey: [FSRS_BASE_KEY, userId] });
   },
 } as const;
+
+/**
+ * The due list as the cached full word list implies it — available before the
+ * due query's own request lands, through the same filter the server applies
+ * (`filterDueWords`). `undefined` while the word list itself is not cached.
+ *
+ * Read by the due query's placeholder (useFSRSQueries) and by the add gate's
+ * backlog check (useStudyWordMutations), which used to compute it separately.
+ */
+export function estimateDueWordsFromCache(
+  queryClient: QueryClient,
+  userId: string,
+  nowMs: number,
+): StudyWord[] | undefined {
+  const allWords = queryClient.getQueryData(fsrsQueries.all(userId).queryKey);
+  if (!allWords) return undefined;
+
+  return filterDueWords(allWords, {
+    lastCompletedAt: queryClient.getQueryData(lastCompletedAt(userId).queryKey),
+    cooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
+    nowMs,
+  });
+}
 
 /**
  * Article queries (articles, categories, authors)
@@ -232,24 +319,25 @@ export const articleQueries = {
   all: () =>
     queryOptions({
       queryKey: ['articles'] as const,
-      queryFn: () => articlesService.getArticles(),
+      queryFn: ({ signal }) => articlesService.getArticles(managedRequest(signal)),
       ...CACHE_TIMES.ARTICLES, // Infinity staleTime
-      retry: 3,
-      refetchOnWindowFocus: false,
+      retry: retryWhileOnline(3),
       placeholderData: old => old,
     }),
 
   /**
    * Single article details by ID
-   * Used for article reader and prefetching
+   * Used for article reader and prefetching. No id (a reader route without a
+   * valid one) is `skipToken`.
    */
-  detail: (articleId: ArticleId) =>
+  detail: (articleId: ArticleId | undefined) =>
     queryOptions({
       queryKey: ['article', articleId] as const,
-      queryFn: () => articlesService.getArticleById(articleId),
+      queryFn: articleId
+        ? () => articlesService.getArticleById(articleId, managedRequest())
+        : skipToken,
       ...CACHE_TIMES.ARTICLES, // Infinity staleTime
-      enabled: !!articleId,
-      retry: 2,
+      retry: retryWhileOnline(2),
       placeholderData: old => old,
     }),
 
@@ -260,9 +348,9 @@ export const articleQueries = {
   withStats: () =>
     queryOptions({
       queryKey: ['articles', 'with-word-stats'] as const,
-      queryFn: () => articlesService.getArticlesWithWordStats(),
+      queryFn: ({ signal }) => articlesService.getArticlesWithWordStats(managedRequest(signal)),
       ...CACHE_TIMES.ARTICLES,
-      retry: 3,
+      retry: retryWhileOnline(3),
     }),
 
   /**
@@ -277,11 +365,9 @@ export const articleQueries = {
   searchCorpus: () =>
     queryOptions({
       queryKey: ['articles', 'search-corpus'] as const,
-      queryFn: () => articlesService.getSearchCorpus(),
+      queryFn: ({ signal }) => articlesService.getSearchCorpus(managedRequest(signal)),
       ...CACHE_TIMES.ARTICLES, // Sentences never change (infinite staleTime)
-      retry: 2,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
+      retry: retryWhileOnline(2),
     }),
 
   /**
@@ -291,11 +377,9 @@ export const articleQueries = {
   categories: () =>
     queryOptions({
       queryKey: ['categories'] as const,
-      queryFn: () => categoriesService.getCategories(),
+      queryFn: () => categoriesService.getCategories(managedRequest()),
       ...CACHE_TIMES.STATIC, // 48 hours
-      retry: 3,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
+      retry: retryWhileOnline(3),
     }),
 
   /**
@@ -305,11 +389,9 @@ export const articleQueries = {
   authors: () =>
     queryOptions({
       queryKey: ['authors'] as const,
-      queryFn: () => authorsService.getUniqueAuthors(),
+      queryFn: () => authorsService.getUniqueAuthors(managedRequest()),
       ...CACHE_TIMES.STATIC, // 48 hours
-      retry: 3,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
+      retry: retryWhileOnline(3),
     }),
 
   /**
@@ -318,11 +400,32 @@ export const articleQueries = {
    */
   invalidateAll: (queryClient: QueryClient) => {
     return Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['articles'], predicate: isFetchableQuery }),
-      queryClient.invalidateQueries({ queryKey: ['categories'], predicate: isFetchableQuery }),
-      queryClient.invalidateQueries({ queryKey: ['authors'], predicate: isFetchableQuery }),
+      queryClient.invalidateQueries({ queryKey: ['articles'] }),
+      queryClient.invalidateQueries({ queryKey: ['categories'] }),
+      queryClient.invalidateQueries({ queryKey: ['authors'] }),
     ]);
   },
+} as const;
+
+/**
+ * A featured-articles pick, cached client-side for the session — never
+ * fetched. Only the articles are kept: they are all any consumer reads.
+ */
+export interface FeaturedSelection {
+  articles: Article[];
+}
+
+/**
+ * Featured-article picks, one cache entry per scope and refresh. APP_SESSION_ID
+ * in the key gives every app launch a fresh pick; tagged so reads and writes
+ * of the entry are typed without a generic.
+ */
+export const featuredQueries = {
+  selection: (scope: string, refreshKey: number) =>
+    queryOptions<FeaturedSelection>({
+      queryKey: ['featured-articles', scope, refreshKey, APP_SESSION_ID],
+      queryFn: skipToken,
+    }),
 } as const;
 
 /**
@@ -332,45 +435,36 @@ export const articleQueries = {
 export const readingProgressQueries = {
   /**
    * Reading list (bookmarks) for a user
-   * Used for bookmark management and audio playlists
+   * Used for bookmark management, audio playlists, and — through a `select` —
+   * whether one article is saved (see useArticleData)
    */
   readingList: (userId: string) =>
     queryOptions({
       queryKey: ['readingList', userId] as const,
-      queryFn: () => bookmarkService.getReadingList(userId),
+      queryFn: () => bookmarkService.getReadingList(userId, managedRequest()),
       enabled: !!userId,
       ...CACHE_TIMES.MEDIUM,
-      retry: 2,
+      retry: retryWhileOnline(2),
       placeholderData: [],
     }),
 
   /**
    * Bulk reading progress for a user
    * Single shared cache for all reading progress
+   *
+   * Refreshed by invalidation, pull-to-refresh and the startup preload — not
+   * on mount (the app-wide default) and not on reconnect.
    */
   bulk: (userId: string) =>
     queryOptions({
       queryKey: ['reading-progress-bulk', userId] as const,
-      queryFn: () => readingProgressService.getBulkProgress(userId, []),
+      queryFn: ({ signal }) =>
+        readingProgressService.getBulkProgress(userId, managedRequest(signal)),
       enabled: !!userId,
       staleTime: 10000, // 10 seconds
-      gcTime: 1000 * 60 * 60 * 24, // 24 hours
-      refetchOnMount: false,
+      gcTime: MILLISECONDS_PER_DAY,
       refetchOnReconnect: false,
       placeholderData: new Map(),
-    }),
-
-  /**
-   * Check if a specific article is in user's reading list
-   * Used for bookmark status in article detail views
-   */
-  isInReadingList: (userId: string, articleId: ArticleId) =>
-    queryOptions({
-      queryKey: ['readingList', userId, articleId] as const,
-      queryFn: () => bookmarkService.isInReadingList(userId, articleId),
-      enabled: !!userId && !!articleId,
-      ...CACHE_TIMES.MEDIUM,
-      refetchOnMount: false,
     }),
 
   /**
@@ -379,14 +473,22 @@ export const readingProgressQueries = {
    */
   invalidateAll: (queryClient: QueryClient, userId: string) => {
     return Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: ['readingList', userId],
-        predicate: isFetchableQuery,
-      }),
-      queryClient.invalidateQueries({
-        queryKey: ['reading-progress-bulk', userId],
-        predicate: isFetchableQuery,
-      }),
+      queryClient.invalidateQueries({ queryKey: ['readingList', userId] }),
+      queryClient.invalidateQueries({ queryKey: ['reading-progress-bulk', userId] }),
+    ]);
+  },
+
+  /**
+   * Refresh everything the reading list feeds after it changes — an article
+   * saved or removed, from anywhere. The list itself (and so every saved-state
+   * `select` of it) and the audio tracks built from it, in every audio
+   * language. Three hand-written copies of this had drifted: one refreshed
+   * only the current language's tracks, one wrote its keys inline.
+   */
+  onListChanged: (queryClient: QueryClient, userId: string) => {
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['readingList', userId] }),
+      queryClient.invalidateQueries({ queryKey: ['enhancedAudioTracks', userId] }),
     ]);
   },
 } as const;
@@ -399,14 +501,26 @@ export const audioQueries = {
   /**
    * Enhanced audio tracks for reading list
    * Used for audio playback with language preference
+   *
+   * Built from the reading list's own cache entry (`client.query` dedupes onto
+   * it, and fetches only when it is stale), not a second download of the list.
    */
-  tracks: (userId: string, audioPreference: 'arabic' | 'bilingual') =>
+  tracks: (userId: string, audioPreference: AudioLanguage) =>
     queryOptions({
       queryKey: ['enhancedAudioTracks', userId, audioPreference] as const,
-      queryFn: () => enhancedAudioService.getReadingListEnhancedTracks(userId, audioPreference),
+      queryFn: async ({ client }) =>
+        buildReadingListTracks(
+          await client.query(readingProgressQueries.readingList(userId)),
+          audioPreference,
+        ),
       enabled: !!userId,
       ...CACHE_TIMES.MEDIUM,
       placeholderData: [],
+      // A reading-list failure is reported by the reading-list query itself;
+      // this names the playlist failure once more, without a toast.
+      meta: {
+        errorReport: { ...READING_LIST_TRACKS_ERROR_REPORT, analyticsProperties: { userId } },
+      },
     }),
 
   /**
@@ -414,31 +528,40 @@ export const audioQueries = {
    * Use after: reading list changes, audio preference changes
    */
   invalidateAll: (queryClient: QueryClient, userId: string) => {
-    return queryClient.invalidateQueries({
-      queryKey: ['enhancedAudioTracks', userId],
-      predicate: isFetchableQuery,
-    });
+    return queryClient.invalidateQueries({ queryKey: ['enhancedAudioTracks', userId] });
   },
 } as const;
+
+/**
+ * Every LOCAL day the user reviewed a word — the one paged scan behind both the
+ * streak and its history. Shared so the scan runs once for both, and one
+ * invalidation refreshes both.
+ */
+const studyDays = (userId: string) =>
+  queryOptions({
+    queryKey: ['study-streak', userId] as const,
+    queryFn: ({ signal }) =>
+      StudySessionStreakService.fetchStudyDayKeys(userId, managedRequest(signal)),
+    enabled: !!userId,
+    ...CACHE_TIMES.CRITICAL, // 30 seconds (time-sensitive)
+    retry: retryWhileOnline(2),
+  });
 
 /**
  * Study streak queries
  * Used for vocabulary practice streak tracking
  */
 export const studyStreakQueries = {
+  studyDays,
+
   /**
    * Current study streak metrics
    * Used for displaying streak count and motivation
    */
   streak: (userId: string) =>
     queryOptions({
-      queryKey: ['study-streak', userId] as const,
-      queryFn: () => StudySessionStreakService.getStudySessionStreak(userId),
-      enabled: !!userId,
-      ...CACHE_TIMES.CRITICAL, // 30 seconds (time-sensitive)
-      retry: 2,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
+      ...studyDays(userId),
+      select: calculateStreakFromDayKeys,
     }),
 
   /**
@@ -447,13 +570,9 @@ export const studyStreakQueries = {
    */
   history: (userId: string, days: number = 40) =>
     queryOptions({
-      queryKey: ['study-streak-history', userId, days, 'v2'] as const,
-      queryFn: () => StudySessionStreakService.getStudySessionHistory(userId, days),
-      enabled: !!userId,
-      ...CACHE_TIMES.CRITICAL, // 30 seconds (match streak counter for consistent UX)
-      retry: 2,
+      ...studyDays(userId),
+      select: (dayKeys: Set<string>) => buildStudyHistory(dayKeys, days),
       refetchOnMount: 'always', // Always refetch when chart opens to show fresh data
-      refetchOnWindowFocus: false,
     }),
 
   /**
@@ -461,16 +580,7 @@ export const studyStreakQueries = {
    * Use after: completing practice session, manual streak updates
    */
   invalidateAll: (queryClient: QueryClient, userId: string) => {
-    return Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: ['study-streak', userId],
-        predicate: isFetchableQuery,
-      }),
-      queryClient.invalidateQueries({
-        queryKey: ['study-streak-history', userId],
-        predicate: isFetchableQuery,
-      }),
-    ]);
+    return queryClient.invalidateQueries({ queryKey: studyDays(userId).queryKey });
   },
 } as const;
 
@@ -490,10 +600,10 @@ export const sentenceQueries = {
   byRootId: (rootId: RootId, limit = 5) =>
     queryOptions({
       queryKey: ['sentences', 'by-root', rootId, limit] as const,
-      queryFn: () => sentencesService.getSentencesByRootId(rootId, limit),
+      queryFn: () => sentencesService.getSentencesByRootId(rootId, limit, managedRequest()),
       ...CACHE_TIMES.ARTICLES, // Sentences never change (infinite staleTime)
       enabled: !!rootId,
-      retry: 2,
+      retry: retryWhileOnline(2),
     }),
 } as const;
 
@@ -516,8 +626,72 @@ export const rootEnrichmentQueries = {
   detail: (rootId: RootId | undefined) =>
     queryOptions({
       queryKey: ['root-enrichment', rootId] as const,
-      queryFn: rootId ? () => rootEnrichmentService.getByRootId(rootId) : skipToken,
+      queryFn: rootId
+        ? () => rootEnrichmentService.getByRootId(rootId, managedRequest())
+        : skipToken,
       ...CACHE_TIMES.STATIC,
-      retry: 1,
+      retry: retryWhileOnline(1),
+    }),
+} as const;
+
+/** One immutable review batch: its roots, and the signature its key is named by. */
+interface ReviewChunkInput {
+  rootIds: RootId[];
+  keySignature: string;
+}
+
+/**
+ * What every review-chunk query shares.
+ *
+ * Each feeds the card something it can do without — an example sentence, wider
+ * accepted answers for voice grading, a root story — so a failure is silent (no
+ * toast, no report: the card simply omits the block) and is not retried:
+ * retrying costs a session more requests than the feature is worth.
+ */
+const REVIEW_CHUNK_OPTIONS = {
+  ...CACHE_TIMES.REVIEW_CHUNK,
+  retry: false,
+  meta: { silent: true },
+} as const;
+
+/**
+ * Review-session enrichment, one bounded query per immutable scheduler batch so
+ * the per-card path makes no network call at all (the review lane's rule — a
+ * warm session makes zero, and the debug HUD turns red when it doesn't). An
+ * empty batch is `skipToken`.
+ */
+export const reviewChunkQueries = {
+  /** One example sentence per root; see `sentencesService.getExamplesForRoots`. */
+  examples: ({ rootIds, keySignature }: ReviewChunkInput) =>
+    queryOptions({
+      queryKey: ['review', 'examples', keySignature] as const,
+      queryFn:
+        rootIds.length > 0
+          ? () => sentencesService.getExamplesForRoots(rootIds, managedRequest())
+          : skipToken,
+      ...REVIEW_CHUNK_OPTIONS,
+    }),
+
+  /** Every corpus gloss per root; see `sentencesService.getGlossAlternatesForRoots`. */
+  glossAlternates: ({ rootIds, keySignature }: ReviewChunkInput) =>
+    queryOptions({
+      queryKey: ['review', 'glossAlternates', keySignature] as const,
+      queryFn:
+        rootIds.length > 0
+          ? ({ signal }) =>
+              sentencesService.getGlossAlternatesForRoots(rootIds, managedRequest(signal))
+          : skipToken,
+      ...REVIEW_CHUNK_OPTIONS,
+    }),
+
+  /** The root story per root; see `rootEnrichmentService.getByRootIds`. */
+  rootEnrichments: ({ rootIds, keySignature }: ReviewChunkInput) =>
+    queryOptions({
+      queryKey: ['review', 'rootEnrichments', keySignature] as const,
+      queryFn:
+        rootIds.length > 0
+          ? () => rootEnrichmentService.getByRootIds(rootIds, managedRequest())
+          : skipToken,
+      ...REVIEW_CHUNK_OPTIONS,
     }),
 } as const;

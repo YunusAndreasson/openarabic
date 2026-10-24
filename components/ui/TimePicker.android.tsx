@@ -2,7 +2,7 @@ import { Host, TimePickerDialog } from '@expo/ui/jetpack-compose';
 import { useCallback } from 'react';
 
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useNativeColorScheme } from '@/hooks/theme/useThemeDetection';
 import type { TimePickerProps } from './TimePicker';
 
 export type { TimePickerProps } from './TimePicker';
@@ -15,7 +15,7 @@ export function TimePicker({
   initialMinute = 0,
 }: TimePickerProps) {
   const colors = useColors();
-  const isDark = useIsDarkMode();
+  const colorScheme = useNativeColorScheme();
   const initialDate = new Date();
   initialDate.setHours(initialHour, initialMinute, 0, 0);
 
@@ -32,7 +32,7 @@ export function TimePicker({
   // The community adapter follows the device theme on Android. Use its native
   // dialog directly so an app-selected theme and accent reach the Compose host.
   return (
-    <Host colorScheme={isDark ? 'dark' : 'light'} seedColor={colors.tint}>
+    <Host colorScheme={colorScheme} seedColor={colors.tint}>
       <TimePickerDialog
         initialDate={initialDate.toISOString()}
         is24Hour

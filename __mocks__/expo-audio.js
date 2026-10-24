@@ -1,9 +1,10 @@
+// `createAudioPlayer` is bare: each suite builds the player it needs.
 const mockCreateAudioPlayer = jest.fn();
-const mockSetAudioModeAsync = jest.fn().mockResolvedValue({});
-const mockSetIsAudioActiveAsync = jest.fn().mockResolvedValue(undefined);
-const mockPreload = jest.fn().mockResolvedValue(undefined);
-const mockClearPreloadedSource = jest.fn().mockResolvedValue(undefined);
-const mockClearAllPreloadedSources = jest.fn().mockResolvedValue(undefined);
+const mockSetAudioModeAsync = mockStable(() => Promise.resolve({}));
+const mockSetIsAudioActiveAsync = mockStable(() => Promise.resolve(undefined));
+const mockPreload = mockStable(() => Promise.resolve(undefined));
+const mockClearPreloadedSource = mockStable(() => Promise.resolve(undefined));
+const mockClearAllPreloadedSources = mockStable(() => Promise.resolve(undefined));
 
 module.exports = {
   __esModule: true,

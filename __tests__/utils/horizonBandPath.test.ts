@@ -12,11 +12,10 @@
 
 import { describe, expect, jest, test } from '@jest/globals';
 
-// The repo-wide Skia mock is built from jest.fn()s and jest.config sets
-// `resetMocks: true`, so by the time a test runs PathBuilder.Make() returns
-// undefined. Substitute a real (tiny) recording builder: plain closures survive
-// resetMocks, and the emitted verb sequence is genuine, which is the whole point
-// of the assertions below. Same technique as the practice chart truth harness.
+// The repo-wide Skia mock's PathBuilder records nothing: every path it builds
+// reads 'M0,0'. Substitute a real (tiny) recording builder, so the emitted verb
+// sequence is genuine, which is the whole point of the assertions below. Same
+// technique as the practice chart truth harness.
 jest.mock('react-native-skia', () => {
   const makePathBuilder = () => {
     const segments: string[] = [];

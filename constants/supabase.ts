@@ -23,5 +23,15 @@ export const SUPABASE_URL = 'https://kkmnzbeugdoajtzfjkxg.supabase.co';
  * queries are the slow end and still land far inside it.
  */
 export const SUPABASE_REQUEST_TIMEOUT_MS = 20_000;
+
+/**
+ * The most rows PostgREST returns for one request (the project's `max-rows`).
+ *
+ * A response is truncated to it SILENTLY — no error, no flag — so any read
+ * that can grow past it has to page (`fetchAllPages` in
+ * utils/supabaseHelpers.ts). It used to live as a private `1000` in four
+ * services, three of which paged without a unique order.
+ */
+export const POSTGREST_MAX_ROWS = 1000;
 export const SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrbW56YmV1Z2RvYWp0emZqa3hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU3ODk1NDQsImV4cCI6MjA0MTM2NTU0NH0.AjF-MzqjnUuERhgtYMwJKpDtNKBFKXjEmSMqUPeM1Os';

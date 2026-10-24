@@ -4,13 +4,13 @@ import { StyleSheet, View } from 'react-native';
 // own barrel would pull in every sibling and close an import cycle.
 import { ListRow } from '@/components/common/ListRow';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Icon } from '@/components/ui/Icon';
-import { LAYOUT, getCompactArabicFontSize } from '@/constants/layout';
+import { DisclosureChevron } from '@/components/ui/DisclosureChevron';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, getCompactArabicFontSize } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
-import { useColors } from '@/hooks/theme/useColors';
 import type { RootId } from '@/types/branded.types';
 import type { RootEnrichment, RootFamilyMember } from '@/types/rootEnrichment.types';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 /**
  * Where this renders, which decides how much of the record it shows.
@@ -93,14 +93,14 @@ export const RootExplanation = ({
   const arabicFontSize = getCompactArabicFontSize(useDebouncedArabicFontSize(100));
 
   const { triliteralRoot, rootTransliteration, rootMeaning } = enrichment;
-  const summary = STRINGS.WORD_ROOT_SUMMARY.replace(
-    '{transliteration}',
-    rootTransliteration,
-  ).replace('{meaning}', rootMeaning);
-  const rootA11y = STRINGS.WORD_ROOT_A11Y.replace('{root}', rootTransliteration).replace(
-    '{meaning}',
-    rootMeaning,
-  );
+  const summary = fillTemplate(STRINGS.WORD_ROOT_SUMMARY, {
+    transliteration: rootTransliteration,
+    meaning: rootMeaning,
+  });
+  const rootA11y = fillTemplate(STRINGS.WORD_ROOT_A11Y, {
+    root: rootTransliteration,
+    meaning: rootMeaning,
+  });
 
   // Every member, on both surfaces. The sheet used to show three, to stay short.
   // What a word is built from is the reason this panel exists, so trimming it to
@@ -217,7 +217,7 @@ export const RootExplanation = ({
           one more line between the learner and the sentence they were reading,
           and the same citation is one tap away on the word screen. */}
       <ThemedText colorName="textTertiary" style={styles.source} type="caption">
-        {STRINGS.WORD_ROOT_SOURCE.replace('{source}', enrichment.source)}
+        {fillTemplate(STRINGS.WORD_ROOT_SOURCE, { source: enrichment.source })}
       </ThemedText>
     </View>
   );
@@ -241,7 +241,6 @@ interface FamilyRowProps {
  * list". Unlinkable members stay plain text, which is honest.
  */
 const FamilyRow = ({ member, arabicFontSize, onOpen, canOpen }: FamilyRowProps) => {
-  const colors = useColors();
   const { rootId } = member;
   const isLinkable = rootId != null && !!onOpen && (canOpen?.(rootId) ?? true);
 
@@ -291,13 +290,7 @@ const FamilyRow = ({ member, arabicFontSize, onOpen, canOpen }: FamilyRowProps) 
   return (
     <ListRow density="compact" divider hapticType="selection" onPress={() => onOpen(rootId)}>
       {content}
-      <Icon
-        accessible={false}
-        importantForAccessibility="no"
-        color={colors.textTertiary}
-        name="chevron-forward"
-        size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
-      />
+      <DisclosureChevron />
     </ListRow>
   );
 };
@@ -317,7 +310,7 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
   },
   prose: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.RELAXED,
     marginTop: LAYOUT.SPACING.SMALL,
   },
   block: {

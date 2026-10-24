@@ -2,16 +2,17 @@ import { QueryClient } from '@tanstack/react-query';
 import { act } from 'react';
 
 /**
- * Standard QueryClient configuration for tests
+ * Standard QueryClient configuration for tests, one fresh client per test:
  * - No retries (fail fast)
- * - No garbage collection time (immediate cleanup)
+ * - No garbage collection (`gcTime: Infinity`): nothing is evicted mid-test,
+ *   and no collection timer outlives the test
  */
 export const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {
       queries: {
         retry: false,
-        gcTime: 0,
+        gcTime: Infinity,
       },
       mutations: {
         retry: false,

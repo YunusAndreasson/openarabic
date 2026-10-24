@@ -24,19 +24,14 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
-import Animated, {
-  useAnimatedStyle,
-  useDerivedValue,
-  useReducedMotion,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useDerivedValue, withTiming } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { BREATHE_HALF_PERIOD, breatheStyle, TIMING_CONSTANTS } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { VoicePhase } from '@/hooks/review/useVoiceReview';
 import { useColors } from '@/hooks/theme/useColors';
-import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 
 /**
  * The three beats worth showing. `null` everywhere else: an idle card shows its
@@ -77,27 +72,25 @@ const BAR_MIN_SCALE = 0.14;
 const BAR_HEIGHT = LAYOUT.BUTTON.ICON_SIZE.LARGE;
 const BAR_WIDTH = 2;
 
-/** Smoothing between the recorder's ~10 Hz buffers. Slightly longer than the
- *  buffer interval so each level carries into the next without visible steps;
- *  much longer and the meter lags the voice enough to feel disconnected. */
-const LEVEL_TIMING = { duration: 130 } as const;
+/** Smoothing between the recorder's buffers — see MIC_LEVEL_SMOOTHING. */
+const LEVEL_TIMING = { duration: TIMING_CONSTANTS.MIC_LEVEL_SMOOTHING } as const;
 
 /**
  * Opening the mic. Deliberately wordless — the old copy said "Opening mic…",
  * which is the app talking about itself. A breathing meter says the same thing
  * and then becomes the live meter without a change of shape. State-driven, so
  * per the house split it belongs on Reanimated's CSS API.
+ *
+ * Plays under Reduce Motion too. It breathes opacity only, which is the
+ * substitution the setting asks for rather than motion it removes (see
+ * `useMotionStyle`). Dropping it left a still grey row of stubs, which says
+ * nothing is happening — the same reasoning PulsatingLoader documents.
  */
-const OPENING_PULSE: ReanimatedCSSAnimationStyle = {
-  animationName: {
-    from: { opacity: LAYOUT.OPACITY.MEDIUM },
-    to: { opacity: LAYOUT.OPACITY.FULL },
-  },
-  animationDuration: 700,
-  animationTimingFunction: 'ease-in-out',
-  animationIterationCount: 'infinite',
-  animationDirection: 'alternate',
-};
+const OPENING_PULSE = breatheStyle(
+  { opacity: LAYOUT.OPACITY.MEDIUM },
+  { opacity: LAYOUT.OPACITY.FULL },
+  BREATHE_HALF_PERIOD.MIC_OPENING,
+);
 
 const STATIC_STYLES = StyleSheet.create({
   // Matches the replay button it stands in for, so the question face's body
@@ -146,7 +139,6 @@ interface VoiceListeningIndicatorProps {
 
 export const VoiceListeningIndicator = ({ state, level }: VoiceListeningIndicatorProps) => {
   const colors = useColors();
-  const reduceMotion = useReducedMotion();
   const isLive = state === 'live';
 
   // Smoothed once, here, rather than once per bar: seven timing animations
@@ -173,9 +165,7 @@ export const VoiceListeningIndicator = ({ state, level }: VoiceListeningIndicato
       accessibilityRole="progressbar"
       accessibilityLabel={caption || STRINGS.VOICE_CHANNEL_LABEL}
     >
-      <Animated.View
-        style={[STATIC_STYLES.barRow, state === 'opening' && !reduceMotion && OPENING_PULSE]}
-      >
+      <Animated.View style={[STATIC_STYLES.barRow, state === 'opening' && OPENING_PULSE]}>
         {BARS.map(bar => (
           <VoiceBar key={bar.id} level={smoothed} weight={bar.weight} color={barColor} />
         ))}

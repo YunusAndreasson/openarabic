@@ -3,15 +3,17 @@ import type { JSX } from 'react';
 
 import { DictionaryButton } from '@/components/practice/DictionaryButton';
 import { ReviewButton } from '@/components/practice/ReviewButton';
-import { CloseButton } from '@/components/ui';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
+import {
+  createNavigationOptions,
+  createTabHeaderOptions,
+  renderCloseButton,
+} from '@/utils/navigation';
 import { AppTab } from '@/types/enums';
 
 const renderDictionaryButton = () => <DictionaryButton />;
 const renderReviewButton = () => <ReviewButton />;
-const renderCloseButton = () => <CloseButton />;
 
 export default function StudyLayout(): JSX.Element {
   const colors = useColors();

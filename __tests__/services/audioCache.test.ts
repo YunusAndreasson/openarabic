@@ -26,11 +26,12 @@ interface FileMock {
   delete: jest.Mock<() => void>;
 }
 
-const mockDownloadFileAsync = jest.fn<(url: string, target: unknown) => Promise<unknown>>();
+const mockDownloadFileAsync =
+  jest.fn<(url: string, target: unknown, options?: unknown) => Promise<unknown>>();
 const mockFileConstructor = jest.fn<(path: string) => FileMock>();
 const mockDirectoryConstructor = jest.fn<(path: string) => unknown>();
 const mockDigestStringAsync = jest.fn<(algorithm: unknown, data: string) => Promise<string>>();
-const mockDirectoryCreate = jest.fn<() => void>();
+const mockDirectoryCreate = jest.fn<(options?: unknown) => void>();
 const mockDirectoryDelete = jest.fn<() => void>();
 const mockDirectoryList = jest.fn<() => unknown[]>();
 const mockFileMove = jest.fn<(destination: unknown, options?: unknown) => void>();
@@ -55,26 +56,47 @@ const makeFileMock =
     delete: mockFileDelete,
   });
 
+/**
+ * The real constructors take path segments — a Directory or File instance, or
+ * a string — and join them (`new File(directory, name)`). The mocks below see
+ * the joined path, so each test can describe a file by where it lives.
+ */
+const mockToUri = (...parts: (string | { uri: string })[]): string =>
+  parts
+    .map(part => (typeof part === 'string' ? part : part.uri))
+    .join('/')
+    .replace(/\/+/g, '/');
+
+// A test's own implementation wins; without one (resetMocks clears them before
+// every test) these defaults stand in: an existing directory, a non-empty file.
 jest.mock('expo-file-system', () => ({
   File: Object.assign(
-    mockFileConstructor.mockImplementation(path => ({
-      uri: path,
-      exists: true,
-      size: 100,
-      move: mockFileMove,
-      delete: mockFileDelete,
-    })),
-    {
-      downloadFileAsync: mockDownloadFileAsync,
+    function File(...parts: (string | { uri: string })[]) {
+      const uri = mockToUri(...parts);
+      return (
+        mockFileConstructor(uri) ?? {
+          uri,
+          exists: true,
+          size: 100,
+          move: mockFileMove,
+          delete: mockFileDelete,
+        }
+      );
     },
+    { downloadFileAsync: mockDownloadFileAsync },
   ),
-  Directory: mockDirectoryConstructor.mockImplementation(path => ({
-    uri: path,
-    exists: true,
-    create: mockDirectoryCreate,
-    delete: mockDirectoryDelete,
-    list: mockDirectoryList,
-  })),
+  Directory: function Directory(...parts: (string | { uri: string })[]) {
+    const uri = mockToUri(...parts);
+    return (
+      mockDirectoryConstructor(uri) ?? {
+        uri,
+        exists: true,
+        create: mockDirectoryCreate,
+        delete: mockDirectoryDelete,
+        list: mockDirectoryList,
+      }
+    );
+  },
   Paths: {
     cache: {
       uri: '/cache/',
@@ -171,7 +193,12 @@ describe('audioCache', () => {
 
     const result = await audioCache.getAudio(url);
 
-    expect(mockDownloadFileAsync).toHaveBeenCalled();
+    // Into a temp file beside the cache entry, bounded by a timeout signal.
+    expect(mockDownloadFileAsync).toHaveBeenCalledWith(
+      url,
+      expect.objectContaining({ uri: expect.stringContaining(`/cache/audio/${hash}.mp3.tmp-`) }),
+      expect.objectContaining({ idempotent: true, signal: expect.any(AbortSignal) }),
+    );
     // Downloaded temp file is moved into the final cache path
     expect(mockFileMove).toHaveBeenCalledWith(
       expect.objectContaining({ uri: cachedPath }),
@@ -216,44 +243,16 @@ describe('audioCache', () => {
   });
 
   test('clearCache removes files and recreates directory', async () => {
-    // Clear mocks
-    mockDirectoryConstructor.mockClear();
-    mockDirectoryCreate.mockClear();
-    mockDirectoryDelete.mockClear();
-
-    // Mock Directory to handle multiple calls
-    // First call: constructor (ensureCacheDirectoryExists) - exists: false
-    // Second call: clearCache - exists: true
-    // Third call: ensureCacheDirectoryExists after delete - exists: false
-    mockDirectoryConstructor
-      .mockImplementationOnce(path => ({
-        uri: path,
-        exists: false, // Constructor call
-        create: mockDirectoryCreate,
-        delete: mockDirectoryDelete,
-        list: mockDirectoryList,
-      }))
-      .mockImplementationOnce(path => ({
-        uri: path,
-        exists: true, // clearCache call
-        create: mockDirectoryCreate,
-        delete: mockDirectoryDelete,
-        list: mockDirectoryList,
-      }))
-      .mockImplementationOnce(path => ({
-        uri: path,
-        exists: false, // ensureCacheDirectoryExists after delete
-        create: mockDirectoryCreate,
-        delete: mockDirectoryDelete,
-        list: mockDirectoryList,
-      }));
-
+    // One Directory for the life of the cache, created on construction.
     audioCache = require('../../services/audioCache').audioCache;
+    expect(mockDirectoryConstructor).toHaveBeenCalledWith('/cache/audio');
+    mockDirectoryCreate.mockClear();
 
     await audioCache.clearCache();
 
     expect(mockDirectoryDelete).toHaveBeenCalled();
-    expect(mockDirectoryCreate).toHaveBeenCalled();
+    // Idempotent, so an existing directory is not an error.
+    expect(mockDirectoryCreate).toHaveBeenCalledWith({ intermediates: true, idempotent: true });
   });
 
   test('clearCache rethrows errors from delete', async () => {
@@ -286,30 +285,12 @@ describe('audioCache', () => {
     expect(handleError).toHaveBeenCalledWith(err);
   });
 
-  test('getCacheSize sums file sizes correctly', async () => {
-    // Clear mocks
-    mockDirectoryConstructor.mockClear();
-    mockFileConstructor.mockClear();
-    mockDirectoryList.mockClear();
-
-    // Mock directory.list() to return File instances (synchronous API)
-    mockDirectoryList.mockReturnValue([
-      {
-        uri: '/cache/audio/one.mp3',
-        exists: true,
-        size: 100,
-      },
-      {
-        uri: '/cache/audio/two.mp3',
-        exists: true,
-        size: 200,
-      },
-    ]);
-
-    // Mock Directory to exist
+  // The directory reports its own total size; nothing is listed or summed.
+  test('getCacheSize is the size the cache directory reports', () => {
     mockDirectoryConstructor.mockImplementation(path => ({
       uri: path,
       exists: true,
+      size: 300,
       create: mockDirectoryCreate,
       delete: mockDirectoryDelete,
       list: mockDirectoryList,
@@ -317,21 +298,15 @@ describe('audioCache', () => {
 
     audioCache = require('../../services/audioCache').audioCache;
 
-    const size = await audioCache.getCacheSize();
-
-    expect(mockDirectoryList).toHaveBeenCalled();
-    expect(size).toBe(300);
+    expect(audioCache.getCacheSize()).toBe(300);
+    expect(mockDirectoryList).not.toHaveBeenCalled();
   });
 
-  test('getCacheSize returns 0 for empty directory', async () => {
-    mockDirectoryConstructor.mockClear();
-    mockDirectoryList.mockClear();
-
-    mockDirectoryList.mockReturnValue([]);
-
+  test('getCacheSize returns 0 for empty directory', () => {
     mockDirectoryConstructor.mockImplementation(path => ({
       uri: path,
       exists: true,
+      size: 0,
       create: mockDirectoryCreate,
       delete: mockDirectoryDelete,
       list: mockDirectoryList,
@@ -339,21 +314,15 @@ describe('audioCache', () => {
 
     audioCache = require('../../services/audioCache').audioCache;
 
-    const size = await audioCache.getCacheSize();
-
-    expect(size).toBe(0);
+    expect(audioCache.getCacheSize()).toBe(0);
   });
 
-  test('getCacheSize returns 0 when directory does not exist', async () => {
-    mockDirectoryConstructor.mockClear();
-    mockDirectoryList.mockClear();
-
-    // When directory doesn't exist, list returns empty or we get 0
-    mockDirectoryList.mockReturnValue([]);
-
+  test('getCacheSize returns 0 when the directory is missing or unreadable', () => {
+    // Directory#size is null when the directory does not exist or cannot be read.
     mockDirectoryConstructor.mockImplementation(path => ({
       uri: path,
       exists: false,
+      size: null,
       create: mockDirectoryCreate,
       delete: mockDirectoryDelete,
       list: mockDirectoryList,
@@ -361,46 +330,7 @@ describe('audioCache', () => {
 
     audioCache = require('../../services/audioCache').audioCache;
 
-    const size = await audioCache.getCacheSize();
-
-    expect(size).toBe(0);
-  });
-
-  test('getCacheSize handles files with null size', async () => {
-    mockDirectoryConstructor.mockClear();
-    mockDirectoryList.mockClear();
-
-    mockDirectoryList.mockReturnValue([
-      {
-        uri: '/cache/audio/one.mp3',
-        exists: true,
-        size: 100,
-      },
-      {
-        uri: '/cache/audio/two.mp3',
-        exists: true,
-        size: null, // File with unknown size
-      },
-      {
-        uri: '/cache/audio/three.mp3',
-        exists: true,
-        size: 50,
-      },
-    ]);
-
-    mockDirectoryConstructor.mockImplementation(path => ({
-      uri: path,
-      exists: true,
-      create: mockDirectoryCreate,
-      delete: mockDirectoryDelete,
-      list: mockDirectoryList,
-    }));
-
-    audioCache = require('../../services/audioCache').audioCache;
-
-    const size = await audioCache.getCacheSize();
-
-    expect(size).toBe(150); // Only 100 + 50, null size file skipped
+    expect(audioCache.getCacheSize()).toBe(0);
   });
 
   test('getAudio returns original URL for local files', async () => {

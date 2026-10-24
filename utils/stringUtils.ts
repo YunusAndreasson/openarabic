@@ -4,6 +4,7 @@
 
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 /**
  * Validates if a value is a non-empty string.
@@ -53,19 +54,10 @@ const SENTENCES_PER_MINUTE = 4;
  * calculateReadingTime(60) // "15 min"
  */
 export function calculateReadingTime(sentenceCount: number): string {
-  if (sentenceCount <= 0) {
-    return '1 min';
-  }
-
-  // Calculate minutes and round up (better to overestimate than underestimate)
-  const minutes = Math.ceil(sentenceCount / SENTENCES_PER_MINUTE);
-
-  // Minimum 1 minute for readability on small cards
-  if (minutes < 1) {
-    return '1 min';
-  }
-
-  return `${minutes} min`;
+  // Rounded up (better to overestimate than underestimate), and at least one
+  // minute for readability on small cards — any positive count already is.
+  const minutes = sentenceCount <= 0 ? 1 : Math.ceil(sentenceCount / SENTENCES_PER_MINUTE);
+  return fillTemplate(STRINGS.READING_TIME_MINUTES, { minutes });
 }
 
 /**
@@ -137,19 +129,14 @@ export function getAuthorDisplayName(rawName: string): string {
   return STRINGS.AUTHORS[rawName] ?? rawName;
 }
 
-/**
- * Formats author and category for display with consistent separator
- * @param author - Author name
- * @param category - Category name (will be capitalized)
- * @returns Formatted string like "Author Name · Category Name"
- * @example
- * formatAuthorCategory('Ibn Kathir', 'tafsir')
- * // Returns: 'Ibn Kathir · Tafsir'
- */
-export function formatAuthorCategory(author: string, category: string): string {
-  if (!author || !category) return author || category || '';
+/** Metadata parts joined with the separator: "Author · Category · 3 min". */
+function joinMetadata(...parts: string[]): string {
+  return parts.join(` ${METADATA_SEPARATOR} `);
+}
 
-  return `${getAuthorDisplayName(author)} ${METADATA_SEPARATOR} ${getCategoryDisplayName(category)}`;
+/** An article's reading time, from its sentence count. */
+function articleReadingTime(article: { article_sentences?: unknown[] }): string {
+  return calculateReadingTime(article.article_sentences?.length ?? 0);
 }
 
 /**
@@ -172,13 +159,8 @@ export function formatArticleMetadata(
 ): string {
   if (!author || !category) return author || category || '';
 
-  const base = `${getAuthorDisplayName(author)} ${METADATA_SEPARATOR} ${getCategoryDisplayName(category)}`;
-
-  if (readingTime) {
-    return `${base} ${METADATA_SEPARATOR} ${readingTime}`;
-  }
-
-  return base;
+  const base = joinMetadata(getAuthorDisplayName(author), getCategoryDisplayName(category));
+  return readingTime ? joinMetadata(base, readingTime) : base;
 }
 
 /**
@@ -195,10 +177,11 @@ export function getArticleMetadata(article: {
   category: { name: string };
   article_sentences?: unknown[];
 }): string {
-  const sentenceCount = article.article_sentences?.length || 0;
-  const readingTime = calculateReadingTime(sentenceCount);
-
-  return formatArticleMetadata(article.author.name, article.category.name, readingTime);
+  return formatArticleMetadata(
+    article.author.name,
+    article.category.name,
+    articleReadingTime(article),
+  );
 }
 
 /**
@@ -211,9 +194,7 @@ export function getArticleMetadataWithoutAuthor(article: {
   category: { name: string };
   article_sentences?: unknown[];
 }): string {
-  const readingTime = calculateReadingTime(article.article_sentences?.length || 0);
-
-  return `${getCategoryDisplayName(article.category.name)} ${METADATA_SEPARATOR} ${readingTime}`;
+  return joinMetadata(getCategoryDisplayName(article.category.name), articleReadingTime(article));
 }
 
 /**
@@ -229,10 +210,7 @@ export function getArticleMetadataWithoutCategory(article: {
   author: { name: string };
   article_sentences?: unknown[];
 }): string {
-  const sentenceCount = article.article_sentences?.length || 0;
-  const readingTime = calculateReadingTime(sentenceCount);
-
-  return `${getAuthorDisplayName(article.author.name)} ${METADATA_SEPARATOR} ${readingTime}`;
+  return joinMetadata(getAuthorDisplayName(article.author.name), articleReadingTime(article));
 }
 
 /**

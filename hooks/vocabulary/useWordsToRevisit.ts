@@ -36,13 +36,9 @@ export function useWordsToRevisit(): UseWordsToRevisitResult {
   // Filtered ONCE, then counted and ranked off the same array. `allWords` pages
   // the whole table for a heavy account, and `rankStrugglingWords` runs this very
   // predicate internally before throwing the length away — so counting
-  // separately walked every word twice with the same test, and gave the
-  // `Array.filter` index-as-`minLapses` footgun a second site to be
-  // reintroduced at. The arrow wrapper below is that footgun: `filter` passes the
-  // index as a second argument, which lands on `isLeechWord`'s `minLapses` and
-  // makes every word at index 0/1 a leech. Same trap as `useDictionaryList`.
+  // separately walked every word twice with the same test.
   const { leeches, totalCount } = useMemo(() => {
-    const struggling = (allWords ?? []).filter(word => isLeechWord(word));
+    const struggling = (allWords ?? []).filter(isLeechWord);
     return { leeches: rankStrugglingWords(struggling), totalCount: struggling.length };
   }, [allWords]);
 

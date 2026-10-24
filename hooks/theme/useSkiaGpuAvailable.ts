@@ -1,7 +1,8 @@
 import * as Sentry from '@sentry/react-native';
-import { useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 import { Skia } from 'react-native-skia';
+
+import { createExternalStore, type ExternalStore } from '@/utils/createExternalStore';
 
 /**
  * Whether Skia can draw right now.
@@ -18,9 +19,7 @@ import { Skia } from 'react-native-skia';
  * most plausibly shows up), and shared across every subscriber.
  */
 
-let available: boolean | null = null;
 let lossReported = false;
-const listeners = new Set<() => void>();
 
 const readGpu = (): boolean => {
   const { isAvailable } = Skia.gpu;
@@ -34,31 +33,32 @@ const readGpu = (): boolean => {
   return isAvailable;
 };
 
-const getSnapshot = (): boolean => {
-  available ??= readGpu();
-  return available;
-};
-
 let appStateSubscription: { remove: () => void } | null = null;
 
 const onAppStateChange = (state: string) => {
   if (state !== 'active') return;
-  const next = readGpu();
-  if (next === available) return;
-  available = next;
-  listeners.forEach(notify => notify());
+  // An unchanged reading notifies no one (the store compares with Object.is).
+  getGpuStore().set(readGpu());
 };
 
-const subscribe = (listener: () => void): (() => void) => {
-  listeners.add(listener);
-  appStateSubscription ??= AppState.addEventListener('change', onAppStateChange);
-  return () => {
-    listeners.delete(listener);
-    if (listeners.size === 0) {
+/**
+ * Created on first read, not at import: the first reading is taken when a
+ * component first asks, as it always was, and the AppState listener exists only
+ * while something is subscribed.
+ */
+let gpuStore: ExternalStore<boolean> | null = null;
+
+const getGpuStore = (): ExternalStore<boolean> => {
+  gpuStore ??= createExternalStore(readGpu(), {
+    onFirstSubscribe: () => {
+      appStateSubscription = AppState.addEventListener('change', onAppStateChange);
+    },
+    onLastUnsubscribe: () => {
       appStateSubscription?.remove();
       appStateSubscription = null;
-    }
-  };
+    },
+  });
+  return gpuStore;
 };
 
 /** The adapter Skia renders with, for Sentry: a blank-canvas report names its GPU. */
@@ -67,5 +67,4 @@ export const getSkiaGpuContext = () => {
   return { isAvailable, backend, vendor, device, error };
 };
 
-export const useSkiaGpuAvailable = (): boolean =>
-  useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+export const useSkiaGpuAvailable = (): boolean => getGpuStore().useValue();

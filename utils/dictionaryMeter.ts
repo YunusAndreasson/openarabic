@@ -29,12 +29,13 @@
  * traffic light in one row that `SortMeter` warns about.
  */
 
-import { FSRS_DIFFICULTY_MAX, FSRS_DIFFICULTY_MIN, OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
+import { FSRS_DIFFICULTY_MAX, FSRS_DIFFICULTY_MIN } from '@/constants/fsrs';
 import type { DictionarySortField } from '@/hooks/vocabulary/useDictionaryList';
 import type { SolidColorName } from '@/constants/colors';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { STRINGS } from '@/constants/strings';
-import { MILLISECONDS_PER_DAY, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
+import { clamp01, MILLISECONDS_PER_DAY, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
+import { fillTemplate } from '@/utils/fillTemplate';
 import {
   MEMORY_STAGE_COLORS,
   formatHorizon,
@@ -45,16 +46,11 @@ import {
 import { DIFFICULTY_COLORS, getWordDifficultyLevel } from '@/utils/urgencyScore';
 import { hasBeenPractised } from '@/utils/wordClassification';
 
-function clamp01(value: number): number {
-  if (!Number.isFinite(value)) return 0;
-  return Math.min(1, Math.max(0, value));
-}
-
 /**
  * How hard the word is, as a length. Hardest reads longest.
  *
  * Gated on `hasBeenPractised` for the same reason the horizon meter is: a
- * never-practised word carries a placeholder difficulty of 6.5, not null, so
+ * never-practised word carries a placeholder difficulty (`PLACEHOLDER_FSRS`), not null, so
  * without the gate every brand-new word would show a confident mid-length bar
  * describing a judgement the learner has never been asked to make.
  */
@@ -71,15 +67,13 @@ function getDifficultyFraction(word: StudyWord): number {
  * longest, because the sort is called "Recent" and that is the quantity it
  * names — a bar that grew with age would be measuring the opposite of its label.
  *
- * Log-scaled against the same one-year window as the horizon, so the two share a
- * scale shape and the first weeks — where a learner's library actually changes —
- * get most of the travel.
+ * The horizon meter's scale, reversed: log-scaled against the same one-year
+ * window, so the two share a scale shape and the first weeks — where a
+ * learner's library actually changes — get most of the travel.
  */
 function getRecencyFraction(word: StudyWord, nowMs: number): number {
   const ageDays = getAgeDays(word, nowMs);
-  if (ageDays === null) return 0;
-  if (ageDays <= 0) return 1;
-  return clamp01(1 - Math.log1p(ageDays) / Math.log1p(OPTIMIZED_FSRS_CONFIG.maximum_interval));
+  return ageDays === null ? 0 : 1 - getHorizonFraction(ageDays);
 }
 
 /**
@@ -114,7 +108,7 @@ export function getRecencyAccessibilityLabel(word: StudyWord, nowMs: number): st
   // ago a day old. Under this sort those are exactly the rows at the top.
   if (ageDays < 1) return STRINGS.WORD_ADDED_TODAY_A11Y;
 
-  return STRINGS.WORD_ADDED_AGO_A11Y.replace('{age}', formatHorizon(ageDays));
+  return fillTemplate(STRINGS.WORD_ADDED_AGO_A11Y, { age: formatHorizon(ageDays) });
 }
 
 /**

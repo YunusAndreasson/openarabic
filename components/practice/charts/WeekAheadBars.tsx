@@ -10,14 +10,15 @@ import {
 import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import { useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
-// Direct path rather than through a barrel: this is the only chart part the
-// practice canvases share, and it is all they need.
+// Direct paths rather than through a barrel: these are the only chart parts the
+// practice canvases share, and they are all they need.
 import { ChartBaseline } from '@/components/common/charts/ChartBaseline';
+import { useBaselineGrowth } from '@/components/common/charts/useBaselineGrowth';
 import { CHART_OPACITY, useChartColors } from '@/constants/chartColors';
-import { appendRoundedTopBar, BAR_TOP_RADIUS } from '@/utils/barChartPath';
+import { appendRoundedTopBar, BAR_TOP_RADIUS, columnGeometry } from '@/utils/barChartPath';
 import { withOpacity } from '@/utils/colorUtils';
 
 /**
@@ -65,8 +66,6 @@ interface WeekBarGeometry {
   gap: number;
 }
 
-const barWidthFor = ({ width, gap }: WeekBarGeometry): number => (width - (DAYS - 1) * gap) / DAYS;
-
 /**
  * All seven columns as one path.
  *
@@ -85,7 +84,7 @@ function buildWeekPath(
 ): SkPath {
   const builder = Skia.PathBuilder.Make();
   const safeScale = Math.max(1, scale);
-  const barWidth = barWidthFor(geometry);
+  const { barWidth, pitch } = columnGeometry(geometry.width, DAYS, geometry.gap);
 
   for (let index = 0; index < DAYS; index++) {
     const count = counts[index] ?? 0;
@@ -93,7 +92,7 @@ function buildWeekPath(
       count <= 0 ? 0 : Math.max(BAR_TOP_RADIUS * 2, (count / safeScale) * geometry.height);
 
     appendRoundedTopBar(builder, {
-      x: index * (barWidth + geometry.gap),
+      x: index * pitch,
       width: barWidth,
       height,
       baseline: geometry.height,
@@ -205,18 +204,9 @@ export function WeekAheadBars({
   // snapped to its new height while the week around it eased there.
   const todayPath = usePathInterpolation(morph, MORPH_RANGE, interpolatable(pathState.today));
 
-  // Entrance grows the row off the baseline as one transform, offset from the
-  // recall chart so the two never start animating on the same frame.
-  const growth = useSharedValue(0);
-  useEffect(() => {
-    growth.set(0);
-    growth.set(withDelay(TIMING_CONSTANTS.STAGGER.BASE, withTiming(1, TIMING_CONFIG.PROGRESS)));
-  }, [growth]);
-
-  const growTransform = useDerivedValue(() => {
-    'worklet';
-    return [{ scaleY: growth.get() }];
-  });
+  // Entrance grows the row off the baseline as one transform, once, offset
+  // from the recall chart so the two never start animating on the same frame.
+  const growTransform = useBaselineGrowth(undefined, TIMING_CONSTANTS.STAGGER.BASE);
 
   return (
     <View>

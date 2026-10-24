@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { APP_SESSION_ID } from '@/constants/queries';
+import { APP_SESSION_ID, featuredQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useFSRSData } from '@/components/providers/FSRSDataProvider';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
@@ -49,13 +49,10 @@ export function useMultipleFeaturedArticles(
   const currentSessionId = APP_SESSION_ID;
 
   // Try to get cached featured articles first for immediate display
-  // Include APP_SESSION_ID to ensure fresh articles on each app launch
-  const cachedFeatured = queryClient.getQueryData<MultipleFeaturedArticlesResult>([
-    'featured-articles',
-    scope,
-    refreshKey,
-    APP_SESSION_ID,
-  ]);
+  // The key includes APP_SESSION_ID to ensure fresh articles on each app launch
+  const cachedFeatured = queryClient.getQueryData(
+    featuredQueries.selection(scope, refreshKey).queryKey,
+  );
 
   // Use due words hook for Strategy 1
   const {
@@ -310,9 +307,10 @@ export function useMultipleFeaturedArticles(
   }, [refreshKey, hasArticles, allQueriesReady, isRefreshing, selectionLogic]);
 
   // CRITICAL: Trust preloader cache for initial load (refreshKey === 0)
-  // This prevents expensive recomputation and eliminates jank
+  // This prevents expensive recomputation and eliminates jank. The cache holds
+  // the articles only — all any consumer reads of the result.
   if (cachedFeatured && refreshKey === 0) {
-    return cachedFeatured;
+    return { ...selectedArticles, articles: cachedFeatured.articles };
   }
 
   // During refresh, return frozen selection to prevent flickering.

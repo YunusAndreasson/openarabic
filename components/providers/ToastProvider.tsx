@@ -1,16 +1,8 @@
 import { Toast } from '@/components/ui/Toast';
-import {
-  createContext,
-  use,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { DEFAULT_TOAST_DURATION } from '@/constants/animation';
 import { ToastType } from '@/types/enums';
+import { createRequiredContext } from '@/utils/createRequiredContext';
 import { setGlobalToastHandler } from '@/utils/errorHandling';
 
 interface ToastContextType {
@@ -20,18 +12,14 @@ interface ToastContextType {
     type?: ToastType,
     position?: 'top' | 'bottom',
   ) => void;
-  showImportantToast: (message: string, duration?: number) => void;
 }
 
-const ToastContext = createContext<ToastContextType | null>(null);
+const [ToastContext, useToast] = createRequiredContext<ToastContextType>(
+  'ToastContext',
+  'useToast must be used within a ToastProvider',
+);
 
-export const useToast = (): ToastContextType => {
-  const context = use(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
-};
+export { useToast };
 
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toastState, setToastState] = useState<{
@@ -78,38 +66,20 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     [],
   );
 
-  const showImportantToast = useCallback(
-    (message: string, duration: number = DEFAULT_TOAST_DURATION) => {
-      setToastState(prev => ({
-        visible: true,
-        message,
-        duration,
-        type: ToastType.IMPORTANT,
-        position: 'top',
-        key: prev.visible ? prev.key : prev.key + 1,
-      }));
-    },
-    [],
-  );
-
   const handleClose = useCallback(() => {
     setToastState(prev => ({ ...prev, visible: false }));
   }, []);
 
-  // Register the toast handler globally when the component mounts
+  // Register the toast handler globally while mounted. The cleanup puts back
+  // whichever provider was registered before this one, so closing a screen
+  // with its own provider (the article reader) hands global toasts back to the
+  // root one instead of to nobody.
   useEffect(() => {
-    setGlobalToastHandler(showToast);
-
-    return () => {
-      // Use an empty function to clear the handler
-      setGlobalToastHandler(() => () => undefined);
-    };
+    const restorePreviousHandler = setGlobalToastHandler(showToast);
+    return restorePreviousHandler;
   }, [showToast]);
 
-  const contextValue = useMemo(
-    () => ({ showToast, showImportantToast }),
-    [showToast, showImportantToast],
-  );
+  const contextValue = useMemo(() => ({ showToast }), [showToast]);
 
   return (
     <ToastContext value={contextValue}>

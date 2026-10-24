@@ -29,7 +29,12 @@ import React from 'react';
 
 import { ArticleCard } from '@/components/explore/ArticleCard';
 import type { Article } from '@/types/articles.types';
+import { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { articleId, authorId, categoryId } from '@/__tests__/helpers/ids';
+
+/** The card prefetches the article on press-in, through the query client. */
+const renderCard = (card: React.ReactElement) =>
+  render(card, { wrapper: createHookTestWrapper().wrapper });
 
 // Mock dependencies
 jest.mock('expo-router', () => ({
@@ -114,39 +119,39 @@ describe('ArticleCard Component', () => {
 
   describe('Basic Rendering', () => {
     test('renders article title correctly', () => {
-      const { getByText } = render(<ArticleCard {...defaultProps} />);
+      const { getByText } = renderCard(<ArticleCard {...defaultProps} />);
 
       expect(getByText('Introduction to Arabic Grammar')).toBeTruthy();
     });
 
     test('renders author name correctly', () => {
-      const { getByText } = render(<ArticleCard {...defaultProps} />);
+      const { getByText } = renderCard(<ArticleCard {...defaultProps} />);
 
       // Author is formatted with category
       expect(getByText(/Dr. Ahmad/)).toBeTruthy();
     });
 
     test('renders metadata with author, category, and reading time', () => {
-      const { getByText } = render(<ArticleCard {...defaultProps} />);
+      const { getByText } = renderCard(<ArticleCard {...defaultProps} />);
 
       // Metadata string format: "Dr. Ahmad · Grammar · 1 min"
       expect(getByText(/Dr\. Ahmad · Grammar · \d+ min/)).toBeTruthy();
     });
 
     test('renders summary text', () => {
-      const { getByText } = render(<ArticleCard {...defaultProps} />);
+      const { getByText } = renderCard(<ArticleCard {...defaultProps} />);
 
       expect(getByText('Learn the basics of Arabic grammar and sentence structure.')).toBeTruthy();
     });
 
     test('renders with testID for testing', () => {
-      const { getByTestId } = render(<ArticleCard {...defaultProps} testID="article-card-1" />);
+      const { getByTestId } = renderCard(<ArticleCard {...defaultProps} testID="article-card-1" />);
 
       expect(getByTestId('article-card-1')).toBeTruthy();
     });
 
     test('renders image with correct source', () => {
-      const { getByTestId } = render(<ArticleCard {...defaultProps} />);
+      const { getByTestId } = renderCard(<ArticleCard {...defaultProps} />);
 
       // EnhancedImage is mocked but we can verify it renders
       expect(getByTestId('article-image')).toBeTruthy();
@@ -158,14 +163,14 @@ describe('ArticleCard Component', () => {
       const mockPush = jest.fn();
       jest.mocked(useRouter).mockReturnValue({ push: mockPush });
 
-      const { getByTestId } = render(<ArticleCard {...defaultProps} testID="article-card" />);
+      const { getByTestId } = renderCard(<ArticleCard {...defaultProps} testID="article-card" />);
 
       const card = getByTestId('article-card');
       fireEvent.press(card);
 
       // Should navigate to article detail screen
       expect(mockPush).toHaveBeenCalled();
-      expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('/article/'));
+      expect(mockPush).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/article/[id]' }));
     });
 
     test('includes article ID in navigation path', () => {
@@ -175,11 +180,13 @@ describe('ArticleCard Component', () => {
       const article = createMockArticle({ id: articleId(42) });
       const props = { ...defaultProps, article };
 
-      const { getByTestId } = render(<ArticleCard {...props} testID="article-card" />);
+      const { getByTestId } = renderCard(<ArticleCard {...props} testID="article-card" />);
 
       fireEvent.press(getByTestId('article-card'));
 
-      expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('/42'));
+      expect(mockPush).toHaveBeenCalledWith(
+        expect.objectContaining({ params: expect.objectContaining({ id: 42 }) }),
+      );
     });
   });
 
@@ -188,7 +195,7 @@ describe('ArticleCard Component', () => {
       const article = createMockArticle({
         category: { id: 2, name: 'Culture' },
       });
-      const { getByText } = render(<ArticleCard {...defaultProps} article={article} />);
+      const { getByText } = renderCard(<ArticleCard {...defaultProps} article={article} />);
 
       // Category is shown in metadata string
       expect(getByText(/Culture/)).toBeTruthy();
@@ -198,7 +205,7 @@ describe('ArticleCard Component', () => {
       const article = createMockArticle({
         category: { id: 3, name: 'advanced topics' },
       });
-      const { getByText } = render(<ArticleCard {...defaultProps} article={article} />);
+      const { getByText } = renderCard(<ArticleCard {...defaultProps} article={article} />);
 
       // Should capitalize first letter
       expect(getByText(/Advanced topics/)).toBeTruthy();
@@ -213,7 +220,7 @@ describe('ArticleCard Component', () => {
         title: longTitle,
       };
 
-      const { getByText } = render(<ArticleCard {...props} />);
+      const { getByText } = renderCard(<ArticleCard {...props} />);
 
       // Verify the long title is rendered in the component
       const titleElement = getByText(longTitle);
@@ -227,7 +234,7 @@ describe('ArticleCard Component', () => {
         summary: longSummary,
       };
 
-      const { getByText } = render(<ArticleCard {...props} />);
+      const { getByText } = renderCard(<ArticleCard {...props} />);
 
       const summaryElement = getByText(longSummary);
       expect(summaryElement.props.children).toBe(longSummary);
@@ -239,7 +246,7 @@ describe('ArticleCard Component', () => {
         summary: '',
       };
 
-      const { getByText, getByTestId } = render(<ArticleCard {...props} testID="card" />);
+      const { getByText, getByTestId } = renderCard(<ArticleCard {...props} testID="card" />);
 
       // Card should render with title still visible
       expect(getByTestId('card')).toBeDefined();
@@ -249,7 +256,7 @@ describe('ArticleCard Component', () => {
 
   describe('Image Handling', () => {
     test('renders with valid image URL', () => {
-      const { getByTestId } = render(<ArticleCard {...defaultProps} />);
+      const { getByTestId } = renderCard(<ArticleCard {...defaultProps} />);
 
       const imageElement = getByTestId('article-image');
       expect(imageElement).toBeDefined();
@@ -261,7 +268,7 @@ describe('ArticleCard Component', () => {
         imageUrl: '',
       };
 
-      const { getByText, getByTestId } = render(<ArticleCard {...props} testID="card" />);
+      const { getByText, getByTestId } = renderCard(<ArticleCard {...props} testID="card" />);
 
       // Card should still render with title visible
       expect(getByTestId('card')).toBeDefined();
@@ -274,7 +281,7 @@ describe('ArticleCard Component', () => {
         imageUrl: 'not-a-valid-url',
       };
 
-      const { getByText, getByTestId } = render(<ArticleCard {...props} testID="card" />);
+      const { getByText, getByTestId } = renderCard(<ArticleCard {...props} testID="card" />);
 
       // Card should still render functional
       expect(getByTestId('card')).toBeDefined();
@@ -293,7 +300,7 @@ describe('ArticleCard Component', () => {
         article,
       };
 
-      const { getByText } = render(<ArticleCard {...props} />);
+      const { getByText } = renderCard(<ArticleCard {...props} />);
 
       // Category shown in metadata
       expect(getByText(/Basics/)).toBeTruthy();
@@ -309,7 +316,7 @@ describe('ArticleCard Component', () => {
         article,
       };
 
-      const { getByText } = render(<ArticleCard {...props} />);
+      const { getByText } = renderCard(<ArticleCard {...props} />);
 
       // Category shown in metadata
       expect(getByText(/Advanced/)).toBeTruthy();
@@ -324,7 +331,7 @@ describe('ArticleCard Component', () => {
         article: arabicArticle,
       };
 
-      const { getByText } = render(<ArticleCard {...props} />);
+      const { getByText } = renderCard(<ArticleCard {...props} />);
 
       expect(getByText(/أحمد محمود/)).toBeTruthy();
     });
@@ -337,7 +344,7 @@ describe('ArticleCard Component', () => {
         isFeaturedArticle: true,
       };
 
-      const { getByTestId } = render(<ArticleCard {...props} testID="featured-article" />);
+      const { getByTestId } = renderCard(<ArticleCard {...props} testID="featured-article" />);
 
       expect(getByTestId('featured-article')).toBeTruthy();
     });
@@ -351,7 +358,7 @@ describe('ArticleCard Component', () => {
         isFeaturedArticle: true,
       };
 
-      const { getByTestId } = render(<ArticleCard {...props} testID="featured-article" />);
+      const { getByTestId } = renderCard(<ArticleCard {...props} testID="featured-article" />);
 
       fireEvent.press(getByTestId('featured-article'));
 
@@ -369,7 +376,7 @@ describe('ArticleCard Component', () => {
         article,
       };
 
-      const { getByTestId, getByText } = render(<ArticleCard {...props} testID="card" />);
+      const { getByTestId, getByText } = renderCard(<ArticleCard {...props} testID="card" />);
 
       // Card renders with title visible
       expect(getByTestId('card')).toBeDefined();
@@ -385,7 +392,7 @@ describe('ArticleCard Component', () => {
         article,
       };
 
-      const { getByTestId, getByText } = render(<ArticleCard {...props} testID="card" />);
+      const { getByTestId, getByText } = renderCard(<ArticleCard {...props} testID="card" />);
 
       expect(getByTestId('card')).toBeDefined();
       expect(getByText(defaultProps.title)).toBeDefined();
@@ -398,7 +405,7 @@ describe('ArticleCard Component', () => {
         title: specialTitle,
       };
 
-      const { getByText } = render(<ArticleCard {...props} />);
+      const { getByText } = renderCard(<ArticleCard {...props} />);
 
       const titleElement = getByText(specialTitle);
       expect(titleElement.props.children).toBe(specialTitle);
@@ -411,7 +418,7 @@ describe('ArticleCard Component', () => {
         title: arabicTitle,
       };
 
-      const { getByText } = render(<ArticleCard {...props} />);
+      const { getByText } = renderCard(<ArticleCard {...props} />);
 
       const titleElement = getByText(arabicTitle);
       expect(titleElement.props.children).toBe(arabicTitle);
@@ -424,7 +431,7 @@ describe('ArticleCard Component', () => {
         title: mixedTitle,
       };
 
-      const { getByText } = render(<ArticleCard {...props} />);
+      const { getByText } = renderCard(<ArticleCard {...props} />);
 
       const titleElement = getByText(mixedTitle);
       expect(titleElement.props.children).toBe(mixedTitle);
@@ -442,7 +449,7 @@ describe('ArticleCard Component', () => {
 
       const start = Date.now();
       articles.forEach(article => {
-        render(<ArticleCard {...defaultProps} title={article.title} article={article} />);
+        renderCard(<ArticleCard {...defaultProps} title={article.title} article={article} />);
       });
       const elapsed = Date.now() - start;
 
@@ -453,14 +460,14 @@ describe('ArticleCard Component', () => {
 
   describe('Accessibility', () => {
     test('provides accessible card for screen readers', () => {
-      const { getByTestId } = render(<ArticleCard {...defaultProps} testID="article-card" />);
+      const { getByTestId } = renderCard(<ArticleCard {...defaultProps} testID="article-card" />);
 
       const card = getByTestId('article-card');
       expect(card).toBeTruthy();
     });
 
     test('includes all important text content', () => {
-      const { getByText } = render(<ArticleCard {...defaultProps} />);
+      const { getByText } = renderCard(<ArticleCard {...defaultProps} />);
 
       // All key information should be accessible
       expect(getByText('Introduction to Arabic Grammar')).toBeTruthy();
@@ -478,12 +485,17 @@ describe('ArticleCard Component', () => {
       const article = createMockArticle({ id: articleId(123) });
       const props = { ...defaultProps, article };
 
-      const { getByTestId } = render(<ArticleCard {...props} testID="card" />);
+      const { getByTestId } = renderCard(<ArticleCard {...props} testID="card" />);
 
       fireEvent.press(getByTestId('card'));
 
       // Regression: Ensure route follows /article/[id] pattern
-      expect(mockPush).toHaveBeenCalledWith(expect.stringMatching(/\/article\/123/));
+      expect(mockPush).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pathname: '/article/[id]',
+          params: expect.objectContaining({ id: 123 }),
+        }),
+      );
     });
 
     test('should format author and category correctly', () => {
@@ -491,7 +503,7 @@ describe('ArticleCard Component', () => {
         author: { id: 2, name: 'Jane Smith' },
         category: { id: 2, name: 'Culture' },
       });
-      const { getByText } = render(<ArticleCard {...defaultProps} article={customArticle} />);
+      const { getByText } = renderCard(<ArticleCard {...defaultProps} article={customArticle} />);
 
       // Should format as "Author · Category · X min"
       expect(getByText(/Jane Smith · Culture · \d+ min/)).toBeTruthy();

@@ -16,6 +16,7 @@
 
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 
+import { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { VERDICT } from '@/constants/animation';
 import { useReview } from '@/hooks/review/useReview';
 import {
@@ -475,12 +476,10 @@ describe('useReview Hook - Grading', () => {
     });
 
     test('leaving without grading does not stamp a completed session', async () => {
-      const { useQueryClient } = require('@tanstack/react-query');
       const { fsrsQueries } = require('@/constants/queries');
-      const setQueryData = jest.fn();
-      useQueryClient.mockReturnValue({ ...useQueryClient(), setQueryData });
+      const { wrapper, queryClient } = createHookTestWrapper();
+      const setQueryData = jest.spyOn(queryClient, 'setQueryData');
       const key = fsrsQueries.lastCompletedAtKey('test-user-123');
-      const wrapper = createWrapper();
 
       useFSRS.mockReturnValue({ ...fsrsState(mocks, createMockWord()), flushPendingWrites });
       const first = renderHook(() => useReview(), { wrapper });
@@ -498,6 +497,71 @@ describe('useReview Hook - Grading', () => {
       await waitFor(() => expect(mocks.mockUpdateMetrics).toHaveBeenCalled());
       act(() => second.unmount());
       await waitFor(() => expect(setQueryData).toHaveBeenCalledWith(key, expect.any(Number)));
+    });
+
+    // The completion screen shows a streak, and the streak query does not
+    // refetch on mount — so a session that runs out of cards is finalized when
+    // that screen appears, not when the learner leaves it. Once: the Continue
+    // that follows used to repeat every refresh the screen had already made.
+    test('a session that runs out of cards is finalized once, after its writes settle', async () => {
+      const { fsrsQueries } = require('@/constants/queries');
+      const { wrapper, queryClient } = createHookTestWrapper();
+      const setQueryData = jest.spyOn(queryClient, 'setQueryData');
+      const invalidateQueries = jest.spyOn(queryClient, 'invalidateQueries');
+      let settleWrites!: () => void;
+      const heldFlush = jest.fn(
+        () =>
+          new Promise<void>(resolve => {
+            settleWrites = resolve;
+          }),
+      );
+      const streakRefreshes = () =>
+        invalidateQueries.mock.calls.filter(
+          ([filters]: unknown[]) =>
+            (filters as { queryKey?: unknown[] }).queryKey?.[0] === 'study-streak',
+        ).length;
+      const word = createMockWord();
+      useFSRS.mockReturnValue({ ...fsrsState(mocks, word), flushPendingWrites: heldFlush });
+
+      const { result, rerender } = renderHook(() => useReview(), { wrapper });
+      act(() => result.current.revealAnswer());
+      act(() => {
+        result.current.grade('known');
+      });
+      await waitFor(() => expect(mocks.mockUpdateMetrics).toHaveBeenCalled());
+
+      // The last card's grade emptied the session.
+      useFSRS.mockReturnValue({
+        ...fsrsState(mocks, null, { isComplete: true }),
+        flushPendingWrites: heldFlush,
+      });
+      rerender({});
+      await waitFor(() => expect(heldFlush).toHaveBeenCalledTimes(1));
+      // Nothing is refreshed while a write is still in flight.
+      expect(setQueryData).not.toHaveBeenCalled();
+      expect(streakRefreshes()).toBe(0);
+      expect(mocks.mockInvalidateQueries).not.toHaveBeenCalled();
+
+      await act(async () => settleWrites());
+      await waitFor(() =>
+        expect(setQueryData).toHaveBeenCalledWith(
+          fsrsQueries.lastCompletedAtKey('test-user-123'),
+          expect.any(Number),
+        ),
+      );
+      expect(streakRefreshes()).toBe(1);
+      expect(mocks.mockInvalidateQueries).toHaveBeenCalledTimes(1);
+
+      // Continue: the session is already finalized, so nothing runs again.
+      act(() => result.current.handleClose());
+      // The close defers its finalize to an idle callback; let it run.
+      await act(async () => {
+        await jest.runOnlyPendingTimersAsync();
+      });
+      expect(heldFlush).toHaveBeenCalledTimes(1);
+      expect(setQueryData).toHaveBeenCalledTimes(1);
+      expect(streakRefreshes()).toBe(1);
+      expect(mocks.mockInvalidateQueries).toHaveBeenCalledTimes(1);
     });
   });
 });

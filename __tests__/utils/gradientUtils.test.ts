@@ -55,13 +55,16 @@ describe('gradientUtils', () => {
     });
   });
 
+  // The clear stops are the overlay itself at zero opacity. The `transparent`
+  // keyword is rgba(0,0,0,0): a light theme's ramp would fade in through grey,
+  // since React Native only rewrites a transparent stop on iOS.
   describe('createImageGradientColors', () => {
     test('should create dark mode gradient colors', () => {
       const result = createImageGradientColors(mockDarkThemeColors);
 
       expect(result).toHaveLength(7);
-      expect(result[0]).toBe('transparent');
-      expect(result[1]).toBe('transparent');
+      expect(result[0]).toBe('rgba(0,0,0,0)');
+      expect(result[1]).toBe('rgba(0,0,0,0)');
       expect(result[2]).toContain('rgba(0,0,0,0.03)');
       expect(result[6]).toContain('rgba(0,0,0,0.4)');
     });
@@ -70,8 +73,8 @@ describe('gradientUtils', () => {
       const result = createImageGradientColors(mockLightThemeColors);
 
       expect(result).toHaveLength(7);
-      expect(result[0]).toBe('transparent');
-      expect(result[1]).toBe('transparent');
+      expect(result[0]).toBe('rgba(245,245,220,0)');
+      expect(result[1]).toBe('rgba(245,245,220,0)');
       expect(result[2]).toContain('rgba(245,245,220,0.03)');
       expect(result[6]).toContain('rgba(245,245,220,0.4)');
     });
@@ -82,9 +85,9 @@ describe('gradientUtils', () => {
       const result = createBackgroundGradientColors(mockDarkThemeColors);
 
       expect(result).toHaveLength(10);
-      expect(result[0]).toBe('transparent');
-      expect(result[1]).toBe('transparent');
-      expect(result[2]).toBe('transparent');
+      expect(result[0]).toBe('rgba(0,0,0,0)');
+      expect(result[1]).toBe('rgba(0,0,0,0)');
+      expect(result[2]).toBe('rgba(0,0,0,0)');
       expect(result[9]).toBe(mockDarkThemeColors.background);
     });
 
@@ -92,9 +95,9 @@ describe('gradientUtils', () => {
       const result = createBackgroundGradientColors(mockLightThemeColors);
 
       expect(result).toHaveLength(10);
-      expect(result[0]).toBe('transparent');
-      expect(result[1]).toBe('transparent');
-      expect(result[2]).toBe('transparent');
+      expect(result[0]).toBe('rgba(245,245,220,0)');
+      expect(result[1]).toBe('rgba(245,245,220,0)');
+      expect(result[2]).toBe('rgba(245,245,220,0)');
       expect(result[9]).toBe(mockLightThemeColors.background);
     });
   });

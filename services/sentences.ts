@@ -5,7 +5,7 @@ import type { ArticleId, RootId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import type { ColoredSegment, SentenceWord } from '@/types/vocabulary.types';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
-import { executeQuery } from '@/utils/supabaseHelpers';
+import { executeQuery, fetchAllPages, type RequestOptions } from '@/utils/supabaseHelpers';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { mapToSentenceWord } from '@/utils/typeMappers';
 
@@ -127,7 +127,6 @@ const SENTENCE_ROWS_PER_EXAMPLE = 4;
 
 /** PostgREST truncates an unbounded select at 1000 rows silently, so this pages.
  *  A 20-word chunk is ~200 rows; the cap is the runaway guard, not the budget. */
-const GLOSS_PAGE_SIZE = 1000;
 const GLOSS_MAX_PAGES = 4;
 
 export const sentencesService = {
@@ -149,7 +148,10 @@ export const sentencesService = {
    * analyzer works per word (form + its own gloss), so a sentence-level string
    * is not enough. Still two round trips for the whole chunk.
    */
-  async getExamplesForRoots(rootIds: RootId[]): Promise<Map<number, WordExample>> {
+  async getExamplesForRoots(
+    rootIds: RootId[],
+    request: RequestOptions = {},
+  ): Promise<Map<number, WordExample>> {
     if (rootIds.length === 0) return new Map();
 
     const wordRows = await executeQuery(
@@ -157,19 +159,17 @@ export const sentencesService = {
         supabase
           .from('sentence_words')
           .select('root_id, sentence_id, word_form, difficulty_level, word_type:word_types(name)')
-          .in(
-            'root_id',
-            rootIds.map(id => id as number),
-          )
+          .in('root_id', rootIds)
           .order('difficulty_level', { ascending: true })
           .limit(rootIds.length * EXAMPLE_ROWS_PER_ROOT),
       {
         ...errorConfig.loadByRootId,
         analyticsProperties: { rootCount: rootIds.length },
       },
+      request,
     );
 
-    if (!wordRows || wordRows.length === 0) return new Map();
+    if (wordRows.length === 0) return new Map();
 
     // First row per root wins — the query already ordered by difficulty.
     const chosen = new Map<number, { sentenceId: number; wordForm: string; wordType: string }>();
@@ -197,9 +197,8 @@ export const sentencesService = {
         ...errorConfig.loadByRootId,
         analyticsProperties: { sentenceCount: chosen.size },
       },
+      request,
     );
-
-    if (!sentenceRows) return new Map();
 
     const byId = new Map(sentenceRows.map(s => [s.id, s]));
     const examples = new Map<number, WordExample>();
@@ -253,33 +252,37 @@ export const sentencesService = {
    * and also carries "the cup". That is what the caller crediting `vague`
    * instead of `known` is for — see `matchSingleWord`.
    */
-  async getGlossAlternatesForRoots(rootIds: RootId[]): Promise<Map<number, string[]>> {
+  async getGlossAlternatesForRoots(
+    rootIds: RootId[],
+    request: RequestOptions = {},
+  ): Promise<Map<number, string[]>> {
     if (rootIds.length === 0) return new Map();
 
-    const ids = rootIds.map(id => id as number);
-    const rows: { root_id: number; english: string | null }[] = [];
-    for (let page = 0; page < GLOSS_MAX_PAGES; page++) {
-      const batch = await executeQuery(
-        () =>
-          supabase
-            .from('sentence_words')
-            .select('root_id, english')
-            .in('root_id', ids)
-            .range(page * GLOSS_PAGE_SIZE, (page + 1) * GLOSS_PAGE_SIZE - 1),
-        {
+    // Ordered by `id`, which is unique: without an order the pages had no
+    // stable boundary, so a page could repeat rows or skip them.
+    const rows = await fetchAllPages(
+      (from, to, signal) =>
+        supabase
+          .from('sentence_words')
+          .select('root_id, english')
+          .in('root_id', rootIds)
+          .order('id')
+          .range(from, to)
+          .abortSignal(signal),
+      {
+        errorConfig: offset => ({
           ...errorConfig.loadByRootId,
-          analyticsProperties: { rootCount: rootIds.length, page },
-        },
-      );
-      if (batch.length === 0) break;
-      rows.push(...batch);
-      if (batch.length < GLOSS_PAGE_SIZE) break;
-    }
+          analyticsProperties: { rootCount: rootIds.length, offset },
+        }),
+        request,
+        maxPages: GLOSS_MAX_PAGES,
+      },
+    );
 
     const seen = new Map<number, Set<string>>();
     const alternates = new Map<number, string[]>();
     for (const row of rows) {
-      const gloss = row.english?.trim();
+      const gloss = row.english.trim();
       if (!gloss) continue;
       const key = gloss.toLowerCase();
       let keys = seen.get(row.root_id);
@@ -306,7 +309,11 @@ export const sentencesService = {
    * @param limit - Maximum number of sentences to return (default: 5)
    * @returns Array of sentences with all their words
    */
-  async getSentencesByRootId(rootId: RootId, limit = 5): Promise<SentenceWithWords[]> {
+  async getSentencesByRootId(
+    rootId: RootId,
+    limit = 5,
+    request: RequestOptions = {},
+  ): Promise<SentenceWithWords[]> {
     // Which sentences to show, and in what order.
     //
     // Two things used to go wrong here. The row limit was applied BEFORE the
@@ -323,7 +330,7 @@ export const sentencesService = {
         supabase
           .from('sentence_words')
           .select('sentence_id')
-          .eq('root_id', rootId as number)
+          .eq('root_id', rootId)
           // The easiest usage wins. An example is there to reinforce the word,
           // not to introduce three harder ones.
           .order('difficulty_level', { ascending: true })
@@ -336,9 +343,10 @@ export const sentencesService = {
         ...errorConfig.loadByRootId,
         analyticsProperties: { rootId, limit },
       },
+      request,
     );
 
-    if (!sentenceIdsResult || sentenceIdsResult.length === 0) {
+    if (sentenceIdsResult.length === 0) {
       return [];
     }
 
@@ -389,17 +397,13 @@ export const sentencesService = {
           )
           // Plain embed, NOT `articles!inner`: an unpublished or RLS-hidden
           // article must cost the example its attribution, not the example.
-          .in('id', sentenceIds)
-          .overrideTypes<SentenceWithWordsRow[], { merge: false }>(),
+          .in('id', sentenceIds),
       {
         ...errorConfig.loadByRootId,
         analyticsProperties: { rootId, sentenceCount: sentenceIds.length },
       },
+      request,
     );
-
-    if (!sentencesResult) {
-      return [];
-    }
 
     // `difficulty_level` lives on `sentence_words`, so the parent query cannot
     // order by it, and `.in()` returns rows in an order Postgres does not

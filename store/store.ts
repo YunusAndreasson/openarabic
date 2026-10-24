@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { configureStore } from '@reduxjs/toolkit';
 import {
   FLUSH,
@@ -10,18 +9,12 @@ import {
   persistReducer,
   persistStore,
 } from 'redux-persist';
-import type { PersistConfig } from 'redux-persist/es/types';
 
-import { REDUX_PERSIST_KEY } from '@/constants/storageKeys';
-import { PERSISTED_SLICES, rootReducer, type RootStateShape } from '@/store/rootReducer';
+import { persistConfig } from '@/store/persistConfig';
+import { rootReducer, type RootStateShape } from '@/store/rootReducer';
 
-// Configure redux-persist
-const persistConfig: PersistConfig<RootStateShape> = {
-  key: REDUX_PERSIST_KEY,
-  storage: AsyncStorage,
-  whitelist: [...PERSISTED_SLICES],
-};
-
+// The config (reconciler, version, migrations) lives in its own module so a
+// test can run it — see store/persistConfig.ts.
 const persistedReducer = persistReducer<RootStateShape>(persistConfig, rootReducer);
 
 export const store = configureStore({

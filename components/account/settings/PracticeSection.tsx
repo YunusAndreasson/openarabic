@@ -12,6 +12,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useVoiceModel } from '@/hooks/voice/useVoiceModel';
 import { deleteVoiceModel } from '@/services/voiceModelStore';
 import { voiceReadiness } from '@/utils/voiceReadiness';
+import { fillTemplate } from '@/utils/fillTemplate';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
   selectAdaptiveNewWordPacingEnabled,
@@ -19,6 +20,7 @@ import {
   setAdaptiveNewWordPacingEnabled,
   setVoiceEnabled,
   setVoiceHandsFree,
+  selectVoiceEnabled,
   selectVoiceHandsFree,
 } from '@/store/settingsSlice';
 import type { ReminderTime } from '@/types/notifications.types';
@@ -63,7 +65,7 @@ export const PracticeSection = memo<PracticeSectionProps>(
     // Through the selector, not the raw field — see selectHapticsEnabled for
     // why a field added after a user's install rehydrates as `undefined`.
     const adaptiveNewWordPacingEnabled = useAppSelectorShallow(selectAdaptiveNewWordPacingEnabled);
-    const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+    const voiceEnabled = useAppSelectorShallow(selectVoiceEnabled);
     const voiceHandsFree = useAppSelectorShallow(selectVoiceHandsFree);
 
     const dailyLimitSummary = useDailyWordLimitSummary();
@@ -74,7 +76,7 @@ export const PracticeSection = memo<PracticeSectionProps>(
       if (currentDailyWordLimit === DAILY_WORD_LIMIT_UNLIMITED) {
         return STRINGS.DAILY_LIMIT_UNLIMITED;
       }
-      return STRINGS.DAILY_LIMIT_WORDS_COUNT.replace('{count}', String(currentDailyWordLimit));
+      return fillTemplate(STRINGS.DAILY_LIMIT_WORDS_COUNT, { count: currentDailyWordLimit });
     }, [currentDailyWordLimit]);
 
     // Every voice surface reads one resolver now. This row used to answer from
@@ -110,10 +112,9 @@ export const PracticeSection = memo<PracticeSectionProps>(
           // the review screen's story to tell, not a settings subtitle's.
           return STRINGS.SPEAK_ANSWER_IDLE_SUBTITLE;
         default:
-          return STRINGS.SPEAK_ANSWER_DOWNLOADING_SUBTITLE.replace(
-            '{pct}',
-            String(Math.round(readiness.progress * 100)),
-          );
+          return fillTemplate(STRINGS.SPEAK_ANSWER_DOWNLOADING_SUBTITLE, {
+            pct: Math.round(readiness.progress * 100),
+          });
       }
     }, [voiceEnabled, model, voice.isReady, voice.isWarming]);
 

@@ -24,6 +24,7 @@ jest.mock('expo-router', () => ({
     back: jest.fn(),
     dismiss: jest.fn(),
     push: jest.fn(),
+    replace: jest.fn(),
   },
 }));
 jest.mock('@/hooks/auth/useAuth');
@@ -106,7 +107,6 @@ describe('useArticleScreen Hook', () => {
   const mockHandleAddWordToStudy = jest.fn();
   const mockCloseTooltipOnScroll = jest.fn();
   const mockRefetchStudyWords = jest.fn();
-  const mockRefetchReadingListStatus = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -128,7 +128,6 @@ describe('useArticleScreen Hook', () => {
       sentenceWordsMap: new Map(),
       refetchStudyWords: mockRefetchStudyWords,
       isInReadingList: false,
-      refetchReadingListStatus: mockRefetchReadingListStatus,
     } as any);
 
     jest.mocked(useReadingListMutations).mockReturnValue({
@@ -213,7 +212,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: false,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>
@@ -237,7 +235,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: true,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>
@@ -297,7 +294,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: false,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>
@@ -323,7 +319,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: false, // Not in list
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>
@@ -352,7 +347,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: true, // In list
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>
@@ -411,7 +405,9 @@ describe('useArticleScreen Hook', () => {
       expect(router.push).not.toHaveBeenCalled();
     });
 
-    test('navigates to explore tab when router cannot dismiss', async () => {
+    test('replaces itself with the explore tab when it is the only screen', async () => {
+      // A cold deep link into the reader: nothing to dismiss to. Pushing the tab
+      // left the reader in history underneath it.
       jest.mocked(router.canDismiss).mockReturnValue(false);
 
       const { result } = renderHook(() =>
@@ -427,7 +423,8 @@ describe('useArticleScreen Hook', () => {
 
       expect(stopNonPlaylistAudioSafely).toHaveBeenCalledWith(true);
       expect(router.dismiss).not.toHaveBeenCalled();
-      expect(router.push).toHaveBeenCalledWith('/(tabs)/explore');
+      expect(router.push).not.toHaveBeenCalled();
+      expect(router.replace).toHaveBeenCalledWith('/(tabs)/explore');
     });
 
     test('handles audio stop error gracefully', async () => {
@@ -724,7 +721,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: false,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>
@@ -746,7 +742,6 @@ describe('useArticleScreen Hook', () => {
         sentenceWordsMap: new Map(),
         refetchStudyWords: mockRefetchStudyWords,
         isInReadingList: false,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
       } as any);
 
       const { result } = renderHook(() =>

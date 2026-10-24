@@ -1,6 +1,12 @@
 import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
-import { QueryClient, onlineManager } from '@tanstack/react-query';
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  focusManager,
+  onlineManager,
+} from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useFonts } from 'expo-font';
@@ -10,7 +16,6 @@ import {
   Stack,
   ThemeProvider as NavigationThemeProvider,
   useNavigationContainerRef,
-  useRouter,
 } from 'expo-router';
 import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -43,11 +48,11 @@ import {
 } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
-import { Theme } from '@/constants/colors';
 import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
-import { ROUTE_PATHS } from '@/constants/routes';
+import { ROUTE_PATHS, SHEET_ROUTES } from '@/constants/routes';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useUpdateReady } from '@/hooks/app/useUpdateReady';
+import { useNotificationResponseRouting } from '@/hooks/notifications/useNotificationResponseRouting';
 import { useSmartNotifications } from '@/hooks/notifications/useSmartNotifications';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { GlobalAudioStateProvider } from '@/hooks/audio/useGlobalAudioState';
@@ -55,38 +60,26 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { getSkiaGpuContext } from '@/hooks/theme/useSkiaGpuAvailable';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsCalculator';
 import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
-import {
-  cleanupNotifications,
-  clearNotificationNavigationCallback,
-  handleNotificationResponse,
-  initializeNotifications,
-  setNotificationNavigationCallback,
-} from '@/services/notificationService';
-import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
-import type { RootState } from '@/store/store';
+import { cleanupNotifications, initializeNotifications } from '@/services/notificationService';
 import { persistor, store } from '@/store/store';
-import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
 import { registerMutationDefaults } from '@/utils/mutationDefaults';
 import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
 import { flushPersistedQueryCache, PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
+import { reportQueryFailure } from '@/utils/queryMeta';
+import { retryWhileOnline } from '@/utils/queryRetry';
 import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
-import type * as NotificationsModule from 'expo-notifications';
 
-// expo-notifications is unavailable in Expo Go on Android (SDK 53+).
-let Notifications: typeof NotificationsModule | null = null;
-try {
-  Notifications = require('expo-notifications');
-} catch {
-  // expo-notifications unavailable in Expo Go on Android (SDK 53+)
-}
-
-const TAB_ROUTE_OPTIONS = { animation: 'fade' } as const;
-const AUTH_ROUTE_OPTIONS = { animation: 'fade' } as const;
+// The tabs, the auth group and the password reset all fade. Declared here
+// rather than from inside a page, where an animation set by <Stack.Screen
+// options> only applies after the screen has mounted. Their headers are
+// already hidden by the root screen options.
+const FADE_ROUTE_OPTIONS = { animation: 'fade' } as const;
 const ROOT_SCREEN_LISTENERS = {
   transitionEnd: (event: { data: { closing: boolean } }) => {
     if (event.data.closing) flushPendingSheetNavigation();
@@ -148,33 +141,47 @@ NetInfo.fetch()
     // onlineManager listener above covers the steady state.
   });
 
-// Optimized retry logic that stops when offline
-const createRetryFunction = (maxRetries: number) => (failureCount: number, error: unknown) => {
-  if (!onlineManager.isOnline()) return false;
-  // Don't retry on 4xx errors (client errors)
-  if (error && typeof error === 'object' && 'status' in error) {
-    const status = (error as { status: number }).status;
-    if (status >= 400 && status < 500) return false;
-  }
-  return failureCount < maxRetries;
-};
+// The documented React Native wiring for focus: the app is "focused" while it
+// is in the foreground. TanStack reads this to pause a query's retries while
+// the app is backgrounded (they continue on return instead of burning the
+// radio in the background) and to resume paused mutations when the app comes
+// back. Window-focus refetching stays off (the `refetchOnWindowFocus` default
+// below); the resume refresh in AppContent is what refreshes data on return.
+focusManager.setEventListener(handleFocus => {
+  const subscription = AppState.addEventListener('change', state => {
+    handleFocus(state === 'active');
+  });
+  return () => subscription.remove();
+});
 
 // Move queryClient outside component scope for better performance
 const queryClient = new QueryClient({
+  // Failures are reported here, once each, after the last retry — not by the
+  // services on every attempt. See reportQueryFailure (utils/queryMeta.ts)
+  // for how a query's `meta` and a managed request's error decide the report.
+  queryCache: new QueryCache({
+    onError: (error, query) => reportQueryFailure(error, query.meta),
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _onMutateResult, mutation) =>
+      reportQueryFailure(error, mutation.meta),
+  }),
   defaultOptions: {
     queries: {
       staleTime: QUERY_DEFAULTS.STALE_TIME,
       gcTime: QUERY_DEFAULTS.GC_TIME,
       refetchOnMount: false,
       refetchOnReconnect: true,
-      refetchOnWindowFocus: false, // Disable for mobile
+      // Focus is wired above, but a return to the foreground refreshes through
+      // AppContent's resume pass rather than refetching every mounted query.
+      refetchOnWindowFocus: false,
       networkMode: 'online',
-      retry: createRetryFunction(QUERY_DEFAULTS.MAX_RETRIES),
+      retry: retryWhileOnline(QUERY_DEFAULTS.MAX_RETRIES),
       retryDelay: attemptIndex =>
         Math.min(1000 * 2 ** attemptIndex, QUERY_DEFAULTS.MAX_RETRY_DELAY),
     },
     mutations: {
-      retry: createRetryFunction(QUERY_DEFAULTS.MUTATION_MAX_RETRIES),
+      retry: retryWhileOnline(QUERY_DEFAULTS.MUTATION_MAX_RETRIES),
       networkMode: 'online',
       gcTime: 0, // Don't cache mutation results
     },
@@ -284,9 +291,9 @@ Sentry.setTag('expo_update_runtime_version', Updates.runtimeVersion ?? 'unknown'
 Sentry.setTag('expo_update_is_embedded', String(Updates.isEmbeddedLaunch));
 
 function AppContent() {
-  const dispatch = useAppDispatch();
-  const theme = useAppSelectorShallow((state: RootState) => state.theme.theme);
-  const isDark = theme === Theme.Dark;
+  // A stored null theme reads as the default, Dark, through selectTheme — so
+  // there is nothing to normalise into the store on launch any more.
+  const isDark = useIsDarkMode();
   const [appReady, setAppReady] = useState(false);
   const [initialSessionStartedAt] = useState(() => Date.now());
   const activeSessionStartedAt = useRef(initialSessionStartedAt);
@@ -295,7 +302,6 @@ function AppContent() {
   const { isLoading: isAuthLoading, session } = useAuth();
   const userId = session?.user?.id;
   const navigationRef = useNavigationContainerRef();
-  const router = useRouter();
 
   // Runtime font load for Expo Go + Android — see RUNTIME_FONT_MAP above
   const [fontsLoaded, fontError] = useFonts(NEEDS_RUNTIME_FONTS ? RUNTIME_FONT_MAP : {});
@@ -402,14 +408,6 @@ function AppContent() {
     };
   }, [isDark, colors.tint, colors.background]);
 
-  // Set default theme based on system preference if none is set yet
-  useEffect(() => {
-    if (!theme) {
-      // Use dark theme (Midnight Summer) as the default for new users
-      dispatch(setTheme(Theme.Dark)); // Default to dark theme for comfortable evening study
-    }
-  }, [dispatch, theme]);
-
   // Handle preloading app data - start when auth is ready
   useEffect(() => {
     if (!isAuthLoading && !isLoaded && !hasTriggeredPreload.current) {
@@ -468,47 +466,9 @@ function AppContent() {
     }
   }, [appReady]);
 
-  // Set up notification navigation callback
-  useEffect(() => {
-    if (!appReady) return;
-
-    // Set navigation callback for when user taps notifications
-    setNotificationNavigationCallback((path: string) => {
-      router.navigate(path);
-    });
-
-    return () => {
-      clearNotificationNavigationCallback();
-    };
-  }, [appReady, router]);
-
-  // Handle cold start notifications (when app launches from notification)
-  useEffect(() => {
-    if (!appReady) return;
-
-    const handleColdStartNotification = async () => {
-      try {
-        if (!Notifications) return;
-
-        const response = Notifications.getLastNotificationResponse();
-
-        if (response) {
-          handleNotificationResponse(response, path => router.navigate(path), { coldStart: true });
-
-          // Clear the last notification response to prevent re-handling on next launch
-          Notifications.clearLastNotificationResponse();
-        }
-      } catch (error) {
-        // Silently handle cold start notification errors
-        void handleError(error, {
-          showToast: false,
-          analyticsEventName: 'Cold_Start_Notification_Error',
-        });
-      }
-    };
-
-    void handleColdStartNotification();
-  }, [appReady, router]);
+  // Notification taps — the one that launched the app, then every later one —
+  // open their screen once the navigator is up.
+  useNotificationResponseRouting(appReady);
 
   // Cleanup notifications, background tasks and audio on unmount.
   //
@@ -605,9 +565,9 @@ function AppContent() {
   );
   const rootScreenOptions = useMemo(
     () => ({
+      // Every root screen hides its header, so no other header option here
+      // would ever apply.
       headerShown: false,
-      headerTitle: '',
-      headerShadowVisible: false,
       contentStyle: { backgroundColor: colors.background },
     }),
     [colors.background],
@@ -654,7 +614,7 @@ function AppContent() {
                       Declarative guards mount directly into the right route, so
                       the race is gone — fade matches the auth screen for a
                       symmetric sign-in / sign-out transition. */}
-                  <Stack.Screen name="(tabs)" options={TAB_ROUTE_OPTIONS} />
+                  <Stack.Screen name="(tabs)" options={FADE_ROUTE_OPTIONS} />
                   <Stack.Screen
                     name="article/[id]"
                     options={createNavigationOptions(colors, {
@@ -686,7 +646,6 @@ function AppContent() {
                        */
                       presentation: 'fullScreenModal',
                       gestureEnabled: false,
-                      fullScreenGestureEnabled: false,
                     })}
                   />
                   <Stack.Screen
@@ -695,36 +654,26 @@ function AppContent() {
                       headerShown: false,
                     })}
                   />
-                  <Stack.Screen name="sleep-timer" options={createSheetOptions(colors, [0.4])} />
-                  {/* These four fit their contents: fixed-height charts, or a
-                      handful of rows, under a short header — no scrolling. See
-                      createSheetOptions for what 'fitToContents' requires of the
-                      screen's content. */}
-                  <Stack.Screen name="due-words" options={createSheetOptions(colors)} />
-                  <Stack.Screen name="memory-retention" options={createSheetOptions(colors)} />
-                  <Stack.Screen name="study-streak" options={createSheetOptions(colors)} />
-                  <Stack.Screen name="review-depth" options={createSheetOptions(colors)} />
-                  {/* The odd one out: up to 20 leech rows never fit their
-                      contents, so this sheet scrolls and needs a fixed detent.
-                      Its screen owns the sheet background because the scroll
-                      view has to be a direct child — the route file documents
-                      the layout react-native-screens requires. */}
-                  <Stack.Screen
-                    name="words-to-revisit"
-                    options={createSheetOptions(colors, [0.6, 1])}
-                  />
-                  {/* One saved word, root-level so the Explore rail can present
-                      it without changing tabs. Fixed detents for the same reason
-                      as the sheet above: a memory panel, a stat block and a root
-                      explanation do not fit their contents, so this one scrolls
-                      and its screen owns the two-child layout that requires. */}
-                  <Stack.Screen name="word-detail" options={createSheetOptions(colors, [0.6, 1])} />
+                  {/* The form sheets, from the one table that also tells the
+                      MiniPlayer to stand down (SHEET_ROUTES). Stack.Protected
+                      walks its children with Children.forEach, so the array
+                      flattens like any other children. */}
+                  {Object.entries(SHEET_ROUTES).map(([name, detents]) => (
+                    <Stack.Screen
+                      key={name}
+                      name={name}
+                      options={createSheetOptions(colors, detents)}
+                    />
+                  ))}
                 </Stack.Protected>
 
                 {/* Unauthenticated routes — on sign-in auth redirects to Explore */}
                 <Stack.Protected guard={!isAuthenticated} redirectTo={ROUTE_PATHS.EXPLORE_TAB}>
-                  <Stack.Screen name="auth" options={AUTH_ROUTE_OPTIONS} />
+                  <Stack.Screen name="auth" options={FADE_ROUTE_OPTIONS} />
                 </Stack.Protected>
+
+                {/* Unguarded: a reset link opens it signed in or signed out */}
+                <Stack.Screen name="reset-password" options={FADE_ROUTE_OPTIONS} />
 
                 {/* Audio overlays - mini-player and sleep timer */}
               </Stack>

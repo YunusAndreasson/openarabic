@@ -3,16 +3,14 @@
  *
  * Tests the complete authentication lifecycle including:
  * - Initial session retrieval
- * - Session refresh with retry logic
- * - Auth state change handling
+ * - Auth state change handling (token refreshes arrive here: supabase-js
+ *   refreshes on its own, with `autoRefreshToken`)
  * - App state transitions
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
  * - ✅ jest.mocked() for type-safe mocking
  */
-
-jest.unmock('@tanstack/react-query');
 
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, afterEach, describe, expect, jest, test } from '@jest/globals';
@@ -21,10 +19,8 @@ import { AppState, type AppStateStatus } from 'react-native';
 
 import { useProvideAuth } from '@/hooks/auth/useProvideAuth';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type NetInfo from '@react-native-community/netinfo';
 import {
   createAuthErrorMock,
-  createNetInfoStateMock,
   createSessionMock,
   createUserMock,
 } from '@/__tests__/helpers/serviceMocks';
@@ -34,18 +30,17 @@ import {
 // whose `mockResolvedValue` argument is checked against `never` — so none of the
 // session shapes these return were ever verified against what supabase produces.
 const mockGetSession = jest.fn<SupabaseClient['auth']['getSession']>();
-const mockRefreshSession = jest.fn<SupabaseClient['auth']['refreshSession']>();
-const mockNetInfoFetch = jest.fn<typeof NetInfo.fetch>();
 const mockRemoveSupabaseListener = jest.fn();
 const mockAuthUnsubscribe = jest.fn();
+const mockOnAuthStateChange = jest.fn();
 let mockAuthStateCallback: ((event: string, session: unknown) => void) | null = null;
 
 jest.mock('@/services/supabase', () => ({
   supabase: {
     auth: {
       getSession: () => mockGetSession(),
-      refreshSession: () => mockRefreshSession(),
       onAuthStateChange: (callback: (event: string, session: unknown) => void) => {
+        mockOnAuthStateChange();
         mockAuthStateCallback = callback;
         return {
           data: {
@@ -60,8 +55,13 @@ jest.mock('@/services/supabase', () => ({
   setupSupabaseAppStateListener: () => mockRemoveSupabaseListener,
 }));
 
-jest.mock('@react-native-community/netinfo', () => ({
-  fetch: () => mockNetInfoFetch(),
+// The store's dispatch keeps one identity for the life of the app, and the
+// hook's subscription relies on that. The global react-redux stub hands back a
+// fresh function on every call, so this suite uses a stable one, like the
+// real store.
+const mockDispatch = jest.fn();
+jest.mock('@/store/hooks', () => ({
+  useAppDispatch: () => mockDispatch,
 }));
 
 jest.mock('@sentry/react-native', () => ({
@@ -94,8 +94,6 @@ describe('Authentication Flow', () => {
 
     // Default mock implementations
     mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
-    mockRefreshSession.mockResolvedValue({ data: { user: null, session: null }, error: null });
-    mockNetInfoFetch.mockResolvedValue(createNetInfoStateMock(true));
 
     // Mock AppState
     Object.defineProperty(AppState, 'currentState', {
@@ -180,87 +178,7 @@ describe('Authentication Flow', () => {
       });
 
       expect(result.current.session).toBeNull();
-      expect(result.current.authError).toEqual(error);
-    });
-  });
-
-  describe('Session Refresh', () => {
-    test('refreshSession checks network connectivity first', async () => {
-      mockGetSession.mockResolvedValue({ data: { session: mockSession }, error: null });
-      mockNetInfoFetch.mockResolvedValue(createNetInfoStateMock(false));
-
-      const { result } = renderHook(() => useProvideAuth());
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBeFalsy();
-      });
-
-      let refreshResult: unknown;
-      await act(async () => {
-        refreshResult = await result.current.refreshSession();
-      });
-
-      expect(refreshResult).toBeNull();
-      expect(mockRefreshSession).not.toHaveBeenCalled();
-    });
-
-    test('refreshSession succeeds with valid session', async () => {
-      mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
-      mockNetInfoFetch.mockResolvedValue(createNetInfoStateMock(true));
-      mockRefreshSession.mockResolvedValue({
-        data: { user: mockSession.user, session: mockSession },
-        error: null,
-      });
-
-      const { result } = renderHook(() => useProvideAuth());
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBeFalsy();
-      });
-
-      let refreshResult: unknown;
-      await act(async () => {
-        refreshResult = await result.current.refreshSession();
-      });
-
-      expect(refreshResult).toEqual(mockSession);
-      expect(result.current.session).toEqual(mockSession);
-      expect(result.current.isAuthenticated).toBeTruthy();
-    });
-
-    test('refreshSession retries on error up to max attempts', async () => {
-      mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
-      mockNetInfoFetch.mockResolvedValue(createNetInfoStateMock(true));
-      mockRefreshSession.mockResolvedValue({
-        data: { user: null, session: null },
-        error: createAuthErrorMock('Refresh failed'),
-      });
-
-      const { result } = renderHook(() => useProvideAuth());
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBeFalsy();
-      });
-
-      // Call refreshSession - it will retry with exponential backoff
-      const refreshPromise = result.current.refreshSession();
-
-      // Advance through retry delays (1000ms, 2000ms, 4000ms)
-      await act(async () => {
-        jest.advanceTimersByTime(1000);
-      });
-      await act(async () => {
-        jest.advanceTimersByTime(2000);
-      });
-      await act(async () => {
-        jest.advanceTimersByTime(4000);
-      });
-
-      const refreshResult = await refreshPromise;
-
-      // Should have called refreshSession multiple times (up to MAX_REFRESH_RETRIES)
-      expect(mockRefreshSession.mock.calls.length).toBeGreaterThanOrEqual(1);
-      expect(refreshResult).toBeNull();
+      expect(result.current.isAuthenticated).toBe(false);
     });
   });
 
@@ -443,16 +361,19 @@ describe('Authentication Flow', () => {
   });
 
   describe('Auth Result Interface', () => {
-    test('provides refreshSession function', async () => {
-      mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
+    test('subscribes to auth changes once, however often it re-renders', async () => {
+      mockGetSession.mockResolvedValue({ data: { session: mockSession }, error: null });
 
-      const { result } = renderHook(() => useProvideAuth());
+      const { result, rerender } = renderHook(() => useProvideAuth());
 
       await waitFor(() => {
         expect(result.current.isLoading).toBeFalsy();
       });
+      rerender({});
 
-      expect(typeof result.current.refreshSession).toBe('function');
+      expect(mockOnAuthStateChange).toHaveBeenCalledTimes(1);
+      expect(mockGetSession).toHaveBeenCalledTimes(1);
+      expect(mockAuthUnsubscribe).not.toHaveBeenCalled();
     });
 
     test('memoizes auth result for reference stability', async () => {

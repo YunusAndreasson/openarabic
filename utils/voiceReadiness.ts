@@ -53,7 +53,8 @@ export function voiceReadiness(input: {
   voiceEnabled: boolean;
   micDenied: boolean;
   model: VoiceModelSnapshot;
-  engine: { isReady: boolean; isWarming: boolean; error: Error | null };
+  /** `error` is the recognizer build failure, as the provider reports it. */
+  engine: { isReady: boolean; isWarming: boolean; error: string | null };
 }): VoiceReadiness {
   const { voiceEnabled, micDenied, model, engine } = input;
 

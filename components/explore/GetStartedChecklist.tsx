@@ -1,47 +1,44 @@
-import { Icon } from '@/components/ui';
+import { GlyphButton, Icon } from '@/components/ui';
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  ZoomIn,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { BaseCard } from '@/components/common';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
+import { TIMING_CONFIG, checkPopEntering, fadeInStyle } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ONBOARDING_CONFIG, OnboardingStep } from '@/constants/onboarding';
-import { getArticleRoute, ROUTE_PATHS } from '@/constants/routes';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import type { OnboardingChecklistState } from '@/hooks/onboarding/useOnboardingChecklist';
-import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
+import { useOpenStarterArticle } from '@/hooks/onboarding/useOpenStarterArticle';
 import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
 import type { Article } from '@/types/articles.types';
-import { pickStarterArticle } from '@/utils/articleUtils';
 import { selectionFeedback } from '@/utils/haptics';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 const CHECK_ICON_SIZE = 22;
 
 // Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render
 // alloc. Gives the card a deliberate entrance when the welcome intro dismisses,
 // instead of popping in behind the closing modal.
-const MOUNT_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.SLOW.duration, 'forwards');
-
-/** A small pop with no wobble — the ratio CompletionScreen's check uses. */
-const CHECK_DAMPING_RATIO = 0.75;
-
-// The duration goes INTO springify: a bare `.springify()` runs Reanimated's
-// default physics spring for ~0.8s, a long wobble for a tick that should land
-// while the learner is still looking at the row.
-const ENTERING_CHECK = ZoomIn.springify(TIMING_CONFIG.FAST.duration).dampingRatio(
-  CHECK_DAMPING_RATIO,
+const MOUNT_FADE_IN_STYLE = fadeInStyle(
+  TIMING_CONFIG.SLOW.duration,
+  'forwards',
+  // SLOW's own curve is CSS `ease` (bezier 0.25, 0.1, 0.25, 1), which is what
+  // this fade ran on before fadeInStyle gained a timing argument.
+  'ease',
 );
+
+// The same pop as CompletionScreen's check. Its duration goes into springify:
+// a bare `.springify()` runs Reanimated's default physics spring for ~0.8s, a
+// long wobble for a tick that should land while the learner is still looking
+// at the row.
+const ENTERING_CHECK = checkPopEntering();
 
 interface GetStartedChecklistProps {
   articlesData: Article[];
@@ -68,8 +65,7 @@ const GetStartedChecklistComponent = ({
   const router = useRouter();
   const { isChecklistVisible, items, doneCount, allDone, finalizeCompletion, dismiss } = checklist;
 
-  const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
-  const { data: progressMap } = useBulkReadingProgress(articleIds);
+  const openStarterArticle = useOpenStarterArticle(articlesData);
 
   // Collapse animation: measured height + opacity → 0, then persist completion.
   // Height-based (not reanimated `exiting`) because the card lives inside a
@@ -126,22 +122,19 @@ const GetStartedChecklistComponent = ({
         return;
       }
 
-      const starter = pickStarterArticle(articlesData, progressMap);
-      if (starter) {
-        router.push(getArticleRoute(starter.id, starter.title, true));
-      }
+      openStarterArticle();
     },
-    [articlesData, progressMap, router],
+    [openStarterArticle, router],
   );
 
   if (!isChecklistVisible || isSuppressedByIntro) {
     return null;
   }
 
-  const progressLabel = STRINGS.CHECKLIST_PROGRESS.replace('{done}', String(doneCount)).replace(
-    '{total}',
-    String(items.length),
-  );
+  const progressLabel = fillTemplate(STRINGS.CHECKLIST_PROGRESS, {
+    done: doneCount,
+    total: items.length,
+  });
 
   return (
     <Animated.View style={[MOUNT_FADE_IN_STYLE, animatedStyle]}>
@@ -159,15 +152,11 @@ const GetStartedChecklistComponent = ({
             </ThemedText>
             {/* A bare glyph, not a filled button: putting the card away is the
                 least important thing on it, and it should look it. */}
-            <Pressable
+            <GlyphButton
               accessibilityLabel={STRINGS.CHECKLIST_DISMISS_A11Y}
-              accessibilityRole="button"
-              hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-              style={({ pressed }) => pressed && styles.pressed}
+              icon="close"
               onPress={dismiss}
-            >
-              <Icon name="close" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.textTertiary} />
-            </Pressable>
+            />
           </View>
 
           {items.map(item => (
@@ -230,9 +219,6 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-  },
-  pressed: {
-    opacity: LAYOUT.OPACITY.PRESSED,
   },
   row: {
     flexDirection: 'row',

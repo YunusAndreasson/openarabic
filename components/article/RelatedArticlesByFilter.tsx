@@ -1,24 +1,18 @@
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-// Gesture-handler Pressable, NOT react-native's. The article screen wraps its
-// whole content in an RNGH Pressable (see app/article/[id].tsx) to dismiss the
-// word tooltip on a background tap, and these rows render inside it as the
-// list footer. An RNGH ancestor wins the gesture arena against descendants
-// that use the JS responder system, so every related-article card silently
-// stopped responding to taps — the same failure the floating action buttons
-// and the tutorial close button already hit.
-import { Pressable } from 'react-native-gesture-handler';
 
+// These rows are the reader's list footer, inside its tap detector, where a
+// react-native Pressable takes no taps at all — see ReaderPressable.
+import { ReaderPressable } from '@/components/article/ReaderPressable';
 import { SectionLabel } from '@/components/common';
-import { PlaylistItemCard } from '@/components/playlist';
+import { ArticleRow } from '@/components/explore/ArticleRow';
 import { LAYOUT } from '@/constants/layout';
-import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
-import type { ArticleId } from '@/types/branded.types';
-import { generateStorageUrl } from '@/utils/storageUtils';
+import { getArticleRoute } from '@/utils/routeBuilders';
 import { getArticleProgressPercentage, type ReadingProgressLookup } from '@/utils/progressUtils';
+import { fillTemplate } from '@/utils/fillTemplate';
 import {
   getArticleMetadataWithoutAuthor,
   getArticleMetadataWithoutCategory,
@@ -63,31 +57,25 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     // the reader back to Explore and then raced a push into the middle of the
     // pop animation, with an uncancelled timer left to fire after unmount.
     const handleArticlePress = useCallback(
-      (articleId: ArticleId, title: string) => {
-        router.push(getArticleRoute(articleId, title));
+      (article: Article) => {
+        router.push(getArticleRoute(article.id));
       },
       [router],
     );
 
     // Memoize the article cards to prevent unnecessary re-renders
     const articleCards = useMemo(() => {
-      return articles.map((article, index) => {
-        const progressPercentage = getArticleProgressPercentage(progressMap, article.id);
-
-        return (
-          <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
-            <PlaylistItemCard
-              title={article.title}
-              secondaryText={getSubtitle(article, filterType)}
-              imageUrl={generateStorageUrl('images', article.image_url)}
-              articleId={article.id}
-              progressPercentage={progressPercentage}
-              onPress={() => handleArticlePress(article.id, article.title)}
-              PressableComponent={Pressable}
-            />
-          </View>
-        );
-      });
+      return articles.map((article, index) => (
+        <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
+          <ArticleRow
+            article={article}
+            secondaryText={getSubtitle(article, filterType)}
+            progressPercentage={getArticleProgressPercentage(progressMap, article.id)}
+            onPress={handleArticlePress}
+            PressableComponent={ReaderPressable}
+          />
+        </View>
+      ));
     }, [articles, progressMap, filterType, handleArticlePress]);
 
     // Format section title based on filter type
@@ -95,9 +83,13 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     // Must be called before early return to satisfy React Hooks rules
     const sectionTitle = useMemo(() => {
       if (filterType === 'author') {
-        return STRINGS.MORE_FROM_AUTHOR.replace('{author}', getAuthorDisplayName(filterName));
+        return fillTemplate(STRINGS.MORE_FROM_AUTHOR, {
+          author: getAuthorDisplayName(filterName),
+        });
       }
-      return STRINGS.MORE_FROM_CATEGORY.replace('{category}', getCategoryDisplayName(filterName));
+      return fillTemplate(STRINGS.MORE_FROM_CATEGORY, {
+        category: getCategoryDisplayName(filterName),
+      });
     }, [filterType, filterName]);
 
     // Early return if no articles to show

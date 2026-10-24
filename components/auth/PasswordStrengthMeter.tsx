@@ -6,8 +6,9 @@ import { ThemedText } from '@/components/primitives/ThemedText';
 import { ProgressBar } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { PASSWORD_REQUIREMENTS } from '@/hooks/auth/useAuthForm';
 import { useColors } from '@/hooks/theme/useColors';
+import { PASSWORD_REQUIREMENTS } from '@/utils/authUtils';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 interface PasswordStrengthMeterProps {
   password: string;
@@ -54,10 +55,9 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
   const requirements = useMemo((): PasswordRequirement[] => {
     return [
       {
-        label: STRINGS.PASSWORD_REQUIREMENT_LENGTH.replace(
-          '{minLength}',
-          PASSWORD_REQUIREMENTS.minLength.toString(),
-        ),
+        label: fillTemplate(STRINGS.PASSWORD_REQUIREMENT_LENGTH, {
+          minLength: PASSWORD_REQUIREMENTS.minLength,
+        }),
         met: password.length >= PASSWORD_REQUIREMENTS.minLength,
       },
     ];

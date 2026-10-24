@@ -16,6 +16,7 @@ import { ToastType } from '@/types/enums';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
+import { managedRequest } from '@/utils/supabaseHelpers';
 
 /**
  * Number of common words to add (matches the default daily word limit).
@@ -54,7 +55,9 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
   // Fetch common words
   const { data: commonWords = [] } = useQuery({
     queryKey: ['commonWordsForAdd'],
-    queryFn: () => studyWordsFSRSService.getCommonRoots(COMMON_WORDS_COUNT),
+    // Managed: the query cache reports a failure once, after the last retry.
+    queryFn: ({ signal }) =>
+      studyWordsFSRSService.getCommonRoots(COMMON_WORDS_COUNT, managedRequest(signal)),
     staleTime: Infinity,
   });
 
@@ -72,7 +75,13 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
       }
 
       // Add common roots to study list
-      const addedCount = await studyWordsFSRSService.addMultipleRoots(user.id, rootIds);
+      // Managed: the mutation cache reports a failure once, after the last
+      // retry, instead of the service reporting every attempt.
+      const addedCount = await studyWordsFSRSService.addMultipleRoots(
+        user.id,
+        rootIds,
+        managedRequest(),
+      );
 
       return { addedCount };
     },

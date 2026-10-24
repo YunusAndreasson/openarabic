@@ -10,22 +10,9 @@
 import { render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-
-/**
- * jest.setup stubs `StyleSheet.flatten` as the identity function, so a style
- * array has to be merged here for an assertion on its values to mean anything.
- */
-const flattenStyle = (style: unknown): Record<string, unknown> => {
-  if (Array.isArray(style)) {
-    return style.reduce<Record<string, unknown>>(
-      (acc, entry) => ({ ...acc, ...flattenStyle(entry) }),
-      {},
-    );
-  }
-  return style && typeof style === 'object' ? (style as Record<string, unknown>) : {};
-};
 
 // Use shared mock factories from componentMocks.tsx. `captionText` is not in
 // the shared palette; the caption type's default ink needs a value to assert.
@@ -39,17 +26,29 @@ jest.mock('@/hooks/theme/useThemeDetection', () =>
   require('@/__tests__/helpers/componentMocks').useThemeDetectionMockFactory(),
 );
 
+// Counted rather than jest.fn(): `resetMocks` would strip a jest.fn's
+// implementation before every test.
+const mockHookCalls = { arabicFontSize: 0, store: 0 };
+
 jest.mock('@/hooks/theme/useDebouncedArabicFontSize', () => ({
-  useDebouncedArabicFontSize: () => 20,
+  useDebouncedArabicFontSize: () => {
+    mockHookCalls.arabicFontSize += 1;
+    return 20;
+  },
 }));
 
 jest.mock('@/store/hooks', () => ({
-  useAppSelector: () => 'noto-naskh',
+  useAppSelector: () => {
+    mockHookCalls.store += 1;
+    return 'noto-naskh';
+  },
 }));
 
 describe('ThemedText', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockHookCalls.arabicFontSize = 0;
+    mockHookCalls.store = 0;
   });
 
   describe('Basic Rendering', () => {
@@ -164,8 +163,8 @@ describe('ThemedText', () => {
     ] as const)('a %s with no colorName takes its own ink at full opacity', (type, ink) => {
       const { getByText } = render(<ThemedText type={type}>Ink</ThemedText>);
 
-      const style = flattenStyle(getByText('Ink').props.style);
-      expect(style.color).toBe(ink);
+      const style = StyleSheet.flatten(getByText('Ink').props.style);
+      expect(style?.color).toBe(ink);
       expect(style).not.toHaveProperty('opacity');
     });
 
@@ -176,8 +175,8 @@ describe('ThemedText', () => {
         </ThemedText>,
       );
 
-      const style = flattenStyle(getByText('Quiet').props.style);
-      expect(style.color).toBe('#999999');
+      const style = StyleSheet.flatten(getByText('Quiet').props.style);
+      expect(style?.color).toBe('#999999');
       expect(style).not.toHaveProperty('opacity');
     });
 
@@ -188,8 +187,8 @@ describe('ThemedText', () => {
         </ThemedText>,
       );
 
-      const style = flattenStyle(getByText('Styled').props.style);
-      expect(style.color).toBe('#123456');
+      const style = StyleSheet.flatten(getByText('Styled').props.style);
+      expect(style?.color).toBe('#123456');
       expect(style).not.toHaveProperty('opacity');
     });
   });
@@ -259,6 +258,25 @@ describe('ThemedText', () => {
 
       const element = getByText('العربية');
       expect(element).toHaveStyle({ textAlign: 'right' });
+    });
+  });
+
+  // Every instance used to subscribe to the Arabic font and run the size
+  // debounce (a store subscription, a state and a timer), Arabic or not —
+  // 212 call sites, 12 of them Arabic.
+  describe('Hook cost', () => {
+    test('Latin text reads neither the Arabic font nor its size', () => {
+      render(<ThemedText type="caption">Plain caption</ThemedText>);
+
+      expect(mockHookCalls.store).toBe(0);
+      expect(mockHookCalls.arabicFontSize).toBe(0);
+    });
+
+    test('Arabic text reads both', () => {
+      render(<ThemedText type="arabicCompact">كتاب</ThemedText>);
+
+      expect(mockHookCalls.store).toBeGreaterThan(0);
+      expect(mockHookCalls.arabicFontSize).toBeGreaterThan(0);
     });
   });
 });

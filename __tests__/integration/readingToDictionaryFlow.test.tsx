@@ -11,8 +11,6 @@
  * - ✅ jest.mocked() for type-safe mocking
  */
 
-jest.unmock('@tanstack/react-query');
-
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -457,7 +455,12 @@ describe('Reading to Dictionary Flow', () => {
       });
 
       expect(toggleResult).toBeTruthy();
-      expect(mockSetFSRSStudyRoot).toHaveBeenCalledWith(mockUserId, 501, undefined);
+      expect(mockSetFSRSStudyRoot).toHaveBeenCalledWith(
+        mockUserId,
+        501,
+        undefined,
+        expect.objectContaining({ managed: true }),
+      );
     });
 
     test('respects daily word limit when adding new words', async () => {

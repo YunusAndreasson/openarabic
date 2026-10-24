@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { readingProgressQueries } from '@/constants/queries';
+import { gated, readingProgressQueries } from '@/constants/queries';
+import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { readingProgressService, type ReadingProgress } from '@/services/readingProgress';
 import type { ArticleId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
+import { managedRequest } from '@/utils/supabaseHelpers';
 
 interface UseReadingProgressOptions {
   articleId: ArticleId;
@@ -109,12 +111,15 @@ export function useReadingProgress({
     mutationFn: async (lastSentenceRead: number) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      return readingProgressService.updateProgress({
-        userId: user.id,
-        articleId,
-        lastSentenceRead,
-        totalSentences,
-      });
+      return readingProgressService.updateProgress(
+        {
+          userId: user.id,
+          articleId,
+          lastSentenceRead,
+          totalSentences,
+        },
+        managedRequest(),
+      );
     },
     onSuccess: (_, lastSentenceRead) => {
       // Mutations can settle out of order. Never let an older completion lower
@@ -125,30 +130,27 @@ export function useReadingProgress({
       // entire user's progress map after every reading pause, notifying every
       // progress consumer in the app.
       if (user?.id) {
-        queryClient.setQueryData<Map<ArticleId, ReadingProgress>>(
-          readingProgressQueries.bulk(user.id).queryKey,
-          current => {
-            const next = new Map(current);
-            const existing = next.get(articleId);
-            const now = new Date().toISOString();
+        queryClient.setQueryData(readingProgressQueries.bulk(user.id).queryKey, current => {
+          const next = new Map(current);
+          const existing = next.get(articleId);
+          const now = new Date().toISOString();
 
-            next.set(articleId, {
-              article_id: articleId,
-              user_id: user.id,
-              last_sentence_read: Math.max(existing?.last_sentence_read ?? 0, lastSentenceRead),
-              total_sentences: totalSentences,
-              created_at: existing?.created_at ?? now,
-              updated_at: now,
-            });
-            return next;
-          },
-        );
+          next.set(articleId, {
+            article_id: articleId,
+            user_id: user.id,
+            last_sentence_read: Math.max(existing?.last_sentence_read ?? 0, lastSentenceRead),
+            total_sentences: totalSentences,
+            created_at: existing?.created_at ?? now,
+            updated_at: now,
+          });
+          return next;
+        });
       }
     },
     onError: error => {
-      void handleError(
-        error instanceof Error ? error : new Error('Failed to update reading progress'),
-      );
+      // The toast says what failed, never the request's own wording: a failed
+      // save arrives as a SupabaseRequestError whose message is PostgREST's.
+      void handleError(error, { toastMessage: STRINGS.FAILED_TO_UPDATE_READING_PROGRESS });
     },
     onSettled: (_data, _error, lastSentenceRead) => {
       pendingSentencesRef.current.delete(lastSentenceRead);
@@ -304,31 +306,10 @@ export function useReadingProgress({
 export function useBulkReadingProgress(articleIds: ArticleId[]) {
   const { user } = useAuth();
 
-  const query = useQuery({
-    queryKey: user?.id
-      ? readingProgressQueries.bulk(user.id).queryKey
-      : (['reading-progress-bulk', undefined] as const),
-    queryFn: async () => {
-      // TypeScript guard - should never happen due to enabled check
-      if (!user?.id) {
-        return new Map<ArticleId, ReadingProgress>();
-      }
-      // Fetch ALL reading progress for this user (not just requested articleIds)
-      // This creates a single shared cache entry that all components can use
-      // The service's getBulkProgress without articleIds filter will fetch all progress
-      return readingProgressService.getBulkProgress(user.id, []);
-    },
-    // Enable query only when we have a user ID
-    enabled: Boolean(user?.id),
-    // Use placeholderData to prevent undefined while query is disabled or fetching
-    placeholderData: new Map<ArticleId, ReadingProgress>(),
-    // Stale time controls when data needs refetching
-    staleTime: 1000 * 10, // 10 seconds - refetch if older
-    gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
-    // Only refresh via pull-to-refresh, not on mount or reconnect
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-  });
+  // ALL of the user's reading progress (not just the requested articleIds), in
+  // the one shared cache entry every component reads — the factory's own
+  // options, which this used to restate field for field.
+  const query = useQuery(gated(readingProgressQueries.bulk, user?.id));
 
   // Filter the full Map to only include requested articleIds for this component
   // This happens in the component, not in the query cache

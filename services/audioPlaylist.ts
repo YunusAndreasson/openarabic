@@ -2,8 +2,9 @@ import { STRINGS } from '@/constants/strings';
 import { articlesService } from '@/services/articles';
 import { audioCache } from '@/services/audioCache';
 import type { SourceTrackedAudioTrack } from '@/services/audioPlayer';
-import { bookmarkService } from '@/services/bookmark';
+import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
+import type { AudioLanguage } from '@/types/enums';
 import { handleError } from '@/utils/errorHandling';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -124,55 +125,48 @@ export const enhancedAudioService = {
       return null;
     }
   },
-
-  /**
-   * Gets enhanced audio tracks for all reading list items.
-   *
-   * Metadata only — this never downloads. It runs from an app-wide query (see
-   * useGlobalAudioState → usePlaylistScreen), so caching here would mean
-   * downloading every saved article's audio at app start and on every reading
-   * list / preference invalidation, competing for bandwidth with whatever the
-   * user actually tapped. Tracks resolve to cached paths when present and
-   * stream otherwise; whichever one the user plays is warmed by the play path
-   * via warmTrackCache.
-   */
-  async getReadingListEnhancedTracks(
-    userId: string,
-    audioPreference: 'arabic' | 'bilingual' = 'bilingual',
-  ): Promise<SourceTrackedAudioTrack[]> {
-    try {
-      // Fetch user's reading list with the correct audio URL selected at database level
-      const readingList = await bookmarkService.getReadingList(userId);
-
-      // Build tracks using helpers
-      const allTracks: SourceTrackedAudioTrack[] = [];
-
-      for (const item of readingList) {
-        const article = item.articles;
-        const selectedAudioUrl = selectAudioUrl(article, audioPreference);
-        const track = await createEnhancedTrack(
-          item.article_id as ArticleId,
-          article,
-          selectedAudioUrl,
-        );
-        allTracks.push(track);
-      }
-
-      return allTracks;
-    } catch (error) {
-      // Rethrown, not answered with []: this runs as an app-wide query, and an
-      // empty array is a SUCCESS to React Query — a network blip at startup was
-      // cached as an empty playlist (no retry, `error` never set, so the
-      // Playlist screen's own failure toast could not fire), and a failed
-      // refetch overwrote good tracks with nothing. Thrown, the query retries,
-      // keeps the last good tracks, and surfaces the error once — so no toast
-      // here, where it would repeat on every retry.
-      await handleError(error, {
-        ...errorConfig.playlist,
-        showToast: false,
-        analyticsProperties: { userId },
-      });
-      throw error;
-    }
-  },
 };
+
+/**
+ * How a failure to build the reading-list tracks is reported — once, by the
+ * query cache, from `audioQueries.tracks`' `meta`.
+ *
+ * No toast. The failure is rethrown, not answered with []: the tracks are an
+ * app-wide query, and an empty array is a SUCCESS to React Query — a network
+ * blip at startup was cached as an empty playlist (no retry, `error` never
+ * set, so the Playlist screen's own failure toast could not fire), and a failed
+ * refetch overwrote good tracks with nothing. Thrown, the query retries, keeps
+ * the last good tracks, and the Playlist screen surfaces the error itself.
+ */
+export const READING_LIST_TRACKS_ERROR_REPORT = { ...errorConfig.playlist, showToast: false };
+
+/**
+ * The enhanced audio tracks for a reading list, in its order.
+ *
+ * Metadata only — this never downloads. It backs the persisted tracks query
+ * the Playlist screen observes, so caching here would mean downloading every
+ * saved article's audio whenever that query refetches (every reading-list or
+ * audio-preference invalidation), competing for bandwidth with whatever the
+ * user actually tapped. Tracks resolve to cached paths when present and
+ * stream otherwise; whichever one the user plays is warmed by the play path
+ * via warmTrackCache.
+ *
+ * Takes the list rather than fetching it: `audioQueries.tracks` reads it
+ * through the reading-list query's own cache entry, where this used to
+ * download the whole list a second time. The per-track cache lookups are
+ * independent, so they run together.
+ */
+export function buildReadingListTracks(
+  readingList: readonly BookmarkItem[],
+  audioPreference: AudioLanguage,
+): Promise<SourceTrackedAudioTrack[]> {
+  return Promise.all(
+    readingList.map(item =>
+      createEnhancedTrack(
+        item.article_id as ArticleId,
+        item.articles,
+        selectAudioUrl(item.articles, audioPreference),
+      ),
+    ),
+  );
+}

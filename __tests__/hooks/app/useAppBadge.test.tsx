@@ -6,15 +6,13 @@
  * authorized — so the contract under test is "re-assert, never cache".
  */
 
-jest.unmock('@tanstack/react-query');
-
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
 import React from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
-import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { rootId } from '@/__tests__/helpers/ids';
 import { fsrsQueries } from '@/constants/queries';
@@ -45,6 +43,7 @@ jest.mock('@/hooks/auth/useAuth', () => ({
 
 describe('useAppBadge', () => {
   let queryClient: QueryClient;
+  let wrapper: HookTestWrapper;
   let appStateListeners: ((state: AppStateStatus) => void)[] = [];
   let seedClock = Date.now();
 
@@ -56,7 +55,7 @@ describe('useAppBadge', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    queryClient = createTestQueryClient();
+    ({ wrapper, queryClient } = createHookTestWrapper());
     appStateListeners = [];
     seedClock = Date.now();
     mockIsAuthenticated = true;
@@ -69,10 +68,6 @@ describe('useAppBadge', () => {
       return { remove: jest.fn() };
     });
   });
-
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
 
   const emitAppState = (state: AppStateStatus) =>
     appStateListeners.forEach(listener => listener(state));

@@ -5,12 +5,12 @@
 const systemListeners = new Map();
 
 const mockAudioManager = {
-  checkRecordingPermissions: jest.fn().mockResolvedValue('Granted'),
-  requestRecordingPermissions: jest.fn().mockResolvedValue('Granted'),
+  checkRecordingPermissions: mockStable(() => Promise.resolve('Granted')),
+  requestRecordingPermissions: mockStable(() => Promise.resolve('Granted')),
   setAudioSessionOptions: jest.fn(),
-  setAudioSessionActivity: jest.fn().mockResolvedValue(undefined),
+  setAudioSessionActivity: mockStable(() => Promise.resolve(undefined)),
   observeAudioInterruptions: jest.fn(),
-  addSystemEventListener: jest.fn((name, callback) => {
+  addSystemEventListener: mockStable((name, callback) => {
     const set = systemListeners.get(name) ?? new Set();
     set.add(callback);
     systemListeners.set(name, set);

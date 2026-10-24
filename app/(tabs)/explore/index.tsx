@@ -17,20 +17,19 @@ import {
 import { WelcomeIntro } from '@/components/tutorials/WelcomeIntro';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
-import { getArticleRoute, getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
-import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useExploreRails } from '@/hooks/explore/useExploreRails';
 import { useOnboardingChecklist } from '@/hooks/onboarding/useOnboardingChecklist';
+import { useOpenStarterArticle } from '@/hooks/onboarding/useOpenStarterArticle';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
 import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
 import type { CategoryId } from '@/types/branded.types';
-import { pickStarterArticle } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
+import { getCategoryFilterRoute } from '@/utils/routeBuilders';
 
 /**
  * Generic helper to build entities (categories/authors) with article counts
@@ -73,10 +72,7 @@ export default function ExploreScreen(): JSX.Element {
     isError: isCatalogError,
     isFetching: isCatalogFetching,
     refetch: refetchCatalog,
-  } = useQuery({
-    ...articleQueries.all(),
-    refetchOnMount: false, // Don't refetch on mount if we have data
-  });
+  } = useQuery(articleQueries.all());
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -103,15 +99,7 @@ export default function ExploreScreen(): JSX.Element {
   // Every article rail on the tab, chosen together so no text appears twice
   const rails = useExploreRails(articlesData, refreshKey, checklist.isChecklistVisible);
 
-  const starterArticleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
-  const { data: starterProgressMap } = useBulkReadingProgress(starterArticleIds);
-
-  const handleOpenFirstText = useCallback(() => {
-    const starter = pickStarterArticle(articlesData, starterProgressMap);
-    if (starter) {
-      router.push(getArticleRoute(starter.id, starter.title, true));
-    }
-  }, [articlesData, starterProgressMap]);
+  const handleOpenFirstText = useOpenStarterArticle(articlesData);
 
   // Build category counts from articles
   const categoryCounts = useMemo(() => {

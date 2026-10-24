@@ -7,14 +7,11 @@
  * which is why the search cannot be a server-side `ilike`.
  */
 
-// Unmock React Query so the real select/caching path runs.
-jest.unmock('@tanstack/react-query');
-
 import type { QueryClient } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
 
 import { articleId, authorId, categoryId } from '@/__tests__/helpers/ids';
-import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { useArticleSearch } from '@/hooks/articles/useArticleSearch';
 import { articlesService } from '@/services/articles';
 import type { Article, SearchCorpusSentence } from '@/types/articles.types';
@@ -87,10 +84,11 @@ const CORPUS: SearchCorpusSentence[] = [
 
 describe('useArticleSearch', () => {
   let queryClient: QueryClient;
+  let wrapper: HookTestWrapper;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    queryClient = createTestQueryClient();
+    ({ wrapper, queryClient } = createHookTestWrapper());
     mockArticlesService.getArticles.mockResolvedValue(ARTICLES);
     mockArticlesService.getSearchCorpus.mockResolvedValue(CORPUS);
   });
@@ -98,11 +96,6 @@ describe('useArticleSearch', () => {
   afterEach(() => {
     queryClient.clear();
   });
-
-  const wrapper = ({ children }: { children: React.ReactNode }) => {
-    const { QueryClientProvider } = require('@tanstack/react-query');
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-  };
 
   const search = async (query: string) => {
     const view = renderHook(() => useArticleSearch(query), { wrapper });

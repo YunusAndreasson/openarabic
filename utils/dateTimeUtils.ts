@@ -83,6 +83,16 @@ export function parseSupabaseTimestamp(ts: string | null | undefined): Date | nu
 }
 
 /**
+ * A Supabase timestamp as epoch ms, read exactly as `parseSupabaseTimestamp`
+ * reads it — without allocating a Date. `NaN` when the stamp is missing or does
+ * not parse, so test the result with `Number.isFinite`.
+ */
+export function timestampMs(ts: string | null | undefined): number {
+  const normalized = normalizeTimestamp(ts);
+  return normalized ? Date.parse(normalized) : Number.NaN;
+}
+
+/**
  * Format seconds to M:SS (e.g., 1:05)
  */
 export function formatSecondsToClock(seconds: number): string {
@@ -101,6 +111,11 @@ export function format24HourTime(hour: number, minute: number): string {
     minute: '2-digit',
     hour12: false,
   });
+}
+
+/** `value` clamped to 0–1, for fractions and opacities. NaN stays NaN. */
+export function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value));
 }
 
 /**

@@ -13,8 +13,6 @@
  * - jest.mocked() for type-safe mocking
  */
 
-jest.unmock('@tanstack/react-query');
-
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, afterEach, describe, expect, jest, test } from '@jest/globals';
 import { State } from 'ts-fsrs';
@@ -392,6 +390,7 @@ describe('useFSRS Hook - Edge Cases', () => {
           fsrs_lapses: 3,
           fsrs_state: State.Relearning,
         }),
+        expect.objectContaining({ managed: true }),
       );
     });
 

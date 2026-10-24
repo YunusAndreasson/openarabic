@@ -1,6 +1,7 @@
 import type { JSX } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { useMeasuredWidth } from '@/components/common/charts/useMeasuredWidth';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { DAYS_7 } from '@/constants/chartConstants';
 import { LAYOUT } from '@/constants/layout';
@@ -36,12 +37,13 @@ interface DueWordsPrognosisChartProps {
  * every later column only what that day adds. It used to be the running backlog
  * if nothing were ever reviewed, which only rose, so its "busiest day" was
  * always the last one.
+ *
+ * The bars take the width the sheet actually gives them (`useMeasuredWidth`)
+ * rather than the window's less an assumed inset; the label rows stretch to the
+ * same width on their own, so a column and its labels share one edge.
  */
 export function DueWordsPrognosisChart({ studyWords }: DueWordsPrognosisChartProps): JSX.Element {
-  const { width: windowWidth } = useWindowDimensions();
-  // The sheet's content width: SheetScreen and its large-text scroll fallback
-  // both inset by the screen padding on each side.
-  const width = windowWidth - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
+  const { ref, onLayout, width } = useMeasuredWidth();
 
   const days = calculateDueWordsForecast(studyWords, DAYS_7).map((day, index) => ({
     key: day.date.toISOString(),
@@ -64,15 +66,27 @@ export function DueWordsPrognosisChart({ studyWords }: DueWordsPrognosisChartPro
   return (
     // One drawing, read through one sentence — never as fourteen loose numbers
     // and weekday fragments.
-    <View accessible accessibilityRole="image" accessibilityLabel={accessibilityLabel}>
-      <WeekAheadBars
-        counts={days.map(day => day.count)}
-        width={width}
-        height={BAR_HEIGHT}
-        gap={COLUMN_GAP}
-      />
+    <View
+      ref={ref}
+      onLayout={onLayout}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={accessibilityLabel}
+    >
+      {/* Nothing to draw until the width is known — at the height the bars
+          will have, so the sheet fitted to this does not change height. */}
+      {width === null ? (
+        <View style={styles.barsPlaceholder} />
+      ) : (
+        <WeekAheadBars
+          counts={days.map(day => day.count)}
+          width={width}
+          height={BAR_HEIGHT}
+          gap={COLUMN_GAP}
+        />
+      )}
 
-      <View style={[styles.labelRow, styles.countRow, { width }]}>
+      <View style={[styles.labelRow, styles.countRow]}>
         {days.map((day, index) => (
           <ThemedText
             key={day.key}
@@ -90,7 +104,7 @@ export function DueWordsPrognosisChart({ studyWords }: DueWordsPrognosisChartPro
         ))}
       </View>
 
-      <View style={[styles.labelRow, { width }]}>
+      <View style={styles.labelRow}>
         {days.map(day => (
           <ThemedText
             key={day.key}
@@ -112,6 +126,9 @@ export function DueWordsPrognosisChart({ studyWords }: DueWordsPrognosisChartPro
 DueWordsPrognosisChart.displayName = 'DueWordsPrognosisChart';
 
 const styles = StyleSheet.create({
+  barsPlaceholder: {
+    height: BAR_HEIGHT,
+  },
   // Seven equal cells with the bars' own gap: (width − 6·gap) / 7 each, which is
   // exactly a bar's width, so every label is centred under its column.
   labelRow: {

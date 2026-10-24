@@ -1,4 +1,3 @@
-import { ICON_TO_COMPONENT_TYPE } from '@/constants/arabicWordComponents';
 import { CONTRACTION_EXPANSIONS, EXPANSION_TO_CONTRACTION } from '@/constants/contractions';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis, WordAnalysis } from '@/utils/arabicWordAnalysis';
@@ -92,7 +91,6 @@ export const generateColorCodedSegments = ({
     start: number;
     end: number;
     color: string;
-    componentType?: string;
     /** Section processing order — earlier sections (prefixes) win ties over later ones (suffixes) */
     sectionIndex: number;
   }[] = [];
@@ -111,10 +109,6 @@ export const generateColorCodedSegments = ({
     const colorValue = section.colorName
       ? resolveColorName(section.colorName, colors)
       : colors.text;
-
-    // Detect component type from icon (→ = prefix, ← = suffix, ↔ = infix, ◌ = diacritic)
-    // Uses ICON_TO_COMPONENT_TYPE from arabicWordComponents.ts (single source of truth)
-    const componentType = section.icon ? ICON_TO_COMPONENT_TYPE[section.icon] : undefined;
 
     // Split slash-separated alternatives like "his / its / it"
     // Also split compound patterns like "of him" into individual words for matching
@@ -179,7 +173,6 @@ export const generateColorCodedSegments = ({
               start: idx,
               end: idx + candidate.length,
               color: colorValue,
-              componentType,
               sectionIndex: sectionIdx,
             });
           }
@@ -203,15 +196,12 @@ export const generateColorCodedSegments = ({
     claimedRanges.some(r => start < r.end && end > r.start);
 
   // Group match positions by section, preserving text position order within each group
-  const bySectionIndex = new Map<number, typeof matchPositions>();
-  for (const m of matchPositions) {
-    const list = bySectionIndex.get(m.sectionIndex) ?? [];
-    list.push(m);
-    bySectionIndex.set(m.sectionIndex, list);
-  }
+  const bySectionIndex = Object.groupBy(matchPositions, m => m.sectionIndex);
 
   // Process sections in order (sorted by sectionIndex)
-  const sectionIndices = [...bySectionIndex.keys()].sort((a, b) => a - b);
+  const sectionIndices = Object.keys(bySectionIndex)
+    .map(Number)
+    .sort((a, b) => a - b);
 
   // Pre-compute which sections claim each English word so we can distribute repeated
   // occurrences across claiming sections instead of letting the first claim them all.
@@ -228,7 +218,7 @@ export const generateColorCodedSegments = ({
   }
 
   for (const si of sectionIndices) {
-    const candidates = bySectionIndex.get(si) ?? [];
+    const candidates = bySectionIndex[si] ?? [];
     candidates.sort((a, b) => a.start - b.start);
 
     // Find the first non-overlapping candidate, then also accept all other matches

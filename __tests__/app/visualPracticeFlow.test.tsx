@@ -13,9 +13,6 @@
  * - This functionality IS tested via manual QA and real device testing
  */
 
-// Unmock React Query to use real query client
-jest.unmock('@tanstack/react-query');
-
 import type { QueryClient } from '@tanstack/react-query';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
@@ -79,15 +76,6 @@ jest.mock('@/services/audioCache', () => ({
     cacheAudio: jest.fn(async (..._args: unknown[]) => undefined),
     clearCache: jest.fn(async (..._args: unknown[]) => undefined),
   },
-}));
-
-jest.mock('@/hooks/audio/useSimpleAudioPlayer', () => ({
-  useSimpleAudioPlayer: () => ({
-    play: jest.fn(async (..._args: unknown[]) => undefined),
-    stop: jest.fn(async (..._args: unknown[]) => undefined),
-    pause: jest.fn(async (..._args: unknown[]) => undefined),
-    getStatus: jest.fn(async (..._args: unknown[]) => ({ playing: false })),
-  }),
 }));
 
 // expo-haptics is already mocked globally via moduleNameMapper (__mocks__/expo-haptics.js),

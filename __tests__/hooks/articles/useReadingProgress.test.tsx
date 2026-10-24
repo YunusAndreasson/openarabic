@@ -7,14 +7,11 @@
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
 
-// Unmock React Query to test real hook behavior
-jest.unmock('@tanstack/react-query');
-
 import type { QueryClient } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { act } from 'react';
 
-import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { readingProgressQueries } from '@/constants/queries';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { readingProgressService } from '@/services/readingProgress';
@@ -35,12 +32,13 @@ const mockUseAuth = jest.requireMock('@/hooks/auth/useAuth');
 
 describe('useReadingProgress', () => {
   let queryClient: QueryClient;
+  let wrapper: HookTestWrapper;
   const testUserId = 'test-user-123';
   const testArticleId = articleId(42);
 
   beforeEach(() => {
     jest.clearAllMocks();
-    queryClient = createTestQueryClient();
+    ({ wrapper, queryClient } = createHookTestWrapper());
 
     // Setup auth mock to return test user
     mockUseAuth.useAuth = jest.fn((..._args: unknown[]) => ({
@@ -73,34 +71,18 @@ describe('useReadingProgress', () => {
     queryClient.clear();
   });
 
-  const wrapper = ({ children }: { children: React.ReactNode }) => {
-    const { QueryClientProvider } = require('@tanstack/react-query');
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-  };
-
   describe('Query Configuration', () => {
-    // These two options are observer options, not query options: they live on
+    // An observer option, not a query option: it lives on
     // `readingProgressQueries.bulk()`, and a cached `Query`'s `.options` never
-    // carries them. Reading them off the cache entry (as this suite used to)
-    // compared `undefined` to falsy and could not fail.
-    test('bulk progress does not refetch on mount', () => {
-      expect(readingProgressQueries.bulk(testUserId).refetchOnMount).toBe(false);
-    });
-
+    // carries it. Reading it off the cache entry (as this suite used to)
+    // compared `undefined` to falsy and could not fail. (Not refetching on
+    // mount is the app-wide default — app/_layout.tsx — so the factory no
+    // longer restates it.)
     test('bulk progress does not refetch on reconnect', () => {
       expect(readingProgressQueries.bulk(testUserId).refetchOnReconnect).toBe(false);
     });
 
     test('the hook registers exactly one bulk-progress query', async () => {
-      mockReadingProgressService.getProgress.mockResolvedValue({
-        user_id: testUserId,
-        article_id: testArticleId,
-        last_sentence_read: 5,
-        total_sentences: 10,
-        updated_at: '2024-01-01T12:00:00Z',
-        created_at: '2024-01-01T10:00:00Z',
-      });
-
       const { result } = renderHook(
         () =>
           useReadingProgress({
@@ -125,16 +107,6 @@ describe('useReadingProgress', () => {
     test('updates bulk progress locally without refetching it', async () => {
       // Mock successful update (updateProgress returns void)
       mockReadingProgressService.updateProgress.mockResolvedValue(undefined);
-
-      // Mock getProgress for article open tracking
-      mockReadingProgressService.getProgress.mockResolvedValue({
-        user_id: testUserId,
-        article_id: testArticleId,
-        last_sentence_read: 5,
-        total_sentences: 10,
-        updated_at: '2024-01-01T12:00:00Z',
-        created_at: '2024-01-01T10:00:00Z',
-      });
 
       // Spy on queryClient.invalidateQueries
       const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
@@ -178,16 +150,6 @@ describe('useReadingProgress', () => {
       // Mock failed update
       const error = new Error('Network error');
       mockReadingProgressService.updateProgress.mockRejectedValue(error);
-
-      // Mock getProgress for article open tracking
-      mockReadingProgressService.getProgress.mockResolvedValue({
-        user_id: testUserId,
-        article_id: testArticleId,
-        last_sentence_read: 5,
-        total_sentences: 10,
-        updated_at: '2024-01-01T12:00:00Z',
-        created_at: '2024-01-01T10:00:00Z',
-      });
 
       // Spy on queryClient.invalidateQueries
       const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
@@ -253,6 +215,7 @@ describe('useReadingProgress', () => {
         expect(mockReadingProgressService.updateProgress).toHaveBeenCalledTimes(1);
         expect(mockReadingProgressService.updateProgress).toHaveBeenCalledWith(
           expect.objectContaining({ lastSentenceRead: 8 }),
+          expect.objectContaining({ managed: true }),
         );
       } finally {
         jest.useRealTimers();
@@ -262,16 +225,6 @@ describe('useReadingProgress', () => {
     test('should successfully update reading progress when active', async () => {
       // Mock successful update (updateProgress returns void)
       mockReadingProgressService.updateProgress.mockResolvedValue(undefined);
-
-      // Mock getProgress for article open tracking
-      mockReadingProgressService.getProgress.mockResolvedValue({
-        user_id: testUserId,
-        article_id: testArticleId,
-        last_sentence_read: 5,
-        total_sentences: 10,
-        updated_at: '2024-01-01T12:00:00Z',
-        created_at: '2024-01-01T10:00:00Z',
-      });
 
       const { result } = renderHook(
         () =>
@@ -292,13 +245,17 @@ describe('useReadingProgress', () => {
         await waitFor(() => expect(mockReadingProgressService.updateProgress).toHaveBeenCalled());
       });
 
-      // Verify service was called with correct params
-      expect(mockReadingProgressService.updateProgress).toHaveBeenCalledWith({
-        userId: testUserId,
-        articleId: testArticleId,
-        lastSentenceRead: 8,
-        totalSentences: 10,
-      });
+      // Verify service was called with correct params — as a managed request,
+      // so the mutation cache reports a failure once instead of per attempt
+      expect(mockReadingProgressService.updateProgress).toHaveBeenCalledWith(
+        {
+          userId: testUserId,
+          articleId: testArticleId,
+          lastSentenceRead: 8,
+          totalSentences: 10,
+        },
+        expect.objectContaining({ managed: true }),
+      );
     });
 
     test('keeps the high-water mark when requests settle out of order', async () => {
@@ -368,16 +325,6 @@ describe('useReadingProgress', () => {
     });
 
     test('should NOT update progress when inactive via updateProgress callback', async () => {
-      // Mock getProgress for article open tracking (returns existing progress)
-      mockReadingProgressService.getProgress.mockResolvedValue({
-        user_id: testUserId,
-        article_id: testArticleId,
-        last_sentence_read: 5,
-        total_sentences: 10,
-        updated_at: '2024-01-01T12:00:00Z',
-        created_at: '2024-01-01T10:00:00Z',
-      });
-
       const { result } = renderHook(
         () =>
           useReadingProgress({
@@ -432,22 +379,11 @@ describe('useReadingProgress', () => {
 
       // Verify service was NOT called (no auth)
       expect(mockReadingProgressService.updateProgress).not.toHaveBeenCalled();
-      expect(mockReadingProgressService.getProgress).not.toHaveBeenCalled();
     });
   });
 
   describe('Progress Data', () => {
     test('should return reading progress from bulk query', async () => {
-      // Mock getProgress for article open tracking
-      mockReadingProgressService.getProgress.mockResolvedValue({
-        user_id: testUserId,
-        article_id: testArticleId,
-        last_sentence_read: 5,
-        total_sentences: 10,
-        updated_at: '2024-01-01T12:00:00Z',
-        created_at: '2024-01-01T10:00:00Z',
-      });
-
       const { result } = renderHook(
         () =>
           useReadingProgress({
@@ -484,9 +420,6 @@ describe('useReadingProgress', () => {
       mockReadingProgressService.getBulkProgress.mockResolvedValue(
         new Map<ArticleId, ReadingProgress>(),
       );
-
-      // Mock getProgress returning null for article open tracking
-      mockReadingProgressService.getProgress.mockResolvedValue(null);
 
       const { result } = renderHook(
         () =>

@@ -1,8 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Linking } from 'react-native';
 
 import { STRINGS } from '@/constants/strings';
+import { clearFlag, readFlag, setFlag } from '@/utils/createJsonStore';
 
 interface PhotoLibraryAccessRequest {
   /** Storage key remembering that the OS refused — iOS never re-prompts. */
@@ -30,7 +30,7 @@ export async function requestPhotoLibraryAccess({
   disclosureMessage,
 }: PhotoLibraryAccessRequest): Promise<boolean> {
   // Check if permission was previously denied (subsequent attempt)
-  const wasPreviouslyDenied = (await AsyncStorage.getItem(deniedKey)) === 'true';
+  const wasPreviouslyDenied = await readFlag(deniedKey);
 
   // The flag records that the OS once said no — the learner may have
   // allowed access in Settings since (the alert below sends them there).
@@ -40,7 +40,7 @@ export async function requestPhotoLibraryAccess({
     wasPreviouslyDenied &&
     (await ImagePicker.getMediaLibraryPermissionsAsync()).status !== 'granted';
   if (wasPreviouslyDenied && !isStillDenied) {
-    await AsyncStorage.removeItem(deniedKey);
+    await clearFlag(deniedKey);
   }
 
   if (isStillDenied) {
@@ -69,7 +69,7 @@ export async function requestPhotoLibraryAccess({
 
   if (status !== 'granted') {
     // Save denied state for subsequent attempts
-    await AsyncStorage.setItem(deniedKey, 'true');
+    await setFlag(deniedKey);
     // Accept denial silently (Apple requirement - no retry, no auto-redirect)
     return false;
   }

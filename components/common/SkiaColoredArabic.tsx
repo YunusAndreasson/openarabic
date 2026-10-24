@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 
-import { Canvas, Paragraph as SkiaParagraph, TextDirection } from 'react-native-skia';
+import { Canvas, Paragraph as SkiaParagraph } from 'react-native-skia';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
@@ -9,12 +9,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useSkiaFonts } from '@/hooks/theme/useSkiaFonts';
 import { useSkiaGpuAvailable } from '@/hooks/theme/useSkiaGpuAvailable';
 import type { ColoredSegment } from '@/types/vocabulary.types';
-import {
-  PARAGRAPH_LAYOUT_WIDTH,
-  buildColoredParagraph,
-  buildSimpleParagraph,
-  measureParagraphCanvas,
-} from '@/utils/skiaParagraphBuilder';
+import { buildWordParagraph, measureParagraphCanvas } from '@/utils/skiaParagraphBuilder';
 
 interface SkiaColoredArabicProps {
   /** The full word or phrase, used when there is nothing to colour. */
@@ -64,40 +59,22 @@ const SkiaColoredArabicInternal = function SkiaColoredArabic({
   const fontSize = Math.round((fontSizeOverride ?? readingFontSize) * fontScale);
   const baseColor = color ?? colors.arabicText;
 
-  // A segment set that carries no grammar colour is the same picture as plain
-  // text — build the cheaper single-run paragraph for it.
-  const hasComponents =
-    !!segments?.length &&
-    segments.some(seg => seg.color !== colors.text && seg.color !== colors.arabicText);
-
-  const paragraph = useMemo(() => {
-    // Native ParagraphBuilder.Make requires a font provider — skip until the
-    // shared manager finishes its one-time load.
-    if (!fontManager) return null;
-
-    // `hasComponents` is an aliased type guard, so it narrows `segments` here.
-    if (hasComponents) {
-      return buildColoredParagraph({
-        segments,
+  // The reader's own builder: grammar-coloured when a segment carries a
+  // colour, one run in `baseColor` otherwise. Null until the shared font
+  // manager finishes its one-time load (native ParagraphBuilder.Make requires
+  // a font provider).
+  const paragraph = useMemo(
+    () =>
+      buildWordParagraph({
+        word: { word_form: text, coloredSegments: segments },
+        colors,
+        plainColor: baseColor,
         fontSize,
         fontFamily,
         fontManager,
-        textDirection: TextDirection.RTL,
-        maxWidth: PARAGRAPH_LAYOUT_WIDTH,
-        letterSpacing: 0,
-      });
-    }
-
-    return buildSimpleParagraph({
-      text,
-      fontSize,
-      color: baseColor,
-      fontFamily,
-      fontManager,
-      textDirection: TextDirection.RTL,
-      maxWidth: PARAGRAPH_LAYOUT_WIDTH,
-    });
-  }, [hasComponents, segments, text, baseColor, fontSize, fontFamily, fontManager]);
+      }),
+    [segments, text, colors, baseColor, fontSize, fontFamily, fontManager],
+  );
 
   const canvas = useMemo(
     () => measureParagraphCanvas(paragraph, { fontSize, fontFamily }),

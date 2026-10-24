@@ -1,6 +1,4 @@
 import { configureStore } from '@reduxjs/toolkit';
-import React, { useMemo, type ReactNode } from 'react';
-import { Provider } from 'react-redux';
 
 import { rootReducer } from '../../store/rootReducer';
 
@@ -47,16 +45,3 @@ export const setupTestStore = (preloadedState?: TestPreloadedState) =>
     reducer: rootReducer,
     preloadedState: preloadedState ? mergeSlices(preloadedState) : defaultPreloadedState,
   });
-
-type Props = {
-  children: ReactNode;
-  preloadedState?: TestPreloadedState;
-};
-
-/** @internal Reached through a jest.mock require(); knip cannot see it. */
-export const TestStoreProvider = ({ children, preloadedState }: Props) => {
-  const store = useMemo(() => setupTestStore(preloadedState), [preloadedState]);
-  return <Provider store={store}>{children}</Provider>;
-};
-
-export default TestStoreProvider;

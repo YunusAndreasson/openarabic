@@ -21,13 +21,19 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: async (key: string) => {
     mockMemoryStore.delete(key);
   },
+  multiRemove: async (keys: string[]) => {
+    keys.forEach(key => mockMemoryStore.delete(key));
+  },
 }));
 
 jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));
 
+import { STORAGE_KEYS } from '@/constants/storageKeys';
+
 type PromptStorageModule = typeof import('@/utils/notificationPromptStorage');
+type AccountSwitchModule = typeof import('@/utils/accountSwitch');
 
 function freshModule(): PromptStorageModule {
   let module: PromptStorageModule | undefined;
@@ -95,6 +101,61 @@ describe('notificationPromptStorage', () => {
     const state = await second.loadNotificationPromptState();
     expect(state.sessionsCompleted).toBe(1);
     expect(state.impressions).toBe(1);
+  });
+
+  test('stores the same bytes it always did', async () => {
+    const { recordSessionCompleted } = freshModule();
+    await recordSessionCompleted();
+
+    expect(mockMemoryStore.get(STORAGE_KEYS.NOTIFICATION_PROMPT_STATE)).toBe(
+      '{"version":1,"sessionsCompleted":1,"impressions":0,"lastImpressionSession":0,"accepted":false}',
+    );
+  });
+
+  test('a stored field of the wrong type reads as its default, not as stored', async () => {
+    mockMemoryStore.set(
+      STORAGE_KEYS.NOTIFICATION_PROMPT_STATE,
+      '{"version":1,"sessionsCompleted":"3","impressions":0,"lastImpressionSession":0,"accepted":"no"}',
+    );
+
+    const state = await freshModule().loadNotificationPromptState();
+
+    // "no" is truthy: trusted as stored, it read as accepted and the card never showed.
+    expect(state.accepted).toBe(false);
+    expect(state.sessionsCompleted).toBe(0);
+  });
+
+  test("an account switch does not carry the previous learner's prompt state over", async () => {
+    // Regression: the module cache outlived the key, which the switch removes,
+    // and the next update wrote learner A's impressions and "accepted" flag
+    // under learner B.
+    let prompt: PromptStorageModule | undefined;
+    let accountSwitch: AccountSwitchModule | undefined;
+    jest.isolateModules(() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      prompt = require('@/utils/notificationPromptStorage') as PromptStorageModule;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      accountSwitch = require('@/utils/accountSwitch') as AccountSwitchModule;
+    });
+    if (!prompt || !accountSwitch) throw new Error('modules failed to load');
+
+    mockMemoryStore.set(STORAGE_KEYS.LAST_SIGNED_IN_USER, 'user-a');
+    await prompt.recordSessionCompleted();
+    await prompt.recordSessionCompleted();
+    await prompt.recordAccepted();
+
+    expect(await accountSwitch.claimDeviceForAccount('user-b')).toBe(true);
+    await prompt.recordImpression();
+
+    expect(JSON.parse(mockMemoryStore.get(STORAGE_KEYS.NOTIFICATION_PROMPT_STATE) ?? '{}')).toEqual(
+      {
+        version: 1,
+        sessionsCompleted: 0,
+        impressions: 1,
+        lastImpressionSession: 0,
+        accepted: false,
+      },
+    );
   });
 
   test('FAIL-SAFE: a read error yields an exhausted state so the prompt never shows', async () => {

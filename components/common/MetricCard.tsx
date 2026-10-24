@@ -7,10 +7,9 @@ import { ThemedText } from '@/components/primitives/ThemedText';
 // Direct path, not the `@/components/ui` barrel: `common` sits above `ui`, and
 // pulling the barrel in from here closes the import cycle `eslint.config.mjs`
 // bans. Precedent: `components/common/EmptyState.tsx`.
-import { Icon } from '@/components/ui/Icon';
+import { DisclosureChevron } from '@/components/ui/DisclosureChevron';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
 import { formatCount } from '@/utils/stringUtils';
 
 interface MetricCardProps {
@@ -67,7 +66,6 @@ interface MetricCardProps {
  */
 export const MetricCard = memo<MetricCardProps>(
   ({ value, label, accessibilityLabel, density = 'compact', animated = false, onPress, style }) => {
-    const colors = useColors();
     const displayValue = typeof value === 'number' ? formatCount(value) : value;
 
     return (
@@ -123,13 +121,7 @@ export const MetricCard = memo<MetricCardProps>(
             )}
 
             {/* Only tiles that lead somewhere claim to. */}
-            {onPress && (
-              <Icon
-                color={colors.textTertiary}
-                name="chevron-forward"
-                size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
-              />
-            )}
+            {onPress && <DisclosureChevron />}
           </View>
         </View>
       </BaseCard>

@@ -24,11 +24,10 @@ import { renderHook } from '@testing-library/react-native';
 import { afterAll, beforeAll, describe, expect, jest, test } from '@jest/globals';
 import { State } from 'ts-fsrs';
 
-// The repo-wide Skia mock is built from jest.fn()s, and jest.config sets
-// `resetMocks: true` — so by the time a test runs, PathBuilder.Make() returns
-// undefined and every chart hook throws. Substitute a real (tiny) SVG path
-// builder instead of a stub: plain closures survive resetMocks, and the emitted
-// path string is genuine, so geometry assertions below actually mean something.
+// The repo-wide Skia mock's PathBuilder records nothing: every path it builds
+// reads 'M0,0'. Substitute a real (tiny) SVG path builder instead, so the
+// emitted path string is genuine and the geometry assertions below actually
+// mean something.
 jest.mock('react-native-skia', () => {
   const makePathBuilder = () => {
     const segments: string[] = [];

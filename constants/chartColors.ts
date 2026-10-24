@@ -1,7 +1,7 @@
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { ChartColors } from '@/types/ui/chart.types';
-import { mixColors, withOpacity } from '@/utils/colorUtils';
+import { mixColors } from '@/utils/colorUtils';
 
 /**
  * Unified Chart Color System for Vocabulary Analytics
@@ -72,9 +72,6 @@ export const getChartColors = (colors: ThemeColors): ChartColors => {
       primary: colors.chartAccent,
       inner: colors.card, // Surface ring so points stay legible on the line
     },
-
-    // Helper functions
-    withOpacity: (color: string, opacity: number) => withOpacity(color, opacity),
   };
 };
 

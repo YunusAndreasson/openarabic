@@ -42,18 +42,22 @@ jest.mock('@/utils/errorHandling');
 jest.mock('@/utils/storageUtils');
 
 import { STRINGS } from '@/constants/strings';
-import { enhancedAudioService, warmTrackCache } from '@/services/audioPlaylist';
+import {
+  buildReadingListTracks,
+  enhancedAudioService,
+  READING_LIST_TRACKS_ERROR_REPORT,
+  warmTrackCache,
+} from '@/services/audioPlaylist';
+import type { BookmarkItem } from '@/types/bookmark.types';
 import { handleError } from '@/utils/errorHandling';
 import { generateStorageUrl } from '@/utils/storageUtils';
 
 import { articlesService } from '../../services/articles';
 import { audioCache } from '../../services/audioCache';
-import { bookmarkService } from '../../services/bookmark';
 import { articleId } from '@/__tests__/helpers/ids';
 
 const mockArticlesService = jest.mocked(articlesService);
 const mockAudioCache = jest.mocked(audioCache);
-const mockBookmarkService = jest.mocked(bookmarkService);
 const mockHandleError = jest.mocked(handleError);
 const mockGenerateStorageUrl = jest.mocked(generateStorageUrl);
 
@@ -201,7 +205,7 @@ describe('enhancedAudioService', () => {
     });
   });
 
-  describe('getReadingListEnhancedTracks', () => {
+  describe('buildReadingListTracks', () => {
     const mockReadingList = [
       {
         article_id: 1,
@@ -221,35 +225,19 @@ describe('enhancedAudioService', () => {
           image_url: 'image2.jpg',
         },
       },
-    ];
+    ] as unknown as BookmarkItem[];
 
-    test('processes all reading list items with bilingual preference', async () => {
-      mockBookmarkService.getReadingList.mockResolvedValue(mockReadingList as any);
-      let audioCallCount = 0;
-      let imageCallCount = 0;
-      mockGenerateStorageUrl.mockImplementation((bucket, _path) => {
-        if (bucket === 'audio') {
-          audioCallCount++;
-          return audioCallCount === 1
-            ? 'https://example.com/bilingual1.mp3'
-            : 'https://example.com/audio2.mp3';
-        }
-        if (bucket === 'images') {
-          imageCallCount++;
-          return imageCallCount === 1
-            ? 'https://example.com/image1.jpg'
-            : 'https://example.com/image2.jpg';
-        }
-        return '';
-      });
-      mockAudioCache.getCachedPath
-        .mockResolvedValueOnce('cached-bilingual1.mp3')
-        .mockResolvedValueOnce('cached-audio2.mp3');
-
-      const result = await enhancedAudioService.getReadingListEnhancedTracks(
-        'user123',
-        'bilingual',
+    beforeEach(() => {
+      mockGenerateStorageUrl.mockImplementation(
+        (_bucket, path) => `https://example.com/${String(path)}`,
       );
+      mockAudioCache.getCachedPath.mockImplementation(
+        async url => `cached-${String(url).split('/').pop()}`,
+      );
+    });
+
+    test('builds a track per item with the bilingual audio where there is one', async () => {
+      const result = await buildReadingListTracks(mockReadingList, 'bilingual');
 
       expect(result).toEqual([
         {
@@ -271,75 +259,62 @@ describe('enhancedAudioService', () => {
       ]);
     });
 
-    test('processes all reading list items with arabic preference', async () => {
-      mockBookmarkService.getReadingList.mockResolvedValue(mockReadingList as any);
-      let audioCallCount = 0;
-      let imageCallCount = 0;
-      mockGenerateStorageUrl.mockImplementation((bucket, _path) => {
-        if (bucket === 'audio') {
-          audioCallCount++;
-          return audioCallCount === 1
-            ? 'https://example.com/audio1.mp3'
-            : 'https://example.com/audio2.mp3';
-        }
-        if (bucket === 'images') {
-          imageCallCount++;
-          return imageCallCount === 1
-            ? 'https://example.com/image1.jpg'
-            : 'https://example.com/image2.jpg';
-        }
-        return '';
-      });
-      mockAudioCache.getCachedPath
-        .mockResolvedValueOnce('cached-audio1.mp3')
-        .mockResolvedValueOnce('cached-audio2.mp3');
+    test('uses the Arabic-only audio for the arabic preference', async () => {
+      const result = await buildReadingListTracks(mockReadingList, 'arabic');
 
-      const result = await enhancedAudioService.getReadingListEnhancedTracks('user123', 'arabic');
-
-      expect(result).toEqual([
-        {
-          id: 'article-1',
-          articleId: 1,
-          audioUrl: 'cached-audio1.mp3',
-          sourceUrl: 'https://example.com/audio1.mp3',
-          title: 'Article 1',
-          imageUrl: 'https://example.com/image1.jpg',
-        },
-        {
-          id: 'article-2',
-          articleId: 2,
-          audioUrl: 'cached-audio2.mp3',
-          sourceUrl: 'https://example.com/audio2.mp3',
-          title: 'Article 2',
-          imageUrl: 'https://example.com/image2.jpg',
-        },
+      expect(result.map(track => track.sourceUrl)).toEqual([
+        'https://example.com/audio1.mp3',
+        'https://example.com/audio2.mp3',
       ]);
     });
 
-    test('reports and rethrows a failure instead of answering with an empty playlist', async () => {
-      const error = new Error('Reading list fetch failed');
-      mockBookmarkService.getReadingList.mockRejectedValue(error);
-
-      // An empty array would be cached as a successful, empty playlist: no
-      // retry, no error state, and a failed refetch would wipe good tracks.
-      await expect(enhancedAudioService.getReadingListEnhancedTracks('user123')).rejects.toBe(
-        error,
+    // The cache lookups used to run one after another; they are independent.
+    test('looks every track up at once, and keeps the reading-list order', async () => {
+      const lookups: { url: string; resolve: (path: string | null) => void }[] = [];
+      mockAudioCache.getCachedPath.mockImplementation(
+        url =>
+          new Promise(resolve => {
+            lookups.push({ url: String(url), resolve });
+          }),
       );
-      expect(mockHandleError).toHaveBeenCalledWith(error, {
+
+      const tracks = buildReadingListTracks(mockReadingList, 'arabic');
+      await Promise.resolve();
+
+      // Both lookups are in flight before either has answered.
+      expect(lookups).toHaveLength(2);
+      lookups[1]!.resolve(null);
+      lookups[0]!.resolve(null);
+
+      expect((await tracks).map(track => track.articleId)).toEqual([1, 2]);
+    });
+
+    test('handles empty reading list', async () => {
+      await expect(buildReadingListTracks([], 'bilingual')).resolves.toEqual([]);
+    });
+
+    test('does not download audio for uncached items', async () => {
+      // This runs from an app-wide query, so warming here would download every
+      // saved article's audio at app start.
+      mockAudioCache.getCachedPath.mockResolvedValue(null);
+
+      const result = await buildReadingListTracks(mockReadingList, 'bilingual');
+
+      expect(mockAudioCache.prefetch).not.toHaveBeenCalled();
+      expect(mockAudioCache.getAudio).not.toHaveBeenCalled();
+      // Still usable — they stream if the user plays one
+      expect(result[0]?.audioUrl).toBe('https://example.com/bilingual1.mp3');
+    });
+
+    // Reported once by the query cache now (`audioQueries.tracks`' meta), not
+    // here on every attempt; still without a toast.
+    test('its failure report names the playlist error without a toast', () => {
+      expect(READING_LIST_TRACKS_ERROR_REPORT).toEqual({
         toastMessage: STRINGS.FAILED_TO_GET_ENHANCED_AUDIO_TRACKS,
         analyticsEventName: 'Enhanced_Audio_Playlist_Error',
         sentrySeverity: 'error',
         showToast: false,
-        analyticsProperties: { userId: 'user123' },
       });
-    });
-
-    test('handles empty reading list', async () => {
-      mockBookmarkService.getReadingList.mockResolvedValue([]);
-
-      const result = await enhancedAudioService.getReadingListEnhancedTracks('user123');
-
-      expect(result).toEqual([]);
     });
 
     test('warmTrackCache caches a streaming track but not an already-local one', () => {
@@ -360,23 +335,6 @@ describe('enhancedAudioService', () => {
         title: 'Already cached',
       });
       expect(mockAudioCache.prefetch).not.toHaveBeenCalled();
-    });
-
-    test('does not download audio for uncached items', async () => {
-      // This runs from an app-wide query, so warming here would download every
-      // saved article's audio at app start.
-      mockBookmarkService.getReadingList.mockResolvedValue(mockReadingList as any);
-      mockGenerateStorageUrl.mockImplementation(bucket =>
-        bucket === 'audio' ? 'https://example.com/audio.mp3' : 'https://example.com/image.jpg',
-      );
-      mockAudioCache.getCachedPath.mockResolvedValue(null);
-
-      const result = await enhancedAudioService.getReadingListEnhancedTracks('user123');
-
-      expect(mockAudioCache.prefetch).not.toHaveBeenCalled();
-      expect(mockAudioCache.getAudio).not.toHaveBeenCalled();
-      // Still usable — they stream if the user plays one
-      expect(result[0]?.audioUrl).toBe('https://example.com/audio.mp3');
     });
   });
 });

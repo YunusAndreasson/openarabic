@@ -14,14 +14,13 @@
  * after a prompt is asynchronous; arm() joins that restore if a tap beats it.
  */
 import {
-  createContext,
-  use,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from 'react';
 import { Platform } from 'react-native';
 import { AudioManager } from 'react-native-audio-api';
@@ -60,12 +59,15 @@ import { CaptureOpenQueue } from '@/utils/captureOpenQueue';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { useAppSelectorShallow } from '@/store/hooks';
 import {
+  selectVoiceEnabled,
   selectVoiceEnergyGateEnabled,
   selectVoiceGainNormalizeEnabled,
   selectVoiceIosRawMode,
 } from '@/store/settingsSlice';
+import { createRequiredContext } from '@/utils/createRequiredContext';
 import { mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
+import { toError } from '@/utils/toError';
 import { mergeHotwords } from '@/utils/voiceHotwords';
 
 export type VoiceArmOutcome =
@@ -215,13 +217,73 @@ const LEVEL_PEAK_DECAY = 0.985; // per ~100 ms buffer → ~4.6 s half-life
  *  a full meter that claims the mic is hearing speech. */
 const MIN_LEVEL_REFERENCE = 0.02;
 
-const VoiceGradingContext = createContext<VoiceGradingContextValue | null>(null);
+/**
+ * One buffer on the meter: the bar height (0..1), and the reference — the
+ * loudest buffer so far, decayed — that the next buffer is measured against.
+ */
+export function meterLevel(rms: number, peak: number): { level: number; peak: number } {
+  const reference = Math.max(rms, peak * LEVEL_PEAK_DECAY, MIN_LEVEL_REFERENCE);
+  // sqrt: RMS is a power measure, so a linear bar leaves ordinary
+  // speech hugging the bottom of the meter.
+  return { level: Math.min(1, Math.sqrt(rms / reference)), peak: reference };
+}
 
-export const useVoiceGrading = (): VoiceGradingContextValue => {
-  const ctx = use(VoiceGradingContext);
-  if (!ctx) throw new Error('useVoiceGrading must be used within a VoiceGradingProvider');
-  return ctx;
-};
+const [VoiceGradingContext, useVoiceGrading] = createRequiredContext<VoiceGradingContextValue>(
+  'VoiceGradingContext',
+  'useVoiceGrading must be used within a VoiceGradingProvider',
+);
+export { useVoiceGrading };
+
+/**
+ * One holder of a shared resource: counts it in, runs `onFirst` when it is the
+ * first, and returns its release, which runs `onLast` when it was the last.
+ *
+ * The release is idempotent: a screen that unmounts twice (Fast Refresh, a
+ * double cleanup) must not drive the count negative, which would pin the
+ * resource for the app's life.
+ */
+function retain(
+  count: RefObject<number>,
+  { onFirst, onLast }: { onFirst?: () => void; onLast: () => void },
+): () => void {
+  count.current += 1;
+  if (count.current === 1) onFirst?.();
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    count.current -= 1;
+    if (count.current > 0) return;
+    onLast();
+  };
+}
+
+/**
+ * Make `transition` the occupant of `slot` until it settles.
+ *
+ * Identity-checked on the way out: a later transition may already own the slot.
+ * Released through both settle paths rather than `finally`, whose derived
+ * promise would surface a failed transition again as an unhandled rejection.
+ */
+function occupyUntilSettled(
+  slot: RefObject<Promise<void> | null>,
+  transition: Promise<void>,
+): void {
+  slot.current = transition;
+  const release = (): void => {
+    if (slot.current === transition) slot.current = null;
+  };
+  void transition.then(release, release);
+}
+
+/** Refuse an arm: mark why on the timeline, and hand the caller the outcome. */
+function rejectArm(
+  reason: VoiceArmFailureReason,
+  { message, diag = reason }: { message?: string; diag?: string } = {},
+): VoiceArmOutcome {
+  diagMark('mic.arm.reject', { reason: diag });
+  return message === undefined ? { ok: false, reason } : { ok: false, reason, message };
+}
 
 /**
  * How long the recognizer survives its last release.
@@ -233,8 +295,54 @@ export const useVoiceGrading = (): VoiceGradingContextValue => {
  */
 const VOICE_ENGINE_LINGER_MS = 120_000;
 
+/**
+ * Watch the two system events that leave the input stream present but deaf,
+ * for as long as a review session holds the microphone. Returns the stop.
+ *
+ * Interruptions (a call, Siri, another app taking the session) and route
+ * changes (a headset arriving or leaving) both leave the input stream present
+ * but silent. Neither was handled at all, so the card waited out its dead-air
+ * timeout and the learner read it as "the mic randomly stops working".
+ *
+ * Scoped to a session — `acquireSession`'s first holder starts it and the last
+ * release stops it — because observing is not passive on Android: audio-api
+ * maps `observeAudioInterruptions(true)` to 'gain' and requests
+ * AUDIOFOCUS_GAIN (AudioAPIModule.kt). Started at provider mount whenever voice
+ * was enabled — which, with voice on by default, meant every launch — it took
+ * long-term audio focus, which should stop another app's music for a learner
+ * who only came to read. Outside a session the handlers had nothing to do
+ * anyway: `openCapture` returns at zero holders.
+ */
+function watchSystemAudio(
+  abortWindow: (reason: 'error', message: string) => void,
+  reopenCapture: () => Promise<void>,
+): () => void {
+  AudioManager.observeAudioInterruptions(true);
+  const interruption = AudioManager.addSystemEventListener('interruption', ({ type }) => {
+    diagMark('mic.interruption', { type });
+    if (type === 'began') {
+      abortWindow('error', 'interrupted');
+      return;
+    }
+    void reopenCapture();
+  });
+  const routeChange = AudioManager.addSystemEventListener('routeChange', ({ reason }) => {
+    diagMark('mic.routeChange', { reason });
+    // A device arriving or leaving re-points the input; anything else is
+    // cosmetic and reopening would cost a card its microphone for nothing.
+    if (reason !== 'NewDeviceAvailable' && reason !== 'OldDeviceUnavailable') return;
+    abortWindow('error', `route:${reason}`);
+    void reopenCapture();
+  });
+  return () => {
+    interruption.remove();
+    routeChange.remove();
+    AudioManager.observeAudioInterruptions(false);
+  };
+}
+
 export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
-  const enabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  const enabled = useAppSelectorShallow(selectVoiceEnabled);
 
   // The bytes: fetched independently of everything below, on Wi-Fi, and never
   // torn down by this component's lifecycle.
@@ -246,30 +354,28 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
   const engineLingerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [engineRetained, setEngineRetained] = useState(false);
 
-  const acquireEngine = useCallback((): (() => void) => {
-    engineHoldersRef.current += 1;
-    if (engineLingerRef.current) {
-      clearTimeout(engineLingerRef.current);
-      engineLingerRef.current = null;
-    }
-    setEngineRetained(true);
-
-    // Idempotent release, exactly as `acquireSession` does it: a screen that
-    // unmounts twice (Fast Refresh, a double cleanup) must not drive the count
-    // negative, which would pin the engine for the app's life.
-    let released = false;
-    return () => {
-      if (released) return;
-      released = true;
-      engineHoldersRef.current -= 1;
-      if (engineHoldersRef.current > 0) return;
-      if (engineLingerRef.current) clearTimeout(engineLingerRef.current);
-      engineLingerRef.current = setTimeout(() => {
-        engineLingerRef.current = null;
-        if (engineHoldersRef.current === 0) setEngineRetained(false);
-      }, VOICE_ENGINE_LINGER_MS);
-    };
-  }, []);
+  const acquireEngine = useCallback(
+    (): (() => void) =>
+      retain(engineHoldersRef, {
+        // Only the first holder can find a linger pending, or the engine
+        // released: both happen only once the count has reached zero.
+        onFirst: () => {
+          if (engineLingerRef.current) {
+            clearTimeout(engineLingerRef.current);
+            engineLingerRef.current = null;
+          }
+          setEngineRetained(true);
+        },
+        onLast: () => {
+          if (engineLingerRef.current) clearTimeout(engineLingerRef.current);
+          engineLingerRef.current = setTimeout(() => {
+            engineLingerRef.current = null;
+            if (engineHoldersRef.current === 0) setEngineRetained(false);
+          }, VOICE_ENGINE_LINGER_MS);
+        },
+      }),
+    [],
+  );
 
   useEffect(
     () => () => {
@@ -373,6 +479,8 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
   const finishRef = useRef<(() => void) | null>(null);
   /** Review screens currently holding the microphone. */
   const holdersRef = useRef(0);
+  /** Stops the interruption/route-change watch while a session holds the mic. */
+  const stopSystemAudioWatchRef = useRef<(() => void) | null>(null);
 
   /** Settle any pending arm() with a failure and close its window. */
   const abortWindow = useCallback(
@@ -508,7 +616,7 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
           }
           diagMark('mic.session.open', { reopen });
         } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
+          const { message } = toError(err);
           lastOpenErrorRef.current = message;
           lastOpenWasPermissionDeniedRef.current = err instanceof MicPermissionDeniedError;
           diagMark('mic.session.open.failed', { message, reopen });
@@ -576,12 +684,8 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
       }
       await openCapture(true);
     })();
-    reopenQueuedRef.current = handoff;
-    handoffRef.current = handoff;
-    void handoff.finally(() => {
-      if (reopenQueuedRef.current === handoff) reopenQueuedRef.current = null;
-      if (handoffRef.current === handoff) handoffRef.current = null;
-    });
+    occupyUntilSettled(reopenQueuedRef, handoff);
+    occupyUntilSettled(handoffRef, handoff);
     return handoff;
   }, [openCapture]);
 
@@ -695,99 +799,94 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
     [capture, openCapture],
   );
 
-  const acquireSession = useCallback((): (() => void) => {
-    holdersRef.current += 1;
-    if (holdersRef.current === 1) {
-      // Opens the input stream up front, and it has to stay that way.
-      //
-      // Deferring it to the tap was tried and reverted: opening on demand cost
-      // 1008 ms on the first card (the ~19 ms that justified the attempt was a
-      // WARM reopen mid-session, not a cold open — the wrong number to
-      // generalise from), and worse, it failed outright, producing 15
-      // consecutive `arm_failed` rows where the microphone never came back for
-      // the rest of the session. Opening while nothing contends for the device
-      // is what makes the tap reliable.
-      //
-      // The cost is real and unresolved: an open input stream lights the iOS
-      // microphone indicator for the whole session, before the learner has
-      // asked for anything, and it forces the output route onto .playAndRecord
-      // (quieter playback — see AUDIO_MODE_CONFIG). Fixing that means releasing
-      // the recording session between cards, not opening the stream late.
-      // Join the pending handoff before touching the session. This was the one
-      // transition that did not, and it is why the SECOND session of an app
-      // launch came up with a dead microphone while a restart always fixed it:
-      //
-      //   screen 1 unmounts → release() → holders 0 → an async cleanup starts
-      //     (close the stream, setRecordingSessionEnabled(false))
-      //   screen 2 mounts   → acquire() → holders 1 → setRecordingSessionEnabled(true)
-      //     → openCapture()
-      //
-      // Nothing ordered those two. The new session's open would land first and
-      // the old session's teardown would then close the stream underneath it and
-      // switch the category back off recording — after which `capture.open()`
-      // throws for the rest of the app's life, every arm returns "input stream
-      // unavailable", and the prompt still plays perfectly because only the
-      // record half is gone. It is a race, so it missed as often as it hit,
-      // which is why it read as flakiness rather than a lifecycle bug.
-      const previous = handoffRef.current;
-      const startup = (async () => {
-        await previous?.catch(() => undefined);
-        // Read AFTER the teardown, not before: the release path clears this on
-        // its way out, so a value sampled synchronously above would be the
-        // outgoing session's.
-        //
-        // A first prompt may already own playback: useReview registers that
-        // effect before useVoiceReview registers this acquisition. In that case
-        // markDone will restore/open the microphone after the prompt; opening
-        // here would switch the prompt back to the quiet record-capable route
-        // mid-word.
-        if (playbackPriorityRef.current) return;
-        // Another holder arrived and left again while we waited.
-        if (holdersRef.current === 0) return;
-        await simpleAudioService.setRecordingSessionEnabled(true);
-        await openCapture();
-      })();
-      handoffRef.current = startup;
-      void startup.finally(() => {
-        if (handoffRef.current === startup) handoffRef.current = null;
-      });
-    }
-    let released = false;
-    return () => {
-      if (released) return;
-      released = true;
-      holdersRef.current -= 1;
-      if (holdersRef.current > 0) return;
-      abortWindow('not-ready');
-      const previous = handoffRef.current;
-      const cleanup = (async () => {
-        await previous?.catch(() => undefined);
-        await capture.close();
-        // Forced: a review must never hand the app back a recording session.
-        // Without `force` this is an equality check, so it no-ops on exactly the
-        // exit that needs it most — one taken while playback held the session
-        // (the flag already reads false) after a reopen had reconfigured the
-        // session record-capable underneath it. That combination left the whole
-        // app, not just review, on `.playAndRecord` + `.measurement`, with
-        // nothing anywhere that would ever set the category or mode back.
-        await simpleAudioService.setRecordingSessionEnabled(false, { force: true });
-        playbackPriorityRef.current = false;
-        playbackPriorityBrokenRef.current = false;
-        // The provider lives for the whole app, so a latch left set here outlives
-        // the session that tripped it. One forced reopen (a foreground resume, an
-        // interruption, a deaf window) used to put every later session of the
-        // launch on the Expo-grant restore: ~1.3 s to the microphone instead of
-        // ~0.3 s, on every card, until the app was killed.
-        recordingGrantRequiredRef.current = false;
-        // A debt owed to a session that no longer exists is not owed.
-        reopenOwedRef.current = false;
-      })();
-      handoffRef.current = cleanup;
-      void cleanup.finally(() => {
-        if (handoffRef.current === cleanup) handoffRef.current = null;
-      });
-    };
-  }, [abortWindow, capture, openCapture]);
+  const acquireSession = useCallback(
+    (): (() => void) =>
+      retain(holdersRef, {
+        onFirst: () => {
+          stopSystemAudioWatchRef.current = watchSystemAudio(abortWindow, reopenCapture);
+          // Opens the input stream up front, and it has to stay that way.
+          //
+          // Deferring it to the tap was tried and reverted: opening on demand cost
+          // 1008 ms on the first card (the ~19 ms that justified the attempt was a
+          // WARM reopen mid-session, not a cold open — the wrong number to
+          // generalise from), and worse, it failed outright, producing 15
+          // consecutive `arm_failed` rows where the microphone never came back for
+          // the rest of the session. Opening while nothing contends for the device
+          // is what makes the tap reliable.
+          //
+          // The cost is real and unresolved: an open input stream lights the iOS
+          // microphone indicator for the whole session, before the learner has
+          // asked for anything, and it forces the output route onto .playAndRecord
+          // (quieter playback — see AUDIO_MODE_CONFIG). Fixing that means releasing
+          // the recording session between cards, not opening the stream late.
+          // Join the pending handoff before touching the session. This was the one
+          // transition that did not, and it is why the SECOND session of an app
+          // launch came up with a dead microphone while a restart always fixed it:
+          //
+          //   screen 1 unmounts → release() → holders 0 → an async cleanup starts
+          //     (close the stream, setRecordingSessionEnabled(false))
+          //   screen 2 mounts   → acquire() → holders 1 → setRecordingSessionEnabled(true)
+          //     → openCapture()
+          //
+          // Nothing ordered those two. The new session's open would land first and
+          // the old session's teardown would then close the stream underneath it and
+          // switch the category back off recording — after which `capture.open()`
+          // throws for the rest of the app's life, every arm returns "input stream
+          // unavailable", and the prompt still plays perfectly because only the
+          // record half is gone. It is a race, so it missed as often as it hit,
+          // which is why it read as flakiness rather than a lifecycle bug.
+          const previous = handoffRef.current;
+          const startup = (async () => {
+            await previous?.catch(() => undefined);
+            // Read AFTER the teardown, not before: the release path clears this on
+            // its way out, so a value sampled synchronously above would be the
+            // outgoing session's.
+            //
+            // A first prompt may already own playback: useReview registers that
+            // effect before useVoiceReview registers this acquisition. In that case
+            // markDone will restore/open the microphone after the prompt; opening
+            // here would switch the prompt back to the quiet record-capable route
+            // mid-word.
+            if (playbackPriorityRef.current) return;
+            // Another holder arrived and left again while we waited.
+            if (holdersRef.current === 0) return;
+            await simpleAudioService.setRecordingSessionEnabled(true);
+            await openCapture();
+          })();
+          occupyUntilSettled(handoffRef, startup);
+        },
+        onLast: () => {
+          stopSystemAudioWatchRef.current?.();
+          stopSystemAudioWatchRef.current = null;
+          abortWindow('not-ready');
+          const previous = handoffRef.current;
+          const cleanup = (async () => {
+            await previous?.catch(() => undefined);
+            await capture.close();
+            // Forced: a review must never hand the app back a recording session.
+            // Without `force` this is an equality check, so it no-ops on exactly the
+            // exit that needs it most — one taken while playback held the session
+            // (the flag already reads false) after a reopen had reconfigured the
+            // session record-capable underneath it. That combination left the whole
+            // app, not just review, on `.playAndRecord` + `.measurement`, with
+            // nothing anywhere that would ever set the category or mode back.
+            await simpleAudioService.setRecordingSessionEnabled(false, { force: true });
+            playbackPriorityRef.current = false;
+            playbackPriorityBrokenRef.current = false;
+            // The provider lives for the whole app, so a latch left set here outlives
+            // the session that tripped it. One forced reopen (a foreground resume, an
+            // interruption, a deaf window) used to put every later session of the
+            // launch on the Expo-grant restore: ~1.3 s to the microphone instead of
+            // ~0.3 s, on every card, until the app was killed.
+            recordingGrantRequiredRef.current = false;
+            // A debt owed to a session that no longer exists is not owed.
+            reopenOwedRef.current = false;
+          })();
+          occupyUntilSettled(handoffRef, cleanup);
+        },
+      }),
+    [abortWindow, capture, openCapture, reopenCapture],
+  );
 
   // A stream that dies mid-session used to be invisible: no error surfaced and
   // the card simply recorded nothing until noSpeechTimeoutMs. Now it fails the
@@ -802,44 +901,14 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
     return () => capture.onStreamError(null);
   }, [abortWindow, capture, reopenCapture]);
 
-  // Interruptions (a call, Siri, another app taking the session) and route
-  // changes (a headset arriving or leaving) both leave the input stream
-  // present but silent. Neither was handled at all, so the card waited out its
-  // dead-air timeout and the learner read it as "the mic randomly stops working".
-  useEffect(() => {
-    // Gated on the setting, like the model download: a user who never opts into
-    // voice should not have this provider turning on system audio observation
-    // for the rest of the app.
-    if (!enabled) return;
-    AudioManager.observeAudioInterruptions(true);
-    const interruption = AudioManager.addSystemEventListener('interruption', ({ type }) => {
-      diagMark('mic.interruption', { type });
-      if (type === 'began') {
-        abortWindow('error', 'interrupted');
-        return;
-      }
-      void reopenCapture();
-    });
-    const routeChange = AudioManager.addSystemEventListener('routeChange', ({ reason }) => {
-      diagMark('mic.routeChange', { reason });
-      // A device arriving or leaving re-points the input; anything else is
-      // cosmetic and reopening would cost a card its microphone for nothing.
-      if (reason !== 'NewDeviceAvailable' && reason !== 'OldDeviceUnavailable') return;
-      abortWindow('error', `route:${reason}`);
-      void reopenCapture();
-    });
-    return () => {
-      interruption?.remove();
-      routeChange?.remove();
-      AudioManager.observeAudioInterruptions(false);
-    };
-  }, [enabled, abortWindow, reopenCapture]);
+  // Interruptions and route changes are watched only while a session holds the
+  // microphone — see watchSystemAudio, started and stopped by acquireSession.
 
   /**
    * Rebuild the input stream when the app comes back with a review still
    * holding the microphone.
    *
-   * The interruption listener above is the precise signal, but it is not a
+   * The watchSystemAudio listener is the precise signal, but it is not a
    * reliable one: a call takes the app to the background, and an `ended` event
    * delivered while it is there does its reopen against a session the app is
    * not allowed to activate — so it fails, silently, and nothing tries again.
@@ -881,10 +950,7 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
       // Synchronous — before any await — so a second call arriving before
       // this one reaches `armResolveRef.current = resolve` still sees the
       // claim and bails, instead of racing it. See armClaimRef's own comment.
-      if (armClaimRef.current) {
-        diagMark('mic.arm.reject', { reason: 'busy' });
-        return { ok: false, reason: 'busy' };
-      }
+      if (armClaimRef.current) return rejectArm('busy');
       armClaimRef.current = true;
       try {
         markArmEntered();
@@ -893,14 +959,8 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
         // on. The microphone reclaims it here rather than trusting that, so a tap
         // can never land on a session that is still in .playback.
         await setPlaybackPriority(false);
-        if (!isReady) {
-          diagMark('mic.arm.reject', { reason: 'not-ready' });
-          return { ok: false, reason: 'not-ready' };
-        }
-        if (capture.isCapturing || armResolveRef.current !== null) {
-          diagMark('mic.arm.reject', { reason: 'busy' });
-          return { ok: false, reason: 'busy' };
-        }
+        if (!isReady) return rejectArm('not-ready');
+        if (capture.isCapturing || armResolveRef.current !== null) return rejectArm('busy');
 
         // Normally already open — acquireSession did it when the screen mounted.
         // This covers a first card that beat the open, and any reopen still in
@@ -936,24 +996,17 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
             // MAX_ARM_RETRIES on a mic that will never open and then giving up
             // in silence — indistinguishable from the tap never having landed.
             if (lastOpenWasPermissionDeniedRef.current) {
-              diagMark('mic.arm.reject', { reason: 'permission' });
-              return {
-                ok: false,
-                reason: 'permission',
-                message: lastOpenErrorRef.current ?? undefined,
-              };
+              return rejectArm('permission', { message: lastOpenErrorRef.current ?? undefined });
             }
-            diagMark('mic.arm.reject', { reason: 'stream-closed' });
-            return {
-              ok: false,
-              reason: 'error',
+            return rejectArm('error', {
+              diag: 'stream-closed',
               // Carry the reason `capture.open()` actually gave. Without it every
               // one of these looks identical in telemetry and says only that the
               // stream is not open, which is the symptom we already knew.
               message: lastOpenErrorRef.current
                 ? `input stream unavailable: ${lastOpenErrorRef.current}`
                 : 'input stream unavailable',
-            };
+            });
           }
         }
 
@@ -962,109 +1015,98 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
         levelPeakRef.current = MIN_LEVEL_REFERENCE;
         diagMark('mic.arm.request', { windowId });
 
-        return new Promise<VoiceArmOutcome>(resolve => {
-          armResolveRef.current = resolve;
+        const { promise, resolve } = Promise.withResolvers<VoiceArmOutcome>();
+        armResolveRef.current = resolve;
 
-          const finish = (): void => {
-            if (armResolveRef.current !== resolve) return; // already resolved
-            if (windowId !== windowSeqRef.current) return; // stale callback
-            armResolveRef.current = null;
-            finishRef.current = null;
-            micLevel.set(0);
+        const finish = (): void => {
+          if (armResolveRef.current !== resolve) return; // already resolved
+          if (windowId !== windowSeqRef.current) return; // stale callback
+          armResolveRef.current = null;
+          finishRef.current = null;
+          micLevel.set(0);
 
-            // Synchronous: no stream teardown, no audio-session restore. The
-            // caller starts transcribing on this frame — that hand-off used to
-            // wait on both.
-            const result = capture.endWindow();
-            diagMark('mic.stopped', {
-              windowId,
-              durationMs: result.durationMs,
-              stopReason: result.stopReason,
-              bufferCount: result.bufferCount,
-              firstBufferMs: result.firstBufferMs,
-              heardSpeech: result.heardSpeech,
-              peakRms: Number(result.peakRms.toFixed(5)),
-              samples: result.waveform.length,
-            });
-            voiceBreadcrumb('voice.recorder.stopped', {
-              windowId,
-              durationMs: result.durationMs,
-              bufferCount: result.bufferCount,
-              stopReason: result.stopReason,
-              heardSpeech: result.heardSpeech,
-              peakRms: result.peakRms,
-              firstBufferMs: result.firstBufferMs,
-            });
-            if (result.bufferCount === 0) {
-              void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_FAILED, {
-                stage: 'recorder-no-buffers',
-                durationMs: result.durationMs,
-                stopReason: result.stopReason,
-              });
-              // The stream is present but deaf. Reopening now means the retry
-              // lands on a live microphone rather than the same dead one.
-              //
-              // Through the QUEUE, not `openCapture(true)` directly. This is not
-              // arm()'s recovery rung — it fires from a window's finish callback,
-              // off the learner's tap and with no restore ahead of it to drain
-              // the chain — so a direct rebuild would deactivate and re-create
-              // the audio session in the middle of whatever handoff the next
-              // card's prompt had already started. That is the inaudible-prompt
-              // bug this queue exists to prevent, and it would be invisible:
-              // `play()` still reports success. Deferred behind a prompt, the
-              // debt is settled by the restore before the learner can tap.
-              void reopenCapture();
-              resolve({ ok: false, reason: 'error', message: 'no audio from microphone' });
-              return;
-            }
-            resolve({ ok: true, result });
+          // Synchronous: no stream teardown, no audio-session restore. The
+          // caller starts transcribing on this frame — that hand-off used to
+          // wait on both.
+          const result = capture.endWindow();
+          const stopped = {
+            windowId,
+            durationMs: result.durationMs,
+            stopReason: result.stopReason,
+            bufferCount: result.bufferCount,
+            firstBufferMs: result.firstBufferMs,
+            heardSpeech: result.heardSpeech,
           };
-
-          finishRef.current = finish;
-
-          try {
-            markBeginWindow();
-            capture.beginWindow(
-              {
-                onAutoStop: finish,
-                onCapturing: () => {
-                  // Stale guard: a window from a superseded arm() must not flip
-                  // the current card's UI to "listening".
-                  if (windowId === windowSeqRef.current) options?.onCapturing?.();
-                },
-                onLevel: rms => {
-                  if (windowId !== windowSeqRef.current) return;
-                  const reference = Math.max(
-                    rms,
-                    levelPeakRef.current * LEVEL_PEAK_DECAY,
-                    MIN_LEVEL_REFERENCE,
-                  );
-                  levelPeakRef.current = reference;
-                  // sqrt: RMS is a power measure, so a linear bar leaves ordinary
-                  // speech hugging the bottom of the meter.
-                  micLevel.set(Math.min(1, Math.sqrt(rms / reference)));
-                },
-              },
-              options?.handsFree
-                ? withHandsFreeBudget(recordingConfigRef.current)
-                : recordingConfigRef.current,
-              speechGateRef.current,
-            );
-            voiceBreadcrumb('voice.recorder.arm', { windowId });
-          } catch (err) {
-            armResolveRef.current = null;
-            finishRef.current = null;
-            micLevel.set(0);
-            const message = err instanceof Error ? err.message : String(err);
-            diagMark('mic.window.failed', { message });
-            voiceBreadcrumb('voice.recorder.start.failed', { windowId, error: message }, 'warning');
-            if (err instanceof MicPermissionDeniedError) {
-              resolve({ ok: false, reason: 'permission' });
-            } else {
-              resolve({ ok: false, reason: 'error', message });
-            }
+          diagMark('mic.stopped', {
+            ...stopped,
+            peakRms: Number(result.peakRms.toFixed(5)),
+            samples: result.waveform.length,
+          });
+          voiceBreadcrumb('voice.recorder.stopped', { ...stopped, peakRms: result.peakRms });
+          if (result.bufferCount === 0) {
+            void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_FAILED, {
+              stage: 'recorder-no-buffers',
+              durationMs: result.durationMs,
+              stopReason: result.stopReason,
+            });
+            // The stream is present but deaf. Reopening now means the retry
+            // lands on a live microphone rather than the same dead one.
+            //
+            // Through the QUEUE, not `openCapture(true)` directly. This is not
+            // arm()'s recovery rung — it fires from a window's finish callback,
+            // off the learner's tap and with no restore ahead of it to drain
+            // the chain — so a direct rebuild would deactivate and re-create
+            // the audio session in the middle of whatever handoff the next
+            // card's prompt had already started. That is the inaudible-prompt
+            // bug this queue exists to prevent, and it would be invisible:
+            // `play()` still reports success. Deferred behind a prompt, the
+            // debt is settled by the restore before the learner can tap.
+            void reopenCapture();
+            resolve({ ok: false, reason: 'error', message: 'no audio from microphone' });
+            return;
           }
-        });
+          resolve({ ok: true, result });
+        };
+
+        finishRef.current = finish;
+
+        try {
+          markBeginWindow();
+          capture.beginWindow(
+            {
+              onAutoStop: finish,
+              onCapturing: () => {
+                // Stale guard: a window from a superseded arm() must not flip
+                // the current card's UI to "listening".
+                if (windowId === windowSeqRef.current) options?.onCapturing?.();
+              },
+              onLevel: rms => {
+                if (windowId !== windowSeqRef.current) return;
+                const { level, peak } = meterLevel(rms, levelPeakRef.current);
+                levelPeakRef.current = peak;
+                micLevel.set(level);
+              },
+            },
+            options?.handsFree
+              ? withHandsFreeBudget(recordingConfigRef.current)
+              : recordingConfigRef.current,
+            speechGateRef.current,
+          );
+          voiceBreadcrumb('voice.recorder.arm', { windowId });
+        } catch (err) {
+          armResolveRef.current = null;
+          finishRef.current = null;
+          micLevel.set(0);
+          const { message } = toError(err);
+          diagMark('mic.window.failed', { message });
+          voiceBreadcrumb('voice.recorder.start.failed', { windowId, error: message }, 'warning');
+          if (err instanceof MicPermissionDeniedError) {
+            resolve({ ok: false, reason: 'permission' });
+          } else {
+            resolve({ ok: false, reason: 'error', message });
+          }
+        }
+        return promise;
       } finally {
         // Released the instant a window is actually claimed too — from then
         // on `armResolveRef.current !== null` is the authoritative busy
@@ -1091,7 +1133,6 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
 
   const cancel = useCallback(async (): Promise<void> => {
     abortWindow('busy');
-    return Promise.resolve();
   }, [abortWindow]);
 
   const transcribe = useCallback(
@@ -1128,7 +1169,7 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
       endPrewarm({ failed: true });
       voiceBreadcrumb(
         'voice.permission.prewarm.failed',
-        { error: err instanceof Error ? err.message : String(err) },
+        { error: toError(err).message },
         'warning',
       );
     }

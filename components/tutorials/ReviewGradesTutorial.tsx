@@ -10,10 +10,11 @@
  */
 
 import type { IconName } from '@/components/ui';
-import { useCallback, useState, type ComponentType } from 'react';
+import { useCallback, type ComponentType } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 import { ReviewTutorialStep } from '@/constants/tutorials';
+import { useTutorialSteps } from '@/hooks/tutorials/useTutorialSteps';
 
 import { TutorialGradesStep } from './steps';
 import { TutorialCard } from './TutorialCard';
@@ -52,35 +53,23 @@ const STEPS: ReviewTutorialStepConfig[] = [
   },
 ];
 
-const LAST_STEP = STEPS.length - 1;
-
 export function ReviewGradesTutorial({ visible, onDismiss }: ReviewGradesTutorialProps) {
-  const [currentStep, setCurrentStep] = useState<number>(ReviewTutorialStep.INTRO);
-
-  const isLastStep = currentStep === LAST_STEP;
+  // `next` clamps at the last step; see useTutorialSteps for why it must.
+  const {
+    step: currentStep,
+    isLast: isLastStep,
+    next,
+    reset,
+  } = useTutorialSteps(STEPS.length, visible);
 
   const handleNext = useCallback(() => {
     if (isLastStep) {
-      setCurrentStep(ReviewTutorialStep.INTRO);
+      reset();
       onDismiss();
     } else {
-      // Clamp at the last step: when the JS thread is busy (session preparing),
-      // several taps can batch into one render with a stale isLastStep, and an
-      // unbounded prev + 1 would walk past the array into a stuck fallback
-      // state that can never dismiss.
-      setCurrentStep(prev => (prev >= LAST_STEP ? LAST_STEP : prev + 1));
+      next();
     }
-  }, [isLastStep, onDismiss]);
-
-  // Reset to first step when the tutorial transitions from hidden→visible.
-  // Uses the "store previous prop in state" pattern instead of an effect.
-  const [prevVisible, setPrevVisible] = useState(visible);
-  if (visible !== prevVisible) {
-    setPrevVisible(visible);
-    if (visible) {
-      setCurrentStep(ReviewTutorialStep.INTRO);
-    }
-  }
+  }, [isLastStep, next, reset, onDismiss]);
 
   const step = STEPS[currentStep] ?? STEPS[ReviewTutorialStep.INTRO];
   if (!step) return null;

@@ -4,6 +4,7 @@ import type * as ExecuTorch from 'react-native-executorch';
 import type { SpeechGate } from '@/lib/voice/recording';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
 import { mark as diagMark } from '@/utils/reviewDiagnostics';
+import { toError } from '@/utils/toError';
 
 /**
  * The detector behind "is the learner speaking yet" — **FSMN VAD**, ~1.8 MB,
@@ -26,10 +27,14 @@ import { mark as diagMark } from '@/utils/reviewDiagnostics';
  * other than the model's 16 kHz.
  *
  * **The task runner is built directly rather than through the library's
- * `useVoiceActivityDetector` hook.** That hook starts its download the moment it
- * mounts, and this one is mounted by `VoiceGradingProvider` for the whole app —
- * a learner who has voice switched off should not fetch a model they will never
- * run.
+ * `useVoiceActivityDetector` hook.** Not because of the download: the hook takes
+ * `preventLoad` (react-native-executorch 0.10.5), which would keep a learner who
+ * has voice switched off from fetching a model they will never run. The reason
+ * is how the package fails. Its entry throws on a binary without the executorch
+ * JSI bindings, and a hook has to be in hand when the provider renders, so that
+ * throw would land in `VoiceGradingProvider` — mounted for the whole app — and
+ * take it down. The task factory is `require`d inside the async load instead,
+ * where the same failure is only a rejected load (see `loadDetector`).
  */
 
 /**
@@ -112,8 +117,7 @@ export function useSpeechGate({ enabled }: { enabled: boolean }): SpeechGateStat
         // gate ran" is only answerable from telemetry, and a model that never
         // loads would otherwise look identical to one that loaded and disagreed.
         if (!active) return;
-        const message = err instanceof Error ? err.message : String(err);
-        voiceBreadcrumb('voice.vad.loadFailed', { message }, 'warning');
+        voiceBreadcrumb('voice.vad.loadFailed', { message: toError(err).message }, 'warning');
       });
     return () => {
       active = false;

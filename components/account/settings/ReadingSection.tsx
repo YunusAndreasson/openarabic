@@ -2,12 +2,17 @@ import { memo, useCallback } from 'react';
 import { router } from 'expo-router';
 
 import { SettingsCard, SettingsSection } from '@/components/account';
-import { resolveArabicFont, type ArabicFontName } from '@/constants/fonts';
-import { clampArabicFontSize } from '@/constants/layout';
+import type { ArabicFontName } from '@/constants/fonts';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
-import { setWordTapShowsTooltip } from '@/store/settingsSlice';
+import {
+  selectArabicFont,
+  selectArabicFontSize,
+  selectWordTapShowsTooltip,
+  setWordTapShowsTooltip,
+} from '@/store/settingsSlice';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 const FONT_DISPLAY_NAMES: Record<ArabicFontName, string> = {
   'NotoSansArabic-Regular': 'Noto Sans',
@@ -27,23 +32,17 @@ const FONT_DISPLAY_NAMES: Record<ArabicFontName, string> = {
 export const ReadingSection = memo(() => {
   const dispatch = useAppDispatch();
 
-  // Through the resolvers, not the raw fields: an unknown persisted font or an
+  // Through the selectors, not the raw fields: an unknown persisted font or an
   // out-of-range size would otherwise print here as something the picker can't
   // show as selected.
-  const currentArabicFont = useAppSelectorShallow(state =>
-    resolveArabicFont(state.settings.arabicFont),
-  );
-  const currentArabicFontSize = useAppSelectorShallow(state =>
-    clampArabicFontSize(state.settings.arabicFontSize),
-  );
-  const wordTapShowsTooltip = useAppSelectorShallow(
-    state => state.settings.wordTapShowsTooltip ?? false,
-  );
+  const currentArabicFont = useAppSelectorShallow(selectArabicFont);
+  const currentArabicFontSize = useAppSelectorShallow(selectArabicFontSize);
+  const wordTapShowsTooltip = useAppSelectorShallow(selectWordTapShowsTooltip);
 
-  const arabicTextValue = STRINGS.ARABIC_TEXT_VALUE.replace(
-    '{font}',
-    FONT_DISPLAY_NAMES[currentArabicFont],
-  ).replace('{size}', String(currentArabicFontSize));
+  const arabicTextValue = fillTemplate(STRINGS.ARABIC_TEXT_VALUE, {
+    font: FONT_DISPLAY_NAMES[currentArabicFont],
+    size: currentArabicFontSize,
+  });
 
   const handleFontPress = useCallback(() => {
     router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR);

@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { AppState, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 
@@ -18,12 +17,14 @@ import { useArticleWordInteractions } from '@/hooks/articles/useArticleWordInter
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAppSelectorShallow } from '@/store/hooks';
+import { selectWordTapShowsTooltip } from '@/store/settingsSlice';
 import type { ArticleId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import { ToastType } from '@/types/enums';
 import { stopNonPlaylistAudioSafely } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
+import { dismissOrReplace } from '@/utils/sheetNavigation';
 
 export interface UseArticleScreenOptions {
   id: string;
@@ -68,7 +69,6 @@ export function useArticleScreen({
     refetchStudyWords,
     isLoadingStudyWords,
     isInReadingList,
-    refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
 
   // Track article viewed (once per article load)
@@ -86,16 +86,13 @@ export function useArticleScreen({
   }, [article]);
 
   // Article mutations - using focused hooks directly
-  const { handleToggleReadingList } = useReadingListMutations(refetchReadingListStatus);
+  const { handleToggleReadingList } = useReadingListMutations();
   const { handleRootPress } = useStudyWordMutations(async () => {
     await refetchStudyWords();
   });
 
   // Reading preference: default is tap-to-open-card; opt-in tooltip-first.
-  // Guard for existing installs whose persisted settings predate this field.
-  const showTooltipFirst = useAppSelectorShallow(
-    state => state.settings.wordTapShowsTooltip ?? false,
-  );
+  const showTooltipFirst = useAppSelectorShallow(selectWordTapShowsTooltip);
 
   // Word interactions (tooltips, modal, study state)
   const {
@@ -144,12 +141,9 @@ export function useArticleScreen({
       void handleError(error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO_ON_CLOSE });
     }
 
-    // Dismiss the modal screen, or navigate to library home if not dismissible
-    if (router.canDismiss()) {
-      router.dismiss();
-    } else {
-      router.push(ROUTE_PATHS.EXPLORE_TAB);
-    }
+    // Dismiss the modal screen, or land on library home when it is the only
+    // screen (a cold deep link into the reader)
+    dismissOrReplace(ROUTE_PATHS.EXPLORE_TAB);
   }, []);
 
   // Reading progress

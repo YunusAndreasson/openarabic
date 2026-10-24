@@ -27,6 +27,12 @@
     // and the full run is only ~11s.
     "incremental": false
   },
-  "include": ["__tests__/**/*.ts", "__tests__/**/*.tsx", "types/**/*.d.ts", "expo-env.d.ts"],
+  "include": [
+    "__tests__/**/*.ts",
+    "__tests__/**/*.tsx",
+    "types/**/*.d.ts",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
   "exclude": []
 }

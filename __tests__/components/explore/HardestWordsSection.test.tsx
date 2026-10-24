@@ -189,6 +189,6 @@ describe('HardestWordsSection', () => {
     expect(mockPrefetch).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: ['root-enrichment', 9] }),
     );
-    expect(mockPush).toHaveBeenCalledWith('/word-detail?rootId=9');
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/word-detail', params: { rootId: 9 } });
   });
 });

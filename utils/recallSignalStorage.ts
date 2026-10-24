@@ -1,7 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-import type { RecentRecall } from '@/utils/newWordPacing';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
+import { createJsonStore } from '@/utils/createJsonStore';
+import type { RecentRecall } from '@/utils/newWordPacing';
 
 /**
  * Local, per-device record of recent realised recall, used to drive adaptive
@@ -17,7 +16,6 @@ import { STORAGE_KEYS } from '@/constants/storageKeys';
  *   (full ceiling), the safe default.
  */
 
-const RECENT_RECALL_KEY = STORAGE_KEYS.RECENT_RECALL_SESSIONS;
 /** Rolling window: the most recent N sessions feed the recall estimate. */
 const MAX_SESSIONS = 10;
 
@@ -27,42 +25,38 @@ interface RecallSessionEntry {
   at: number;
 }
 
-async function readSessions(): Promise<RecallSessionEntry[]> {
-  try {
-    const raw = await AsyncStorage.getItem(RECENT_RECALL_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (entry): entry is RecallSessionEntry =>
-        entry != null &&
-        typeof entry === 'object' &&
-        typeof (entry as RecallSessionEntry).known === 'number' &&
-        typeof (entry as RecallSessionEntry).unknown === 'number' &&
-        typeof (entry as RecallSessionEntry).at === 'number',
-    );
-  } catch {
-    return [];
-  }
-}
+const isRecallSessionEntry = (entry: unknown): entry is RecallSessionEntry =>
+  typeof entry === 'object' &&
+  entry !== null &&
+  'known' in entry &&
+  typeof entry.known === 'number' &&
+  'unknown' in entry &&
+  typeof entry.unknown === 'number' &&
+  'at' in entry &&
+  typeof entry.at === 'number';
+
+// Best-effort and silent: a failed read or write falls back to "warming-up".
+const sessionsStore = createJsonStore<RecallSessionEntry[]>({
+  key: STORAGE_KEYS.RECENT_RECALL_SESSIONS,
+  decode: raw => (Array.isArray(raw) ? raw.filter(isRecallSessionEntry) : null),
+  empty: () => [],
+  onReadError: () => [],
+  encode: sessions => sessions.slice(-MAX_SESSIONS),
+  report: false,
+});
 
 /** Record a finished session's first-attempt tally into the rolling window. */
 export async function appendSession(known: number, unknown: number): Promise<void> {
   // Nothing graded → nothing to learn from; don't dilute the window.
   if (known + unknown <= 0) return;
 
-  try {
-    const sessions = await readSessions();
-    sessions.push({ known, unknown, at: Date.now() });
-    await AsyncStorage.setItem(RECENT_RECALL_KEY, JSON.stringify(sessions.slice(-MAX_SESSIONS)));
-  } catch {
-    // Best-effort; pacing falls back to "warming-up" if this fails.
-  }
+  const sessions = await sessionsStore.read();
+  await sessionsStore.write([...sessions, { known, unknown, at: Date.now() }]);
 }
 
 /** Sum the recent window into a single recall rate + sample size. */
 export async function readRecentRecall(): Promise<RecentRecall> {
-  const sessions = await readSessions();
+  const sessions = await sessionsStore.read();
 
   let known = 0;
   let unknown = 0;

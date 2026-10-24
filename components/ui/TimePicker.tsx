@@ -10,7 +10,7 @@ import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useNativeColorScheme } from '@/hooks/theme/useThemeDetection';
 import { format24HourTime } from '@/utils/dateTimeUtils';
 
 export interface TimePickerProps {
@@ -49,7 +49,7 @@ function IosTimePicker({
   initialMinute = 0,
 }: TimePickerProps) {
   const colors = useColors();
-  const isDark = useIsDarkMode();
+  const colorScheme = useNativeColorScheme();
   const insets = useSafeAreaInsets();
 
   const initialDate = new Date();
@@ -88,7 +88,7 @@ function IosTimePicker({
             onValueChange={handleDateChange}
             style={styles.picker}
             accentColor={colors.tint}
-            themeVariant={isDark ? 'dark' : 'light'}
+            themeVariant={colorScheme}
           />
         </View>
 

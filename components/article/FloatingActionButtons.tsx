@@ -1,18 +1,13 @@
 import { GlassIconButton } from '@/components/ui';
 import { memo, startTransition, useOptimistic } from 'react';
 import { View } from 'react-native';
-// Gesture-handler Pressable, NOT react-native's. The article screen wraps its
-// whole content in an RNGH Pressable (see app/article/[id].tsx) to dismiss the
-// word tooltip on a background tap. An RNGH ancestor wins the gesture arena
-// against descendants that use the JS responder system, so these buttons —
-// close, listen, add-to-playlist — silently stopped responding to every tap.
-// RNGH children compose with it instead, which is why tapping a word kept
-// working: SkiaSentenceWords already imports Pressable from here.
-import { Pressable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+
+// Gesture-handler's Pressable, as everywhere in the reader — see ReaderPressable.
+import { ReaderPressable } from './ReaderPressable';
 
 export interface FloatingActionButtonsProps {
   isInReadingList: boolean;
@@ -49,11 +44,14 @@ export const ReaderCloseButton = ({ onClose }: ReaderCloseButtonProps) => {
   // dragging the article away), and 16px from the true screen top put Close,
   // Listen and Add-to-playlist underneath the status bar — with the swipe-down
   // exit gone too, that left no way out of an article at all.
+  //
+  // No zIndex, here or on the action row: every place this renders, it is the
+  // sibling after what it floats over, and the word sheet that must cover it
+  // sets none — a zIndex would lift these buttons over its backdrop.
   const closeButtonStyle = {
     position: 'absolute' as const,
     top: insets.top,
     left: LAYOUT.SPACING.LARGE,
-    zIndex: LAYOUT.Z_INDEX.OVERLAY,
   };
 
   return (
@@ -62,7 +60,7 @@ export const ReaderCloseButton = ({ onClose }: ReaderCloseButtonProps) => {
       hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
       icon="close"
       iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-      PressableComponent={Pressable}
+      PressableComponent={ReaderPressable}
       style={closeButtonStyle}
       onPress={onClose}
     />
@@ -92,7 +90,6 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
       position: 'absolute' as const,
       top: insets.top,
       right: LAYOUT.SPACING.LARGE,
-      zIndex: LAYOUT.Z_INDEX.OVERLAY,
       flexDirection: 'row' as const,
       gap: LAYOUT.SPACING.TINY,
     };
@@ -133,7 +130,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
               accessibilityLabel={STRINGS.ARTICLE_LISTEN_A11Y}
               icon="play"
               iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              PressableComponent={Pressable}
+              PressableComponent={ReaderPressable}
               onPress={onToggleListen}
             />
           )}
@@ -148,7 +145,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
             active={optimisticIsInReadingList}
             icon={optimisticIsInReadingList ? 'headset' : 'headset-outline'}
             iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            PressableComponent={Pressable}
+            PressableComponent={ReaderPressable}
             onPress={handleOptimisticToggle}
           />
         </View>

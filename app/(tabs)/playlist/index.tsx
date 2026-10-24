@@ -1,4 +1,5 @@
-import { ErrorState, ListSeparator, LoadingState } from '@/components/common';
+import { ListSeparator } from '@/components/common';
+import { ScreenStateHandler } from '@/components/common/ScreenStateHandler';
 import { useFocusEffect } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
@@ -8,7 +9,6 @@ import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import Animated, { FadeOut } from 'react-native-reanimated';
 
-import { ThemedView } from '@/components/primitives/ThemedView';
 import { SavedEmptyState, PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
 import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
@@ -243,88 +243,72 @@ export default function PlaylistScreen(): JSX.Element {
   // keyExtractor is a module-level constant, already stable.
   const memoizedKeyExtractor = keyExtractor;
 
-  if (shouldShowInitialLoading) {
-    return (
-      <ThemedView useSafeArea={false} style={styles.container}>
-        <LoadingState />
-      </ThemedView>
-    );
-  }
-
-  if (readingListLoadFailed) {
-    return (
-      <ThemedView useSafeArea={false} style={styles.container}>
-        <ErrorState
-          message={STRINGS.FAILED_TO_LOAD_BOOKMARKS}
-          onRetry={() => void retryReadingList()}
+  return (
+    <ScreenStateHandler
+      isLoading={shouldShowInitialLoading}
+      isError={readingListLoadFailed}
+      errorMessage={STRINGS.FAILED_TO_LOAD_BOOKMARKS}
+      onRetry={() => void retryReadingList()}
+      isEmpty={shouldShowEmpty}
+      empty={<SavedEmptyState />}
+    >
+      {editMode ? (
+        <DraggableFlatList<BookmarkItem>
+          // NOT `{...tabBarAutoHide}`. DraggableFlatList renders its inner list as
+          // `{...props}` and then sets its own `onScroll` / `scrollEventThrottle`
+          // after it, so a spread handler is dropped on the floor — the code reads
+          // as working and the tab bar simply never hides in edit mode. This is the
+          // library's supported way in.
+          onScrollOffsetChange={tabBarAutoHide.onScrollOffset}
+          onContainerLayout={({ layout }) => tabBarAutoHide.onViewportHeightChange(layout.height)}
+          data={sortedReadingList}
+          // The now-playing row is not in `data`; this is what re-renders it.
+          extraData={nowPlayingArticleId}
+          keyExtractor={memoizedKeyExtractor}
+          renderItem={renderItem}
+          onDragEnd={handleDragEnd}
+          // iOS best practice: Allow natural bounce behavior for tactile feedback
+          bounces={true}
+          alwaysBounceVertical={true}
+          overScrollMode="always"
+          // `automatic` is required for the iOS large-title collapse-on-scroll
+          // animation that the parent Stack.Screen opts into.
+          contentInsetAdjustmentBehavior="automatic"
+          showsVerticalScrollIndicator={true}
+          // The list is the route's primary scrollable — must fill the screen
+          // for UIKit to collapse the large title (per RN-Stack docs).
+          containerStyle={styles.container}
+          contentContainerStyle={listContainerStyle}
+          ItemSeparatorComponent={ItemSeparator}
+          removeClippedSubviews
+          initialNumToRender={6}
+          windowSize={7}
         />
-      </ThemedView>
-    );
-  }
-
-  if (shouldShowEmpty) {
-    return (
-      <ThemedView useSafeArea={false} style={styles.container}>
-        <SavedEmptyState />
-      </ThemedView>
-    );
-  }
-
-  return editMode ? (
-    <DraggableFlatList<BookmarkItem>
-      // NOT `{...tabBarAutoHide}`. DraggableFlatList renders its inner list as
-      // `{...props}` and then sets its own `onScroll` / `scrollEventThrottle`
-      // after it, so a spread handler is dropped on the floor — the code reads
-      // as working and the tab bar simply never hides in edit mode. This is the
-      // library's supported way in.
-      onScrollOffsetChange={tabBarAutoHide.onScrollOffset}
-      onContainerLayout={({ layout }) => tabBarAutoHide.onViewportHeightChange(layout.height)}
-      data={sortedReadingList}
-      // The now-playing row is not in `data`; this is what re-renders it.
-      extraData={nowPlayingArticleId}
-      keyExtractor={memoizedKeyExtractor}
-      renderItem={renderItem}
-      onDragEnd={handleDragEnd}
-      // iOS best practice: Allow natural bounce behavior for tactile feedback
-      bounces={true}
-      alwaysBounceVertical={true}
-      overScrollMode="always"
-      // `automatic` is required for the iOS large-title collapse-on-scroll
-      // animation that the parent Stack.Screen opts into.
-      contentInsetAdjustmentBehavior="automatic"
-      showsVerticalScrollIndicator={true}
-      // The list is the route's primary scrollable — must fill the screen
-      // for UIKit to collapse the large title (per RN-Stack docs).
-      containerStyle={styles.container}
-      contentContainerStyle={listContainerStyle}
-      ItemSeparatorComponent={ItemSeparator}
-      removeClippedSubviews
-      initialNumToRender={6}
-      windowSize={7}
-    />
-  ) : (
-    <FlashList<BookmarkItem>
-      // Brings `scrollEventThrottle: 16`, replacing the 64ms this list used to
-      // set: at 64ms a fast flick delivers only three or four samples, too
-      // coarse to tell a direction change from one long run — the tab bar
-      // stayed hidden after the user had already scrolled back up.
-      {...tabBarAutoHide}
-      data={sortedReadingList}
-      // The now-playing row is not in `data`; this is what re-renders it.
-      extraData={nowPlayingArticleId}
-      drawDistance={ITEM_HEIGHT * 3}
-      keyExtractor={memoizedKeyExtractor}
-      // iOS best practice: Allow natural bounce behavior for tactile feedback
-      bounces={true}
-      alwaysBounceVertical={true}
-      overScrollMode="always"
-      // `automatic` is required for the iOS large-title collapse-on-scroll
-      // animation that the parent Stack.Screen opts into.
-      contentInsetAdjustmentBehavior="automatic"
-      showsVerticalScrollIndicator={true}
-      contentContainerStyle={listContainerStyle}
-      ItemSeparatorComponent={ItemSeparator}
-      renderItem={renderItem}
-    />
+      ) : (
+        <FlashList<BookmarkItem>
+          // Brings `scrollEventThrottle: 16`, replacing the 64ms this list used to
+          // set: at 64ms a fast flick delivers only three or four samples, too
+          // coarse to tell a direction change from one long run — the tab bar
+          // stayed hidden after the user had already scrolled back up.
+          {...tabBarAutoHide}
+          data={sortedReadingList}
+          // The now-playing row is not in `data`; this is what re-renders it.
+          extraData={nowPlayingArticleId}
+          drawDistance={ITEM_HEIGHT * 3}
+          keyExtractor={memoizedKeyExtractor}
+          // iOS best practice: Allow natural bounce behavior for tactile feedback
+          bounces={true}
+          alwaysBounceVertical={true}
+          overScrollMode="always"
+          // `automatic` is required for the iOS large-title collapse-on-scroll
+          // animation that the parent Stack.Screen opts into.
+          contentInsetAdjustmentBehavior="automatic"
+          showsVerticalScrollIndicator={true}
+          contentContainerStyle={listContainerStyle}
+          ItemSeparatorComponent={ItemSeparator}
+          renderItem={renderItem}
+        />
+      )}
+    </ScreenStateHandler>
   );
 }

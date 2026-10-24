@@ -20,8 +20,8 @@ export { EmailLink } from './EmailLink';
 export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
 
-// `DocEffectiveDate` is used only by the two documents in ./legal, which import
-// it by direct path.
+// `DocEffectiveDate` and `DocSections` are used only by the two documents in
+// ./legal, which import them by direct path.
 export { DocCredit, DocHeading, DocLink, DocParagraph, LegalDocument } from './LegalDocument';
 
 export { ListRow } from './ListRow';

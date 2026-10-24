@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { useToast } from '@/components/providers';
-import { LAYOUT, getArabicHeroFontSize } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, getArabicHeroFontSize } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
@@ -360,11 +360,10 @@ export function WordDetailsBottomSheet({
                         : STRINGS.ADD_TO_PRACTICE
                   }
                   variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
-                  // ThemedButton fires the press haptic itself (it defaults to
-                  // 'light'); `selection` is the apt type for a toggle. This
-                  // used to be a manual selectionFeedback() on top of the
-                  // button's own, so one save buzzed twice.
-                  hapticType="selection"
+                  // ThemedButton fires the press haptic itself — its default,
+                  // `selection`, the apt type for a toggle. This used to be a
+                  // manual selectionFeedback() on top of the button's own, so
+                  // one save buzzed twice.
                   onPress={handleAddToStudy}
                   disabled={isStudyStateLoading || isToggling}
                   fullWidth
@@ -442,6 +441,6 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.LARGE,
   },
   noteText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.RELAXED,
   },
 });

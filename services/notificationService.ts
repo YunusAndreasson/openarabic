@@ -39,6 +39,7 @@
 import { Platform } from 'react-native';
 
 import type * as NotificationsModule from 'expo-notifications';
+import type { Href } from 'expo-router';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { Colors } from '@/constants/colors';
@@ -49,9 +50,11 @@ import {
 } from '@/constants/notifications';
 import type { AnyNotificationType } from '@/constants/notifications';
 import { analytics } from '@/services/analytics';
+import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { buildReminderContent, dayOfYearSeed, reminderKindForPlan } from '@/utils/notificationCopy';
-import type { PlannedNotification } from '@/utils/notificationPlanner';
+import { buildNotificationPlan, type PlannedNotification } from '@/utils/notificationPlanner';
+import type { SmartReminderMirror } from '@/utils/smartReminderPrefs';
 
 // expo-notifications is unavailable in Expo Go on Android (SDK 53+).
 // Use a guarded require so the module-level throw doesn't crash the app.
@@ -94,20 +97,7 @@ if (Notifications) {
 }
 
 let isInitialized = false;
-let notificationSubscription: { remove: () => void } | null = null;
-let responseSubscription: { remove: () => void } | null = null;
 let droppedSubscription: { remove: () => void } | null = null;
-let navigationCallback: ((path: string) => void) | null = null;
-
-// Set navigation callback from app layout
-export function setNotificationNavigationCallback(callback: (path: string) => void): void {
-  navigationCallback = callback;
-}
-
-// Clear navigation callback
-export function clearNotificationNavigationCallback(): void {
-  navigationCallback = null;
-}
 
 /** The delivered notification that last navigated — see handleNotificationResponse. */
 let lastRoutedNotificationKey: string | null = null;
@@ -122,17 +112,17 @@ let lastRoutedNotificationKey: string | null = null;
  * A press on an action button (the reminder's "Complete") acknowledges the
  * reminder and never routes, on a cold start included.
  *
- * The live listener and the cold-start path in app/_layout.tsx both come
- * through here. A launch tap can reach both, so a delivered notification that
- * already navigated is ignored: it is routed, and counted as opened, once.
- * Keyed on identifier + delivery date, because a repeating reminder reuses
- * its identifier every day.
+ * The live listener and the cold-start read in `observeNotificationResponses`
+ * both come through here. A launch tap can reach both, so a delivered
+ * notification that already navigated is ignored: it is routed, and counted as
+ * opened, once. Keyed on identifier + delivery date, because a repeating
+ * reminder reuses its identifier every day.
  *
  * @returns whether it navigated
  */
 export function handleNotificationResponse(
   response: NotificationsModule.NotificationResponse,
-  navigate: ((path: string) => void) | null,
+  navigate: ((href: Href) => void) | null,
   { coldStart = false }: { coldStart?: boolean } = {},
 ): boolean {
   if (!Notifications || !navigate) return false;
@@ -156,6 +146,41 @@ export function handleNotificationResponse(
   }
   navigate(NOTIFICATION_ROUTE_BY_TYPE[type as AnyNotificationType]);
   return true;
+}
+
+/**
+ * Route notification taps to `navigate`: the tap that launched the app, then
+ * every tap after it. Returns the unsubscribe; a no-op where the notifications
+ * module is absent (Expo Go on Android).
+ *
+ * This is Expo's documented observer pattern — the last response for a cold
+ * start plus a response listener, in one subscription — instead of a
+ * module-level navigation callback the root layout had to set and clear in
+ * separate effects.
+ */
+export function observeNotificationResponses(navigate: (href: Href) => void): () => void {
+  if (!Notifications) return () => undefined;
+
+  try {
+    const launchResponse = Notifications.getLastNotificationResponse();
+    if (launchResponse) {
+      handleNotificationResponse(launchResponse, navigate, { coldStart: true });
+      // Cleared so the next launch does not route the same tap again.
+      Notifications.clearLastNotificationResponse();
+    }
+  } catch (error) {
+    void handleError(error, {
+      showToast: false,
+      analyticsEventName: 'Cold_Start_Notification_Error',
+    });
+  }
+
+  const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+    handleNotificationResponse(response, navigate);
+  });
+  return () => {
+    subscription.remove();
+  };
 }
 
 // Initialize notifications during app startup (Expo best practice)
@@ -212,43 +237,23 @@ export async function initializeNotifications(): Promise<boolean> {
   }
 }
 
-// Set up notification listeners (Expo best practice)
+// Set up notification listeners (Expo best practice). Taps are routed by
+// observeNotificationResponses, which the root layout subscribes once it can
+// navigate.
 function setupNotificationListeners(): void {
   if (!Notifications) return;
-  // Clean up existing subscriptions before creating new ones
-  if (notificationSubscription) {
-    notificationSubscription.remove();
-  }
-  if (responseSubscription) {
-    responseSubscription.remove();
-  }
-  if (droppedSubscription) {
-    droppedSubscription.remove();
-  }
-
-  // Listen for notification received events
-  notificationSubscription = Notifications.addNotificationReceivedListener(() => {
-    // Notification received - handle silently
-  });
-
-  // Listen for notification response events (when user interacts with notification)
-  responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
-    handleNotificationResponse(response, navigationCallback);
-  });
+  // Clean up the existing subscription before creating a new one
+  droppedSubscription?.remove();
 
   // Listen for dropped notifications (Android FCM only)
   // This occurs when the notification queue overflows
   droppedSubscription = Notifications.addNotificationsDroppedListener(() => {
-    // Track dropped notifications for monitoring
-    void analytics.track(ANALYTICS_EVENTS.NOTIFICATIONS_DROPPED, {
-      platform: Platform.OS,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Also log to Sentry as a warning
+    // One report, which is also the one analytics event (handleError tracks
+    // it under analyticsEventName); it used to be tracked a second time.
     void handleError(new Error('Notifications were dropped due to queue overflow'), {
       showToast: false,
       analyticsEventName: ANALYTICS_EVENTS.NOTIFICATIONS_DROPPED,
+      analyticsProperties: { platform: Platform.OS },
       sentrySeverity: 'warning',
       sentryTags: {
         location: 'notifications',
@@ -260,18 +265,8 @@ function setupNotificationListeners(): void {
 
 // Cleanup notification listeners
 export function cleanupNotifications(): void {
-  if (notificationSubscription) {
-    notificationSubscription.remove();
-    notificationSubscription = null;
-  }
-  if (responseSubscription) {
-    responseSubscription.remove();
-    responseSubscription = null;
-  }
-  if (droppedSubscription) {
-    droppedSubscription.remove();
-    droppedSubscription = null;
-  }
+  droppedSubscription?.remove();
+  droppedSubscription = null;
 }
 
 /**
@@ -386,6 +381,27 @@ export async function syncSmartNotifications(
 }
 
 /**
+ * Build the smart-reminder plan from the word set and the reminder setting,
+ * and schedule it. The one path both schedulers take — the foreground hook and
+ * the headless background task — so they cannot drift on what the plan is
+ * built from. Never throws (see syncSmartNotifications).
+ */
+export async function syncReminderPlan(
+  words: StudyWord[],
+  prefs: SmartReminderMirror,
+  trigger: string,
+): Promise<number> {
+  const plan = buildNotificationPlan({
+    words,
+    now: new Date(),
+    preferredHour: prefs.hour,
+    preferredMinute: prefs.minute,
+    lastSessionCompletedAt: prefs.lastSessionCompletedAt,
+  });
+  return syncSmartNotifications(plan, trigger);
+}
+
+/**
  * Dismiss already-delivered smart reminders from the notification tray —
  * called when the app comes to the foreground so stale counts never linger.
  */
@@ -455,79 +471,64 @@ export async function setAppBadgeCount(count: number): Promise<boolean> {
 export type NotificationPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'unavailable';
 
 /**
+ * One reading of a permission response, for the check and the request alike —
+ * the same mapping used to be written out twice, and had drifted into a
+ * `default` branch no response could reach.
+ *
+ * iOS answers in `ios.status`: PROVISIONAL counts as granted (quiet delivery
+ * is enough for a reminder), EPHEMERAL (App Clips) as denied. Android has no
+ * 'undetermined': a never-asked app reports denied with canAskAgain true, so
+ * that combination maps to 'undetermined' (askable); only denied +
+ * !canAskAgain is a real, final denial.
+ */
+function toPermissionStatus(
+  notifications: NonNullable<typeof Notifications>,
+  { status, ios, canAskAgain }: NotificationsModule.NotificationPermissionsStatus,
+): Exclude<NotificationPermissionStatus, 'unavailable'> {
+  if (Platform.OS === 'ios' && ios) {
+    switch (ios.status) {
+      case notifications.IosAuthorizationStatus.AUTHORIZED:
+      case notifications.IosAuthorizationStatus.PROVISIONAL:
+        return 'granted';
+      case notifications.IosAuthorizationStatus.DENIED:
+      case notifications.IosAuthorizationStatus.EPHEMERAL:
+        return 'denied';
+      case notifications.IosAuthorizationStatus.NOT_DETERMINED:
+        return 'undetermined';
+    }
+  }
+
+  if (status === 'granted') return 'granted';
+  if (status === 'denied') return canAskAgain ? 'undetermined' : 'denied';
+  return 'undetermined';
+}
+
+/**
  * Check-only permission status — never triggers the OS dialog.
  * 'unavailable' means the notifications module itself is absent (Expo Go Android).
- * Android has no 'undetermined': a never-asked app reports denied with
- * canAskAgain true, so that combination maps to 'undetermined' (askable);
- * only denied + !canAskAgain is a real, final denial.
  */
 export async function getPermissionStatus(): Promise<NotificationPermissionStatus> {
   if (!Notifications) return 'unavailable';
   try {
-    const { status, ios, canAskAgain } = await Notifications.getPermissionsAsync();
-
-    if (Platform.OS === 'ios' && ios) {
-      switch (ios.status) {
-        case Notifications.IosAuthorizationStatus.AUTHORIZED:
-        case Notifications.IosAuthorizationStatus.PROVISIONAL:
-          return 'granted';
-        case Notifications.IosAuthorizationStatus.DENIED:
-        case Notifications.IosAuthorizationStatus.EPHEMERAL:
-          return 'denied';
-        case Notifications.IosAuthorizationStatus.NOT_DETERMINED:
-          return 'undetermined';
-      }
-    }
-
-    if (status === 'granted') return 'granted';
-    if (status === 'denied') return canAskAgain ? 'undetermined' : 'denied';
-    return 'undetermined';
+    return toPermissionStatus(Notifications, await Notifications.getPermissionsAsync());
   } catch (error) {
     void handleError(error, { showToast: false });
     return 'unavailable';
   }
 }
 
+/**
+ * Whether reminders may be delivered, asking the OS only when the answer is
+ * still open. A granted or final answer is returned as it stands (Expo best
+ * practice: check before requesting); an undetermined one shows the dialog.
+ */
 export async function ensurePermissions(): Promise<boolean> {
   if (!Notifications) return false;
   try {
-    // First check current permissions (more efficient than always requesting)
-    const existing = await Notifications.getPermissionsAsync();
-    if (existing.status === 'granted') {
-      return true;
-    }
+    const current = toPermissionStatus(Notifications, await Notifications.getPermissionsAsync());
+    if (current !== 'undetermined') return current === 'granted';
 
-    // Check iOS-specific authorization status
-    if (Platform.OS === 'ios' && existing.ios) {
-      const iosStatus = existing.ios.status;
-
-      // Handle iOS-specific statuses
-      switch (iosStatus) {
-        case Notifications.IosAuthorizationStatus.PROVISIONAL:
-          // User has provisional authorization - quiet notifications in notification center
-          // This is acceptable for our use case
-          return true;
-
-        case Notifications.IosAuthorizationStatus.EPHEMERAL:
-          // App Clips only - very limited, treat as not granted
-          return false;
-
-        case Notifications.IosAuthorizationStatus.DENIED:
-          // Explicitly denied - don't request again
-          return false;
-
-        case Notifications.IosAuthorizationStatus.AUTHORIZED:
-          // Fully authorized
-          return true;
-
-        case Notifications.IosAuthorizationStatus.NOT_DETERMINED:
-          // Fall through to request permissions
-          break;
-      }
-    }
-
-    // Only request if not already granted (Expo best practice)
-    const request = await Notifications.requestPermissionsAsync({
+    const requested = await Notifications.requestPermissionsAsync({
       ios: {
         allowAlert: true,
         allowBadge: true,
@@ -540,26 +541,7 @@ export async function ensurePermissions(): Promise<boolean> {
       // is a single yes/no permission), so the key is omitted entirely.
     });
 
-    // Handle different permission states properly
-    switch (request.status) {
-      case 'granted':
-        return true;
-      case 'denied':
-        // User explicitly denied - respect their choice
-        return false;
-      case 'undetermined':
-        // User dismissed dialog - don't keep asking
-        return false;
-      default:
-        // Check iOS status again after request
-        if (Platform.OS === 'ios' && request.ios) {
-          return (
-            request.ios.status === Notifications.IosAuthorizationStatus.AUTHORIZED ||
-            request.ios.status === Notifications.IosAuthorizationStatus.PROVISIONAL
-          );
-        }
-        return false;
-    }
+    return toPermissionStatus(Notifications, requested) === 'granted';
   } catch (error) {
     void handleError(error, {
       showToast: false,

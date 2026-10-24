@@ -3,63 +3,11 @@ import * as Sentry from '@sentry/react-native';
 import { DEFAULT_TOAST_DURATION } from '@/constants/animation';
 import { analytics } from '@/services/analytics';
 import { ToastType } from '@/types/enums';
+import { toError } from '@/utils/toError';
 
-/** Upper bound on a synthesised error message, so one can never carry a payload. */
-const MAX_THROWN_VALUE_LENGTH = 200;
-
-/**
- * Describe a thrown non-Error WITHOUT serialising its contents.
- *
- * Serialising it is actively harmful: a rejected Supabase query once threw the
- * whole articles array, and `JSON.stringify`-ing it produced a ~100 KB "message".
- * Sentry then grouped on that text, so every distinct payload opened a BRAND NEW
- * issue whose title and stack frames were article JSON. Shape-only descriptions
- * keep such errors groupable and the payload out of the message.
- */
-function describeThrownValue(value: unknown): string {
-  if (typeof value === 'string') return value.slice(0, MAX_THROWN_VALUE_LENGTH);
-  if (value === null) return 'Non-Error thrown: null';
-  if (value === undefined) return 'Non-Error thrown: undefined';
-  if (Array.isArray(value)) return `Non-Error thrown: Array(${value.length})`;
-  if (typeof value === 'object') {
-    return `Non-Error thrown: ${value.constructor?.name ?? 'Object'}`;
-  }
-  // A function stringifies to its whole source text — exactly the unbounded
-  // payload this helper exists to keep out of Sentry titles.
-  if (typeof value === 'function') {
-    return `Non-Error thrown: function ${value.name || 'anonymous'}`;
-  }
-  // Remaining primitives, narrowed explicitly so nothing can reach String()
-  // that would render as "[object Object]".
-  if (typeof value === 'number' || typeof value === 'bigint' || typeof value === 'boolean') {
-    return `Non-Error thrown: ${typeof value} ${String(value).slice(0, MAX_THROWN_VALUE_LENGTH)}`;
-  }
-  if (typeof value === 'symbol') {
-    return `Non-Error thrown: symbol ${value.toString().slice(0, MAX_THROWN_VALUE_LENGTH)}`;
-  }
-  return `Non-Error thrown: ${typeof value}`;
-}
-
-/**
- * Safely converts an unknown error to an Error object.
- * Useful for catch blocks where the error type is unknown.
- *
- * A plain string is treated as a deliberate message (many call sites pass one);
- * anything else non-Error is described by shape — see describeThrownValue.
- */
-export function toError(error: unknown): Error {
-  if (error instanceof Error) return error;
-  // Handle plain objects with a message property (e.g. Supabase error objects)
-  if (
-    error &&
-    typeof error === 'object' &&
-    'message' in error &&
-    typeof error.message === 'string'
-  ) {
-    return new Error(error.message.slice(0, MAX_THROWN_VALUE_LENGTH));
-  }
-  return new Error(describeThrownValue(error));
-}
+// Re-exported so the many `import { toError } from '@/utils/errorHandling'`
+// sites keep working; leaf modules import '@/utils/toError' directly.
+export { toError };
 
 /**
  * Leave a breadcrumb on the Sentry trail.
@@ -95,15 +43,28 @@ export const voiceBreadcrumb = (
   level?: Sentry.Breadcrumb['level'],
 ): void => breadcrumb('voice', message, data, level);
 
-// Store toast handler globally - updated to support types
-let globalToastHandler: ((message: string, duration?: number, type?: ToastType) => void) | null =
-  null;
+type ToastHandler = (message: string, duration?: number, type?: ToastType) => void;
 
-// Function to set the toast handler (call this in your ToastProvider)
-export const setGlobalToastHandler = (
-  handler: (message: string, duration?: number, type?: ToastType) => void,
-): void => {
+// Store toast handler globally - updated to support types
+let globalToastHandler: ToastHandler | null = null;
+
+/**
+ * Install the handler that global toasts (handleError, showSuccessToast) are
+ * shown through; `null` clears it, and toasts are dropped until one is set.
+ *
+ * Returns the restore: it reinstates the handler that was current before this
+ * call, but only while this one still is. Providers nest — the article reader
+ * mounts its own ToastProvider so its toasts draw above the reader's modal — and
+ * clearing the slot when that inner one unmounted left the app with no handler
+ * at all: after the first article closed, every error and success toast was
+ * silently dropped for the rest of the session.
+ */
+export const setGlobalToastHandler = (handler: ToastHandler | null): (() => void) => {
+  const previous = globalToastHandler;
   globalToastHandler = handler;
+  return () => {
+    if (globalToastHandler === handler) globalToastHandler = previous;
+  };
 };
 
 /**

@@ -1,4 +1,3 @@
-import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 import { memo } from 'react';
 import { StyleSheet } from 'react-native';
@@ -16,12 +15,6 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
       contentContainerStyle={styles.scrollContent}
       scrollViewProps={KEYBOARD_AWARE_SCROLL_PROPS}
     >
-      <Stack.Screen
-        options={{
-          headerShown: false,
-          animation: 'fade',
-        }}
-      />
       <Auth />
     </ThemedView>
   );

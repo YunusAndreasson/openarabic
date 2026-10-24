@@ -5,9 +5,16 @@
   },
   "build": {
     "base": {
-      "node": "22.23.1"
+      "env": {
+        "NODE_PATH": "/Users/expo/workingdir/build",
+        "SENTRY_ORG": "openarabic",
+        "SENTRY_PROJECT": "react-native",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "false",
+        "SENTRY_ALLOW_FAILURE": "true"
+      }
     },
     "development": {
+      "extends": "base",
       "developmentClient": true,
       "corepack": true,
       "distribution": "internal",
@@ -15,32 +22,20 @@
       "environment": "development",
       "ios": {
         "simulator": true
-      },
-      "env": {
-        "NODE_PATH": "/Users/expo/workingdir/build",
-        "SENTRY_ORG": "openarabic",
-        "SENTRY_PROJECT": "react-native",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "false",
-        "SENTRY_ALLOW_FAILURE": "true"
       }
     },
     "preview": {
+      "extends": "base",
       "corepack": true,
       "distribution": "internal",
       "channel": "preview",
       "environment": "preview",
       "ios": {
         "resourceClass": "medium"
-      },
-      "env": {
-        "NODE_PATH": "/Users/expo/workingdir/build",
-        "SENTRY_ORG": "openarabic",
-        "SENTRY_PROJECT": "react-native",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "false",
-        "SENTRY_ALLOW_FAILURE": "true"
       }
     },
     "production": {
+      "extends": "base",
       "node": "22.23.1",
       "channel": "production",
       "environment": "production",
@@ -50,13 +45,6 @@
       "android": {
         "resourceClass": "large",
         "buildType": "app-bundle"
-      },
-      "env": {
-        "NODE_PATH": "/Users/expo/workingdir/build",
-        "SENTRY_ORG": "openarabic",
-        "SENTRY_PROJECT": "react-native",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "false",
-        "SENTRY_ALLOW_FAILURE": "true"
       }
     }
   },

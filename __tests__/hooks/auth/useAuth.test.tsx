@@ -8,7 +8,7 @@
  */
 
 import { renderHook } from '@testing-library/react-native';
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, it, expect } from '@jest/globals';
 
 import { AuthContext } from '@/components/providers/AuthProvider';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -25,8 +25,6 @@ describe('useAuth', () => {
           session: null,
           user: null,
           isLoading: false,
-          authError: null,
-          refreshSession: jest.fn(async () => null),
           isAuthenticated: false,
         }}
       >

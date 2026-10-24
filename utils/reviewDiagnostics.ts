@@ -14,6 +14,7 @@
  * so a TestFlight build can produce the same timeline). When off, `mark()` is a
  * single boolean check.
  */
+import { createExternalStore } from '@/utils/createExternalStore';
 
 /** One recorded step in the pipeline. */
 export interface ReviewDiagEntry {
@@ -88,21 +89,33 @@ export interface ReviewDiagSnapshot {
 /** How many trailing entries the snapshot carries for the HUD. */
 const SNAPSHOT_TAIL = 4;
 
-const listeners = new Set<() => void>();
 let version = 0;
-let snapshot: ReviewDiagSnapshot = { version: 0, counters: { ...EMPTY_COUNTERS }, tail: [] };
+/** Whether anything subscribes — snapshot work is skipped while nothing does. */
+let watched = false;
+
+function currentSnapshot(): ReviewDiagSnapshot {
+  return { version, counters: { ...counters }, tail: entries.slice(-SNAPSHOT_TAIL) };
+}
+
+const snapshotStore = createExternalStore<ReviewDiagSnapshot>(
+  { version: 0, counters: { ...EMPTY_COUNTERS }, tail: [] },
+  {
+    // First subscriber: publish what has already accumulated, since notify()
+    // skips snapshot work while nobody is watching.
+    onFirstSubscribe: () => {
+      watched = true;
+      snapshotStore.set(currentSnapshot());
+    },
+    onLastUnsubscribe: () => {
+      watched = false;
+    },
+  },
+);
 
 function notify(): void {
   version += 1;
-  if (listeners.size === 0) return;
-  snapshot = { version, counters: { ...counters }, tail: entries.slice(-SNAPSHOT_TAIL) };
-  listeners.forEach(listener => {
-    try {
-      listener();
-    } catch {
-      // A broken HUD subscriber must never break the pipeline it is watching
-    }
-  });
+  if (!watched) return;
+  snapshotStore.set(currentSnapshot());
 }
 
 /** Turn the timeline on/off. Off is the default outside dev. */
@@ -203,18 +216,18 @@ export function recordPromptToMic(ms: number): void {
 
 /** useSyncExternalStore snapshot getter — stable between notifications. */
 export function getDiagSnapshot(): ReviewDiagSnapshot {
-  return snapshot;
+  return snapshotStore.get();
 }
 
 /** Subscribe to timeline changes (the HUD re-renders off this). */
 export function subscribeDiag(listener: () => void): () => void {
-  listeners.add(listener);
-  // First subscriber: publish what has already accumulated, since notify()
-  // skips snapshot work while nobody is watching.
-  snapshot = { version, counters: { ...counters }, tail: entries.slice(-SNAPSHOT_TAIL) };
-  return () => {
-    listeners.delete(listener);
-  };
+  return snapshotStore.subscribe(() => {
+    try {
+      listener();
+    } catch {
+      // A broken HUD subscriber must never break the pipeline it is watching
+    }
+  });
 }
 
 function safeStringify(data: Record<string, unknown>): string {

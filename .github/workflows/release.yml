@@ -51,10 +51,22 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      # The typed-routes declarations (app.json `typedRoutes`) live in
+      # .expo/types, which the dev server writes and git ignores. Without them
+      # every Href typechecks as a plain string and no route is checked.
+      - name: Generate typed routes
+        run: npx expo customize tsconfig.json
+
       - name: Run validation
         run: yarn verify
 
-      # === EAS Build and Update Steps (run before version bumping) ===
+      # === EAS setup (before version bumping) ===
+      # OTA updates are not published here: they go out through `yarn ota*` only.
+      #
+      # `eas build` runs on EAS's workers, which take their environment from the
+      # profile's `environment` (EAS environment variables) and eas.json `env`,
+      # never from this runner, so the steps below pass only what the local
+      # eas CLI itself reads.
       - name: Setup Expo and EAS CLI
         uses: expo/expo-github-action@v9
         with:
@@ -67,21 +79,6 @@ jobs:
           echo "$GOOGLE_SERVICE_ACCOUNT_KEY" > google-service-account.json
         env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-
-      - name: Verify build dependencies
-        run: |
-          # Check that all required build dependencies are available
-          yarn info --name-only | grep -E "(expo|@babel|metro)" || true
-          echo "✅ Build dependencies verified"
-
-          # Note: mixpanel-react-native expects async-storage ^1.21.0 but we use ^2.2.0
-          # This is a peer dependency warning but doesn't break the build
-          echo "⚠️  Peer dependency warning expected: mixpanel-react-native vs async-storage versions"
-
-      - name: Publish update to Expo Go
-        run: |
-          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          eas update --branch $CURRENT_BRANCH --environment production --auto
 
       # === Version Bumping (before builds so they use new version) ===
       - name: Bump version
@@ -112,24 +109,6 @@ jobs:
         run: eas build --platform android --profile production --non-interactive --clear-cache
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
-          EXPO_PUBLIC_UPDATES_ENABLED: 'true'
-          EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY: 'ON_LOAD'
-          EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: '0'
-          NODE_PATH: '/github/workspace'
-          # Sentry configuration
-          EXPO_PUBLIC_SENTRY_DSN: ${{ secrets.EXPO_PUBLIC_SENTRY_DSN }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: 'openarabic'
-          SENTRY_PROJECT: 'react-native'
-          SENTRY_DISABLE_AUTO_UPLOAD: 'false'
-          SENTRY_ALLOW_FAILURE: 'true'
-          # Analytics
-          EXPO_PUBLIC_MIXPANEL_TOKEN: ${{ secrets.EXPO_PUBLIC_MIXPANEL_TOKEN }}
-          # Google Sign-In
-          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
-          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID }}
-          # Apple Sign-In (Android)
-          EXPO_PUBLIC_APPLE_SERVICE_ID: ${{ secrets.EXPO_PUBLIC_APPLE_SERVICE_ID }}
 
       # === Submit Android to Google Play Store (Internal Testing) ===
       - name: Submit Android to Google Play (Internal)
@@ -142,13 +121,6 @@ jobs:
         env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
-          EXPO_PUBLIC_UPDATES_ENABLED: 'true'
-          EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY: 'ON_LOAD'
-          EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: '0'
-          NODE_PATH: '/github/workspace'
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ALLOW_FAILURE: true
-          SENTRY_DISABLE_AUTO_UPLOAD: false
 
       - name: Build for iOS
         if: |
@@ -160,22 +132,6 @@ jobs:
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           EXPO_NO_CAPABILITY_SYNC: '1'
-          EXPO_PUBLIC_UPDATES_ENABLED: 'true'
-          EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY: 'ON_LOAD'
-          EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: '0'
-          NODE_PATH: '/github/workspace'
-          # Sentry configuration
-          EXPO_PUBLIC_SENTRY_DSN: ${{ secrets.EXPO_PUBLIC_SENTRY_DSN }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: 'openarabic'
-          SENTRY_PROJECT: 'react-native'
-          SENTRY_DISABLE_AUTO_UPLOAD: 'false'
-          SENTRY_ALLOW_FAILURE: 'true'
-          # Analytics
-          EXPO_PUBLIC_MIXPANEL_TOKEN: ${{ secrets.EXPO_PUBLIC_MIXPANEL_TOKEN }}
-          # Google Sign-In
-          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
-          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID }}
 
       # === Submit iOS to TestFlight ===
       - name: Submit iOS to TestFlight
@@ -189,10 +145,6 @@ jobs:
           eas submit --platform ios --profile production --non-interactive --latest
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
-          EXPO_PUBLIC_UPDATES_ENABLED: 'true'
-          EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY: 'ON_LOAD'
-          EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: '0'
-          NODE_PATH: '/github/workspace'
 
       # === GitHub Release Creation (after successful build) ===
       - name: Create GitHub Release

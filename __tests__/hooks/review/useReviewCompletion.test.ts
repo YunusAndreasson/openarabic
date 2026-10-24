@@ -11,19 +11,6 @@ import { describe, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
 
 // Mock dependencies BEFORE imports
-jest.mock('@tanstack/react-query', () => ({
-  useQueryClient: jest.fn((..._args: unknown[]) => ({
-    invalidateQueries: jest.fn(),
-    setQueryData: jest.fn(),
-  })),
-}));
-
-jest.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: jest.fn((..._args: unknown[]) => ({
-    user: { id: 'user-123' },
-  })),
-}));
-
 jest.mock('@/constants/queries', () => ({
   fsrsQueries: {
     lastCompletedAtKey: jest.fn((userId: string) => ['last-completed', userId]),
@@ -71,8 +58,6 @@ jest.mock('@/utils/haptics', () => ({
 }));
 
 import { useReviewCompletion } from '@/hooks/review/useReviewCompletion';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { useQueryClient } from '@tanstack/react-query';
 import type { SessionMetrics } from '@/types/review.types';
 import { analytics } from '@/services/analytics';
 import { metaEvents } from '@/services/metaEvents';
@@ -81,20 +66,10 @@ import { appendSession } from '@/utils/recallSignalStorage';
 import { recordStudyDay } from '@/utils/studyDayLedger';
 import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
 
-const mockUseAuth = jest.mocked(useAuth);
-const mockUseQueryClient = jest.mocked(useQueryClient);
-
 describe('useReviewCompletion', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-
-    // Reset mocks after clearAllMocks
-    mockUseAuth.mockReturnValue({ user: { id: 'user-123' } } as never);
-    mockUseQueryClient.mockReturnValue({
-      invalidateQueries: jest.fn(),
-      setQueryData: jest.fn(),
-    } as never);
   });
 
   afterEach(() => {
@@ -153,6 +128,21 @@ describe('useReviewCompletion', () => {
       expect(recordStudyDay).toHaveBeenCalledTimes(1);
       expect(recordSessionCompleted).toHaveBeenCalledTimes(1);
       expect(metaEvents.logPracticeSessionComplete).toHaveBeenCalledWith(10);
+    });
+
+    // The caches belong to useReview's finalizeSession, which refreshes them
+    // once per session after the writes settle. Refreshing them here too ran
+    // every refresh twice on a natural finish, the first racing the last write.
+    test('leaves the query caches to the session finalize', async () => {
+      renderHook(() => useReviewCompletion(mockSessionMetrics));
+
+      await act(async () => {
+        await jest.runAllTimersAsync();
+      });
+
+      expect(fsrsQueries.invalidateAll).not.toHaveBeenCalled();
+      expect(studyStreakQueries.invalidateAll).not.toHaveBeenCalled();
+      expect(fsrsQueries.lastCompletedAtKey).not.toHaveBeenCalled();
     });
   });
 });

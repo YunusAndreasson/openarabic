@@ -10,18 +10,21 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAudioCache } from '@/hooks/audio/useAudioCache';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useReminders } from '@/hooks/notifications/useReminders';
 import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { ensurePermissions } from '@/services/notificationService';
 import { ReadingProgressService } from '@/services/readingProgress';
 import { supabase } from '@/services/supabase';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { reminderClockSet, remindersToggled } from '@/store/settingsSlice';
 import { ToastType } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
+import { format24HourTime } from '@/utils/dateTimeUtils';
 import { handleError } from '@/utils/errorHandling';
+import { fillTemplate } from '@/utils/fillTemplate';
 import { lightFeedback } from '@/utils/haptics';
 import { recordAccepted } from '@/utils/notificationPromptStorage';
-import { clearPersistedQueryCache } from '@/utils/queryPersistence';
+import { flushPersistedQueryCache } from '@/utils/queryPersistence';
 
 /** iOS never re-prompts, so a refused reminder toggle can only point at Settings. */
 function showEnableNotificationsAlert(): void {
@@ -32,7 +35,8 @@ function showEnableNotificationsAlert(): void {
 }
 
 export const useAccountScreen = () => {
-  const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();
+  const dispatch = useAppDispatch();
+  const reminderTime = useAppSelector(state => state.settings.reminderTime);
   const { clearCache, getCacheSize } = useAudioCache();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -65,7 +69,7 @@ export const useAccountScreen = () => {
 
     Alert.alert(
       STRINGS.CLEAR_CACHE,
-      STRINGS.CLEAR_CACHE_CONFIRMATION.replace('{size}', formatBytes(cacheSize)),
+      fillTemplate(STRINGS.CLEAR_CACHE_CONFIRMATION, { size: formatBytes(cacheSize) }),
       [
         {
           text: STRINGS.CANCEL,
@@ -81,11 +85,16 @@ export const useAccountScreen = () => {
                 await clearCache();
                 setCacheSize(0);
 
-                // Clear React Query in-memory cache
-                queryClient.clear();
+                // Drop every cached query — but only the queries. A paused
+                // mutation is a write the server has not seen yet (an offline
+                // review grade, a word saved on the train), and `clear()`
+                // empties the mutation cache too, discarding it for good.
+                queryClient.removeQueries();
 
-                // Clear React Query persisted AsyncStorage cache
-                await clearPersistedQueryCache();
+                // Overwrite the persisted copy with what is left: no queries,
+                // and those pending writes, so they still resume after a
+                // restart.
+                await flushPersistedQueryCache(queryClient);
 
                 // No success dialog: the row's own size line already turns
                 // into "Nothing to clear", which is the confirmation.
@@ -140,7 +149,7 @@ export const useAccountScreen = () => {
 
   const handleResetReadingProgress = () => {
     if (!user?.id) {
-      Alert.alert(STRINGS.ERROR, 'No user ID available');
+      Alert.alert(STRINGS.ERROR, STRINGS.NO_USER_ID_AVAILABLE);
       return;
     }
 
@@ -163,19 +172,20 @@ export const useAccountScreen = () => {
                 // Delete all reading progress from database (or reset to 0 if RLS blocks DELETE)
                 await ReadingProgressService.deleteAllProgress(user.id);
 
-                // Completely remove all reading progress queries from cache
-                // Using removeQueries instead of invalidate to force complete cache clear
-                queryClient.removeQueries({
-                  queryKey: readingProgressQueries.bulk(user.id).queryKey,
-                });
-                queryClient.removeQueries({
-                  queryKey: readingProgressQueries.readingList(user.id).queryKey,
-                });
-
-                // Refetch to populate cache with fresh (empty or reset) data
-                await queryClient.refetchQueries({
-                  queryKey: readingProgressQueries.bulk(user.id).queryKey,
-                });
+                // Reset, not invalidate: the old positions must not stay on
+                // screen while the refetch is in flight, so the entries go back
+                // to their initial state and every mounted one refetches the
+                // fresh (empty or reset) rows. Removing them and then calling
+                // refetchQueries — as this did — refetched nothing: refetch only
+                // touches entries that exist, and removal had just deleted them.
+                await Promise.all([
+                  queryClient.resetQueries({
+                    queryKey: readingProgressQueries.bulk(user.id).queryKey,
+                  }),
+                  queryClient.resetQueries({
+                    queryKey: readingProgressQueries.readingList(user.id).queryKey,
+                  }),
+                ]);
 
                 // A toast, not a dialog: there is nothing to answer, and the
                 // settings screen itself shows no reading position to update.
@@ -211,25 +221,18 @@ export const useAccountScreen = () => {
           showEnableNotificationsAlert();
           return;
         }
-      }
 
-      if (enabled) {
         // The user made the choice here — the completion-screen priming card
         // should never ask again.
         void recordAccepted();
       }
 
-      try {
-        const newReminderTime = { ...reminderTime, enabled };
-        await updateReminderTime(newReminderTime);
-        void analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_TOGGLED, { enabled });
-        lightFeedback();
-      } catch (error) {
-        void handleError(error, { showToast: false });
-        Alert.alert(STRINGS.ERROR, 'Could not update reminders. Please try again.');
-      }
+      // useSmartNotifications watches this setting and reschedules the plan.
+      dispatch(remindersToggled(enabled));
+      void analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_TOGGLED, { enabled });
+      lightFeedback();
     },
-    [reminderTime, updateReminderTime],
+    [dispatch],
   );
 
   const handleTimePickerOpen = useCallback(() => {
@@ -241,17 +244,11 @@ export const useAccountScreen = () => {
   }, []);
 
   const handleTimeSet = useCallback(
-    async (hour: number, minute: number) => {
-      try {
-        const newReminderTime = { ...reminderTime, hour, minute };
-        await updateReminderTime(newReminderTime);
-        lightFeedback();
-      } catch (error) {
-        void handleError(error, { showToast: false });
-        Alert.alert(STRINGS.ERROR, 'Could not update the reminder time. Please try again.');
-      }
+    (hour: number, minute: number) => {
+      dispatch(reminderClockSet({ hour, minute }));
+      lightFeedback();
     },
-    [reminderTime, updateReminderTime],
+    [dispatch],
   );
 
   const handleSupportContact = useCallback(() => {
@@ -260,7 +257,7 @@ export const useAccountScreen = () => {
 
   return {
     reminderTime,
-    formatReminderTime,
+    formatReminderTime: format24HourTime,
     showTimePicker,
     handleTimePickerOpen,
     handleTimePickerClose,

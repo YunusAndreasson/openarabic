@@ -1,7 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-import { toLocalDateString } from '@/utils/dateTimeUtils';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
+import { createJsonStore } from '@/utils/createJsonStore';
+import { toLocalDateString } from '@/utils/dateTimeUtils';
 
 /**
  * Append-only local record of the LOCAL calendar days on which the learner
@@ -35,8 +34,6 @@ import { STORAGE_KEYS } from '@/constants/storageKeys';
  *   `review_logs` table, which is a schema change and out of scope here.
  */
 
-const STUDY_DAYS_KEY = STORAGE_KEYS.STUDY_DAYS;
-
 /** `YYYY-MM-DD`, the same shape `toLocalDateString` emits. */
 const DAY_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -44,41 +41,34 @@ function isDayKey(value: unknown): value is string {
   return typeof value === 'string' && DAY_KEY_PATTERN.test(value);
 }
 
-/**
- * Every study day this device has recorded.
- *
- * Returns an empty set on any read or parse failure — the caller unions this
- * with the server-derived set, so a failure degrades to today's behaviour
- * rather than blanking the streak.
- */
-export async function readStudyDays(): Promise<Set<string>> {
-  try {
-    const raw = await AsyncStorage.getItem(STUDY_DAYS_KEY);
-    if (!raw) return new Set();
+// Best-effort and silent. A failed read is an empty set — the caller unions
+// this with the server-derived set, so a failure degrades to today's
+// behaviour rather than blanking the streak — and a missed write costs one
+// day of ledger history, which the server-derived set still covers.
+const ledgerStore = createJsonStore<Set<string>>({
+  key: STORAGE_KEYS.STUDY_DAYS,
+  decode: raw => (Array.isArray(raw) ? new Set(raw.filter(isDayKey)) : null),
+  empty: () => new Set(),
+  onReadError: () => new Set(),
+  // Stored as a sorted array, as it always has been.
+  encode: days => [...days].sort(),
+  report: false,
+});
 
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return new Set();
-
-    return new Set(parsed.filter(isDayKey));
-  } catch {
-    return new Set();
-  }
+/** Every study day this device has recorded; an empty set on any read or parse failure. */
+export function readStudyDays(): Promise<Set<string>> {
+  return ledgerStore.read();
 }
 
 /** Add `date`'s local day to the ledger. Idempotent within a day. */
 export async function recordStudyDay(date: Date = new Date()): Promise<void> {
   const key = toLocalDateString(date);
 
-  try {
-    const days = await readStudyDays();
-    if (days.has(key)) return;
+  const days = await readStudyDays();
+  if (days.has(key)) return;
 
-    days.add(key);
-    await AsyncStorage.setItem(STUDY_DAYS_KEY, JSON.stringify([...days].sort()));
-  } catch {
-    // Best-effort. A missed write costs one day of ledger history, and the
-    // server-derived set still covers the common case.
-  }
+  days.add(key);
+  await ledgerStore.write(days);
 }
 
 /**
@@ -92,23 +82,11 @@ export async function recordStudyDay(date: Date = new Date()): Promise<void> {
  */
 export async function mergeStudyDays(derived: Set<string>): Promise<Set<string>> {
   const stored = await readStudyDays();
+  const merged = stored.union(derived);
 
-  const merged = new Set(stored);
-  let added = false;
-  for (const key of derived) {
-    if (!merged.has(key)) {
-      merged.add(key);
-      added = true;
-    }
-  }
-
-  if (added) {
-    try {
-      await AsyncStorage.setItem(STUDY_DAYS_KEY, JSON.stringify([...merged].sort()));
-    } catch {
-      // The merged set is still correct for this read; only persistence failed.
-    }
-  }
+  // A failed write leaves the merged set correct for this read; only
+  // persistence failed.
+  if (merged.size > stored.size) await ledgerStore.write(merged);
 
   return merged;
 }

@@ -52,7 +52,7 @@ type ErrorConfigOptions = Partial<ServiceErrorConfig>;
  *       toastMessage: STRINGS.FAILED_TO_ADD_TO_READING_LIST,
  *     }),
  *     check: createServiceErrorConfig('reading_list', 'check', {
- *       toastMessage: STRINGS.FAILED_TO_CHECK_READING_LIST_STATUS,
+ *       toastMessage: STRINGS.FAILED_TO_ADD_TO_READING_LIST,
  *       showToast: false, // Silent check
  *     }),
  *   },
@@ -104,7 +104,7 @@ export function createServiceErrorConfig(
  *     load: { toastMessage: STRINGS.FAILED_TO_LOAD_BOOKMARKS },
  *     add: { toastMessage: STRINGS.FAILED_TO_ADD_TO_READING_LIST },
  *     remove: { toastMessage: STRINGS.FAILED_TO_REMOVE_FROM_READING_LIST },
- *     check: { toastMessage: STRINGS.FAILED_TO_CHECK_READING_LIST_STATUS, showToast: false },
+ *     check: { toastMessage: STRINGS.FAILED_TO_ADD_TO_READING_LIST, showToast: false },
  *   }),
  * };
  * ```

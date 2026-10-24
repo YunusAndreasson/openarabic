@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -11,8 +11,8 @@ import { KEYBOARD_AWARE_SCROLL_PROPS, ThemedView } from '@/components/primitives
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { PASSWORD_REQUIREMENTS } from '@/hooks/auth/useAuthForm';
 import { supabase } from '@/services/supabase';
+import { getPasswordError, NEW_PASSWORD_ACCESSIBILITY_HINT } from '@/utils/authUtils';
 import { handleError, showSuccessToast } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 
@@ -88,21 +88,9 @@ export default function ResetPasswordScreen(): JSX.Element {
   }, [router, token, type]);
 
   const validatePassword = useCallback((value: string): boolean => {
-    if (!value) {
-      setPasswordError(STRINGS.ENTER_PASSWORD);
-      return false;
-    }
-    if (value.length < PASSWORD_REQUIREMENTS.minLength) {
-      setPasswordError(
-        STRINGS.PASSWORD_USE_AT_LEAST_TEMPLATE.replace(
-          '{minLength}',
-          PASSWORD_REQUIREMENTS.minLength.toString(),
-        ),
-      );
-      return false;
-    }
-    setPasswordError('');
-    return true;
+    const error = getPasswordError(value);
+    setPasswordError(error);
+    return !error;
   }, []);
 
   const validateConfirmPassword = useCallback(
@@ -181,7 +169,7 @@ export default function ResetPasswordScreen(): JSX.Element {
         router.replace(ROUTE_PATHS.EXPLORE_TAB);
       }
     } catch (err) {
-      void handleError(err instanceof Error ? err : new Error('Password reset error'), {
+      void handleError(err, {
         toastMessage: 'Password reset failed. Please try again.',
         analyticsEventName: 'Password_Reset_Error',
         sentrySeverity: 'error',
@@ -196,12 +184,6 @@ export default function ResetPasswordScreen(): JSX.Element {
   if (!isValidSession) {
     return (
       <ThemedView useSafeArea={true} style={styles.container}>
-        <Stack.Screen
-          options={{
-            headerShown: false,
-            animation: 'fade',
-          }}
-        />
         <View style={styles.loadingContainer}>
           <ThemedText type="body">{STRINGS.RESET_PASSWORD_VERIFYING}</ThemedText>
         </View>
@@ -217,13 +199,6 @@ export default function ResetPasswordScreen(): JSX.Element {
       contentContainerStyle={styles.scrollContent}
       scrollViewProps={KEYBOARD_AWARE_SCROLL_PROPS}
     >
-      <Stack.Screen
-        options={{
-          headerShown: false,
-          animation: 'fade',
-        }}
-      />
-
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.headerContainer}>
@@ -257,7 +232,7 @@ export default function ResetPasswordScreen(): JSX.Element {
               value={password}
               testID="new-password-input"
               accessibilityLabel="New password"
-              accessibilityHint="Enter a password with at least 8 characters"
+              accessibilityHint={NEW_PASSWORD_ACCESSIBILITY_HINT}
               onBlur={handlePasswordBlur}
               onChangeText={handlePasswordChange}
               onRightIconPress={handleTogglePassword}

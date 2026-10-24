@@ -12,6 +12,8 @@
 
 import { clampRgb, converter, formatHex, type Oklch, type Rgb } from 'culori';
 
+import { clamp01 } from '@/utils/dateTimeUtils';
+
 /**
  * Convert OKLCH color to hex string for React Native
  *
@@ -61,8 +63,7 @@ const toRgb = converter('rgb');
  * @returns RGBA color string (e.g., "rgba(255,85,0,0.5)")
  */
 export function withOpacity(hex: string, opacity: number): string {
-  const validOpacity =
-    typeof opacity === 'number' && !Number.isNaN(opacity) ? Math.max(0, Math.min(1, opacity)) : 1;
+  const validOpacity = typeof opacity === 'number' && !Number.isNaN(opacity) ? clamp01(opacity) : 1;
 
   // Validate input before parsing
   if (!hex || typeof hex !== 'string') {
@@ -105,8 +106,7 @@ export function withOpacity(hex: string, opacity: number): string {
  * mixColors('#121F17', '#4EAD6D', 0.22) // → "#1E3B28"
  */
 export function mixColors(base: string, overlay: string, amount: number): string {
-  const ratio =
-    typeof amount === 'number' && !Number.isNaN(amount) ? Math.max(0, Math.min(1, amount)) : 0;
+  const ratio = typeof amount === 'number' && !Number.isNaN(amount) ? clamp01(amount) : 0;
 
   const baseRgb = toRgb(base);
   const overlayRgb = toRgb(overlay);
@@ -186,12 +186,23 @@ interface OKLCHColor {
   readonly h: number;
 }
 
-/** Type for a palette with theme variants (light/dark/sepia) */
-interface ThemedOKLCHColor {
-  readonly light: OKLCHColor;
-  readonly dark: OKLCHColor;
-  readonly sepia: OKLCHColor;
+/**
+ * `record` with `fn` applied to each value, keys (and their order) kept — typed
+ * per key, which `Object.fromEntries` is not.
+ */
+function mapValues<T extends Record<string, unknown>, R>(
+  record: T,
+  fn: (value: T[keyof T]) => R,
+): { [K in keyof T]: R } {
+  const result = {} as { [K in keyof T]: R };
+  for (const key of Object.keys(record) as (keyof T)[]) {
+    result[key] = fn(record[key]);
+  }
+  return result;
 }
+
+/** One OKLCH colour as hex. */
+const toHex = (color: OKLCHColor): string => oklchToHex(color.l, color.c, color.h);
 
 /**
  * Convert a flat OKLCH palette to hex values.
@@ -205,77 +216,26 @@ interface ThemedOKLCHColor {
 export function convertFlatPalette<T extends Record<string, OKLCHColor>>(
   palette: T,
 ): { [K in keyof T]: string } {
-  const result = {} as { [K in keyof T]: string };
-  for (const key of Object.keys(palette) as (keyof T)[]) {
-    const color = palette[key] as OKLCHColor;
-    result[key] = oklchToHex(color.l, color.c, color.h);
-  }
-  return result;
+  return mapValues(palette, toHex);
 }
 
 /**
- * Convert a themed OKLCH palette (with light/dark/sepia variants) to hex values.
- * Handles palettes like grammarOKLCH where each color has theme variants.
+ * Convert a palette nested one level deeper to hex values — each entry is
+ * itself a flat palette. Handles both nestings the theme uses:
+ *
+ * - grammarOKLCH, where each colour has light/dark/sepia variants
+ *   (`{ golden: { light, dark, sepia }, ... }`)
+ * - textHierarchyOKLCH, where each theme has its text levels
+ *   (`{ light: { subtitle, metadata }, dark: {...}, sepia: {...} }`)
  *
  * @example
- * const grammarOKLCH = {
- *   golden: { light: {...}, dark: {...}, sepia: {...} },
- *   amber: { light: {...}, dark: {...}, sepia: {...} },
- * };
- * const grammar = convertThemedPalette(grammarOKLCH);
+ * const grammar = convertNestedPalette(grammarOKLCH);
  * // Result: { golden: { light: "#...", dark: "#...", sepia: "#..." }, ... }
  */
-export function convertThemedPalette<T extends Record<string, ThemedOKLCHColor>>(
+export function convertNestedPalette<T extends Record<string, Record<string, OKLCHColor>>>(
   palette: T,
-): { [K in keyof T]: { light: string; dark: string; sepia: string } } {
-  const result = {} as { [K in keyof T]: { light: string; dark: string; sepia: string } };
-  for (const key of Object.keys(palette) as (keyof T)[]) {
-    const themed = palette[key] as ThemedOKLCHColor;
-    result[key] = {
-      light: oklchToHex(themed.light.l, themed.light.c, themed.light.h),
-      dark: oklchToHex(themed.dark.l, themed.dark.c, themed.dark.h),
-      sepia: oklchToHex(themed.sepia.l, themed.sepia.c, themed.sepia.h),
-    };
-  }
-  return result;
-}
-
-/**
- * Convert a text hierarchy palette (light/dark/sepia → text levels) to hex values.
- * Preserves key types from the input palette for proper type inference.
- *
- * @example
- * const textHierarchyOKLCH = {
- *   light: { subtitle: {...}, metadata: {...} },
- *   dark: { subtitle: {...}, metadata: {...} },
- *   sepia: { subtitle: {...}, metadata: {...} },
- * };
- * const textHierarchy = convertTextHierarchyPalette(textHierarchyOKLCH);
- */
-export function convertTextHierarchyPalette<
-  TLight extends Record<string, OKLCHColor>,
-  TDark extends Record<string, OKLCHColor>,
-  TSepia extends Record<string, OKLCHColor>,
->(palette: {
-  readonly light: TLight;
-  readonly dark: TDark;
-  readonly sepia: TSepia;
-}): {
-  light: { [K in keyof TLight]: string };
-  dark: { [K in keyof TDark]: string };
-  sepia: { [K in keyof TSepia]: string };
-} {
-  const result = {
-    light: {} as { [K in keyof TLight]: string },
-    dark: {} as { [K in keyof TDark]: string },
-    sepia: {} as { [K in keyof TSepia]: string },
+): { [K in keyof T]: { [L in keyof T[K]]: string } } {
+  return mapValues(palette, convertFlatPalette) as {
+    [K in keyof T]: { [L in keyof T[K]]: string };
   };
-  for (const theme of ['light', 'dark', 'sepia'] as const) {
-    const levels = palette[theme];
-    for (const level of Object.keys(levels)) {
-      const color = levels[level] as OKLCHColor;
-      (result[theme] as Record<string, string>)[level] = oklchToHex(color.l, color.c, color.h);
-    }
-  }
-  return result;
 }

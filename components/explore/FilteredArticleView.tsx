@@ -1,20 +1,22 @@
-import { EmptyState, ListSeparator, LoadingState, SectionLabel } from '@/components/common';
+import { EmptyState, LoadingState, SectionLabel } from '@/components/common';
 import { FlashList } from '@shopify/flash-list';
 import { type JSX, useCallback, useDeferredValue, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/primitives/ThemedView';
-import { PlaylistItemCard } from '@/components/playlist';
-import { LIST_DRAW_DISTANCE_MULTIPLIER, SCROLL_EVENT_THROTTLE } from '@/constants/animation';
+import { SCROLL_EVENT_THROTTLE } from '@/constants/animation';
 import { COMPLETION_THRESHOLD, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { Article } from '@/types/articles.types';
-import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleProgressPercentage, type ReadingProgressLookup } from '@/utils/progressUtils';
-import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
+
+import {
+  ARTICLE_LIST_DRAW_DISTANCE,
+  ArticleRow,
+  ArticleRowSeparator,
+  useArticleListContentStyle,
+} from './ArticleRow';
 
 // List item types
 interface SectionHeaderItem {
@@ -30,10 +32,6 @@ interface ArticleItem {
 }
 
 type ListItem = SectionHeaderItem | ArticleItem;
-
-const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
-
-const SeparatorComponent = () => <ListSeparator height={LAYOUT.SPACING.SMALL} />;
 
 const STATIC_STYLES = StyleSheet.create({
   container: {
@@ -140,8 +138,6 @@ interface FilteredArticleViewProps {
  * A specialized component for displaying filtered articles
  */
 export const FilteredArticleView = ({ articles, onArticlePress }: FilteredArticleViewProps) => {
-  const insets = useSafeAreaInsets();
-
   const {
     articles: visibleArticles,
     progressMap,
@@ -156,16 +152,7 @@ export const FilteredArticleView = ({ articles, onArticlePress }: FilteredArticl
     [deferredVisibleArticles, progressMap],
   );
 
-  const listContentStyle = useMemo(
-    () => ({
-      paddingTop: LAYOUT.SPACING.MEDIUM,
-      paddingBottom: LAYOUT.SCREEN_PADDING.bottomDefault + insets.bottom,
-      paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-    }),
-    [insets.bottom],
-  );
-
-  const prefetchArticle = useArticlePrefetch();
+  const listContentStyle = useArticleListContentStyle();
 
   const shouldShowLoading =
     isProgressLoading && visibleArticles.length > 0 && progressMap.size === 0;
@@ -178,22 +165,15 @@ export const FilteredArticleView = ({ articles, onArticlePress }: FilteredArticl
         return <SectionLabel title={item.title} style={STATIC_STYLES.flushLabel} />;
       }
 
-      const article = item.data;
-      const progressPercentage = getArticleProgressPercentage(progressMap, article.id);
-
       return (
-        <PlaylistItemCard
-          title={article.title}
-          secondaryText={getArticleMetadataWithoutCategory(article)}
-          imageUrl={generateStorageUrl('images', article.image_url)}
-          articleId={article.id}
-          onPress={onArticlePress ? () => onArticlePress(article) : undefined}
-          onPressIn={() => prefetchArticle(article.id)}
-          progressPercentage={progressPercentage}
+        <ArticleRow
+          article={item.data}
+          progressPercentage={getArticleProgressPercentage(progressMap, item.data.id)}
+          onPress={onArticlePress}
         />
       );
     },
-    [progressMap, onArticlePress, prefetchArticle],
+    [progressMap, onArticlePress],
   );
 
   if (shouldShowLoading) {
@@ -220,12 +200,12 @@ export const FilteredArticleView = ({ articles, onArticlePress }: FilteredArticl
     <ThemedView {...THEMED_VIEW_PROPS}>
       <FlashList<ListItem>
         data={listData}
-        drawDistance={ITEM_HEIGHT * LIST_DRAW_DISTANCE_MULTIPLIER}
+        drawDistance={ARTICLE_LIST_DRAW_DISTANCE}
         keyExtractor={keyExtractor}
         scrollEventThrottle={SCROLL_EVENT_THROTTLE}
         showsVerticalScrollIndicator={true}
         contentContainerStyle={listContentStyle}
-        ItemSeparatorComponent={SeparatorComponent}
+        ItemSeparatorComponent={ArticleRowSeparator}
         ListFooterComponent={FooterComponent}
         renderItem={renderItem}
         getItemType={getItemType}

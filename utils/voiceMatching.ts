@@ -778,60 +778,39 @@ function matchAgainstOneExpected({
 }): SingleWordMatchResult {
   const normalizedSpoken = normalize(spoken);
   const normalizedExpected = normalize(expected);
+  // Every exit of the ladder reports the same two strings, and a result is a
+  // match exactly when it earns credit.
+  const result = (
+    method: MatchMethod,
+    credit: MatchCredit,
+    similarity: number,
+  ): SingleWordMatchResult => ({
+    matched: credit !== 'unknown',
+    credit,
+    method,
+    similarity,
+    normalizedSpoken,
+    normalizedExpected,
+  });
 
   if (normalizedSpoken.length === 0) {
-    return {
-      matched: false,
-      credit: 'unknown',
-      method: 'miss',
-      similarity: 0,
-      normalizedSpoken,
-      normalizedExpected,
-    };
+    return result('miss', 'unknown', 0);
   }
   if (ASR_HALLUCINATIONS.has(normalizedSpoken)) {
-    return {
-      matched: false,
-      credit: 'unknown',
-      method: 'hallucination',
-      similarity: 0,
-      normalizedSpoken,
-      normalizedExpected,
-    };
+    return result('hallucination', 'unknown', 0);
   }
   if (normalizedExpected.length === 0) {
-    return {
-      matched: false,
-      credit: 'unknown',
-      method: 'miss',
-      similarity: 0,
-      normalizedSpoken,
-      normalizedExpected,
-    };
+    return result('miss', 'unknown', 0);
   }
 
   if (normalizedSpoken === normalizedExpected) {
-    return {
-      matched: true,
-      credit: 'known',
-      method: 'exact',
-      similarity: 1,
-      normalizedSpoken,
-      normalizedExpected,
-    };
+    return result('exact', 'known', 1);
   }
 
   const spokenTokens = normalizedSpoken.split(' ').filter(Boolean);
   // Exact token hit anywhere in the utterance ("the answer is knowledge").
   if (spokenTokens.includes(normalizedExpected)) {
-    return {
-      matched: true,
-      credit: 'known',
-      method: 'exact',
-      similarity: 1,
-      normalizedSpoken,
-      normalizedExpected,
-    };
+    return result('exact', 'known', 1);
   }
 
   // Curated equivalence: letter-name truncation ("bee"→"b"), number word↔digit
@@ -839,14 +818,7 @@ function matchAgainstOneExpected({
   // credit — the learner said the right answer, the ASR just picked a homophone.
   for (const tok of spokenTokens) {
     if (equivalentTokens(tok, normalizedExpected)) {
-      return {
-        matched: true,
-        credit: 'known',
-        method: 'equivalent',
-        similarity: 1,
-        normalizedSpoken,
-        normalizedExpected,
-      };
+      return result('equivalent', 'known', 1);
     }
   }
 
@@ -857,14 +829,7 @@ function matchAgainstOneExpected({
     const expectedVariants = new Set(inflectionVariants(normalizedExpected));
     for (const tok of spokenTokens) {
       if (inflectionMatch(expectedVariants, tok)) {
-        return {
-          matched: true,
-          credit: 'known',
-          method: 'inflection',
-          similarity: 1,
-          normalizedSpoken,
-          normalizedExpected,
-        };
+        return result('inflection', 'known', 1);
       }
     }
   }
@@ -880,28 +845,18 @@ function matchAgainstOneExpected({
       const sim = similarityRatio(tok, normalizedExpected);
       if (sim > bestSim) bestSim = sim;
       if (levenshtein(tok, normalizedExpected) <= budget) {
-        return {
-          matched: true,
-          credit: 'known',
-          method: 'edit',
-          similarity: sim,
-          normalizedSpoken,
-          normalizedExpected,
-        };
+        return result('edit', 'known', sim);
       }
     }
   }
 
   for (const tok of spokenTokens) {
     if (foldsEqual(tok, normalizedExpected)) {
-      return {
-        matched: true,
-        credit: 'known',
-        method: 'phonetic',
-        similarity: Math.max(bestSim, similarityRatio(tok, normalizedExpected)),
-        normalizedSpoken,
-        normalizedExpected,
-      };
+      return result(
+        'phonetic',
+        'known',
+        Math.max(bestSim, similarityRatio(tok, normalizedExpected)),
+      );
     }
   }
 
@@ -912,14 +867,7 @@ function matchAgainstOneExpected({
   const despacedSim = similarityRatio(despacedSpoken, despacedExpected);
   if (despacedSim > bestSim) bestSim = despacedSim;
   if (despacedSpoken === despacedExpected) {
-    return {
-      matched: true,
-      credit: 'known',
-      method: 'exact',
-      similarity: 1,
-      normalizedSpoken,
-      normalizedExpected,
-    };
+    return result('exact', 'known', 1);
   }
   if (
     !/\d/.test(despacedExpected) &&
@@ -927,24 +875,10 @@ function matchAgainstOneExpected({
     budget > 0 &&
     levenshtein(despacedSpoken, despacedExpected) <= budget
   ) {
-    return {
-      matched: true,
-      credit: 'known',
-      method: 'edit',
-      similarity: despacedSim,
-      normalizedSpoken,
-      normalizedExpected,
-    };
+    return result('edit', 'known', despacedSim);
   }
   if (foldsEqual(despacedSpoken, despacedExpected)) {
-    return {
-      matched: true,
-      credit: 'known',
-      method: 'phonetic',
-      similarity: despacedSim,
-      normalizedSpoken,
-      normalizedExpected,
-    };
+    return result('phonetic', 'known', despacedSim);
   }
 
   // Generous fuzzy fallback: catch any close call the budget missed. Multi-
@@ -957,14 +891,7 @@ function matchAgainstOneExpected({
     ? FUZZY_TRUNCATION_MIN_SIMILARITY
     : FUZZY_MIN_SIMILARITY;
   if (!/\d/.test(despacedExpected) && bestSim >= fuzzyFloor) {
-    return {
-      matched: true,
-      credit: 'known',
-      method: 'fuzzy',
-      similarity: bestSim,
-      normalizedSpoken,
-      normalizedExpected,
-    };
+    return result('fuzzy', 'known', bestSim);
   }
 
   // Head-word pass: strip the gloss's grammatical scaffolding and try the same
@@ -995,14 +922,11 @@ function matchAgainstOneExpected({
         equivalentTokens(tok, expectedHead) ||
         inflectionMatch(headVariants, tok)
       ) {
-        return {
-          matched: true,
-          credit: expectedContent.length === 1 ? 'known' : 'vague',
-          method: 'head',
-          similarity: Math.max(bestSim, similarityRatio(tok, expectedHead)),
-          normalizedSpoken,
-          normalizedExpected,
-        };
+        return result(
+          'head',
+          expectedContent.length === 1 ? 'known' : 'vague',
+          Math.max(bestSim, similarityRatio(tok, expectedHead)),
+        );
       }
     }
   }
@@ -1016,24 +940,10 @@ function matchAgainstOneExpected({
     (bestSim >= NEAR_MIN_LEXICAL || sharesHeadPrefix(normalizedSpoken, normalizedExpected)) &&
     phoneticNearness(normalizedSpoken, normalizedExpected) >= NEAR_MIN_PHONETIC
   ) {
-    return {
-      matched: true,
-      credit: 'vague',
-      method: 'near',
-      similarity: bestSim,
-      normalizedSpoken,
-      normalizedExpected,
-    };
+    return result('near', 'vague', bestSim);
   }
 
-  return {
-    matched: false,
-    credit: 'unknown',
-    method: 'miss',
-    similarity: bestSim,
-    normalizedSpoken,
-    normalizedExpected,
-  };
+  return result('miss', 'unknown', bestSim);
 }
 
 /**
@@ -1184,4 +1094,43 @@ export function matchSingleWord({
   }
 
   return primary;
+}
+
+/** Similarity below this counts as a "clean miss" — a clearly recognized but
+ *  wrong word. Anything between this and the fuzzy floors
+ *  (FUZZY_TRUNCATION_MIN_SIMILARITY, FUZZY_MIN_SIMILARITY) is ambiguous:
+ *  surface the answer and let the user judge. Picked so that "date" vs "bee"
+ *  (sim ~0.25) auto-Unknowns while a 5-char word with two edits ("growth" vs
+ *  "groth", sim ~0.83) goes to the match path. */
+const CLEAN_MISS_MAX_SIMILARITY = 0.5;
+
+/** Minimum transcript length to trust the heard word. A single-character emit
+ *  ("a", "i") is almost always Parakeet hedging on near-silence — show the
+ *  "didn't catch that" fallback and suggest a retry instead. */
+const CLEAN_MISS_MIN_TRANSCRIPT_CHARS = 2;
+
+/**
+ * What a miss tells the learner: whether the recognizer heard a real word at
+ * all, and which result-panel button to lean on. `suggestion` only nudges the
+ * emphasis; nothing auto-fires from it.
+ *
+ * `heardReliable: false` is the app failing to hear — silence, a hallucinated
+ * stock phrase, a one-letter hedge — not the learner being wrong, so the caller
+ * must neither mark the card nor give the answer away for it.
+ */
+export function suggestAfterMiss(match: SingleWordMatchResult): {
+  heardReliable: boolean;
+  suggestion: VoiceSuggestion;
+} {
+  const heardReliable =
+    match.method !== 'hallucination' &&
+    match.normalizedSpoken.length >= CLEAN_MISS_MIN_TRANSCRIPT_CHARS;
+  // Silence / hallucination: the transcript can't be trusted — retry.
+  if (!heardReliable) return { heardReliable, suggestion: 'retry' };
+  // Confident, clearly different word — lean Unknown.
+  if (match.similarity < CLEAN_MISS_MAX_SIMILARITY) {
+    return { heardReliable, suggestion: 'unknown' };
+  }
+  // Ambiguous band (sim 0.50 up to the fuzzy floors): let the learner judge.
+  return { heardReliable, suggestion: null };
 }

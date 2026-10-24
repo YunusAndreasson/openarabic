@@ -14,15 +14,23 @@ import {
 } from 'react-native-skia';
 import type { JSX } from 'react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import { useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import { StyleSheet, View } from 'react-native';
+import {
+  Easing,
+  useDerivedValue,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { ChartBaseline } from '@/components/common/charts/ChartBaseline';
+import { useBaselineGrowth } from '@/components/common/charts/useBaselineGrowth';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { HORIZON_TRAVEL, TIMING_CONFIG } from '@/constants/animation';
 import { CHART_OPACITY, getChartColors, getMeterTrackColor } from '@/constants/chartColors';
-import { INLINE_VALUE_MIN_WIDTH, LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { useTextLayout } from '@/hooks/ui/useTextLayout';
 import type { RootId } from '@/types/branded.types';
 import {
   departureShare,
@@ -120,6 +128,14 @@ const MEDIAN_BOTTOM = vec(0, BAND_HEIGHT);
 const TRAVEL_STAGGER = HORIZON_TRAVEL.STAGGER;
 const TRAVEL_ARC_LIFT = HORIZON_TRAVEL.ARC_LIFT;
 const TRAVEL_DIM_RAMP = HORIZON_TRAVEL.DIM_RAMP;
+/** Each dot's ease across its slice of the sweep — the median rule's own curve. */
+const DOT_TRAVEL_EASING = Easing.inOut(Easing.cubic);
+
+/**
+ * Hoisted: `useTexture` keys its UI-thread redraw on this object's identity, so
+ * a literal in the call re-drew the dot texture on every render.
+ */
+const DOT_TEXTURE_DIMENSIONS = { width: DOT_TEXTURE_SIZE, height: DOT_TEXTURE_SIZE };
 
 /**
  * How far the dots that are NOT travelling step back while the others do. The
@@ -238,13 +254,12 @@ function HorizonBandCanvasComponent({
   hasDistribution,
 }: HorizonBandCanvasProps): JSX.Element {
   const colors = useColors();
-  const { width, fontScale } = useWindowDimensions();
+  const { crowded, fontScale } = useTextLayout();
   // Fewer ticks keep the log axis readable when text grows. The data and
   // spoken band breakdown stay complete, and both endpoints still name the range.
-  const axisTicks =
-    width / fontScale < INLINE_VALUE_MIN_WIDTH
-      ? AXIS_TICKS.filter(tick => tick.key === 'days' || tick.key === 'year')
-      : AXIS_TICKS;
+  const axisTicks = crowded
+    ? AXIS_TICKS.filter(tick => tick.key === 'days' || tick.key === 'year')
+    : AXIS_TICKS;
   const axisHeight = LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.LOOSE * fontScale;
   const axisStyle = StyleSheet.flatten([styles.axis, { height: axisHeight }]);
   // This component also needs the base card colour. Derive chart tokens from
@@ -267,7 +282,7 @@ function HorizonBandCanvasComponent({
   // field is the same accent — one accent carries all data ink.
   const dotTexture = useTexture(
     <Circle c={vec(DOT_RADIUS, DOT_RADIUS)} r={DOT_RADIUS} color={chartColors.ui.dataLine} />,
-    { width: DOT_TEXTURE_SIZE, height: DOT_TEXTURE_SIZE },
+    DOT_TEXTURE_DIMENSIONS,
     [chartColors.ui.dataLine],
   );
 
@@ -322,7 +337,7 @@ function HorizonBandCanvasComponent({
     const sweep = Math.min(1, Math.max(0, travel.get() - (travels - 1)));
     const offset = departureShare(index, moverCount);
     const local = Math.min(1, Math.max(0, (sweep - offset) / (1 - TRAVEL_STAGGER)));
-    const eased = local < 0.5 ? 4 * local * local * local : 1 - Math.pow(-2 * local + 2, 3) / 2;
+    const eased = DOT_TRAVEL_EASING(local);
 
     // An arc, not a slide: a dot that travelled along the baseline would plough
     // through every column between its old place and its new one.
@@ -346,22 +361,20 @@ function HorizonBandCanvasComponent({
     return 1 - (1 - RESTING_FIELD_OPACITY) * Math.max(0, ramp);
   });
 
-  // Grow the whole field off the baseline as one transform.
-  const growth = useSharedValue(0);
+  // Grow the whole field off the baseline as one transform. Plays on mount and
+  // again for every redraw — a field that could not travel to its new shape
+  // grows into it instead.
+  const growTransform = useBaselineGrowth(redraws);
   const settle = useSharedValue(0);
 
   const medianX = medianFraction * BAND_WIDTH;
   const medianPosition = useSharedValue(medianX);
 
-  // Plays on mount and again for every redraw — a field that could not travel
-  // to its new shape grows into it instead.
+  // The median rule annotates the shape, so it lands after the shape does.
   useEffect(() => {
-    growth.set(0);
     settle.set(0);
-    growth.set(withTiming(1, TIMING_CONFIG.PROGRESS));
-    // The median rule annotates the shape, so it lands after the shape does.
     settle.set(withDelay(TIMING_CONFIG.PROGRESS.duration, withTiming(1, TIMING_CONFIG.ENTRANCE)));
-  }, [growth, settle, redraws]);
+  }, [settle, redraws]);
 
   // The rule slides with the dots: the typical word moved because they did. A
   // redrawn field is the exception — its rule fades in where it belongs, having
@@ -375,11 +388,6 @@ function HorizonBandCanvasComponent({
     }
     medianPosition.set(withTiming(medianX, HORIZON_TRAVEL.MEDIAN));
   }, [medianPosition, medianX, redraws]);
-
-  const growTransform = useDerivedValue(() => {
-    'worklet';
-    return [{ scaleY: growth.get() }];
-  });
 
   const medianTransform = useDerivedValue(() => {
     'worklet';

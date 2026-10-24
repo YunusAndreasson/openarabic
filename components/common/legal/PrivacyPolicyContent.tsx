@@ -2,21 +2,15 @@ import {
   DocEffectiveDate,
   DocHeading,
   DocParagraph,
+  DocSections,
   LegalDocument,
+  type DocSection,
 } from '@/components/common/LegalDocument';
 import { EmailLink } from '@/components/common/EmailLink';
-import { Fragment } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 
-/** A section is a heading plus either a body or a list of labelled subsections. */
-interface Section {
-  title: string;
-  body?: string;
-  subsections?: { title: string; body: string }[];
-}
-
-const SECTIONS: Section[] = [
+const SECTIONS: DocSection[] = [
   {
     title: STRINGS.PRIVACY_COLLECTION_TITLE,
     subsections: [
@@ -51,7 +45,7 @@ const SECTIONS: Section[] = [
   { title: STRINGS.PRIVACY_SECURITY_TITLE, body: STRINGS.PRIVACY_SECURITY },
 ];
 
-const TAIL_SECTIONS: { title: string; body: string }[] = [
+const TAIL_SECTIONS: DocSection[] = [
   { title: STRINGS.PRIVACY_CHILDREN_TITLE, body: STRINGS.PRIVACY_CHILDREN },
   { title: STRINGS.PRIVACY_CHANGES_TITLE, body: STRINGS.PRIVACY_CHANGES },
 ];
@@ -66,18 +60,7 @@ export const PrivacyPolicyContent = () => (
     <DocEffectiveDate>{STRINGS.PRIVACY_EFFECTIVE_DATE}</DocEffectiveDate>
     <DocParagraph>{STRINGS.PRIVACY_INTRO}</DocParagraph>
 
-    {SECTIONS.map(({ title, body, subsections }) => (
-      <Fragment key={title}>
-        <DocHeading>{title}</DocHeading>
-        {body ? <DocParagraph>{body}</DocParagraph> : null}
-        {subsections?.map(subsection => (
-          <Fragment key={subsection.title}>
-            <DocHeading level="subsection">{subsection.title}</DocHeading>
-            <DocParagraph>{subsection.body}</DocParagraph>
-          </Fragment>
-        ))}
-      </Fragment>
-    ))}
+    <DocSections sections={SECTIONS} />
 
     {/* Carries an inline mail link, so it can't come from the data list. */}
     <DocHeading>{STRINGS.PRIVACY_RIGHTS_TITLE}</DocHeading>
@@ -86,12 +69,7 @@ export const PrivacyPolicyContent = () => (
       <EmailLink email={STRINGS.CONTACT_EMAIL} />
     </DocParagraph>
 
-    {TAIL_SECTIONS.map(({ title, body }) => (
-      <Fragment key={title}>
-        <DocHeading>{title}</DocHeading>
-        <DocParagraph>{body}</DocParagraph>
-      </Fragment>
-    ))}
+    <DocSections sections={TAIL_SECTIONS} />
 
     <DocHeading>{STRINGS.PRIVACY_CONTACT_TITLE}</DocHeading>
     <DocParagraph last>

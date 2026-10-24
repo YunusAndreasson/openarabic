@@ -1,8 +1,9 @@
-import { Rating } from 'ts-fsrs';
+import { Rating, State } from 'ts-fsrs';
 import type { Grade, StepUnit } from 'ts-fsrs';
 
 import { WORD_CONFIDENCES } from '@/types/review.types';
 import type { WordConfidence } from '@/types/review.types';
+import { MILLISECONDS_PER_HOUR } from '@/utils/dateTimeUtils';
 
 const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
 const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
@@ -12,8 +13,22 @@ export const FSRS_BASE_KEY = 'fsrs-words';
 
 export const MIN_WORD_SPACING = 3;
 
-// Default values and scaling
-export const DEFAULT_FSRS_DIFFICULTY = 6.5;
+/**
+ * The FSRS values a never-reviewed study word carries — placeholders, not
+ * measurements.
+ *
+ * The `study_words` FSRS columns are not left empty for a new word: it is
+ * written with these (see `createResetFSRSUpdate`), and a word whose progress
+ * is reset gets them back. Read naively they state a difficulty and a memory
+ * for a word the learner has never been asked, so every surface that ranks or
+ * draws FSRS state gates on `hasBeenPractised` first.
+ */
+export const PLACEHOLDER_FSRS = {
+  /** On FSRS's 1–10 scale; also what a card is built with when the column is NULL. */
+  difficulty: 6.5,
+  /** Days. */
+  stability: 0.4,
+} as const;
 
 export const CRITICAL_RETRIEVABILITY_THRESHOLD = 0.7;
 
@@ -24,12 +39,10 @@ export const UNSTABLE_DIFFICULTY_THRESHOLD = 7.5;
  * Stability (in days) at which a word counts as "mastered", paired with
  * ts-fsrs state Review — see `isMasteredWord`, the predicate that owns the rule.
  *
- * Named because the bare `5` had four independent homes: the client predicate,
- * BOTH halves of the server's category filter (mastered `>= 5` / learning
- * `< 5`, which have to stay exact complements or a word belongs to neither
- * category), and a private `MASTERY_THRESHOLD` inside useSessionMetrics that
- * decides whether the completion screen congratulates you for mastering a word.
- * Four copies of one number, three of them invisible from the others.
+ * Named because the bare `5` had independent homes: the client predicate, both
+ * halves of a server-side category filter since removed, and a private
+ * `MASTERY_THRESHOLD` inside useSessionMetrics that decides whether the
+ * completion screen congratulates you for mastering a word.
  */
 export const MASTERY_MIN_STABILITY = 5;
 
@@ -106,6 +119,48 @@ export const RECALLED_CONFIDENCE: ReadonlySet<WordConfidence> = new Set(
 );
 
 export const DEFAULT_SESSION_COOLDOWN_HOURS = 2;
+
+/**
+ * The two short-step states: FSRS schedules them minutes out on purpose
+ * (learning_steps 1m/10m, relearning_steps 5m/10m) — they are the words the
+ * learner has not got right yet.
+ */
+export const SHORT_STEP_STATES = [State.Learning, State.Relearning] as const;
+
+/**
+ * States exempt from the post-session cooldown: New (never asked) plus both
+ * short-step states, whose whole purpose is to come back within minutes.
+ *
+ * One list for both sides of the rule — the server filter in
+ * `studyWordsFSRSService.getFSRSWords` and the client mirror in
+ * `filterDueWords` — because two hand-written `(0,1,3)` lists is how the two
+ * sides drift apart.
+ */
+export const COOLDOWN_EXEMPT_STATES = [State.New, ...SHORT_STEP_STATES] as const;
+
+/** Whether `state` is one of the minute-scale {@link SHORT_STEP_STATES}. */
+export const isShortStepState = (state: State | null | undefined): boolean =>
+  SHORT_STEP_STATES.some(shortStep => shortStep === state);
+
+/** Whether `state` is exempt from the session cooldown ({@link COOLDOWN_EXEMPT_STATES}). */
+export const isCooldownExemptState = (state: State | null | undefined): boolean =>
+  COOLDOWN_EXEMPT_STATES.some(exempt => exempt === state);
+
+/**
+ * Whether the post-session cooldown is in force at `nowMs`: a session finished
+ * less than `cooldownHours` ago. The one statement of the window that the due
+ * query, its client-side mirror and the reminder planner each used to write out.
+ */
+export function isSessionCooldownActive(
+  lastCompletedAt: number | undefined,
+  cooldownHours: number,
+  nowMs: number,
+): boolean {
+  return (
+    typeof lastCompletedAt === 'number' &&
+    nowMs - lastCompletedAt < cooldownHours * MILLISECONDS_PER_HOUR
+  );
+}
 
 /**
  * How many due words the review session holds in its priority heap at once.

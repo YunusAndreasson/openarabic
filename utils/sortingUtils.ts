@@ -3,6 +3,8 @@
  * Used for reading list and audio playlist custom ordering.
  */
 
+import { timestampMs } from '@/utils/dateTimeUtils';
+
 /**
  * Sorts items by custom order array with optional fallback sorting.
  * Items in the custom order come first (in order), followed by remaining items sorted by fallback.
@@ -39,22 +41,21 @@ export function sortByCustomOrder<T>(
   const positionMap = new Map(customOrder.map((id, index) => [id, index]));
 
   return [...items].sort((a, b) => {
-    const aId = getId(a);
-    const bId = getId(b);
-
-    const aPos = positionMap.get(aId) ?? 999; // Use 999 as sentinel for "not in custom order"
-    const bPos = positionMap.get(bId) ?? 999;
+    // `undefined` = not in the custom order. (This was a 999 sentinel, which
+    // also read position 999 itself as "not in the custom order".)
+    const aPos = positionMap.get(getId(a));
+    const bPos = positionMap.get(getId(b));
 
     // Both have custom positions
-    if (aPos !== 999 && bPos !== 999) {
+    if (aPos !== undefined && bPos !== undefined) {
       return aPos - bPos;
     }
 
     // Only a has custom position
-    if (aPos !== 999) return -1;
+    if (aPos !== undefined) return -1;
 
     // Only b has custom position
-    if (bPos !== 999) return 1;
+    if (bPos !== undefined) return 1;
 
     // Neither has position - use fallback sort
     return fallbackSort ? fallbackSort(a, b) : 0;
@@ -81,5 +82,7 @@ export function sortByDateDesc(
   if (!dateA && !dateB) return 0;
   if (!dateA) return 1;
   if (!dateB) return -1;
-  return new Date(dateB).getTime() - new Date(dateA).getTime();
+  // Read as every other Supabase stamp is: the raw `Date` constructor takes a
+  // zone-less stamp as device-local and rejects Postgres' "+00" offset.
+  return timestampMs(dateB) - timestampMs(dateA);
 }

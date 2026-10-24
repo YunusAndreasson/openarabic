@@ -5,13 +5,9 @@
  * AsyncStorage key whenever the setting changes, and the task reads them here.
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-import type { ReminderTime } from '@/types/notifications.types';
-import { handleError } from '@/utils/errorHandling';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
-
-const SMART_REMINDER_PREFS_KEY = STORAGE_KEYS.SMART_REMINDER_PREFS;
+import type { ReminderTime } from '@/types/notifications.types';
+import { createJsonStore } from '@/utils/createJsonStore';
 
 /**
  * What the headless task needs beyond the setting itself. The session cooldown
@@ -23,36 +19,35 @@ export interface SmartReminderMirror extends ReminderTime {
   lastSessionCompletedAt?: number;
 }
 
-export async function readSmartReminderPrefs(): Promise<SmartReminderMirror | null> {
-  try {
-    const raw = await AsyncStorage.getItem(SMART_REMINDER_PREFS_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<SmartReminderMirror>;
-    if (
-      typeof parsed.hour !== 'number' ||
-      typeof parsed.minute !== 'number' ||
-      typeof parsed.enabled !== 'boolean'
-    ) {
-      return null;
-    }
-    return {
-      hour: parsed.hour,
-      minute: parsed.minute,
-      enabled: parsed.enabled,
-      ...(typeof parsed.lastSessionCompletedAt === 'number'
-        ? { lastSessionCompletedAt: parsed.lastSessionCompletedAt }
-        : {}),
-    };
-  } catch (error) {
-    void handleError(error, { showToast: false });
+/** Only a mirror with all three setting fields is usable; anything else reads as absent. */
+function decodeMirror(raw: unknown): SmartReminderMirror | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const { hour, minute, enabled, lastSessionCompletedAt } = raw as Partial<
+    Record<keyof SmartReminderMirror, unknown>
+  >;
+  if (typeof hour !== 'number' || typeof minute !== 'number' || typeof enabled !== 'boolean') {
     return null;
   }
+  return {
+    hour,
+    minute,
+    enabled,
+    lastSessionCompletedAt:
+      typeof lastSessionCompletedAt === 'number' ? lastSessionCompletedAt : undefined,
+  };
 }
 
-export async function writeSmartReminderPrefs(prefs: SmartReminderMirror): Promise<void> {
-  try {
-    await AsyncStorage.setItem(SMART_REMINDER_PREFS_KEY, JSON.stringify(prefs));
-  } catch (error) {
-    void handleError(error, { showToast: false });
-  }
+const mirrorStore = createJsonStore<SmartReminderMirror | null>({
+  key: STORAGE_KEYS.SMART_REMINDER_PREFS,
+  decode: decodeMirror,
+  empty: () => null,
+  onReadError: () => null,
+});
+
+export function readSmartReminderPrefs(): Promise<SmartReminderMirror | null> {
+  return mirrorStore.read();
+}
+
+export function writeSmartReminderPrefs(prefs: SmartReminderMirror): Promise<void> {
+  return mirrorStore.write(prefs);
 }

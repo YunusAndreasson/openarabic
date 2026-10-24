@@ -42,12 +42,17 @@ describe('categoriesService', () => {
   });
 
   describe('getCategories', () => {
-    test('should return empty array when no data', async () => {
-      mockExecuteQuery.mockResolvedValue(null);
+    // A successful select resolves to an array (empty when there are no rows),
+    // so there is no null to map; the request options reach executeQuery.
+    test('forwards the request options to executeQuery', async () => {
+      mockExecuteQuery.mockResolvedValue([]);
 
-      const result = await categoriesService.getCategories();
+      const result = await categoriesService.getCategories({ managed: true });
 
       expect(result).toEqual([]);
+      expect(mockExecuteQuery).toHaveBeenCalledWith(expect.any(Function), expect.any(Object), {
+        managed: true,
+      });
     });
 
     test('should return categories data when available', async () => {

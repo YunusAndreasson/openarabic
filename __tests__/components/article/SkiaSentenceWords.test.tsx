@@ -11,10 +11,13 @@
 
 import { fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
+import * as Reanimated from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 import { Canvas, Group, type SkPaint } from 'react-native-skia';
 
 import { SkiaSentenceWords } from '@/components/article/SkiaSentenceWords';
+import { LAYOUT } from '@/constants/layout';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
 import { measuring, type MeasureCallback } from '../../helpers/testUtils';
@@ -31,12 +34,6 @@ jest.mock('@/hooks/theme/useSkiaFonts', () => ({
     fontFamily: 'Noto Sans Arabic',
     fontManager: {},
   }),
-}));
-
-// A plain function: the shared jest.fn() in jest.setup loses its implementation
-// to `resetMocks`, and the active-word reaction would never reach React.
-jest.mock('react-native-worklets', () => ({
-  scheduleOnRN: (callback: (...args: unknown[]) => void, ...args: unknown[]) => callback(...args),
 }));
 
 jest.mock('@/hooks/theme/useSkiaGpuAvailable', () => ({
@@ -77,9 +74,6 @@ const layOut = (screen: RenderResult, width = 360) => {
   });
 };
 
-const flatStyle = (element: { props: { style?: unknown } }) =>
-  Object.assign({}, ...[element.props.style].flat(Infinity)) as Record<string, number>;
-
 describe('SkiaSentenceWords', () => {
   beforeEach(() => {
     jest.mocked(useSkiaGpuAvailable).mockReturnValue(true);
@@ -102,8 +96,8 @@ describe('SkiaSentenceWords', () => {
       const screen = render(<SkiaSentenceWords words={WORDS} selectedRootIds={NO_SELECTION} />);
       layOut(screen);
 
-      const first = flatStyle(screen.getByTestId('sentence-word-0'));
-      const second = flatStyle(screen.getByTestId('sentence-word-1'));
+      const first = StyleSheet.flatten(screen.getByTestId('sentence-word-0').props.style);
+      const second = StyleSheet.flatten(screen.getByTestId('sentence-word-1').props.style);
 
       expect(first.left).toBeGreaterThan(second.left);
       expect(first.top).toBe(second.top);
@@ -113,8 +107,8 @@ describe('SkiaSentenceWords', () => {
       const screen = render(<SkiaSentenceWords words={WORDS} selectedRootIds={NO_SELECTION} />);
       layOut(screen, 80);
 
-      const first = flatStyle(screen.getByTestId('sentence-word-0'));
-      const third = flatStyle(screen.getByTestId('sentence-word-2'));
+      const first = StyleSheet.flatten(screen.getByTestId('sentence-word-0').props.style);
+      const third = StyleSheet.flatten(screen.getByTestId('sentence-word-2').props.style);
 
       expect(third.top).toBeGreaterThan(first.top);
     });
@@ -166,6 +160,36 @@ describe('SkiaSentenceWords', () => {
       layOut(screen);
 
       expect(latestLayers()).toEqual([undefined, undefined, undefined]);
+    });
+  });
+
+  describe('the reader tutorial pulse', () => {
+    // Under Reduce Motion an infinite reversing withRepeat holds its START
+    // value, and the mock plays nothing at all — so this pins where the pulse
+    // starts and which way it breathes. It used to start at SUBTLE, where the
+    // setting then parked the marker its comment promised would stay solid.
+    test('starts at full strength and breathes down, so Reduce Motion holds it solid', () => {
+      const realUseSharedValue = Reanimated.useSharedValue;
+      let pulse: SharedValue<number> | undefined;
+      jest.spyOn(Reanimated, 'useSharedValue').mockImplementation(((initial: number) => {
+        pulse = realUseSharedValue(initial);
+        return pulse;
+      }) as typeof Reanimated.useSharedValue);
+      const realWithRepeat = Reanimated.withRepeat;
+      let startValue: number | undefined;
+      const repeat = jest.spyOn(Reanimated, 'withRepeat').mockImplementation(((
+        ...args: Parameters<typeof realWithRepeat>
+      ) => {
+        startValue = pulse?.get();
+        return realWithRepeat(...args);
+      }) as typeof realWithRepeat);
+      const timing = jest.spyOn(Reanimated, 'withTiming');
+
+      render(<SkiaSentenceWords words={WORDS} selectedRootIds={NO_SELECTION} highlightFirstWord />);
+
+      expect(startValue).toBe(LAYOUT.OPACITY.FULL);
+      expect(timing).toHaveBeenCalledWith(LAYOUT.OPACITY.SUBTLE, expect.anything());
+      expect(repeat).toHaveBeenCalledWith(expect.anything(), -1, true);
     });
   });
 

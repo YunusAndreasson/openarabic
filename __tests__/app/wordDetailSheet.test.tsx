@@ -21,7 +21,7 @@ import { State } from 'ts-fsrs';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { rootId } from '@/__tests__/helpers/ids';
 import { LEECH_MIN_LAPSES } from '@/constants/fsrs';
-import { getPracticeWordRoute } from '@/constants/routes';
+import { getPracticeWordRoute } from '@/utils/routeBuilders';
 import { STRINGS } from '@/constants/strings';
 import type { RootEnrichment } from '@/types/rootEnrichment.types';
 import type { StudyWord } from '@/types/vocabulary.types';

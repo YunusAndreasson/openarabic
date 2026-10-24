@@ -6,9 +6,10 @@
  * The verdict's whole point is that the haptic fires from the ANIMATION's frame
  * — a `useAnimatedReaction` watching the level cross HAPTIC_AT on the way up —
  * rather than from JS alongside the animation start. That crossing cannot be
- * exercised in jest: the reanimated mock's `useAnimatedReaction` runs the
- * reaction once at render with `previous === current`, so no edge ever occurs,
- * and `withSequence` collapses to its last frame so the level never sweeps.
+ * exercised in jest: the reanimated mock's `useAnimatedReaction` re-runs only
+ * after a React commit, which a shared value written by the animation never
+ * causes, and `withSequence` collapses to its last frame so the level never
+ * sweeps.
  *
  * So the reaction's PAYLOAD is tested directly (fireVerdictFeedback), the
  * mapping that decides it is tested pure (resolveVerdictTone), and the shared
@@ -22,6 +23,7 @@
 
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
+import * as Reanimated from 'react-native-reanimated';
 
 import { VERDICT } from '@/constants/animation';
 import {
@@ -30,21 +32,6 @@ import {
   useCardVerdict,
   VERDICT_TONE,
 } from '@/hooks/review/useCardVerdict';
-
-/**
- * Plain functions, not jest.fn(). The global mock in jest.setup.js is built
- * from jest.fn()s, and this project runs with `resetMocks: true` — which strips
- * every mock's implementation before each test, leaving scheduleOnUI a no-op
- * that silently swallows the worklet. Every assertion below would then pass or
- * fail for a reason that has nothing to do with the verdict.
- */
-jest.mock('react-native-worklets', () => ({
-  scheduleOnUI: (callback: (...args: unknown[]) => void, ...args: unknown[]) => callback(...args),
-  scheduleOnRN:
-    (callback: (...args: unknown[]) => void) =>
-    (...args: unknown[]) =>
-      callback(...args),
-}));
 
 jest.mock('@/utils/haptics', () => ({
   commitFeedback: jest.fn(),
@@ -297,5 +284,38 @@ describe('useCardVerdict', () => {
     act(() => result.current.playVerdict('known', 'card-1'));
 
     expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.CORRECT);
+  });
+});
+
+// With the OS setting on, Reanimated's withSequence plays only its last step and
+// withDelay drops its delay, so a level left on the system setting went 0 → 0
+// for a pass and 0 → RESIDUAL for a miss — it never crossed HAPTIC_AT, and a
+// Reduce Motion learner got neither the ring nor the grade haptic. The mock
+// collapses every sequence to its last step whatever it is told, so what is
+// pinned here is the opt-out itself.
+describe('useCardVerdict under Reduce Motion', () => {
+  test('both verdict levels opt out, because the ring is an opacity change', () => {
+    const sequence = jest.spyOn(Reanimated, 'withSequence');
+    const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
+
+    act(() => result.current.playVerdict('known', 'card-1'));
+    act(() => result.current.playVerdict('unknown', 'card-1'));
+
+    expect(sequence).toHaveBeenCalledTimes(2);
+    for (const call of sequence.mock.calls) {
+      expect(call[0]).toBe(Reanimated.ReduceMotion.Never);
+    }
+  });
+
+  test('the wince keeps the system setting, because it is real movement', () => {
+    const timing = jest.spyOn(Reanimated, 'withTiming');
+    const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
+
+    act(() => result.current.playVerdict('unknown', 'card-1', 'recognizer'));
+
+    expect(timing).toHaveBeenCalledWith(1, VERDICT.SHAKE.SWEEP);
+    expect(VERDICT.SHAKE.SWEEP).not.toHaveProperty('reduceMotion');
   });
 });

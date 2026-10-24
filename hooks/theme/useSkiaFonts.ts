@@ -8,9 +8,10 @@ import madinaFont from '@/assets/fonts/Madina.otf';
 import nastaliqFont from '@/assets/fonts/Nastaliq.ttf';
 import notoSansFont from '@/assets/fonts/NotoSans.ttf';
 import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
-import { resolveArabicFont, SKIA_FONT_FAMILY_MAP, type SkiaFontFamily } from '@/constants/fonts';
-import { clampArabicFontSize } from '@/constants/layout';
+import { SKIA_FONT_FAMILY_MAP, type SkiaFontFamily } from '@/constants/fonts';
 import { useAppSelector } from '@/store/hooks';
+import { selectArabicFont, selectArabicFontSize } from '@/store/settingsSlice';
+import { createExternalStore } from '@/utils/createExternalStore';
 
 /**
  * The .ttf/.otf behind each Skia family, keyed by the family name itself.
@@ -39,9 +40,8 @@ const FONT_SOURCES: Record<SkiaFontFamily, number> = {
  * hundreds of redundant ~4MB font loads per article. The typefaces are
  * loaded exactly once here and shared by every ParagraphBuilder.
  */
-let sharedFontManager: SkTypefaceFontProvider | null = null;
+const sharedFontManager = createExternalStore<SkTypefaceFontProvider | null>(null);
 let fontLoadPromise: Promise<void> | null = null;
-const fontSubscribers = new Set<() => void>();
 
 const loadSharedFontManager = (): Promise<void> => {
   if (!fontLoadPromise) {
@@ -64,8 +64,7 @@ const loadSharedFontManager = (): Promise<void> => {
         for (const [familyName, typeface] of entries) {
           manager.registerFont(typeface, familyName);
         }
-        sharedFontManager = manager;
-        fontSubscribers.forEach(notify => notify());
+        sharedFontManager.set(manager);
       })
       .catch((error: unknown) => {
         // Allow a retry on the next subscriber if loading failed (e.g. dev server hiccup)
@@ -78,15 +77,15 @@ const loadSharedFontManager = (): Promise<void> => {
   return fontLoadPromise;
 };
 
+// Every subscribe asks for the load, not only the first: a failed load clears
+// its promise, and the next component to mount retries it.
 const subscribeToFontManager = (callback: () => void) => {
-  fontSubscribers.add(callback);
+  const unsubscribe = sharedFontManager.subscribe(callback);
   void loadSharedFontManager();
-  return () => {
-    fontSubscribers.delete(callback);
-  };
+  return unsubscribe;
 };
 
-const getFontManagerSnapshot = () => sharedFontManager;
+const getFontManagerSnapshot = () => sharedFontManager.get();
 
 export interface UseSkiaFontsResult {
   /** Whether fonts are ready to use */
@@ -106,15 +105,15 @@ export interface UseSkiaFontsResult {
  * text style (e.g. `fontStyle: { weight }`), not on an SkFont.
  */
 export const useSkiaFonts = (): UseSkiaFontsResult => {
-  const selectedFontName = useAppSelector(state => resolveArabicFont(state.settings.arabicFont));
-  // Clamped rather than `|| LARGE`: the fallback only caught 0/undefined, so a
-  // persisted size from outside the supported range — an older build's, or a
-  // corrupted one — was painted at face value.
-  const fontSize = useAppSelector(state => clampArabicFontSize(state.settings.arabicFontSize));
+  const selectedFontName = useAppSelector(selectArabicFont);
+  // Clamped (by the selector) rather than `|| LARGE`: the fallback only caught
+  // 0/undefined, so a persisted size from outside the supported range — an
+  // older build's, or a corrupted one — was painted at face value.
+  const fontSize = useAppSelector(selectArabicFontSize);
 
   const fontManager = useSyncExternalStore(subscribeToFontManager, getFontManagerSnapshot);
 
-  // No `|| 'Noto Sans Arabic'` fallback: `resolveArabicFont` has already
+  // No `|| 'Noto Sans Arabic'` fallback: `selectArabicFont` has already
   // narrowed the persisted name to an ArabicFontName, and the map is total over
   // those, so the lookup cannot miss. The fallback could only fire for a key the
   // type system no longer admits.

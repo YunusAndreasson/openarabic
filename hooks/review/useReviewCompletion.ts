@@ -1,9 +1,6 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
-import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import { metaEvents } from '@/services/metaEvents';
 import type { SessionMetrics } from '@/types/review.types';
@@ -13,15 +10,19 @@ import { runWhenIdle } from '@/utils/runWhenIdle';
 import { recordStudyDay } from '@/utils/studyDayLedger';
 
 /**
- * Hook to handle review session completion side effects
- * Manages query invalidation and analytics tracking
+ * Hook to handle review session completion side effects: analytics and the
+ * learner's local ledgers.
+ *
+ * The query caches are deliberately not touched here. useReview's
+ * finalizeSession stamps the completion and refreshes the streak and the FSRS
+ * lists once per session, after the session's writes have settled — and for a
+ * session that ran out of cards it does so as this screen mounts. Doing it here
+ * as well ran every refresh twice on a natural finish, the first time racing
+ * the last grade's write.
  *
  * @param sessionMetrics - Optional metrics from the completed session
  */
 export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-
   /**
    * Execute completion logic when component mounts
    * Deferred to after animations complete for better UX
@@ -30,29 +31,11 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
    */
   useEffect(() => {
     // Mounting a completion surface without any reviewed words must be a
-    // no-op — including the cache work. Nothing was graded, so no server state
-    // changed and there is nothing stale to refresh; setting the
-    // last-completed stamp would additionally start the session cooldown for a
-    // session that never happened.
+    // no-op. Nothing was graded, so there is no session to report and no day
+    // to record.
     if (!sessionMetrics || sessionMetrics.wordsReviewed <= 0) return;
 
-    const invalidateReviewQueries = async (): Promise<void> => {
-      if (!user?.id) return;
-
-      queryClient.setQueryData(fsrsQueries.lastCompletedAtKey(user.id), Date.now());
-
-      try {
-        await studyStreakQueries.invalidateAll(queryClient, user.id);
-      } catch {
-        // Streak refresh is best-effort and must not block completion.
-      }
-
-      void fsrsQueries.invalidateAll(queryClient, user.id);
-    };
-
     runWhenIdle(() => {
-      void invalidateReviewQueries();
-
       void analytics.track(ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE, {
         wordsReviewed: sessionMetrics.wordsReviewed,
         wordsKnown: sessionMetrics.wordsKnown,
@@ -91,5 +74,5 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
         // Attribution is non-critical — never let it affect the session.
       }
     });
-  }, [queryClient, sessionMetrics, user?.id]);
+  }, [sessionMetrics]);
 };

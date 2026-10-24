@@ -1,17 +1,17 @@
 import * as Sentry from '@sentry/react-native';
-import { use } from 'react';
 
-import { AuthContext } from '@/components/providers';
+import { useAuthContext } from '@/components/providers/AuthProvider';
 import type { AuthResult } from '@/types/auth.types';
 
+/**
+ * The auth state. Throws outside an AuthProvider — and reports that to Sentry
+ * first, since a provider missing from a tree is a build mistake that should
+ * be seen, not only crash the screen.
+ */
 export function useAuth(): AuthResult {
-  const context = use(AuthContext);
-  if (!context) {
-    const error = new Error(
-      'useAuth must be used within an AuthProvider. Check that AuthProvider wraps your component tree.',
-    );
-
-    // Log to Sentry
+  try {
+    return useAuthContext();
+  } catch (error) {
     Sentry.captureException(error, {
       tags: {
         location: 'useAuth_hook',
@@ -24,7 +24,6 @@ export function useAuth(): AuthResult {
 
     throw error;
   }
-  return context;
 }
 
 export type { AuthResult } from '@/types/auth.types';

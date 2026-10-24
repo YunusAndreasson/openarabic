@@ -33,8 +33,11 @@ export function SignInForm(): JSX.Element {
     await resetPassword();
   }, [resetPassword]);
 
+  // dismissTo, not push: the two forms link to each other, and pushing let a
+  // learner stack sign-in over sign-up over sign-in without limit. It pops back
+  // to the other form when it is below this one, and replaces this one when not.
   const handleCreateAccount = useCallback(() => {
-    router.push(ROUTE_PATHS.AUTH_SIGN_UP);
+    router.dismissTo(ROUTE_PATHS.AUTH_SIGN_UP);
   }, []);
 
   return (

@@ -21,15 +21,11 @@
  * test would merely test QueryClient and could not catch a broken mutation.
  */
 
-// Unmock React Query to use real QueryClient for integration testing
-jest.unmock('@tanstack/react-query');
-
 import type { QueryClient } from '@tanstack/react-query';
-import { QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
-import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { fsrsQueries } from '@/constants/queries';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
@@ -73,6 +69,7 @@ const { supabase } = require('@/services/supabase');
 
 describe('Study List Button State - Bug Reproduction', () => {
   let queryClient: QueryClient;
+  let wrapper: HookTestWrapper;
   const mockUserId = userId('test-user-123');
   const mockRootId = rootId(42);
 
@@ -92,7 +89,7 @@ describe('Study List Button State - Bug Reproduction', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    queryClient = createTestQueryClient();
+    ({ wrapper, queryClient } = createHookTestWrapper());
 
     // Mock successful auth session (legacy)
     (supabase.auth.getSession as jest.Mock).mockResolvedValue({
@@ -111,11 +108,6 @@ describe('Study List Button State - Bug Reproduction', () => {
       user: { id: mockUserId },
     });
   });
-
-  // Shared wrapper for all tests - uses queryClient from beforeEach
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
 
   describe('BUG: Add → Remove → Add Again Flow', () => {
     test('should correctly toggle button state through multiple add/remove cycles', async () => {
@@ -141,6 +133,7 @@ describe('Study List Button State - Bug Reproduction', () => {
         mockUserId,
         mockRootId,
         undefined,
+        expect.objectContaining({ managed: true }),
       );
 
       // The hook's optimistic mutation itself must put the word in the cache.
@@ -162,6 +155,7 @@ describe('Study List Button State - Bug Reproduction', () => {
         mockUserId,
         mockRootId,
         undefined,
+        expect.objectContaining({ managed: true }),
       );
 
       // The hook's optimistic mutation itself must remove the word.
@@ -184,6 +178,7 @@ describe('Study List Button State - Bug Reproduction', () => {
         mockUserId,
         mockRootId,
         undefined,
+        expect.objectContaining({ managed: true }),
       );
 
       // A later add must not be affected by a stale result from the removal.

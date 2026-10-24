@@ -66,16 +66,9 @@ describe('BottomSheetBackdrop', () => {
     expect(toJSON()).toBeNull();
   });
 
-  /**
-   * Asserted on the request rather than on the rendered tree: the state update
-   * travels through `scheduleOnRN` from inside the reaction, which the test
-   * environment runs during render, and a render-phase `setState` does not
-   * settle before `toJSON()` here. What matters is that an open index asks for
-   * the backdrop at all — the closed cases above are the ones that must render
-   * nothing, and they assert on the tree directly.
-   */
-  test('asks for the dimming layer once the sheet is open', () => {
-    render(
+  /** The open state travels through `scheduleOnRN` from inside the reaction. */
+  test('draws the dimming layer once the sheet is open', () => {
+    const { toJSON } = render(
       <BottomSheetBackdrop
         animatedIndex={animatedIndexAt(0)}
         animatedPosition={animatedIndexAt(0)}
@@ -84,6 +77,7 @@ describe('BottomSheetBackdrop', () => {
     );
 
     expect(scheduleOnRN).toHaveBeenCalledWith(expect.any(Function), false);
+    expect(toJSON()).not.toBeNull();
   });
 
   test('never asks for it while the sheet is closed', () => {

@@ -5,46 +5,49 @@ import { useCallback, useRef, useState } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import {
-  APP_SESSION_ID,
   articleQueries,
+  featuredQueries,
   fsrsQueries,
   PRACTICE_DUE_WORDS_LIMIT,
   readingProgressQueries,
 } from '@/constants/queries';
-import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
-import { readingProgressService } from '@/services/readingProgress';
 import type { Article } from '@/types/articles.types';
-import type { ArticleId } from '@/types/branded.types';
 import {
   filterArticlesContainingRoots,
   getBeginnerArticles,
   getRandomItems,
 } from '@/utils/articleUtils';
-import { breadcrumb, handleError, toError } from '@/utils/errorHandling';
+import { breadcrumb, handleError } from '@/utils/errorHandling';
 import { runWhenIdle } from '@/utils/runWhenIdle';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { MAX_FEATURED_ARTICLES } from '@/hooks/articles/useMultipleFeaturedArticles';
 
 /**
- * Applied to every AWAITED query on the appReady-blocking path. The global
- * networkMode is 'online', under which an offline cold start PAUSES fetches
- * indefinitely (the promise never settles) and the splash never hides.
- * 'offlineFirst' always runs the first attempt; the app's global retry
- * function returns false while offline, so the fetch rejects fast and the
- * existing catch paths proceed to setIsLoaded(true).
+ * Applied to every AWAITED query on the appReady-blocking path, so each one
+ * settles — resolves or rejects — on its first attempt.
+ *
+ * The global networkMode is 'online', under which a fetch started offline
+ * PAUSES until the connection returns; 'offlineFirst' always runs the first
+ * attempt instead. `retry: false` matters just as much: under ANY retry the
+ * retryer sleeps after a failure and then pauses for as long as the device is
+ * offline (or the app backgrounded), so the awaited promise never settled and
+ * the splash stayed up until the network came back. The factories each carry a
+ * retry policy, and a factory's `retry` is what `query()` uses, so it has to be
+ * overridden here rather than left to the client default. Each query's own
+ * observers still retry under the factory's policy once a screen mounts it.
  */
-const OFFLINE_FIRST = { networkMode: 'offlineFirst' } as const;
+const SPLASH_GATE = { networkMode: 'offlineFirst', retry: false } as const;
+
+/** The startup pick: the global scope's first selection of this app session. */
+const startupFeaturedKey = () => featuredQueries.selection('global', 0).queryKey;
 
 interface AppPreloaderResult {
-  isPreloading: boolean;
   isLoaded: boolean;
   preloadAppData: () => Promise<void>;
-  prefetchArticle: (articleId: ArticleId) => Promise<boolean>;
   prefetchVocabularyData: () => Promise<boolean>;
   prefetchFeaturedArticles: () => Promise<boolean>;
-  preloadProgress: number; // 0-100 percentage
 }
 
 /**
@@ -53,9 +56,7 @@ interface AppPreloaderResult {
 export const useAppPreloader = (): AppPreloaderResult => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [isPreloading, setIsPreloading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [preloadProgress, setPreloadProgress] = useState(0);
   const preloadLockRef = useRef(false);
 
   // Pre-select featured articles to prevent glitching when library loads
@@ -63,13 +64,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
     if (!user?.id) return false;
 
     // CHECK: If featured articles already cached for this session, don't recalculate
-    // APP_SESSION_ID ensures fresh selection on each app launch
-    const existingFeatured = queryClient.getQueryData([
-      'featured-articles',
-      'global',
-      0,
-      APP_SESSION_ID,
-    ]);
+    // APP_SESSION_ID (in the key) ensures fresh selection on each app launch
+    const existingFeatured = queryClient.getQueryData(startupFeaturedKey());
     if (existingFeatured) {
       return true; // Already have featured articles for this session, use cached selection
     }
@@ -81,40 +77,34 @@ export const useAppPreloader = (): AppPreloaderResult => {
       const [allArticles, allStudyWords, dueWords] = await Promise.all([
         queryClient.query({
           ...articleQueries.all(),
-          ...OFFLINE_FIRST,
+          ...SPLASH_GATE,
           staleTime: 'static',
         }),
         queryClient.query({
           ...fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-          ...OFFLINE_FIRST,
+          ...SPLASH_GATE,
           staleTime: 'static',
         }),
         queryClient.query({
           ...fsrsQueries.due(user.id),
-          ...OFFLINE_FIRST,
+          ...SPLASH_GATE,
           staleTime: 'static',
         }),
       ]);
 
-      if (!allArticles || allArticles.length === 0) return false;
+      if (allArticles.length === 0) return false;
 
       const hasAnyStudyWords = allStudyWords.length > 0;
 
       const dueWordRootIds = new Set(dueWords.map(word => word.root_id));
 
       // Perform intelligent featured article selection
-      const performIntelligentSelection = () => {
+      const performIntelligentSelection = (): Article[] => {
         if (dueWordRootIds.size > 0) {
           const dueWordArticles = filterArticlesContainingRoots(allArticles, dueWordRootIds);
 
           if (dueWordArticles.length > 0) {
-            const selected = getRandomItems(dueWordArticles, MAX_FEATURED_ARTICLES);
-            return {
-              articles: selected,
-              reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
-              type: 'due-words' as const,
-              dueWordRootIds,
-            };
+            return getRandomItems(dueWordArticles, MAX_FEATURED_ARTICLES);
           }
         }
 
@@ -122,33 +112,17 @@ export const useAppPreloader = (): AppPreloaderResult => {
         if (!user?.id || !hasAnyStudyWords) {
           const beginnerArticles = getBeginnerArticles(allArticles);
           if (beginnerArticles.length > 0) {
-            const selected = getRandomItems(beginnerArticles, MAX_FEATURED_ARTICLES);
-            return {
-              articles: selected,
-              reason: STRINGS.RECOMMENDED,
-              type: 'beginner' as const,
-              dueWordRootIds: new Set(),
-            };
+            return getRandomItems(beginnerArticles, MAX_FEATURED_ARTICLES);
           }
         }
 
         // Final fallback: random selection
-        return {
-          articles: getRandomItems(allArticles, MAX_FEATURED_ARTICLES),
-          reason: STRINGS.RECOMMENDED,
-          type: 'random' as const,
-          dueWordRootIds: new Set(),
-        };
+        return getRandomItems(allArticles, MAX_FEATURED_ARTICLES);
       };
 
-      const featuredSelection = performIntelligentSelection();
-
-      // Cache the featured articles for immediate use
-      // Include APP_SESSION_ID to ensure fresh articles on each app launch
-      queryClient.setQueryData(
-        ['featured-articles', 'global', 0, APP_SESSION_ID],
-        featuredSelection,
-      );
+      // Cache the featured articles for immediate use. Only the articles are
+      // kept — they are all the featured rail reads.
+      queryClient.setQueryData(startupFeaturedKey(), { articles: performIntelligentSelection() });
 
       return true;
     } catch {
@@ -162,32 +136,31 @@ export const useAppPreloader = (): AppPreloaderResult => {
     // Lock is handled by preloadAppData, no need to check here
 
     try {
-      setPreloadProgress(10);
-
-      // Load static data first (categories, basic articles list)
-      // Use ensureQueryData to prioritize cache over network (TanStack Query v5 best practice)
-      const criticalPromises = [
-        queryClient.query({
-          ...articleQueries.categories(),
-          ...OFFLINE_FIRST,
-          staleTime: 'static',
-        }),
-        queryClient.query({ ...articleQueries.all(), ...OFFLINE_FIRST, staleTime: 'static' }),
-      ];
+      // Load static data first (categories, basic articles list).
+      // `query()` with `staleTime: 'static'` serves an entry that already has
+      // data and fetches one that does not — what the deprecated
+      // ensureQueryData did.
+      const categoriesPromise = queryClient.query({
+        ...articleQueries.categories(),
+        ...SPLASH_GATE,
+        staleTime: 'static',
+      });
+      const articlesPromise = queryClient.query({
+        ...articleQueries.all(),
+        ...SPLASH_GATE,
+        staleTime: 'static',
+      });
 
       // CRITICAL FIX: Load reading progress synchronously with articles
       // This prevents race condition where filtered view renders before progress data is available
-      // (this must SETTLE, never reject — hence OFFLINE_FIRST and the .catch
+      // (this must SETTLE, never reject — hence SPLASH_GATE and the .catch
       // below: it is awaited in the Promise.all that gates the whole preload)
       const readingProgressPromise = user?.id
         ? queryClient
             .query({
-              queryKey: readingProgressQueries.bulk(user.id).queryKey,
-              queryFn: () => readingProgressService.getBulkProgress(user.id, []),
+              ...readingProgressQueries.bulk(user.id),
               staleTime: 0, // CRITICAL: Always fetch fresh data on app startup to prevent stale cache from blocking updates
-              gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
-              retry: 2,
-              ...OFFLINE_FIRST,
+              ...SPLASH_GATE,
             })
             .catch(() => undefined)
         : Promise.resolve();
@@ -202,17 +175,17 @@ export const useAppPreloader = (): AppPreloaderResult => {
         ? Promise.all([
             queryClient.query({
               ...fsrsQueries.due(user.id),
-              ...OFFLINE_FIRST,
+              ...SPLASH_GATE,
               staleTime: 'static',
             }),
             queryClient.query({
               ...fsrsQueries.all(user.id),
-              ...OFFLINE_FIRST,
+              ...SPLASH_GATE,
               staleTime: 'static',
             }),
             queryClient.query({
               ...fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-              ...OFFLINE_FIRST,
+              ...SPLASH_GATE,
               staleTime: 'static',
             }),
           ])
@@ -222,42 +195,28 @@ export const useAppPreloader = (): AppPreloaderResult => {
       userWordsReady?.catch(() => undefined);
 
       // Wait for BOTH articles AND reading progress to complete
-      const [_categories, _articles] = await Promise.all([
-        ...criticalPromises,
+      const [, articles] = await Promise.all([
+        categoriesPromise,
+        articlesPromise,
         readingProgressPromise,
       ]);
-      setPreloadProgress(25);
 
       // Pre-compute and cache featured articles for immediate availability
       // CRITICAL: Only generate new featured articles if none exist for this session
       // This prevents articles from changing on app resume (backgrounding/foregrounding)
-      if (Array.isArray(_articles) && _articles.length > 0) {
+      if (articles.length > 0) {
         runWhenIdle(() => {
           try {
-            // Check if featured articles already exist for this session
-            const existingFeatured = queryClient.getQueryData([
-              'featured-articles',
-              'global',
-              0,
-              APP_SESSION_ID,
-            ]);
-
             // Skip generation if featured articles already cached for this session
-            if (existingFeatured) {
+            if (queryClient.getQueryData(startupFeaturedKey())) {
               return; // Use existing cached selection
             }
 
-            const articles = _articles as Article[];
             const featured: Article[] = getRandomItems(articles, MAX_FEATURED_ARTICLES);
 
             // Cache featured articles immediately with consistent query key
             // Include APP_SESSION_ID to ensure fresh articles on each app launch
-            queryClient.setQueryData(['featured-articles', 'global', 0, APP_SESSION_ID], {
-              articles: featured,
-              reason: 'Pre-computed during startup',
-              type: 'random' as const,
-              dueWordRootIds: new Set<number>(),
-            });
+            queryClient.setQueryData(startupFeaturedKey(), { articles: featured });
 
             // Prefetch images and details for featured articles with error handling
             const imagePrefetches = featured
@@ -288,8 +247,9 @@ export const useAppPreloader = (): AppPreloaderResult => {
         });
       }
 
-      // Prefetch bookmark images for instant loading when user opens bookmarks
-      // Uses ensureQueryData to reuse the TanStack Query cache and prevent N+1 API calls
+      // Prefetch bookmark images for instant loading when user opens bookmarks.
+      // Read through the reading-list query (`query()` + `staleTime: 'static'`
+      // reuses its cache entry) rather than a request of its own.
       if (user?.id) {
         runWhenIdle(() => {
           void (async () => {
@@ -336,8 +296,6 @@ export const useAppPreloader = (): AppPreloaderResult => {
         }
       }
 
-      setPreloadProgress(50);
-
       // Load user-specific background data asynchronously
       if (user?.id) {
         // Use setTimeout to defer background loading slightly, allowing UI to become responsive first
@@ -357,9 +315,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         }, 500); // Delay background loading by 500ms to prioritize initial UI responsiveness
       }
 
-      setPreloadProgress(70);
       setIsLoaded(true);
-      setPreloadProgress(100);
 
       breadcrumb('preloader', 'App preload complete');
     } catch (error) {
@@ -369,9 +325,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
       });
 
       setIsLoaded(true);
-      setPreloadProgress(100);
     }
-  }, [queryClient, user]);
+  }, [queryClient, user, prefetchFeaturedArticles]);
 
   const preloadAppData = useCallback(async () => {
     if (preloadLockRef.current) {
@@ -379,28 +334,14 @@ export const useAppPreloader = (): AppPreloaderResult => {
     }
     // Don't wait for auth - critical data (categories, articles) can load without user
 
-    setIsPreloading(true);
     preloadLockRef.current = true;
 
     try {
       await preloadCriticalData();
     } finally {
-      setIsPreloading(false);
       preloadLockRef.current = false;
     }
   }, [preloadCriticalData]);
-
-  const prefetchArticle = useCallback(
-    async (articleId: ArticleId) => {
-      try {
-        await queryClient.query(articleQueries.detail(articleId));
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [queryClient],
-  );
 
   const prefetchVocabularyData = useCallback(async () => {
     if (!user?.id) return false;
@@ -417,18 +358,15 @@ export const useAppPreloader = (): AppPreloaderResult => {
       ]);
       return true;
     } catch (error) {
-      void handleError(toError(error), { showToast: false });
+      void handleError(error, { showToast: false });
       return false;
     }
   }, [queryClient, user]);
 
   return {
-    isPreloading,
     isLoaded,
     preloadAppData,
-    prefetchArticle,
     prefetchVocabularyData,
     prefetchFeaturedArticles,
-    preloadProgress,
   };
 };

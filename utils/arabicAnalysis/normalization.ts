@@ -11,6 +11,23 @@ import {
 } from './cache';
 import { DIACRITIC_REGEX_GLOBAL, NON_WORD_REGEX, UNICODE_FORMAT_REGEX } from './constants';
 
+/** إ (U+0625, hamza below), آ (U+0622, madda), ٱ (U+0671, wasla) — NOT أ (U+0623). */
+const ALEF_VARIANTS_REGEX = /[إآٱ]/g;
+
+/**
+ * Folds the alef variants إ/آ/ٱ into plain ا (U+0627), for hamza-insensitive
+ * comparison.
+ *
+ * NOT أ (alef with hamza above): it is preserved to distinguish the
+ * first-person prefix أ from the prosthetic alef ا of Form VII-X verbs
+ * (استطاع, انكسر, اجتمع). The one statement of that rule — `normalizeArabic`,
+ * the affix matcher and the translation-rule keys all fold through here, so a
+ * rule key can never be spelled differently from the text it is looked up by.
+ */
+export function foldAlefVariants(text: string): string {
+  return text.replace(ALEF_VARIANTS_REGEX, 'ا');
+}
+
 /**
  * Normalizes Arabic text for comparison (with caching)
  *
@@ -35,15 +52,9 @@ export function normalizeArabic(text: string): string {
     return cached;
   }
 
-  // Normalize select alef variants to plain alef (ا U+0627)
-  // إ (U+0625, alef with hamza below), آ (U+0622, alef with madda), ٱ (U+0671, alef wasla)
-  // NOT أ (U+0623, alef with hamza above) — preserved to distinguish the first-person
-  // prefix أ from prosthetic alef ا in Form VII-X verbs (استطاع, انكسر, اجتمع)
-  let normalized = text.replace(/[إآٱ]/g, 'ا');
-
-  // Remove Unicode formatting characters (RTL marks, zero-width characters, etc.)
-  // then remove diacritics, then trim
-  normalized = normalized
+  // Fold the alef variants, remove Unicode formatting characters (RTL marks,
+  // zero-width characters, etc.), then remove diacritics, then trim
+  const normalized = foldAlefVariants(text)
     .replace(UNICODE_FORMAT_REGEX, '')
     .replace(DIACRITIC_REGEX_GLOBAL, '')
     .trim();

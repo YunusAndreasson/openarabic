@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { analytics } from '@/services/analytics';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
-import { setVoiceEnabled, setVoiceOfferDismissed } from '@/store/settingsSlice';
+import { selectVoiceEnabled, setVoiceEnabled, setVoiceOfferDismissed } from '@/store/settingsSlice';
 
 /**
  * Where the learner met the offer.
@@ -38,7 +38,7 @@ export interface UseVoicePrimingResult {
  * `useVoicePriming` so the impression is recorded.
  */
 export function useVoiceOfferEligible(): boolean {
-  const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  const voiceEnabled = useAppSelectorShallow(selectVoiceEnabled);
   const dismissed = useAppSelectorShallow(state => state.settings.voiceOfferDismissed);
   return !voiceEnabled && !dismissed;
 }

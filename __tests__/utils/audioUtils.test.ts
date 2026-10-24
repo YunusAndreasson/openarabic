@@ -10,12 +10,12 @@
  */
 
 import { beforeEach, describe, expect, test, jest } from '@jest/globals';
+import type { QueryClient } from '@tanstack/react-query';
 
 import { audioCache } from '@/services/audioCache';
 import { simpleAudioService } from '@/services/audioPlayer';
 import {
   generateWordAudioTrack,
-  getCurrentArticleId,
   isAudioBusy,
   prefetchArticleWithImage,
   stopAudioSafely,
@@ -27,7 +27,6 @@ import {
   createAudioStatusMock,
   createEnhancedAudioTrackMock,
 } from '@/__tests__/helpers/serviceMocks';
-import type { ArticleId } from '@/types/branded.types';
 
 // Mock dependencies
 jest.mock('@/services/audioPlayer', () => ({
@@ -60,61 +59,6 @@ const generateStorageUrlMock = jest.mocked(generateStorageUrl);
 describe('audioUtils', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe('getCurrentArticleId', () => {
-    test('should return article ID when a track is playing', () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue(
-        createAudioStatusMock({
-          currentTrack: { articleId: 123 } as any,
-          playing: true,
-          isLoaded: true,
-          isBuffering: false,
-          currentTime: 0,
-          duration: 100,
-        }),
-      );
-
-      const result = getCurrentArticleId();
-
-      expect(result).toBe(123);
-    });
-
-    test('should return undefined when no track is playing', () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue(
-        createAudioStatusMock({
-          currentTrack: null,
-          playing: false,
-          isLoaded: true,
-          isBuffering: false,
-          currentTime: 0,
-          duration: 0,
-        }),
-      );
-
-      const result = getCurrentArticleId();
-
-      expect(result).toBeUndefined();
-    });
-
-    test('should parse string article IDs to numbers', () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue(
-        createAudioStatusMock({
-          currentTrack: createEnhancedAudioTrackMock({
-            articleId: '456' as unknown as ArticleId,
-          }),
-          playing: true,
-          isLoaded: true,
-          isBuffering: false,
-          currentTime: 0,
-          duration: 100,
-        }),
-      );
-
-      const result = getCurrentArticleId();
-
-      expect(result).toBe(456);
-    });
   });
 
   describe('isAudioBusy', () => {
@@ -176,7 +120,7 @@ describe('audioUtils', () => {
           duration: 100,
         }),
       );
-      simpleAudioServiceMock.stop.mockResolvedValue(undefined);
+      simpleAudioServiceMock.stop.mockResolvedValue(true);
 
       await stopAudioSafely();
 
@@ -194,17 +138,17 @@ describe('audioUtils', () => {
           duration: 0,
         }),
       );
-      simpleAudioServiceMock.stop.mockResolvedValue(undefined);
+      simpleAudioServiceMock.stop.mockResolvedValue(true);
 
       await stopAudioSafely();
 
       expect(simpleAudioServiceMock.stop).toHaveBeenCalled();
     });
 
-    test('should not stop audio when not playing or loading', async () => {
+    test('should not stop a loaded track that is holding still', async () => {
       simpleAudioServiceMock.getStatus.mockReturnValue(
         createAudioStatusMock({
-          currentTrack: null,
+          currentTrack: createEnhancedAudioTrackMock(),
           playing: false,
           isLoaded: true,
           isBuffering: false,
@@ -216,6 +160,15 @@ describe('audioUtils', () => {
       await stopAudioSafely();
 
       expect(simpleAudioServiceMock.stop).not.toHaveBeenCalled();
+    });
+
+    test('should stop when idle, superseding a play that has not published its track', async () => {
+      simpleAudioServiceMock.getStatus.mockReturnValue(createAudioStatusMock());
+      simpleAudioServiceMock.stop.mockResolvedValue(true);
+
+      await stopAudioSafely();
+
+      expect(simpleAudioServiceMock.stop).toHaveBeenCalled();
     });
 
     test('should silently catch errors by default', async () => {
@@ -353,52 +306,59 @@ describe('audioUtils', () => {
   });
 
   describe('prefetchArticleWithImage', () => {
-    test('should prefetch article data and image when available', async () => {
-      const mockQueryClient = {
-        query: jest.fn(async (..._args: unknown[]) => undefined),
-        getQueryData: jest.fn((..._args: unknown[]) => ({
-          id: 1,
-          image_url: 'test.jpg',
-        })),
-      } as any;
+    const createQueryClientMock = (query: () => Promise<unknown>) =>
+      ({ query: jest.fn(query) }) as unknown as QueryClient;
 
+    test("prefetches the track's article and its artwork, whether or not it is cached", () => {
+      const queryClient = createQueryClientMock(async () => undefined);
       const { Image } = require('expo-image');
       Image.prefetch.mockResolvedValue(true);
-      generateStorageUrlMock.mockReturnValue('https://example.com/test.jpg');
 
-      await prefetchArticleWithImage(articleId(1), mockQueryClient);
+      prefetchArticleWithImage(
+        createEnhancedAudioTrackMock({
+          articleId: articleId(1),
+          imageUrl: 'https://example.com/test.jpg',
+        }),
+        queryClient,
+      );
 
-      expect(mockQueryClient.query).toHaveBeenCalled();
+      expect(queryClient.query).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: ['article', 1] }),
+      );
+      // Straight from the track: reading it off the cached article only ever
+      // prefetched artwork that was already cached.
       expect(Image.prefetch).toHaveBeenCalledWith('https://example.com/test.jpg', {
         cachePolicy: 'memory-disk',
       });
     });
 
-    test('should handle missing image URL gracefully', async () => {
-      const mockQueryClient = {
-        query: jest.fn(async (..._args: unknown[]) => undefined),
-        getQueryData: jest.fn((..._args: unknown[]) => null),
-      } as any;
+    test('skips the artwork when the track has none', () => {
+      const queryClient = createQueryClientMock(async () => undefined);
+      const { Image } = require('expo-image');
 
-      const mockPrefetchArticle = jest.fn(async (..._args: unknown[]) => true);
-      generateStorageUrlMock.mockReturnValue('');
+      prefetchArticleWithImage(
+        createEnhancedAudioTrackMock({ articleId: articleId(1), imageUrl: undefined }),
+        queryClient,
+      );
 
-      await prefetchArticleWithImage(articleId(1), mockQueryClient, mockPrefetchArticle);
-
-      expect(mockPrefetchArticle).toHaveBeenCalledWith(1);
+      expect(Image.prefetch).not.toHaveBeenCalled();
     });
 
     test('should silently handle prefetch failures', async () => {
-      const mockQueryClient = {
-        query: jest.fn(async (..._args: unknown[]) => {
-          throw new Error('Prefetch failed');
-        }),
-        getQueryData: jest.fn((..._args: unknown[]) => null),
-      } as any;
+      const queryClient = createQueryClientMock(async () => {
+        throw new Error('Prefetch failed');
+      });
+      const { Image } = require('expo-image');
+      Image.prefetch.mockRejectedValue(new Error('Image failed'));
 
-      await expect(
-        prefetchArticleWithImage(articleId(1), mockQueryClient),
-      ).resolves.toBeUndefined();
+      expect(() =>
+        prefetchArticleWithImage(
+          createEnhancedAudioTrackMock({ articleId: articleId(1), imageUrl: 'x.jpg' }),
+          queryClient,
+        ),
+      ).not.toThrow();
+      // Neither rejection escapes as an unhandled one.
+      await new Promise(resolve => setImmediate(resolve));
     });
   });
 });

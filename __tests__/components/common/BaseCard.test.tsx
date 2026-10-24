@@ -3,10 +3,8 @@
  *
  * Tests foundation card component used throughout the app.
  *
- * No style assertions here. `StyleSheet.flatten` is the identity function under
- * this jest setup, so anything asserted about a resolved style passes whatever
- * the component actually rendered. Surface, elevation and border are verified on
- * device instead; what is worth locking down in jest is the STRUCTURE each prop
+ * No style assertions here: surface, elevation and border are verified on
+ * device. What is worth locking down in jest is the STRUCTURE each prop
  * combination produces — which branch renders, and what the accessibility tree
  * looks like.
  *
