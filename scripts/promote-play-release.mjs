@@ -19,55 +19,38 @@
 
 import { createSign } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { parseArgs } from 'node:util';
 
 const PACKAGE_NAME = 'com.edenmind.OpenArabic';
 const API = 'https://androidpublisher.googleapis.com/androidpublisher/v3';
 const SCOPE = 'https://www.googleapis.com/auth/androidpublisher';
 
-const parseArgs = argv => {
-  const args = {
-    key: './google-service-account.json',
-    from: 'internal',
-    to: 'production',
-    rollout: '1.0',
-    versionCode: null,
-    dryRun: false,
+// Strict: an unknown or mistyped flag throws (ERR_PARSE_ARGS_UNKNOWN_OPTION).
+// The hand-rolled loop this replaces skipped unknown flags, so a mistyped
+// `--dry-run` ran a REAL production promotion.
+const parseCliArgs = argv => {
+  const { values } = parseArgs({
+    args: argv,
+    strict: true,
+    allowPositionals: false,
+    options: {
+      key: { type: 'string', default: './google-service-account.json' },
+      'version-code': { type: 'string' },
+      from: { type: 'string', default: 'internal' },
+      to: { type: 'string', default: 'production' },
+      rollout: { type: 'string', default: '1.0' },
+      'dry-run': { type: 'boolean', default: false },
+    },
+  });
+
+  return {
+    key: values.key,
+    from: values.from,
+    to: values.to,
+    rollout: values.rollout,
+    versionCode: values['version-code'] === undefined ? null : Number(values['version-code']),
+    dryRun: values['dry-run'],
   };
-
-  for (let i = 0; i < argv.length; i += 1) {
-    const flag = argv[i];
-    const value = argv[i + 1];
-
-    switch (flag) {
-      case '--key':
-        args.key = value;
-        i += 1;
-        break;
-      case '--version-code':
-        args.versionCode = Number(value);
-        i += 1;
-        break;
-      case '--from':
-        args.from = value;
-        i += 1;
-        break;
-      case '--to':
-        args.to = value;
-        i += 1;
-        break;
-      case '--rollout':
-        args.rollout = value;
-        i += 1;
-        break;
-      case '--dry-run':
-        args.dryRun = true;
-        break;
-      default:
-        break;
-    }
-  }
-
-  return args;
 };
 
 const base64url = value => Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -144,7 +127,7 @@ const describeRelease = release => {
 };
 
 const main = async () => {
-  const args = parseArgs(process.argv.slice(2));
+  const args = parseCliArgs(process.argv.slice(2));
   const key = JSON.parse(readFileSync(args.key, 'utf8'));
   const rollout = Number(args.rollout);
 
