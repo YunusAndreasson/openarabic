@@ -51,7 +51,7 @@ During development:
 - Focus on specific tests related to your changes
 - Test only what's necessary to validate fixes
 - Use Jest with React Native Testing Library
-- Test timeout: 10 seconds for async operations
+- Test timeout: 15 seconds, set once in `jest.config.js` (`testTimeout`, with `maxWorkers: '75%'`); the scripts pass neither
 
 ## End of Session (REQUIRED)
 

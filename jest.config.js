@@ -7,18 +7,18 @@ module.exports = {
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|react-native-skia|@tanstack/.*|immer))',
   ],
 
-  // Optimized timeouts for AI agent efficiency
-  testTimeout: 15000, // Reduced from 30s - AI agents don't need long timeouts
+  // The one place the timeout and the worker count are set: the package.json
+  // scripts no longer pass them, and jest.setup.js no longer calls setTimeout.
+  testTimeout: 15000,
+  maxWorkers: '75%',
 
-  // Enhanced error reporting for AI analysis
-  clearMocks: true,
-  resetMocks: true, // More thorough cleanup between tests
+  // resetMocks wipes every jest.fn() implementation before each test, and
+  // implies clearMocks.
+  resetMocks: true,
   restoreMocks: true, // Restore original implementations
 
   // Disable watch mode - AI agents run tests programmatically
   watchman: false,
-
-  // Use jest-expo default environment
 
   // Jest 30's globals-cleanup soft-delete wraps globals in warning proxies;
   // react-native's lazy module getters (e.g. BackHandler) can then recurse
@@ -29,17 +29,22 @@ module.exports = {
     globalsCleanup: 'off',
   },
 
-  // Enhanced path ignoring for AI focus
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '__mocks__',
-    '/coverage/',
-    '/.jest-cache/',
-    '/build/',
-    '/dist/',
-    '/admin-dashboard/',
-    '/translate/',
-    '/publish/',
+  // Every suite lives under __tests__. A repo-wide pattern also picked up the
+  // other projects' tests and every agent checkout under .claude/worktrees.
+  testMatch: ['<rootDir>/__tests__/**/*.test.[jt]s?(x)'],
+
+  // Kept out of the module map as well: each agent checkout under
+  // .claude/worktrees carries its own __mocks__, and a duplicate manual mock is
+  // resolved to whichever copy the crawler saw last. The other projects share
+  // no code with the app (AGENTS.md).
+  modulePathIgnorePatterns: [
+    '<rootDir>/.claude/',
+    '<rootDir>/admin-dashboard/',
+    '<rootDir>/translate/',
+    '<rootDir>/social/',
+    '<rootDir>/publish/',
+    '<rootDir>/brand/',
+    '<rootDir>/store-listing/',
   ],
 
   // Comprehensive module mapping for AI predictability
@@ -60,7 +65,6 @@ module.exports = {
     '@sentry/react-native': '<rootDir>/__mocks__/sentry-react-native.js',
     'react-redux': '<rootDir>/__mocks__/react-redux.js',
     'expo-image': '<rootDir>/__mocks__/expo-image.js',
-    '@expo/vector-icons': '<rootDir>/__mocks__/@expo/vector-icons.js',
     '@react-native-vector-icons/ionicons':
       '<rootDir>/__mocks__/react-native-vector-icons-ionicons.js',
 
@@ -95,19 +99,8 @@ module.exports = {
       '<rootDir>/__mocks__/react-native-sherpa-onnx-download.js',
     '^react-native-sherpa-onnx/stt$': '<rootDir>/__mocks__/react-native-sherpa-onnx-stt.js',
 
-    // Path aliases for cleaner imports
+    // The tsconfig.json path alias
     '^@/(.*)$': '<rootDir>/$1',
-    '^@library/(.*)$': '<rootDir>/components/library/$1',
-    '^@bookmarks/(.*)$': '<rootDir>/components/bookmarks/$1',
-    '^@study/(.*)$': '<rootDir>/components/study/$1',
-    '^@account/(.*)$': '<rootDir>/components/account/$1',
-    '^@article/(.*)$': '<rootDir>/components/article/$1',
-    '^@common/(.*)$': '<rootDir>/components/common/$1',
-    '^@ui/(.*)$': '<rootDir>/components/ui/$1',
-    '^@charts/(.*)$': '<rootDir>/components/common/charts/$1',
-    // Bypass strict peer check in @testing-library/react-native so renderer upgrades don't break tests
-    '^@testing-library/react-native/src/helpers/ensure-peer-deps$':
-      '<rootDir>/__mocks__/@testing-library/react-native-ensure-peer-deps.js',
   },
 
   // Comprehensive coverage for AI analysis
@@ -145,20 +138,21 @@ module.exports = {
       lines: 30,
       statements: 30,
     },
-    // Per-directory thresholds for targeted coverage improvements
-    './utils/**/*.ts': {
+    // Per-directory thresholds, aggregated over each directory. A glob key
+    // would apply the threshold to every matching file on its own.
+    './utils/': {
       branches: 50,
       functions: 60,
       lines: 60,
       statements: 60,
     },
-    './hooks/**/*.ts': {
+    './hooks/': {
       branches: 40,
       functions: 50,
       lines: 50,
       statements: 50,
     },
-    './services/**/*.ts': {
+    './services/': {
       branches: 45,
       functions: 55,
       lines: 55,
@@ -178,9 +172,6 @@ module.exports = {
     // Note: jest-junit can be added when needed: yarn add --dev jest-junit
   ],
 
-  // Optimize test result processor for AI actionability
-  testResultsProcessor: undefined, // Can be customized for AI-specific output
-
   // Coverage reporting optimized for AI parsing
   coverageReporters: ['text', 'text-summary', 'lcov', 'json', 'json-summary'],
 
@@ -190,28 +181,6 @@ module.exports = {
   // Error handling optimized for AI analysis
   errorOnDeprecated: true,
 
-  // Display test names and paths for AI agent navigation
-  displayName: undefined,
-
-  // Show full diff on assertion failures for AI analysis
-  expand: false, // Set to true in CI for full diffs
-
-  // Notify mode disabled for automated workflows
-  notify: false,
-  notifyMode: 'failure-change',
-
   // Module file extensions in priority order
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-
-  // Globals for consistent test environment
-  globals: {
-    __DEV__: true,
-    __TEST__: true,
-  },
-
-  // Test match patterns optimized for AI discovery
-  testMatch: ['**/__tests__/**/*.(test|spec).(ts|tsx|js|jsx)', '**/*.(test|spec).(ts|tsx|js|jsx)'],
-
-  // Setup files for consistent environment
-  setupFiles: ['<rootDir>/jest.polyfills.js'],
 };

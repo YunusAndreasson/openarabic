@@ -1,31 +1,10 @@
-import { TextDecoder, TextEncoder } from 'util';
-
-import { jest } from '@jest/globals';
-if (typeof global.jest === 'undefined') {
-  global.jest = jest;
-}
+// TextEncoder/TextDecoder, structuredClone, performance, queueMicrotask and
+// AbortController are not polyfilled here: jest-environment-node 30 copies
+// Node's own into every test context.
 
 // Mock Expo winter runtime globals to prevent import scope errors
 if (typeof global.__ExpoImportMetaRegistry === 'undefined') {
   global.__ExpoImportMetaRegistry = {};
-}
-
-// Mock structuredClone if not available
-if (typeof global.structuredClone === 'undefined') {
-  global.structuredClone = value => JSON.parse(JSON.stringify(value));
-}
-
-// Mock other potential missing globals
-if (typeof global.performance === 'undefined') {
-  global.performance = {
-    now: () => Date.now(),
-    mark: jest.fn(),
-    measure: jest.fn(),
-  };
-}
-
-if (typeof global.queueMicrotask === 'undefined') {
-  global.queueMicrotask = callback => setTimeout(callback, 0);
 }
 
 // Enhanced animation frame mocking for consistent timing
@@ -1079,16 +1058,3 @@ process.on('unhandledRejection', reason => {
   // Handle unhandled promise rejections silently in tests
   throw new Error(`Unhandled promise rejection: ${reason}`);
 });
-
-// Optimized test timeout for AI efficiency
-jest.setTimeout(15000); // Reduced from default
-
-// React 19 + react-test-renderer compatibility fixes
-global.IS_REACT_ACT_ENVIRONMENT = true;
-
-if (typeof TextEncoder === 'undefined') {
-  global.TextEncoder = TextEncoder;
-}
-if (typeof TextDecoder === 'undefined') {
-  global.TextDecoder = TextDecoder;
-}

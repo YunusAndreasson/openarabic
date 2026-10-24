@@ -19,7 +19,7 @@
     "!**/__mocks__/**"
   ],
   "jest": false,
-  "ignore": ["admin-dashboard/**", "types/database.types.ts", "jest.setup.js", "jest.polyfills.js"],
+  "ignore": ["admin-dashboard/**", "types/database.types.ts", "jest.setup.js"],
   "ignoreDependencies": [
     "@expo/agent-cli",
     "@expo-google-fonts/material-symbols",
