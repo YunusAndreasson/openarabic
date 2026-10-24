@@ -1,15 +1,15 @@
 import { Canvas, Group, Path, Skia, vec } from 'react-native-skia';
-import { memo, useEffect, useMemo } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import { useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
+import { memo, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 
+import { useBaselineGrowth } from '@/components/common/charts/useBaselineGrowth';
+import { useMeasuredWidth } from '@/components/common/charts/useMeasuredWidth';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { TIMING_CONFIG } from '@/constants/animation';
 import { CHART_OPACITY, useChartColors } from '@/constants/chartColors';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { DailyReadingActivity, StreakPeriod } from '@/services/studyStreak';
-import { appendRoundedTopBar } from '@/utils/barChartPath';
+import { appendRoundedTopBar, columnGeometry } from '@/utils/barChartPath';
 import { withOpacity } from '@/utils/colorUtils';
 
 interface StreakChartProps {
@@ -22,6 +22,8 @@ const BAR_HEIGHT = LAYOUT.BUTTON.HEIGHT.LARGE / 2; // ~24 via constants
 const BAR_GAP = LAYOUT.CHART.BAR_GAP; // 2 via constants
 const INACTIVE_STUB_HEIGHT = Math.round(BAR_HEIGHT * 0.25); // Short baseline stubs
 const GROW_ORIGIN = vec(0, BAR_HEIGHT);
+/** Floor on a day's bar, so a crowded window still draws visible days. */
+const MIN_BAR_WIDTH = 6;
 
 // Extract expensive calculations outside component
 const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPeriod> => {
@@ -58,25 +60,26 @@ const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPerio
  * The bars grow in as one group off the baseline. They used to spring in one at
  * a time on a 30 ms stagger, a forty-bar cascade that took well over a second to
  * say "here are some days".
+ *
+ * As wide as the sheet's text, measured rather than guessed: it used to take
+ * the window less 24pt a side, but the sheet insets its content 12pt a side, so
+ * the bars sat 12pt inside every line above and below them.
  */
 export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriods }) => {
   const chartColors = useChartColors();
-  const { width: windowWidth } = useWindowDimensions();
+  const { ref, onLayout, width } = useMeasuredWidth();
 
   // Memoize expensive calculations
   const chartData = useMemo(() => {
-    // Calculate available width (window width minus padding)
-    const availableWidth = windowWidth - LAYOUT.SPACING.XLARGE * 2;
+    if (width === null) return null;
 
-    // Calculate bar width to fit all bars without scrolling
-    const calculatedBarWidth =
-      (availableWidth - (dailyActivity.length - 1) * BAR_GAP) / dailyActivity.length;
-
-    // Use calculated width, with a minimum of 6px for visibility
-    const barWidth = Math.max(6, calculatedBarWidth);
-
-    // Calculate actual chart width used
-    const chartWidth = dailyActivity.length * barWidth + (dailyActivity.length - 1) * BAR_GAP;
+    // Every day fits without scrolling, floored so a day never vanishes.
+    const { barWidth, pitch, span } = columnGeometry(
+      width,
+      dailyActivity.length,
+      BAR_GAP,
+      MIN_BAR_WIDTH,
+    );
 
     const streakMap = createStreakMap(streakPeriods);
 
@@ -86,7 +89,7 @@ export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriod
     const currentRun = Skia.PathBuilder.Make();
 
     dailyActivity.forEach((activity, index) => {
-      const x = index * (barWidth + BAR_GAP);
+      const x = index * pitch;
       if (!activity.hasActivity) {
         appendRoundedTopBar(stubs, {
           x,
@@ -106,54 +109,47 @@ export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriod
     });
 
     return {
-      chartWidth,
+      chartWidth: span,
       stubs: stubs.build(),
       practised: practised.build(),
       currentRun: currentRun.build(),
     };
-  }, [dailyActivity, streakPeriods, windowWidth]);
+  }, [dailyActivity, streakPeriods, width]);
 
   // Grow the practised days off the baseline as one transform.
-  const growth = useSharedValue(0);
-  useEffect(() => {
-    growth.set(0);
-    growth.set(withTiming(1, TIMING_CONFIG.PROGRESS));
-  }, [growth, chartData]);
-
-  const growTransform = useDerivedValue(() => {
-    'worklet';
-    return [{ scaleY: growth.get() }];
-  });
+  const growTransform = useBaselineGrowth(chartData);
 
   return (
-    <View style={[styles.container, { height: CHART_HEIGHT }]}>
-      <View style={styles.chartArea}>
-        <Canvas
-          style={{
-            width: chartData.chartWidth,
-            height: BAR_HEIGHT,
-          }}
-        >
-          {/* Days without practice: static grid-ink stubs, so the absence of a
+    <View ref={ref} onLayout={onLayout} style={[styles.container, { height: CHART_HEIGHT }]}>
+      {chartData && (
+        <View style={styles.chartArea}>
+          <Canvas
+            style={{
+              width: chartData.chartWidth,
+              height: BAR_HEIGHT,
+            }}
+          >
+            {/* Days without practice: static grid-ink stubs, so the absence of a
               bar is drawn rather than left as a gap. */}
-          <Path path={chartData.stubs} color={chartColors.ui.grid} />
-          <Group transform={growTransform} origin={GROW_ORIGIN}>
-            <Path
-              path={chartData.practised}
-              color={withOpacity(chartColors.ui.dataLine, CHART_OPACITY.MEDIUM)}
-            />
-            <Path path={chartData.currentRun} color={chartColors.ui.dataLine} />
-          </Group>
-        </Canvas>
-        <View style={[styles.axisRow, { width: chartData.chartWidth }]}>
-          <ThemedText type="caption" colorName="subtleLabelText" style={styles.axisLabel}>
-            {STRINGS.STREAK_CHART_START_LABEL}
-          </ThemedText>
-          <ThemedText type="caption" colorName="subtleLabelText" style={styles.axisLabel}>
-            {STRINGS.STREAK_CHART_TODAY_LABEL}
-          </ThemedText>
+            <Path path={chartData.stubs} color={chartColors.ui.grid} />
+            <Group transform={growTransform} origin={GROW_ORIGIN}>
+              <Path
+                path={chartData.practised}
+                color={withOpacity(chartColors.ui.dataLine, CHART_OPACITY.MEDIUM)}
+              />
+              <Path path={chartData.currentRun} color={chartColors.ui.dataLine} />
+            </Group>
+          </Canvas>
+          <View style={[styles.axisRow, { width: chartData.chartWidth }]}>
+            <ThemedText type="caption" colorName="subtleLabelText" style={styles.axisLabel}>
+              {STRINGS.STREAK_CHART_START_LABEL}
+            </ThemedText>
+            <ThemedText type="caption" colorName="subtleLabelText" style={styles.axisLabel}>
+              {STRINGS.STREAK_CHART_TODAY_LABEL}
+            </ThemedText>
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 });

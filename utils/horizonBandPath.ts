@@ -1,6 +1,7 @@
 import { Skia, type SkPath } from 'react-native-skia';
 
 import { LAYOUT, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/constants/layout';
+import { columnGeometry } from '@/utils/barChartPath';
 import { getHorizonFraction } from '@/utils/memoryHorizon';
 
 /**
@@ -54,7 +55,8 @@ export const BIN_COUNT = Math.min(
   Math.max(MIN_BIN_COUNT, Math.round(BAND_WIDTH / TARGET_BIN_PITCH)),
 );
 export const BIN_GAP = 3;
-export const BIN_WIDTH = (BAND_WIDTH - (BIN_COUNT - 1) * BIN_GAP) / BIN_COUNT;
+const BIN_COLUMNS = columnGeometry(BAND_WIDTH, BIN_COUNT, BIN_GAP);
+export const BIN_WIDTH = BIN_COLUMNS.barWidth;
 
 /**
  * Which column a horizon of `days` falls in.
@@ -71,7 +73,7 @@ export function getHorizonBinIndex(days: number): number {
 
 /** Left edge of column `index`. */
 export function binX(index: number): number {
-  return index * (BIN_WIDTH + BIN_GAP);
+  return index * BIN_COLUMNS.pitch;
 }
 
 // ---------------------------------------------------------------------------
