@@ -12,6 +12,7 @@ import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
 import { getArticleProgressPercentage, type ReadingProgressLookup } from '@/utils/progressUtils';
+import { fillTemplate } from '@/utils/fillTemplate';
 import {
   getArticleMetadataWithoutAuthor,
   getArticleMetadataWithoutCategory,
@@ -82,9 +83,13 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     // Must be called before early return to satisfy React Hooks rules
     const sectionTitle = useMemo(() => {
       if (filterType === 'author') {
-        return STRINGS.MORE_FROM_AUTHOR.replace('{author}', getAuthorDisplayName(filterName));
+        return fillTemplate(STRINGS.MORE_FROM_AUTHOR, {
+          author: getAuthorDisplayName(filterName),
+        });
       }
-      return STRINGS.MORE_FROM_CATEGORY.replace('{category}', getCategoryDisplayName(filterName));
+      return fillTemplate(STRINGS.MORE_FROM_CATEGORY, {
+        category: getCategoryDisplayName(filterName),
+      });
     }, [filterType, filterName]);
 
     // Early return if no articles to show

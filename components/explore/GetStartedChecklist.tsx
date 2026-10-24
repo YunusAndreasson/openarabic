@@ -24,6 +24,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
 import type { Article } from '@/types/articles.types';
 import { selectionFeedback } from '@/utils/haptics';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 const CHECK_ICON_SIZE = 22;
 
@@ -133,10 +134,10 @@ const GetStartedChecklistComponent = ({
     return null;
   }
 
-  const progressLabel = STRINGS.CHECKLIST_PROGRESS.replace('{done}', String(doneCount)).replace(
-    '{total}',
-    String(items.length),
-  );
+  const progressLabel = fillTemplate(STRINGS.CHECKLIST_PROGRESS, {
+    done: doneCount,
+    total: items.length,
+  });
 
   return (
     <Animated.View style={[MOUNT_FADE_IN_STYLE, animatedStyle]}>

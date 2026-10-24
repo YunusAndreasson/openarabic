@@ -7,6 +7,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { getRootLemma } from '@/utils/stringUtils';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 interface WordRailCardProps {
   word: StudyWord;
@@ -41,10 +42,10 @@ const WordRailCardComponent = ({ word, onPress }: WordRailCardProps) => {
 
   return (
     <BaseCard
-      accessibilityLabel={STRINGS.HARDEST_WORD_CARD_A11Y.replace('{arabic}', letters).replace(
-        '{meaning}',
+      accessibilityLabel={fillTemplate(STRINGS.HARDEST_WORD_CARD_A11Y, {
+        arabic: letters,
         meaning,
-      )}
+      })}
       // Explicit, because `BaseCard` has no default and the label no longer says
       // "Opens the word" — the role is what carries that now.
       accessibilityRole="button"

@@ -17,6 +17,7 @@ import { useColors } from '@/hooks/theme';
 import pkg from '@/package.json';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 const MIN_CHARACTERS = 10;
 
@@ -43,11 +44,10 @@ export const FeedbackForm = memo(() => {
     characterCount < MIN_CHARACTERS
       ? characterCount === MIN_CHARACTERS - 1
         ? STRINGS.FEEDBACK_CHARACTER_NEEDED
-        : STRINGS.FEEDBACK_CHARACTERS_NEEDED.replace(
-            '{count}',
-            String(MIN_CHARACTERS - characterCount),
-          )
-      : STRINGS.FEEDBACK_CHARACTER_COUNT.replace('{count}', String(characterCount));
+        : fillTemplate(STRINGS.FEEDBACK_CHARACTERS_NEEDED, {
+            count: MIN_CHARACTERS - characterCount,
+          })
+      : fillTemplate(STRINGS.FEEDBACK_CHARACTER_COUNT, { count: characterCount });
 
   // Never error ink. A message still being typed is not a mistake, and the
   // count used to turn red from the first character until the tenth; there is
@@ -64,7 +64,7 @@ export const FeedbackForm = memo(() => {
     if (message.trim().length < MIN_CHARACTERS) {
       Alert.alert(
         STRINGS.FEEDBACK_SHORT_TITLE,
-        STRINGS.FEEDBACK_SHORT_MESSAGE.replace('{minCharacters}', String(MIN_CHARACTERS)),
+        fillTemplate(STRINGS.FEEDBACK_SHORT_MESSAGE, { minCharacters: MIN_CHARACTERS }),
       );
       return;
     }
@@ -214,7 +214,7 @@ export const FeedbackForm = memo(() => {
       <View style={styles.metaRow}>
         <ThemedText type="caption" colorName="textTertiary">
           {user?.email
-            ? STRINGS.FEEDBACK_EMAIL_INCLUDED.replace('{email}', user.email)
+            ? fillTemplate(STRINGS.FEEDBACK_EMAIL_INCLUDED, { email: user.email })
             : STRINGS.FEEDBACK_EMAIL_UNAVAILABLE}
         </ThemedText>
         <ThemedText type="caption" style={[styles.characterCount, { color: characterCountColor }]}>

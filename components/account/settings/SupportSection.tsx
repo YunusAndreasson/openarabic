@@ -12,6 +12,7 @@ import { handleError } from '@/utils/errorHandling';
 import { errorFeedback, successFeedback } from '@/utils/haptics';
 import { resetOnboarding } from '@/utils/onboardingStorage';
 import { openExternalUrl } from '@/utils/openExternalUrl';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 /**
  * Where "Rate OpenArabic" goes: the App Store's write-a-review page on iOS (the
@@ -25,7 +26,9 @@ function getWriteReviewUrl(): string | null {
     return listingUrl ? `${listingUrl}?action=write-review` : null;
   }
   const packageName = Application.applicationId;
-  return packageName ? STRINGS.PLAY_STORE_LISTING_URL.replace('{package}', packageName) : null;
+  return packageName
+    ? fillTemplate(STRINGS.PLAY_STORE_LISTING_URL, { package: packageName })
+    : null;
 }
 
 const WRITE_REVIEW_URL = getWriteReviewUrl();

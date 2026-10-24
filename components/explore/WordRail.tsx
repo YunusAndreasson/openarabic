@@ -7,6 +7,7 @@ import { DisclosureChevron } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 import { WordRailCard } from './WordRailCard';
 
@@ -40,11 +41,11 @@ interface WordRailProps {
  * it is the same shape as the `SeeAllRow` that ends the revisit sheet.
  */
 const SeeAllCard = ({ count, onPress }: SeeAllTarget) => {
-  const label = STRINGS.WORDS_TO_REVISIT_SEE_ALL.replace('{count}', String(count));
+  const label = fillTemplate(STRINGS.WORDS_TO_REVISIT_SEE_ALL, { count });
 
   return (
     <BaseCard
-      accessibilityLabel={STRINGS.HARDEST_WORDS_SEE_ALL_A11Y.replace('{count}', String(count))}
+      accessibilityLabel={fillTemplate(STRINGS.HARDEST_WORDS_SEE_ALL_A11Y, { count })}
       accessibilityRole="button"
       contentStyle={styles.seeAllContent}
       style={styles.card}

@@ -10,6 +10,7 @@ import { STRINGS } from '@/constants/strings';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
 import type { RootId } from '@/types/branded.types';
 import type { RootEnrichment, RootFamilyMember } from '@/types/rootEnrichment.types';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 /**
  * Where this renders, which decides how much of the record it shows.
@@ -92,14 +93,14 @@ export const RootExplanation = ({
   const arabicFontSize = getCompactArabicFontSize(useDebouncedArabicFontSize(100));
 
   const { triliteralRoot, rootTransliteration, rootMeaning } = enrichment;
-  const summary = STRINGS.WORD_ROOT_SUMMARY.replace(
-    '{transliteration}',
-    rootTransliteration,
-  ).replace('{meaning}', rootMeaning);
-  const rootA11y = STRINGS.WORD_ROOT_A11Y.replace('{root}', rootTransliteration).replace(
-    '{meaning}',
-    rootMeaning,
-  );
+  const summary = fillTemplate(STRINGS.WORD_ROOT_SUMMARY, {
+    transliteration: rootTransliteration,
+    meaning: rootMeaning,
+  });
+  const rootA11y = fillTemplate(STRINGS.WORD_ROOT_A11Y, {
+    root: rootTransliteration,
+    meaning: rootMeaning,
+  });
 
   // Every member, on both surfaces. The sheet used to show three, to stay short.
   // What a word is built from is the reason this panel exists, so trimming it to
@@ -216,7 +217,7 @@ export const RootExplanation = ({
           one more line between the learner and the sentence they were reading,
           and the same citation is one tap away on the word screen. */}
       <ThemedText colorName="textTertiary" style={styles.source} type="caption">
-        {STRINGS.WORD_ROOT_SOURCE.replace('{source}', enrichment.source)}
+        {fillTemplate(STRINGS.WORD_ROOT_SOURCE, { source: enrichment.source })}
       </ThemedText>
     </View>
   );

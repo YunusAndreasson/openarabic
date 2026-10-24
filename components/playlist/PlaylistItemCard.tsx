@@ -14,6 +14,7 @@ import { LAYOUT, TEXT_STYLES } from '@/constants/layout';
 import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
 import type { PressableLikeProps } from '@/types/ui/base.types';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 // Bookmarks thumbnail size with 4:3 ratio for optimal vertical space in portrait mobile
 // Uses centralized constants from layout.ts for consistency
@@ -79,7 +80,7 @@ export const PlaylistItemCard = memo(
         {editMode && dragHandleProps && (
           <View style={styles.dragHandleContainer}>
             <DragHandle
-              accessibilityLabel={STRINGS.PLAYLIST_A11Y_REORDER_ARTICLE.replace('{title}', title)}
+              accessibilityLabel={fillTemplate(STRINGS.PLAYLIST_A11Y_REORDER_ARTICLE, { title })}
               onLongPress={dragHandleProps.onLongPress}
               delayLongPress={dragHandleProps.delayLongPress}
             />
@@ -154,7 +155,7 @@ export const PlaylistItemCard = memo(
         {editMode && onDelete && (
           <View style={styles.deleteButtonContainer}>
             <IconButton
-              accessibilityLabel={STRINGS.PLAYLIST_A11Y_REMOVE_ARTICLE.replace('{title}', title)}
+              accessibilityLabel={fillTemplate(STRINGS.PLAYLIST_A11Y_REMOVE_ARTICLE, { title })}
               hapticType="selection"
               icon="trash"
               size="small"
