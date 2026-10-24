@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,36 +20,20 @@ import { WordFsrsStats } from '@/components/practice/WordFsrsStats';
 import { WordHeroText } from '@/components/practice/WordHeroText';
 import { SkiaColoredArabic } from '@/components/common/SkiaColoredArabic';
 import { PulsatingLoader } from '@/components/ui';
-import {
-  LAYOUT,
-  MIN_TOUCH_TARGET,
-  getArabicHeroFontSize,
-  getArabicHeroTextStyle,
-  getCompactArabicFontSize,
-} from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, getCompactArabicFontSize } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
-import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
-import {
-  useFSRSQueries,
-  useResetWordProgress,
-  useRootEnrichment,
-  useSentencesByWord,
-  useWordMemory,
-} from '@/hooks/vocabulary';
+import { useResetWordProgress, useSentencesByWord } from '@/hooks/vocabulary';
+import { useSavedWordDetail } from '@/hooks/vocabulary/useSavedWordDetail';
 import type { SentenceArticle } from '@/services/sentences';
 import type { RootId } from '@/types/branded.types';
-import type { StudyWord } from '@/types/vocabulary.types';
-import { toWordAudioData } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
 import { getNextReviewLabel } from '@/utils/fsrsUtils';
 import { getArticleRoute, getPracticeWordRoute } from '@/utils/routeBuilders';
 import { getWordUsage, type WordForm } from '@/utils/wordUsage';
 import { dismissAllThenNavigate } from '@/utils/sheetNavigation';
-import { getRootLemma } from '@/utils/stringUtils';
 
 const SENTENCE_EXAMPLES_LIMIT = 5;
 
@@ -61,39 +45,30 @@ export default function PracticeWordScreen(): JSX.Element {
   const { rootId: rootIdParam } = useLocalSearchParams<{ rootId?: string }>();
   const rootId = Number(rootIdParam) as RootId;
 
-  // Debounced like every other Arabic surface, so dragging the size slider does
-  // not re-render the headword on every tick.
-  const readingFontSize = useDebouncedArabicFontSize(100);
-  const heroFontSize = getArabicHeroFontSize(readingFontSize);
+  // The word itself, its memory, enrichment, hero style and audio — shared with
+  // the root-level word sheet (WordDetailContent), so the two cannot disagree.
+  // The word is held after a remove so the screen stays rendered while it
+  // dismisses (the optimistic cache update deletes the word first).
+  const {
+    word,
+    isLoading,
+    error,
+    memory,
+    enrichment,
+    arabicText,
+    englishText,
+    readingFontSize,
+    heroArabicStyle,
+    canOpenFamilyMember,
+    playAudio,
+  } = useSavedWordDetail(rootId);
   // The "Seen as" forms use the dense-row cap, not the hero size: six of them
   // wrap across two lines, and at hero size two would fill the screen.
   const formFontSize = getCompactArabicFontSize(readingFontSize);
-  const heroArabicStyle = useMemo(() => getArabicHeroTextStyle(heroFontSize), [heroFontSize]);
 
-  const { allWords, isLoading, error } = useFSRSQueries({ userId: user?.id });
   const { toggleRootMutation } = useStudyWordMutations();
   const toggleRoot = toggleRootMutation.mutateAsync;
   const { confirmReset } = useResetWordProgress();
-
-  // Hold the last seen word so the sheet stays rendered while it dismisses
-  // after a remove (the optimistic cache update deletes the word first).
-  // Guarded set-state during render is the sanctioned "storing information
-  // from previous renders" pattern.
-  const found = useMemo(
-    () => allWords?.find(candidate => candidate.root_id === rootId),
-    [allWords, rootId],
-  );
-  const [word, setWord] = useState<StudyWord | undefined>(found);
-  if (found && found !== word) {
-    setWord(found);
-  }
-
-  const memory = useWordMemory(word);
-
-  // Keyed off the ROUTE param, not the resolved word: the id is known
-  // synchronously on mount, so this is already in flight while the study-word
-  // list is still loading rather than starting a round trip behind it.
-  const enrichment = useRootEnrichment(rootId);
 
   const {
     sentences,
@@ -104,14 +79,6 @@ export default function PracticeWordScreen(): JSX.Element {
     limit: SENTENCE_EXAMPLES_LIMIT,
     enabled: !!word?.root_id,
   });
-
-  const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
-
-  const handlePlayAudio = useCallback(async () => {
-    const audio = word && toWordAudioData(word);
-    if (!audio) return;
-    await playWordAudio(audio);
-  }, [word, playWordAudio]);
 
   const handleResetProgress = useCallback(() => {
     if (!word) return;
@@ -164,20 +131,13 @@ export default function PracticeWordScreen(): JSX.Element {
     );
   }
 
-  const { arabicText, englishText } = getRootLemma(word);
   const nextReviewLabel = getNextReviewLabel(word.fsrs_due);
 
   // Part of speech and the inflected forms, both read off the examples already
   // loaded above. `roots` has neither column; the corpus is the only source.
   const usage = getWordUsage({ rootId: word.root_id, lemma: arabicText, sentences });
 
-  // A family member is tappable only when the learner has that word saved: this
-  // screen renders WORD_NOT_FOUND for anything outside the practice list, so a
-  // link to an unsaved word is a dead end. The check is handed to the component
-  // PER MEMBER — it used to be an all-or-nothing prop, which meant one saved
-  // member made all five look pressable.
-  const savedRootIds = new Set((allWords ?? []).map(saved => saved.root_id));
-  const canOpenFamilyMember = (memberRootId: RootId) => savedRootIds.has(memberRootId);
+  // A family member opens only when it is saved too: see `canOpenFamilyMember`.
   const handleOpenFamilyMember = (memberRootId: RootId) => {
     router.push(getPracticeWordRoute(memberRootId));
   };
@@ -237,7 +197,7 @@ export default function PracticeWordScreen(): JSX.Element {
           englishText={englishText}
           partOfSpeech={usage.partOfSpeech}
           transliteration={enrichment?.headwordTransliteration}
-          onPlayAudio={() => void handlePlayAudio()}
+          onPlayAudio={playAudio}
         />
 
         {/* The one thing on this screen that shows the model rather than a
