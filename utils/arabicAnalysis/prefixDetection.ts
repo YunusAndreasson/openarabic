@@ -5,14 +5,15 @@
 import { ARABIC_PREFIXES, ComponentType, GrammaticalRole } from '@/constants/arabicWordComponents';
 
 import { findComponent, hasNonArticleAlef } from './componentDetection';
-import { VALIDATION_CONFIG } from './constants';
 import { hasEnglishMatch } from './englishMatching';
 import { normalizeEnglish } from './normalization';
 import type { AnalyzedComponent } from './types';
 import {
   getShortenedPrepositionForm,
   isFormWithSuffixPattern,
+  isFutureOrNegationPrefix,
   isHighRiskPreposition,
+  isSubjectMarker,
 } from './validation';
 
 /** Possessive indicators for shadda-based suffix detection (Validation 0) */
@@ -358,11 +359,7 @@ export function detectPrefixes(
       // Subject markers (ي، ت، ن، أ) are verb conjugation prefixes (he/she/we/I).
       // They're valid colorable prefixes, but detection must stop after them to prevent
       // cascading into the verb root.
-      const isCurrentSubjectMarker = VALIDATION_CONFIG.SUBJECT_MARKERS.includes(
-        prefixMatch.arabicMatch as (typeof VALIDATION_CONFIG.SUBJECT_MARKERS)[number],
-      );
-
-      if (isCurrentSubjectMarker) {
+      if (isSubjectMarker(prefixMatch.arabicMatch)) {
         // VALIDATION 6: Form V/VI verb patterns (يَتَفَعَّلُ / يَتَفَاعَلُ)
         // When subject marker is followed by ت, the ت is part of the verb form (not a prefix).
         // Accept the subject marker but stop detection to prevent ت from being a second prefix.
@@ -374,13 +371,7 @@ export function detectPrefixes(
         // VALIDATION 8: After future tense (س/سوف) or negation (لا/لم/لن)
         // The subject marker IS valid — accept it but stop further detection.
         // Examples: سيذهب "he will go" → [س,ي] + ذهب, لايعلم "does not know" → [لا,ي] + علم
-        const hasFutureOrNegation = detectedPrefixes.some(
-          p =>
-            (VALIDATION_CONFIG.FUTURE_TENSE_PREFIXES as readonly string[]).includes(
-              p.arabicMatch,
-            ) || (VALIDATION_CONFIG.NEGATION_PREFIXES as readonly string[]).includes(p.arabicMatch),
-        );
-        if (hasFutureOrNegation) {
+        if (detectedPrefixes.some(p => isFutureOrNegationPrefix(p.arabicMatch))) {
           continueDetection = false;
         }
       }
@@ -389,11 +380,7 @@ export function detectPrefixes(
       // After a subject marker, single-letter conjunctions (و، ف، ب، ل) with < 3 chars remaining
       // are likely root radicals, not prefixes.
       // Example: وتودد → و + تودد (Form V), NOT و + ت + و + دد
-      const hasSubjectMarker = detectedPrefixes.some(p =>
-        VALIDATION_CONFIG.SUBJECT_MARKERS.includes(
-          p.arabicMatch as (typeof VALIDATION_CONFIG.SUBJECT_MARKERS)[number],
-        ),
-      );
+      const hasSubjectMarker = detectedPrefixes.some(p => isSubjectMarker(p.arabicMatch));
 
       if (
         hasSubjectMarker &&
@@ -410,18 +397,9 @@ export function detectPrefixes(
       // is a root letter, not a future/negation prefix.
       // Example: يَسَّرَ "He will make easy" → ي(subject) + سّر(root), NOT ي+س(future)+ر
       // Example: يسمعه "will hear it" → ي(subject) + سمع(root), NOT ي+س(future)+مع
-      if (hasSubjectMarker) {
-        const isFutureOrNegation =
-          (VALIDATION_CONFIG.FUTURE_TENSE_PREFIXES as readonly string[]).includes(
-            prefixMatch.arabicMatch,
-          ) ||
-          (VALIDATION_CONFIG.NEGATION_PREFIXES as readonly string[]).includes(
-            prefixMatch.arabicMatch,
-          );
-        if (isFutureOrNegation) {
-          continueDetection = false;
-          continue;
-        }
+      if (hasSubjectMarker && isFutureOrNegationPrefix(prefixMatch.arabicMatch)) {
+        continueDetection = false;
+        continue;
       }
 
       // VALIDATION 5a: Reject ف+'for' when ب already detected.

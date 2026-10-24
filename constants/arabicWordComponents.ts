@@ -886,12 +886,3 @@ export const GRAMMATICAL_ROLE_COLORS = {
   // `grammar.*` key the theme does not define, fails to compile — see the note
   // on COMPONENT_TYPE_CONFIG above.
 } as const satisfies Record<GrammaticalRole, ValidColorName>;
-
-/**
- * Derived mapping from icon to component type
- * Used by colorCodedTextUtils.ts for positional scoring
- * Single source of truth: icons come from COMPONENT_TYPE_CONFIG
- */
-export const ICON_TO_COMPONENT_TYPE = Object.fromEntries(
-  Object.entries(COMPONENT_TYPE_CONFIG).map(([type, config]) => [config.icon, type]),
-) as Record<string, ComponentType>;

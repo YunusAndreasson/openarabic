@@ -403,9 +403,8 @@ describe('Positional Scoring Edge Cases', () => {
       expect(result[0]?.color).toBe(mockColors.text);
     });
 
-    test('component with no componentType uses neutral score', () => {
-      // If icon is missing or unrecognized, component type is undefined
-      // Should default to neutral score (0.5)
+    test('component with no icon still matches', () => {
+      // A section's icon is display-only; matching never depends on it
       const formattedAnalysis: FormattedAnalysis = {
         title: '',
         sections: [
@@ -418,7 +417,7 @@ describe('Positional Scoring Edge Cases', () => {
             colorName: 'tint',
             arabicPart: 'و',
             englishPart: 'and',
-            // No icon, so componentType will be undefined
+            // No icon
           },
         ],
         reconstructedArabic: undefined,
@@ -432,7 +431,7 @@ describe('Positional Scoring Edge Cases', () => {
         defaultColor: mockColors.text,
       });
 
-      // Should still match "and" (uses neutral score)
+      // Should still match "and"
       const andSegment = result.find(s => s.text === 'and');
       expect(andSegment).toBeDefined();
     });
