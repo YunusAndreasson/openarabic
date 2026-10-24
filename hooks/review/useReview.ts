@@ -700,7 +700,7 @@ export function useReview({
       // Reported rather than inferred: a play-time cache miss and a cache
       // self-heal both cost seconds, and from the outside they look identical
       // to a player that simply refused to load.
-      const detail: PlayAudioDetail = { cacheMissed: preloaded === null, healed: false };
+      const detail: PlayAudioDetail = { cacheMissed: preloaded === undefined, healed: false };
       const report = (started: boolean): boolean => {
         onResolved?.(detail);
         return started;
