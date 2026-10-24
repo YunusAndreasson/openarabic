@@ -1,11 +1,11 @@
-import * as Sentry from '@sentry/react-native';
 import { useCallback, useState } from 'react';
-import { useMountSafety } from '@/hooks/common/useMountSafety';
+
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
-import { isCancellationError } from '@/utils/authUtils';
+import { getErrorCode, isCancellationError } from '@/utils/authUtils';
 import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
+import { toError } from '@/utils/toError';
 
 /**
  * OAuth provider type
@@ -37,9 +37,30 @@ export interface OAuthSignInResult {
 }
 
 /**
+ * The stage a sign-in had reached when it failed.
+ *
+ * Tracked as the flow advances, never guessed afterwards. The guess used to be
+ * a substring match on the lowercased error message, and `includes('auth')`
+ * matched Apple's own native error text
+ * (com.apple.AuthenticationServices.AuthorizationError): a failed Apple sheet
+ * told the learner "Apple sign-in succeeded, but server authentication failed"
+ * and was filed as a Supabase failure.
+ */
+export type OAuthSignInStep =
+  'module_load' | 'provider_signin' | 'token_validation' | 'supabase_exchange';
+
+const STEP_MESSAGES: Record<OAuthSignInStep, (providerName: string) => string> = {
+  module_load: providerName => `${providerName} Sign In not available`,
+  provider_signin: providerName => `${providerName} sign-in failed`,
+  token_validation: providerName => `${providerName} sign-in succeeded, but no auth token received`,
+  supabase_exchange: providerName =>
+    `${providerName} sign-in succeeded, but server authentication failed`,
+};
+
+/**
  * Provider-specific configuration and implementation
  */
-export interface OAuthProviderConfig {
+export interface OAuthProviderConfig<TModule = unknown> {
   /**
    * Provider name for analytics and logging
    */
@@ -49,14 +70,14 @@ export interface OAuthProviderConfig {
    * Load and return the native module
    * Should throw if module is not available
    */
-  loadModule: () => Promise<unknown>;
+  loadModule: () => Promise<TModule>;
 
   /**
-   * Execute provider-specific sign-in flow
-   * Should return ID token on success
-   * Should throw on error (cancellation, failure, etc.)
+   * Run the provider's own sign-in flow on the module `loadModule` returned.
+   * Resolves the ID token, or `null` when the user backed out — a cancel is an
+   * outcome, not an error, so it is never thrown. Throws on failure.
    */
-  executeSignIn: (module: unknown) => Promise<OAuthSignInResult>;
+  executeSignIn: (module: TModule) => Promise<OAuthSignInResult | null>;
 
   /**
    * Optional: Check if error is provider-specific and should be handled specially
@@ -74,14 +95,15 @@ export interface OAuthProviderConfig {
  * Factory hook for OAuth authentication
  *
  * Consolidates common OAuth patterns:
- * - Loading state and mount safety
+ * - Loading state
  * - Module availability checking
  * - Sentry breadcrumb tracking
  * - Supabase token exchange
  * - Analytics tracking
- * - Session waiting
- * - Success handling (haptics + navigation)
- * - Comprehensive error handling
+ * - Success handling (haptics; navigation follows the session)
+ * - Error handling: ONE report per failed sign-in, tagged with the step that
+ *   failed. Each step used to capture to Sentry itself and then `handleError`
+ *   captured again, so every failure was two or three events.
  *
  * Provider-specific logic is delegated to configuration callbacks.
  *
@@ -90,81 +112,66 @@ export interface OAuthProviderConfig {
  * export function useGoogleAuth() {
  *   return useOAuthProvider({
  *     provider: 'google',
- *     loadModule: async () => {
- *       const { GoogleSignin } = require('@react-native-google-signin/google-signin');
- *       await GoogleSignin.configure({ webClientId: '...' });
- *       return GoogleSignin;
- *     },
- *     executeSignIn: async (GoogleSignin) => {
- *       const result = await GoogleSignin.signIn();
- *       return { idToken: result.data.idToken };
+ *     loadModule: async () => getGoogleSignin(),
+ *     executeSignIn: async google => {
+ *       const response = await google.GoogleSignin.signIn();
+ *       return google.isCancelledResponse(response) ? null : { idToken: … };
  *     },
  *   });
  * }
  * ```
  */
-export function useOAuthProvider(config: OAuthProviderConfig) {
+export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) {
   const [loading, setLoading] = useState(false);
-  const isMountedRef = useMountSafety();
 
   const signIn = useCallback(async (): Promise<void> => {
-    if (!isMountedRef.current) return;
     setLoading(true);
 
     const providerName = config.provider.charAt(0).toUpperCase() + config.provider.slice(1);
+    let step: OAuthSignInStep = 'module_load';
 
     try {
-      // STEP 1: Load native module
       authBreadcrumb(`Checking ${providerName} Auth native module availability`);
 
-      let nativeModule;
+      let nativeModule: TModule;
       try {
         nativeModule = await config.loadModule();
-        authBreadcrumb(`${providerName} Auth native module loaded successfully`);
       } catch (moduleError) {
-        Sentry.captureException(moduleError, {
-          tags: {
-            location: `${config.provider}_auth`,
-            step: 'module_load',
-          },
-          level: 'error',
-          extra: {
-            errorType: 'module_not_available',
-            errorMessage: String(moduleError),
-          },
-        });
+        authBreadcrumb(
+          `${providerName} Auth native module unavailable`,
+          { errorMessage: toError(moduleError).message },
+          'error',
+        );
         throw new Error(
           config.moduleNotAvailableMessage ??
             `${providerName} Sign In is not available. Please rebuild the app with: npx expo prebuild`,
         );
       }
+      authBreadcrumb(`${providerName} Auth native module loaded successfully`);
 
-      // STEP 2: Execute provider-specific sign-in
+      step = 'provider_signin';
       authBreadcrumb(`Starting ${providerName} sign-in flow`);
 
-      let signInResult: OAuthSignInResult;
+      let signInResult: OAuthSignInResult | null;
       try {
         signInResult = await config.executeSignIn(nativeModule);
       } catch (signInError) {
         // Let provider handle specific errors
-        if (config.handleProviderError) {
-          const handledMessage = config.handleProviderError(signInError);
-          if (handledMessage) {
-            // Create error with formatted message but preserve original error code
-            // This ensures isCancellationError can correctly identify non-cancellation errors
-            const formattedError = new Error(handledMessage);
-            if (
-              typeof signInError === 'object' &&
-              signInError &&
-              'code' in signInError &&
-              signInError.code !== undefined
-            ) {
-              (formattedError as Error & { code: unknown }).code = signInError.code;
-            }
-            throw formattedError;
-          }
+        const handledMessage = config.handleProviderError?.(signInError);
+        if (handledMessage) {
+          // Create error with formatted message but preserve original error code
+          // This ensures isCancellationError can correctly identify non-cancellation errors
+          const formattedError = new Error(handledMessage);
+          const code = getErrorCode(signInError);
+          if (code !== undefined) Object.assign(formattedError, { code });
+          throw formattedError;
         }
         throw signInError;
+      }
+
+      if (signInResult === null) {
+        authBreadcrumb(`${providerName} sign-in cancelled by the user`);
+        return;
       }
 
       authBreadcrumb(`${providerName} sign-in successful`, {
@@ -172,66 +179,25 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
         hasUserInfo: !!signInResult.userInfo,
       });
 
+      step = 'token_validation';
       if (!signInResult.idToken) {
-        const error = new Error(`No ID token returned from ${providerName} Sign In`);
-        Sentry.captureException(error, {
-          tags: {
-            location: `${config.provider}_auth`,
-            step: 'token_validation',
-          },
-          level: 'error',
-        });
-        throw error;
+        throw new Error(`No ID token returned from ${providerName} Sign In`);
       }
 
-      // STEP 3: Exchange token with Supabase
+      step = 'supabase_exchange';
       authBreadcrumb(`Exchanging ${providerName} token with Supabase`, {
         hasIdToken: true,
         tokenLength: signInResult.idToken.length,
       });
 
-      let authResponse;
-      try {
-        // Pass nonce only if provided (required for Apple iOS where token contains nonce)
-        authResponse = await supabase.auth.signInWithIdToken({
-          provider: config.provider,
-          token: signInResult.idToken,
-          ...(signInResult.nonce ? { nonce: signInResult.nonce } : {}),
-        });
-      } catch (supabaseError) {
-        Sentry.captureException(supabaseError, {
-          tags: {
-            location: `${config.provider}_auth`,
-            step: 'supabase_signin',
-          },
-          level: 'error',
-          extra: {
-            errorMessage:
-              supabaseError instanceof Error ? supabaseError.message : String(supabaseError),
-            errorType:
-              typeof supabaseError === 'object' && supabaseError
-                ? supabaseError.constructor?.name
-                : typeof supabaseError,
-          },
-        });
-        throw supabaseError;
-      }
-
-      const { data, error: authError } = authResponse;
+      // Pass nonce only if provided (required for Apple iOS where token contains nonce)
+      const { data, error: authError } = await supabase.auth.signInWithIdToken({
+        provider: config.provider,
+        token: signInResult.idToken,
+        ...(signInResult.nonce ? { nonce: signInResult.nonce } : {}),
+      });
 
       if (authError) {
-        Sentry.captureException(authError, {
-          tags: {
-            location: `${config.provider}_auth`,
-            step: 'supabase_response',
-          },
-          level: 'error',
-          extra: {
-            errorMessage: authError.message,
-            errorName: authError.name,
-          },
-        });
-
         const enrichedError = new Error(`Supabase authentication failed: ${authError.message}`);
         Object.assign(enrichedError, { originalError: authError });
         throw enrichedError;
@@ -267,28 +233,29 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
           });
       }
 
-      // STEP 4: Track analytics
+      // Track analytics
       await analytics.identify(data.user.id, {
         last_sign_in: new Date().toISOString(),
       });
       await analytics.trackSignIn(config.provider);
 
-      // STEP 5: Success handling - haptic feedback only
+      // Success handling - haptic feedback only
       // Navigation is handled by root layout when session state updates
       successFeedback();
     } catch (error: unknown) {
-      if (!isMountedRef.current) return;
-
-      // Extract error details for diagnostic logging
-      const errorCode =
-        typeof error === 'object' && error && 'code' in error ? String(error.code) : 'none';
-      const errorMessage = error instanceof Error ? error.message : String(error).substring(0, 200);
+      const errorCode = getErrorCode(error);
+      const errorMessage = toError(error).message;
       const isCancellation = isCancellationError(error);
 
       // Add diagnostic breadcrumb BEFORE cancellation check for debugging
       authBreadcrumb(
         `${providerName} Sign In error caught`,
-        { errorCode, errorMessage: errorMessage.substring(0, 100), isCancellation },
+        {
+          step,
+          errorCode: errorCode ?? 'none',
+          errorMessage: errorMessage.substring(0, 100),
+          isCancellation,
+        },
         isCancellation ? 'info' : 'warning',
       );
 
@@ -297,78 +264,40 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
         return;
       }
 
-      // Build error details
-      const errorDetails = {
-        errorType: error instanceof Error ? error.constructor.name : typeof error,
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorCode:
-          typeof error === 'object' && error && 'code' in error ? String(error.code) : 'unknown',
-        errorStack: error instanceof Error ? error.stack : undefined,
-      };
-
-      // Determine failed step
-      let failedStep = 'unknown';
-      let stepMessage = 'Sign in failed';
-
-      const errorMsg = errorDetails.errorMessage.toLowerCase();
-
-      if (
-        errorMsg.includes('module') ||
-        errorMsg.includes('not available') ||
-        errorMsg.includes('rebuild')
-      ) {
-        failedStep = 'module_load';
-        stepMessage = `${providerName} Sign In not available`;
-      } else if (errorMsg.includes('id token') && errorMsg.includes('returned')) {
-        failedStep = 'token_validation';
-        stepMessage = `${providerName} sign-in succeeded, but no auth token received`;
-      } else if (
-        errorMsg.includes('supabase') ||
-        errorMsg.includes('auth') ||
-        errorMsg.includes('server')
-      ) {
-        failedStep = 'supabase_exchange';
-        stepMessage = `${providerName} sign-in succeeded, but server authentication failed`;
-      } else if (errorMsg.includes('sign') || errorMsg.includes(config.provider)) {
-        failedStep = `${config.provider}_signin`;
-        stepMessage = `${providerName} sign-in failed`;
-      }
-
-      // Build detailed error message
       const detailedErrorMessage = [
         `❌ ${providerName} Sign In Failed`,
         ``,
-        `Step: ${stepMessage}`,
-        errorDetails.errorCode !== 'unknown' ? `Error Code: ${errorDetails.errorCode}` : '',
+        `Step: ${STEP_MESSAGES[step](providerName)}`,
+        errorCode === undefined ? '' : `Error Code: ${errorCode}`,
         ``,
         `Error Message:`,
-        errorDetails.errorMessage,
+        errorMessage,
       ]
         .filter(Boolean)
         .join('\n');
 
-      // Use handleError to avoid duplicate Sentry captures
-      void handleError(
-        error instanceof Error ? error : new Error(`${providerName} Sign In failed`),
-        {
-          toastMessage: detailedErrorMessage,
-          toastDuration: 15000,
-          analyticsEventName: `${providerName}_Sign_In_Error`,
-          sentrySeverity: 'error',
-          sentryTags: {
-            location: `${config.provider}_auth`,
-            step: failedStep,
-            errorCode: errorDetails.errorCode,
-          },
-          sentryExtra: { ...errorDetails, failedStep },
+      void handleError(error, {
+        toastMessage: detailedErrorMessage,
+        toastDuration: 15000,
+        analyticsEventName: `${providerName}_Sign_In_Error`,
+        sentrySeverity: 'error',
+        sentryTags: {
+          location: `${config.provider}_auth`,
+          step,
+          errorCode: errorCode ?? 'unknown',
         },
-      );
+        sentryExtra: {
+          errorType: error instanceof Error ? error.constructor.name : typeof error,
+          errorMessage,
+          errorCode: errorCode ?? 'unknown',
+          errorStack: error instanceof Error ? error.stack : undefined,
+          failedStep: step,
+        },
+      });
     } finally {
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
-  }, [config, isMountedRef]);
+  }, [config]);
 
   return {
     signIn,

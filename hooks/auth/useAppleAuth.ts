@@ -1,28 +1,17 @@
-import * as Sentry from '@sentry/react-native';
-import * as Application from 'expo-application';
+import type * as AppleAuthLibrary from '@invertase/react-native-apple-authentication';
 import { useState } from 'react';
 import { Platform } from 'react-native';
 
-import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
-import { isCancellationError } from '@/utils/authUtils';
+import { useOAuthProvider } from '@/hooks/auth/useOAuthProvider';
+import { delay } from '@/utils/async';
+import { getErrorCode, isCancellationError } from '@/utils/authUtils';
 import { authBreadcrumb } from '@/utils/errorHandling';
 
-/** Type for dynamically imported Apple Auth module (iOS only) */
-interface AppleAuthModule {
-  default: {
-    performRequest: (options: {
-      requestedOperation: unknown;
-      requestedScopes: unknown[];
-    }) => Promise<{
-      identityToken: string | null;
-      nonce: string | null;
-      email: string | null;
-      fullName: { givenName: string | null; familyName: string | null } | null;
-    }>;
-    Operation: { LOGIN: unknown };
-    Scope: { EMAIL: unknown; FULL_NAME: unknown };
-  };
-}
+/**
+ * The library's own types. `import type` is erased under `verbatimModuleSyntax`,
+ * so the guarded `require()` below stays the only runtime load.
+ */
+type AppleAuth = typeof AppleAuthLibrary.appleAuth;
 
 /**
  * Native Apple Auth ships as a native module (iOS only), so it is simply absent in
@@ -32,16 +21,17 @@ interface AppleAuthModule {
  * does work. Mirrors the guarded-require pattern used for expo-notifications in
  * app/_layout.tsx. Probed lazily, then memoized, so importing this hook stays cheap.
  */
-let cachedAppleAuth: AppleAuthModule | null | undefined;
+let cachedAppleAuth: AppleAuth | null | undefined;
 
-function getAppleAuth(): AppleAuthModule | null {
+function getAppleAuth(): AppleAuth | null {
   if (cachedAppleAuth === undefined) {
     if (Platform.OS !== 'ios') {
       cachedAppleAuth = null;
     } else {
       try {
-        cachedAppleAuth =
-          require('@invertase/react-native-apple-authentication') as AppleAuthModule;
+        const library =
+          require('@invertase/react-native-apple-authentication') as typeof AppleAuthLibrary;
+        cachedAppleAuth = library.appleAuth;
       } catch {
         cachedAppleAuth = null;
       }
@@ -49,6 +39,26 @@ function getAppleAuth(): AppleAuthModule | null {
   }
   return cachedAppleAuth;
 }
+
+/** One retry for ASAuthorizationError.unknown (1000), after a brief pause. */
+const MAX_REQUEST_RETRIES = 1;
+const RETRY_DELAY_MS = 500;
+
+/**
+ * The NSUserInfo keys worth having on the trail. React Native builds the JS
+ * error from the NSError with `message`, `code`, `domain` and `userInfo` only —
+ * there are no `localized*` properties to read — so these are the details.
+ */
+const USER_INFO_KEYS = [
+  'NSLocalizedDescription',
+  'NSLocalizedFailureReason',
+  'NSLocalizedRecoverySuggestion',
+  'NSUnderlyingError',
+  'NSDebugDescriptionErrorKey',
+] as const;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
 /**
  * Hook return type for Apple authentication
@@ -87,56 +97,37 @@ export function useAppleAuth(): UseAppleAuthReturn {
       return appleAuth;
     },
 
-    executeSignIn: async (module: unknown): Promise<OAuthSignInResult> => {
-      const appleAuth = module as AppleAuthModule;
+    executeSignIn: async appleAuth => {
       if (Platform.OS === 'ios') {
         // iOS: Native Apple Authentication with retry for error 1000
         authBreadcrumb('Starting iOS Apple Authentication flow');
 
         // Retry logic for ASAuthorizationError.unknown (1000)
         // This error often occurs on first attempt when the module isn't fully ready
-        let credential;
+        let credential: AppleAuthLibrary.AppleRequestResponse | undefined;
         let attempt = 0;
-        const maxRetries = 1;
-
-        while (attempt <= maxRetries) {
+        while (!credential) {
           try {
-            credential = await appleAuth.default.performRequest({
-              requestedOperation: appleAuth.default.Operation.LOGIN,
+            credential = await appleAuth.performRequest({
+              requestedOperation: appleAuth.Operation.LOGIN,
               // IMPORTANT: FULL_NAME must be first per library docs (issue #293)
-              requestedScopes: [appleAuth.default.Scope.FULL_NAME, appleAuth.default.Scope.EMAIL],
+              requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
             });
-            break; // Success
           } catch (requestError) {
-            const errorCode =
-              typeof requestError === 'object' && requestError && 'code' in requestError
-                ? String(requestError.code)
-                : 'unknown';
-
-            // Retry only for error 1000 (ASAuthorizationError.unknown) on first attempt
-            const isUnknownError = errorCode === '1000';
-            const shouldRetry = isUnknownError && attempt < maxRetries;
+            const errorCode = getErrorCode(requestError);
+            const shouldRetry =
+              errorCode === appleAuth.Error.UNKNOWN && attempt < MAX_REQUEST_RETRIES;
 
             authBreadcrumb(
               `Apple auth attempt ${attempt + 1} failed`,
-              { errorCode, willRetry: shouldRetry },
+              { errorCode: errorCode ?? 'unknown', willRetry: shouldRetry },
               shouldRetry ? 'warning' : 'error',
             );
 
-            if (shouldRetry) {
-              attempt++;
-              // Brief delay before retry
-              await new Promise<void>(resolve => setTimeout(resolve, 500));
-              continue;
-            }
-
-            throw requestError;
+            if (!shouldRetry) throw requestError;
+            attempt += 1;
+            await delay(RETRY_DELAY_MS);
           }
-        }
-
-        // Safety check - should never happen due to throw above
-        if (!credential) {
-          throw new Error('Apple Sign In failed: no credential received');
         }
 
         authBreadcrumb('Apple credential received', {
@@ -154,7 +145,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
         // `userInfo.name`; useOAuthProvider saves it once the session exists.
         return {
           idToken: credential.identityToken,
-          nonce: credential.nonce ?? undefined,
+          nonce: credential.nonce,
           userInfo: {
             email: credential.email ?? undefined,
             name: credential.fullName
@@ -174,105 +165,24 @@ export function useAppleAuth(): UseAppleAuthReturn {
         return undefined;
       }
 
-      // Extract comprehensive Apple native error details
-      const errorObj = error && typeof error === 'object' ? error : {};
+      // The native details ride on the trail to the one report
+      // useOAuthProvider makes for this failure.
+      const errorObj = isRecord(error) ? error : {};
+      const nativeDomain = typeof errorObj['domain'] === 'string' ? errorObj['domain'] : undefined;
+      const userInfo = isRecord(errorObj['userInfo']) ? errorObj['userInfo'] : {};
+      const userInfoDetails = Object.fromEntries(
+        USER_INFO_KEYS.filter(key => key in userInfo).map(key => [key, userInfo[key]]),
+      );
 
-      // Extract ALL native error properties (iOS NSError)
-      const nativeDomain =
-        'domain' in errorObj && typeof errorObj.domain === 'string' ? errorObj.domain : undefined;
-      const localizedDescription =
-        'localizedDescription' in errorObj && typeof errorObj.localizedDescription === 'string'
-          ? errorObj.localizedDescription
-          : undefined;
-      const localizedFailureReason =
-        'localizedFailureReason' in errorObj && typeof errorObj.localizedFailureReason === 'string'
-          ? errorObj.localizedFailureReason
-          : undefined;
-      const localizedRecoverySuggestion =
-        'localizedRecoverySuggestion' in errorObj &&
-        typeof errorObj.localizedRecoverySuggestion === 'string'
-          ? errorObj.localizedRecoverySuggestion
-          : undefined;
-      const userInfo =
-        'userInfo' in errorObj && typeof errorObj.userInfo === 'object'
-          ? errorObj.userInfo
-          : undefined;
-
-      // Extract specific keys from userInfo that Apple provides
-      const userInfoDetails: Record<string, unknown> = {};
-      if (userInfo && typeof userInfo === 'object') {
-        const keysToExtract = [
-          'NSLocalizedDescription',
-          'NSLocalizedFailureReason',
-          'NSLocalizedRecoverySuggestion',
-          'NSUnderlyingError',
-          'NSDebugDescriptionErrorKey',
-        ];
-        keysToExtract.forEach(key => {
-          if (key in userInfo) {
-            userInfoDetails[key] = (userInfo as Record<string, unknown>)[key];
-          }
-        });
-      }
-
-      const errorCode =
-        typeof error === 'object' && error && 'code' in error ? String(error.code) : 'unknown';
-
-      // Get device info for debugging
-      const deviceInfo = {
-        ios_version: Platform.Version,
-        bundle_id: Application.applicationId,
-        app_version: Application.nativeApplicationVersion,
-        build_number: Application.nativeBuildVersion,
-        platform: Platform.OS,
-      };
-
-      // Log comprehensive error details to Sentry
-      Sentry.captureException(error, {
-        tags: {
-          location: 'apple_auth',
-          step: 'apple_signin',
-          platform: Platform.OS,
-          errorCode,
-          nativeDomain: nativeDomain || 'unknown',
+      authBreadcrumb(
+        'Apple authorization failed',
+        {
+          errorCode: getErrorCode(error) ?? 'unknown',
+          nativeDomain: nativeDomain ?? 'unknown',
+          userInfo: userInfoDetails,
         },
-        level: 'error',
-        extra: {
-          // Apple error information
-          appleErrorCode: errorCode,
-          appleErrorDomain: nativeDomain,
-          appleLocalizedDescription: localizedDescription,
-          appleFailureReason: localizedFailureReason,
-          appleRecoverySuggestion: localizedRecoverySuggestion,
-          appleUserInfo: JSON.stringify(userInfoDetails, null, 2),
-          // Device context
-          device_ios_version: deviceInfo.ios_version,
-          device_platform: deviceInfo.platform,
-          app_bundle_id: deviceInfo.bundle_id,
-          app_version: deviceInfo.app_version,
-          app_build_number: deviceInfo.build_number,
-        },
-      });
-
-      // Build detailed error message using Apple's native messages
-      if (localizedDescription || localizedFailureReason) {
-        const parts = [
-          '❌ Apple Sign In Error',
-          '',
-          localizedDescription ? `**Error:**\n${localizedDescription}` : '',
-          localizedFailureReason ? `**Reason:**\n${localizedFailureReason}` : '',
-          localizedRecoverySuggestion ? `**Suggestion:**\n${localizedRecoverySuggestion}` : '',
-          '',
-          '**Diagnostic Info:**',
-          `• Error Code: ${errorCode}`,
-          `• Platform: ${Platform.OS} ${Platform.Version}`,
-          nativeDomain ? `• Domain: ${nativeDomain}` : '',
-        ]
-          .filter(Boolean)
-          .join('\n');
-
-        return parts;
-      }
+        'error',
+      );
 
       return undefined; // Use default error handling
     },

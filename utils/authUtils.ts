@@ -3,13 +3,33 @@
  */
 
 /**
- * Known cancellation error codes for different auth providers
+ * The `code` a native module rejected with, as a string; undefined when there
+ * is none.
+ *
+ * Native modules reject with string codes ('1001', 'PLAY_SERVICES_NOT_AVAILABLE'),
+ * but nothing stops a path from handing back a number, and a strict comparison
+ * against the wrong type silently never matches (Google's INTERNAL_ERROR retry
+ * once never ran for exactly that reason). So every comparison is made on the
+ * string form, read in one place.
  */
-const CANCELLATION_ERROR_CODES = [
-  '12501', // Google Android user cancelled
-  '-5', // Google iOS user cancelled
-  '1001', // Apple iOS cancellation
-] as const;
+export function getErrorCode(error: unknown): string | undefined {
+  if (typeof error !== 'object' || error === null || !('code' in error)) return undefined;
+  const { code } = error;
+  if (typeof code === 'string') return code;
+  return typeof code === 'number' ? String(code) : undefined;
+}
+
+/**
+ * Native error codes that mean the user backed out.
+ *
+ * Only Apple's is left. google-signin 16 turns its native SIGN_IN_CANCELLED
+ * ('12501' on Android, '-5' on iOS) into a resolved `{ type: 'cancelled' }`
+ * response instead of a rejection, so those codes can no longer arrive here;
+ * useGoogleAuth reports that response as a `null` sign-in result.
+ */
+const CANCELLATION_ERROR_CODES: readonly string[] = [
+  '1001', // Apple: ASAuthorizationError.canceled (appleAuth.Error.CANCELED)
+];
 
 /**
  * Keywords that indicate user-initiated cancellation
@@ -30,16 +50,12 @@ const CANCELLATION_KEYWORDS = ['cancel', 'cancelled', 'canceled', 'dismiss', 'di
 export function isCancellationError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
 
-  // Check error code (Google and Apple cancellation codes)
-  const errorCode = 'code' in error ? String(error.code) : '';
-
   // If we have a specific error code, rely ONLY on code-based detection
   // This prevents false positives where error 1000 (ASAuthorizationError.unknown)
   // might have "cancelled" in its message but is NOT a user cancellation
+  const errorCode = getErrorCode(error);
   if (errorCode) {
-    return CANCELLATION_ERROR_CODES.includes(
-      errorCode as (typeof CANCELLATION_ERROR_CODES)[number],
-    );
+    return CANCELLATION_ERROR_CODES.includes(errorCode);
   }
 
   // Fallback: Check error message only when no error code exists
