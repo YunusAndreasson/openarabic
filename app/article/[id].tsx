@@ -85,7 +85,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // In-article Listen control (podcast-style playback via the global MiniPlayer)
   const { isListeningToThisArticle, isListenLoading, handleToggleListen } = useArticleListen(
     article?.id,
-    article?.title,
     // Hand over the already-loaded article so tapping Listen doesn't refetch it
     article,
   );

@@ -21,8 +21,6 @@ import { isAudioBusy } from '@/utils/audioUtils';
  */
 export function useArticleListen(
   articleId: ArticleId | undefined,
-  /** Unused: the track carries the article's own title. */
-  _articleTitle?: string,
   /** The article the reader already has loaded. Passed through so the track can
    *  be built without refetching it (see generateEnhancedAudioTrack). */
   article?: AudioTrackArticle | null,

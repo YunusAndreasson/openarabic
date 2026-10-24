@@ -55,7 +55,7 @@ export const createAuthMock = (
 // ============================================================================
 
 /**
- * Creates mock return value for useSimpleAudioPlayer hook
+ * Creates a mock of the audio playback commands (play / stop / preconfigure)
  */
 const createAudioPlayerMockDefaults = () => ({
   play: jest.fn(async (..._args: unknown[]) => true),

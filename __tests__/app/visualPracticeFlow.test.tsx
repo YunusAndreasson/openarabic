@@ -81,15 +81,6 @@ jest.mock('@/services/audioCache', () => ({
   },
 }));
 
-jest.mock('@/hooks/audio/useSimpleAudioPlayer', () => ({
-  useSimpleAudioPlayer: () => ({
-    play: jest.fn(async (..._args: unknown[]) => undefined),
-    stop: jest.fn(async (..._args: unknown[]) => undefined),
-    pause: jest.fn(async (..._args: unknown[]) => undefined),
-    getStatus: jest.fn(async (..._args: unknown[]) => ({ playing: false })),
-  }),
-}));
-
 // expo-haptics is already mocked globally via moduleNameMapper (__mocks__/expo-haptics.js),
 // and jest.setup.js re-arms its promise-returning implementations per test. A local
 // jest.mock() factory here would shadow that with a second, un-armed mock object.
