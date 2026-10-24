@@ -7,7 +7,6 @@ import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { FloatingActionButtons } from '@/components/article/FloatingActionButtons';
 import { HeaderScrim } from '@/components/article/HeaderScrim';
 import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
@@ -130,15 +129,6 @@ interface ArticleContentProps {
   handleScrollEnd: () => void;
   colors: ThemeColors;
   scrollViewRef: RefObject<FlashListRef<Tables<'article_sentences'>>>;
-  // Reading list (bookmarks/listening) functionality
-  isInReadingList: boolean;
-  onToggleReadingList: () => Promise<void>;
-  // In-article Listen control
-  isListening: boolean;
-  isListenLoading: boolean;
-  onToggleListen: () => void;
-  // Close functionality
-  onClose: () => void;
   // FlashList ready callback for scroll-to-position
   onFlashListLoad: () => void;
   selectedRootIds: ReadonlySet<number>;
@@ -153,12 +143,6 @@ const ArticleContentInternal = function ArticleContent({
   handleScrollEnd,
   colors,
   scrollViewRef,
-  isInReadingList,
-  onToggleReadingList,
-  isListening,
-  isListenLoading,
-  onToggleListen,
-  onClose,
   onFlashListLoad,
   selectedRootIds,
 }: ArticleContentProps) {
@@ -312,17 +296,8 @@ const ArticleContentInternal = function ArticleContent({
         <HeaderScrim colors={colors} scrollY={scrollY} headerHeight={headerHeight} />
       )}
 
-      {/* Floating action buttons - completely outside Animated.View to avoid gesture conflicts */}
-      {sortedSentences.length > 0 && (
-        <FloatingActionButtons
-          isInReadingList={isInReadingList}
-          onToggleReadingList={onToggleReadingList}
-          isListening={isListening}
-          isListenLoading={isListenLoading}
-          onToggleListen={onToggleListen}
-          onClose={onClose}
-        />
-      )}
+      {/* The close/listen/playlist buttons this scrim sits under are drawn by
+          the reader screen (app/article/[id].tsx), above this whole view. */}
     </View>
   );
 };

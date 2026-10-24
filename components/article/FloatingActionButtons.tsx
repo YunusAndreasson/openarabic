@@ -49,11 +49,14 @@ export const ReaderCloseButton = ({ onClose }: ReaderCloseButtonProps) => {
   // dragging the article away), and 16px from the true screen top put Close,
   // Listen and Add-to-playlist underneath the status bar — with the swipe-down
   // exit gone too, that left no way out of an article at all.
+  //
+  // No zIndex, here or on the action row: every place this renders, it is the
+  // sibling after what it floats over, and the word sheet that must cover it
+  // sets none — a zIndex would lift these buttons over its backdrop.
   const closeButtonStyle = {
     position: 'absolute' as const,
     top: insets.top,
     left: LAYOUT.SPACING.LARGE,
-    zIndex: LAYOUT.Z_INDEX.OVERLAY,
   };
 
   return (
@@ -92,7 +95,6 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
       position: 'absolute' as const,
       top: insets.top,
       right: LAYOUT.SPACING.LARGE,
-      zIndex: LAYOUT.Z_INDEX.OVERLAY,
       flexDirection: 'row' as const,
       gap: LAYOUT.SPACING.TINY,
     };

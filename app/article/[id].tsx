@@ -1,23 +1,25 @@
 import type { FlashListRef } from '@shopify/flash-list';
-import { useLocalSearchParams } from 'expo-router';
+import type { ErrorBoundaryProps } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX, RefObject } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LayoutRectangle } from 'react-native';
 import { View } from 'react-native';
 import { GestureDetector, useTapGesture } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   ArticleSentence,
+  FloatingActionButtons,
   ReaderCloseButton,
   WordDetailsBottomSheet,
   WordTooltip,
   ArticleContent,
 } from '@/components/article';
 import { AudioErrorBoundary, GlobalMiniPlayer } from '@/components/audio';
-import { ComponentErrorBoundary, EmptyState, ErrorState, LoadingState } from '@/components/common';
+import { EmptyState, ErrorState, LoadingState, ScreenErrorFallback } from '@/components/common';
 import { ToastProvider, useTutorialContext, useToast } from '@/components/providers';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
 import { useArticleListen } from '@/hooks/articles/useArticleListen';
@@ -216,12 +218,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       handleScrollEnd,
       colors,
       scrollViewRef: scrollViewRef as RefObject<FlashListRef<Tables<'article_sentences'>>>,
-      isInReadingList,
-      onToggleReadingList: handleToggleReadingListWithFeedback,
-      isListening: isListeningToThisArticle,
-      isListenLoading,
-      onToggleListen: handleToggleListen,
-      onClose: handleClose,
       onFlashListLoad: handleFlashListLoad,
       selectedRootIds: selectedWordIds,
     };
@@ -234,12 +230,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleScrollEnd,
     colors,
     scrollViewRef,
-    isInReadingList,
-    handleToggleReadingListWithFeedback,
-    isListeningToThisArticle,
-    isListenLoading,
-    handleToggleListen,
-    handleClose,
     handleFlashListLoad,
     selectedWordIds,
   ]);
@@ -322,6 +312,22 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         </GestureDetector>
       ) : null}
 
+      {/* The reader's chrome — close, listen, playlist. After the content, so
+          it draws over the text and the hero; before the player, the tooltip
+          and the word sheet, so those still draw over it. Sibling order is the
+          whole of it: none of these sets a zIndex that would reorder them (the
+          sheet has none, which is why the buttons carry none either). */}
+      {sortedSentences.length > 0 && (
+        <FloatingActionButtons
+          isInReadingList={isInReadingList}
+          onToggleReadingList={handleToggleReadingListWithFeedback}
+          isListening={isListeningToThisArticle}
+          isListenLoading={isListenLoading}
+          onToggleListen={() => void handleToggleListen()}
+          onClose={() => void handleClose()}
+        />
+      )}
+
       {/* The reader is a native modal presented above the root view, so the
           app-wide overlay can't reach it — host the player here instead. */}
       <AudioErrorBoundary>
@@ -344,6 +350,40 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
 ArticleScreenContent.displayName = 'ArticleScreenContent';
 
+/**
+ * Leaving a reader that threw: back to whatever presented it, or to Explore
+ * when nothing did (a cold deep link). `replace`, not `push` — the broken
+ * reader should not stay on the stack under Explore.
+ */
+const closeBrokenReader = () => {
+  if (router.canDismiss()) {
+    router.dismiss();
+  } else {
+    router.replace(ROUTE_PATHS.EXPLORE_TAB);
+  }
+};
+
+/**
+ * What the reader renders in place of itself after a render error.
+ *
+ * Its own boundary, not the Stack's shared `ScreenErrorFallback` alone: the
+ * reader is a `fullScreenModal` with its swipe-down exit turned off, so on iOS
+ * a fallback without a close button had no way out — and the close button
+ * lived inside the very content that threw. Expo Router renders this instead of
+ * the route, so it relies on nothing the screen set up.
+ */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps): JSX.Element {
+  const colors = useColors();
+  const containerStyle = [FLEX_ONE_STYLE, { backgroundColor: colors.background }];
+
+  return (
+    <View style={containerStyle}>
+      <ScreenErrorFallback error={error} retry={retry} />
+      <ReaderCloseButton onClose={closeBrokenReader} />
+    </View>
+  );
+}
+
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
@@ -353,13 +393,14 @@ export default function ArticleScreen(): JSX.Element {
   // MiniPlayer keeps the audio going without one.
   const containerStyle = [FLEX_ONE_STYLE, { backgroundColor: colors.background }];
 
+  // A plain View. This was a SafeAreaView with `edges={[]}`, and in
+  // safe-area-context 5 an omitted edge is an edge turned off — so it applied
+  // no inset at all, only the native work of measuring for one.
   return (
     <ToastProvider>
-      <SafeAreaView style={containerStyle} edges={[]}>
-        <ComponentErrorBoundary componentName="ArticleScreen">
-          <ArticleScreenContent id={id ?? ''} />
-        </ComponentErrorBoundary>
-      </SafeAreaView>
+      <View style={containerStyle}>
+        <ArticleScreenContent id={id ?? ''} />
+      </View>
     </ToastProvider>
   );
 }
