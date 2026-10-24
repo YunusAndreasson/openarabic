@@ -61,6 +61,16 @@ beforeEach(() => {
     inputConfigurationReady = true;
     events.push('reset:end');
   });
+  // `resetMocks` strips the shared mock's implementation, and a subscription the
+  // provider cannot remove would throw out of the session release.
+  jest
+    .mocked(AudioManager.addSystemEventListener)
+    .mockImplementation(
+      () =>
+        ({ remove: jest.fn() }) as unknown as ReturnType<
+          typeof AudioManager.addSystemEventListener
+        >,
+    );
   failNextOpen = false;
   closeBarrier = null;
   events = [];
@@ -191,6 +201,48 @@ async function reviewAfterPrompt() {
   events.length = 0;
   return { ...hook, release };
 }
+
+test('watches interruptions only while a session holds the microphone', async () => {
+  const { result } = renderHook(() => useVoiceGrading(), {
+    wrapper: ({ children }: { children: ReactNode }) => (
+      <VoiceGradingProvider>{children}</VoiceGradingProvider>
+    ),
+  });
+  // Voice is on, but nothing holds the microphone. On Android, observing is a
+  // request for long-term audio focus, which would stop another app's music for
+  // a learner who only came to read.
+  expect(AudioManager.observeAudioInterruptions).not.toHaveBeenCalled();
+  expect(AudioManager.addSystemEventListener).not.toHaveBeenCalled();
+
+  let releaseFirst!: () => void;
+  let releaseSecond!: () => void;
+  await act(async () => {
+    releaseFirst = result.current.acquireSession();
+    releaseSecond = result.current.acquireSession();
+    await result.current.setPlaybackPriority(true);
+  });
+  expect(AudioManager.observeAudioInterruptions).toHaveBeenCalledTimes(1);
+  expect(AudioManager.observeAudioInterruptions).toHaveBeenLastCalledWith(true);
+  const listeners = jest.mocked(AudioManager.addSystemEventListener).mock;
+  expect(listeners.calls.map(([name]) => name)).toEqual(['interruption', 'routeChange']);
+
+  // One holder left: still a session, still watched.
+  await act(async () => {
+    releaseFirst();
+    await result.current.setPlaybackPriority(true);
+  });
+  expect(AudioManager.observeAudioInterruptions).toHaveBeenCalledTimes(1);
+
+  await act(async () => {
+    releaseSecond();
+    await result.current.setPlaybackPriority(true);
+  });
+  expect(AudioManager.observeAudioInterruptions).toHaveBeenCalledTimes(2);
+  expect(AudioManager.observeAudioInterruptions).toHaveBeenLastCalledWith(false);
+  for (const subscription of listeners.results) {
+    expect(subscription.value.remove).toHaveBeenCalledTimes(1);
+  }
+});
 
 test('two successive prompt restores reset native state before delegated input opening', async () => {
   const { result, release } = await reviewAfterPrompt();

@@ -233,6 +233,52 @@ export const useVoiceGrading = (): VoiceGradingContextValue => {
  */
 const VOICE_ENGINE_LINGER_MS = 120_000;
 
+/**
+ * Watch the two system events that leave the input stream present but deaf,
+ * for as long as a review session holds the microphone. Returns the stop.
+ *
+ * Interruptions (a call, Siri, another app taking the session) and route
+ * changes (a headset arriving or leaving) both leave the input stream present
+ * but silent. Neither was handled at all, so the card waited out its dead-air
+ * timeout and the learner read it as "the mic randomly stops working".
+ *
+ * Scoped to a session — `acquireSession`'s first holder starts it and the last
+ * release stops it — because observing is not passive on Android: audio-api
+ * maps `observeAudioInterruptions(true)` to 'gain' and requests
+ * AUDIOFOCUS_GAIN (AudioAPIModule.kt). Started at provider mount whenever voice
+ * was enabled — which, with voice on by default, meant every launch — it took
+ * long-term audio focus, which should stop another app's music for a learner
+ * who only came to read. Outside a session the handlers had nothing to do
+ * anyway: `openCapture` returns at zero holders.
+ */
+function watchSystemAudio(
+  abortWindow: (reason: 'error', message: string) => void,
+  reopenCapture: () => Promise<void>,
+): () => void {
+  AudioManager.observeAudioInterruptions(true);
+  const interruption = AudioManager.addSystemEventListener('interruption', ({ type }) => {
+    diagMark('mic.interruption', { type });
+    if (type === 'began') {
+      abortWindow('error', 'interrupted');
+      return;
+    }
+    void reopenCapture();
+  });
+  const routeChange = AudioManager.addSystemEventListener('routeChange', ({ reason }) => {
+    diagMark('mic.routeChange', { reason });
+    // A device arriving or leaving re-points the input; anything else is
+    // cosmetic and reopening would cost a card its microphone for nothing.
+    if (reason !== 'NewDeviceAvailable' && reason !== 'OldDeviceUnavailable') return;
+    abortWindow('error', `route:${reason}`);
+    void reopenCapture();
+  });
+  return () => {
+    interruption.remove();
+    routeChange.remove();
+    AudioManager.observeAudioInterruptions(false);
+  };
+}
+
 export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
   const enabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
 
@@ -373,6 +419,8 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
   const finishRef = useRef<(() => void) | null>(null);
   /** Review screens currently holding the microphone. */
   const holdersRef = useRef(0);
+  /** Stops the interruption/route-change watch while a session holds the mic. */
+  const stopSystemAudioWatchRef = useRef<(() => void) | null>(null);
 
   /** Settle any pending arm() with a failure and close its window. */
   const abortWindow = useCallback(
@@ -698,6 +746,7 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
   const acquireSession = useCallback((): (() => void) => {
     holdersRef.current += 1;
     if (holdersRef.current === 1) {
+      stopSystemAudioWatchRef.current = watchSystemAudio(abortWindow, reopenCapture);
       // Opens the input stream up front, and it has to stay that way.
       //
       // Deferring it to the tap was tried and reverted: opening on demand cost
@@ -758,6 +807,8 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
       released = true;
       holdersRef.current -= 1;
       if (holdersRef.current > 0) return;
+      stopSystemAudioWatchRef.current?.();
+      stopSystemAudioWatchRef.current = null;
       abortWindow('not-ready');
       const previous = handoffRef.current;
       const cleanup = (async () => {
@@ -787,7 +838,7 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
         if (handoffRef.current === cleanup) handoffRef.current = null;
       });
     };
-  }, [abortWindow, capture, openCapture]);
+  }, [abortWindow, capture, openCapture, reopenCapture]);
 
   // A stream that dies mid-session used to be invisible: no error surfaced and
   // the card simply recorded nothing until noSpeechTimeoutMs. Now it fails the
@@ -802,44 +853,14 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
     return () => capture.onStreamError(null);
   }, [abortWindow, capture, reopenCapture]);
 
-  // Interruptions (a call, Siri, another app taking the session) and route
-  // changes (a headset arriving or leaving) both leave the input stream
-  // present but silent. Neither was handled at all, so the card waited out its
-  // dead-air timeout and the learner read it as "the mic randomly stops working".
-  useEffect(() => {
-    // Gated on the setting, like the model download: a user who never opts into
-    // voice should not have this provider turning on system audio observation
-    // for the rest of the app.
-    if (!enabled) return;
-    AudioManager.observeAudioInterruptions(true);
-    const interruption = AudioManager.addSystemEventListener('interruption', ({ type }) => {
-      diagMark('mic.interruption', { type });
-      if (type === 'began') {
-        abortWindow('error', 'interrupted');
-        return;
-      }
-      void reopenCapture();
-    });
-    const routeChange = AudioManager.addSystemEventListener('routeChange', ({ reason }) => {
-      diagMark('mic.routeChange', { reason });
-      // A device arriving or leaving re-points the input; anything else is
-      // cosmetic and reopening would cost a card its microphone for nothing.
-      if (reason !== 'NewDeviceAvailable' && reason !== 'OldDeviceUnavailable') return;
-      abortWindow('error', `route:${reason}`);
-      void reopenCapture();
-    });
-    return () => {
-      interruption?.remove();
-      routeChange?.remove();
-      AudioManager.observeAudioInterruptions(false);
-    };
-  }, [enabled, abortWindow, reopenCapture]);
+  // Interruptions and route changes are watched only while a session holds the
+  // microphone — see watchSystemAudio, started and stopped by acquireSession.
 
   /**
    * Rebuild the input stream when the app comes back with a review still
    * holding the microphone.
    *
-   * The interruption listener above is the precise signal, but it is not a
+   * The watchSystemAudio listener is the precise signal, but it is not a
    * reliable one: a call takes the app to the background, and an `ended` event
    * delivered while it is there does its reopen against a session the app is
    * not allowed to activate — so it fails, silently, and nothing tries again.
