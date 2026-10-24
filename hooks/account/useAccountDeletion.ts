@@ -6,7 +6,6 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
-import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { AccountDeletionService } from '@/services/accountDeletion';
 import { handleError, showSuccessToast } from '@/utils/errorHandling';
@@ -21,7 +20,11 @@ export interface UseAccountDeletionReturn {
   confirmationError: string;
 
   // Methods
-  validateConfirmation: (text: string) => boolean;
+  /**
+   * Validates the typed confirmation, deletes the account and navigates to
+   * auth. Owns the whole flow, failure included: it never throws, and on
+   * failure the screen stays put with what the learner typed.
+   */
   deleteAccount: () => Promise<void>;
 }
 
@@ -38,7 +41,6 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
   const [loading, setLoading] = useState(false);
   const [confirmationError, setConfirmationError] = useState('');
 
-  const isMountedRef = useMountSafety();
   const queryClient = useQueryClient();
 
   // Fetch user email on mount
@@ -46,38 +48,29 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
     if (user?.email) return;
     const fetchEmail = async () => {
       const email = await AccountDeletionService.getCurrentUserEmail();
-      if (isMountedRef.current) {
-        setFetchedUserEmail(email);
-      }
+      setFetchedUserEmail(email);
     };
     void fetchEmail();
-  }, [isMountedRef, user?.email]);
+  }, [user?.email]);
 
   /**
    * Validates confirmation text matches "DELETE"
    */
-  const validateConfirmation = useCallback(
-    (text: string) => {
-      const trimmedText = text.trim();
-      if (trimmedText !== STRINGS.DELETE_ACCOUNT_CONFIRMATION_WORD) {
-        if (isMountedRef.current) {
-          setConfirmationError(STRINGS.DELETE_ACCOUNT_CONFIRMATION_MISMATCH);
-        }
-        return false;
-      }
-      if (isMountedRef.current) setConfirmationError('');
-      return true;
-    },
-    [isMountedRef],
-  );
+  const validateConfirmation = useCallback((text: string) => {
+    const trimmedText = text.trim();
+    if (trimmedText !== STRINGS.DELETE_ACCOUNT_CONFIRMATION_WORD) {
+      setConfirmationError(STRINGS.DELETE_ACCOUNT_CONFIRMATION_MISMATCH);
+      return false;
+    }
+    setConfirmationError('');
+    return true;
+  }, []);
 
   /**
    * Deletes the user's account after validation
    * Shows success toast and navigates to auth screen
    */
   const deleteAccount = useCallback(async (): Promise<void> => {
-    if (!isMountedRef.current) return;
-
     // Validate confirmation text
     if (!validateConfirmation(confirmationText)) {
       return;
@@ -105,11 +98,11 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
         // Best effort only.
       }
 
-      // Show success feedback
-      if (isMountedRef.current) {
-        successFeedback();
-        showSuccessToast(STRINGS.DELETE_ACCOUNT_SUCCESS);
-      }
+      // Show success feedback. No mount check: the account is gone either way,
+      // and an auth-state update that has already unmounted this screen used
+      // to swallow the only confirmation the learner got.
+      successFeedback();
+      showSuccessToast(STRINGS.DELETE_ACCOUNT_SUCCESS);
 
       // Navigate before the auth-state update unmounts this screen. Deferring
       // behind an isMounted check can strand the user on a stale protected tab.
@@ -122,11 +115,9 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
         showToast: true,
       });
 
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
-  }, [confirmationText, validateConfirmation, isMountedRef, queryClient]);
+  }, [confirmationText, validateConfirmation, queryClient]);
 
   return {
     // State
@@ -137,7 +128,6 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
     confirmationError,
 
     // Methods
-    validateConfirmation,
     deleteAccount,
   };
 }
