@@ -36,7 +36,13 @@ import { countReviewedToday, isDueWord } from '@/utils/wordClassification';
 // Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render alloc.
 // Replaces imperative `entering={FadeIn}` which the React Compiler can't track and
 // which forces a Reanimated mount-side-effect on every focus.
-const MOUNT_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.SLOW.duration, 'forwards');
+const MOUNT_FADE_IN_STYLE = fadeInStyle(
+  TIMING_CONFIG.SLOW.duration,
+  'forwards',
+  // SLOW's own curve is CSS `ease` (bezier 0.25, 0.1, 0.25, 1), which is what
+  // this fade ran on before fadeInStyle gained a timing argument.
+  'ease',
+);
 
 export default function PracticeScreen(): JSX.Element {
   const { user } = useAuth();

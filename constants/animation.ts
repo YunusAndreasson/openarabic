@@ -463,6 +463,8 @@ export const fadeInStyle = (
   animationTimingFunction,
 });
 
+type BreatheFrame = Pick<ViewStyle, 'opacity' | 'transform'>;
+
 /**
  * A pulse on Reanimated's CSS API: `from` to `to` and back, forever, on CSS
  * `ease-in-out`, one leg every `halfPeriodMs` (`BREATHE_HALF_PERIOD`).
@@ -472,8 +474,12 @@ export const fadeInStyle = (
  * plays either way.
  */
 export const breatheStyle = (
-  from: ViewStyle,
-  to: ViewStyle,
+  // Only what a breath animates. The full ViewStyle would not do: with Expo's
+  // react-native-web augmentation loaded (expo-env.d.ts, present in local dev
+  // and absent on CI), ViewStyle carries a web `animationTimingFunction` that
+  // Reanimated's keyframe type rejects.
+  from: BreatheFrame,
+  to: BreatheFrame,
   halfPeriodMs: number,
 ): ReanimatedCSSAnimationStyle => ({
   animationName: { from, to },

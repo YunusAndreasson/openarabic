@@ -26,7 +26,13 @@ const CHECK_ICON_SIZE = 22;
 // Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render
 // alloc. Gives the card a deliberate entrance when the welcome intro dismisses,
 // instead of popping in behind the closing modal.
-const MOUNT_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.SLOW.duration, 'forwards');
+const MOUNT_FADE_IN_STYLE = fadeInStyle(
+  TIMING_CONFIG.SLOW.duration,
+  'forwards',
+  // SLOW's own curve is CSS `ease` (bezier 0.25, 0.1, 0.25, 1), which is what
+  // this fade ran on before fadeInStyle gained a timing argument.
+  'ease',
+);
 
 // The same pop as CompletionScreen's check. Its duration goes into springify:
 // a bare `.springify()` runs Reanimated's default physics spring for ~0.8s, a
