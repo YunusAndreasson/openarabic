@@ -135,8 +135,8 @@ describe('notificationService', () => {
     mockCancelAllScheduledNotificationsAsync.mockClear();
     mockCancelScheduledNotificationAsync.mockClear();
     mockGetAllScheduledNotificationsAsync.mockClear();
-    // `setAppBadgeCount` now passes Expo's own answer through, and the global
-    // `resetMocks` wipes the shared mock's resolved value before every test.
+    // `setAppBadgeCount` now passes Expo's own answer through, and the shared
+    // mock resolves undefined.
     mockSetBadgeCountAsync.mockClear();
     mockSetBadgeCountAsync.mockResolvedValue(true);
     mockGetBadgeCountAsync.mockClear();

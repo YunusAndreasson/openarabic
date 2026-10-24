@@ -10,6 +10,7 @@
 import { render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 import { Toggle } from '@/components/ui/Toggle';
 
@@ -25,18 +26,6 @@ jest.mock('@/hooks/theme/useThemeDetection', () => ({
 // The switch is hidden from accessibility on purpose; queries skip such
 // elements unless asked.
 const HIDDEN = { includeHiddenElements: true };
-
-// jest.setup mocks StyleSheet.flatten, and resetMocks leaves it returning
-// undefined; merge the style here instead.
-function flattenStyle(style: unknown): Record<string, unknown> {
-  if (Array.isArray(style)) {
-    return style.reduce<Record<string, unknown>>(
-      (merged, entry) => ({ ...merged, ...flattenStyle(entry) }),
-      {},
-    );
-  }
-  return style && typeof style === 'object' ? (style as Record<string, unknown>) : {};
-}
 
 describe('Toggle', () => {
   beforeEach(() => {
@@ -55,7 +44,7 @@ describe('Toggle', () => {
     const { getByTestId } = render(<Toggle value={false} testID="toggle" />);
     const wrapper = getByTestId('toggle', HIDDEN);
 
-    expect(flattenStyle(wrapper.props.style).pointerEvents).toBe('none');
+    expect(StyleSheet.flatten(wrapper.props.style)?.pointerEvents).toBe('none');
     expect(wrapper.props.accessibilityElementsHidden).toBe(true);
     expect(wrapper.props.importantForAccessibility).toBe('no-hide-descendants');
   });

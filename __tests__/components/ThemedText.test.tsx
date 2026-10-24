@@ -10,22 +10,9 @@
 import { render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-
-/**
- * jest.setup stubs `StyleSheet.flatten` as the identity function, so a style
- * array has to be merged here for an assertion on its values to mean anything.
- */
-const flattenStyle = (style: unknown): Record<string, unknown> => {
-  if (Array.isArray(style)) {
-    return style.reduce<Record<string, unknown>>(
-      (acc, entry) => ({ ...acc, ...flattenStyle(entry) }),
-      {},
-    );
-  }
-  return style && typeof style === 'object' ? (style as Record<string, unknown>) : {};
-};
 
 // Use shared mock factories from componentMocks.tsx. `captionText` is not in
 // the shared palette; the caption type's default ink needs a value to assert.
@@ -176,8 +163,8 @@ describe('ThemedText', () => {
     ] as const)('a %s with no colorName takes its own ink at full opacity', (type, ink) => {
       const { getByText } = render(<ThemedText type={type}>Ink</ThemedText>);
 
-      const style = flattenStyle(getByText('Ink').props.style);
-      expect(style.color).toBe(ink);
+      const style = StyleSheet.flatten(getByText('Ink').props.style);
+      expect(style?.color).toBe(ink);
       expect(style).not.toHaveProperty('opacity');
     });
 
@@ -188,8 +175,8 @@ describe('ThemedText', () => {
         </ThemedText>,
       );
 
-      const style = flattenStyle(getByText('Quiet').props.style);
-      expect(style.color).toBe('#999999');
+      const style = StyleSheet.flatten(getByText('Quiet').props.style);
+      expect(style?.color).toBe('#999999');
       expect(style).not.toHaveProperty('opacity');
     });
 
@@ -200,8 +187,8 @@ describe('ThemedText', () => {
         </ThemedText>,
       );
 
-      const style = flattenStyle(getByText('Styled').props.style);
-      expect(style.color).toBe('#123456');
+      const style = StyleSheet.flatten(getByText('Styled').props.style);
+      expect(style?.color).toBe('#123456');
       expect(style).not.toHaveProperty('opacity');
     });
   });

@@ -6,9 +6,10 @@
  * The verdict's whole point is that the haptic fires from the ANIMATION's frame
  * — a `useAnimatedReaction` watching the level cross HAPTIC_AT on the way up —
  * rather than from JS alongside the animation start. That crossing cannot be
- * exercised in jest: the reanimated mock's `useAnimatedReaction` runs the
- * reaction once at render with `previous === current`, so no edge ever occurs,
- * and `withSequence` collapses to its last frame so the level never sweeps.
+ * exercised in jest: the reanimated mock's `useAnimatedReaction` re-runs only
+ * after a React commit, which a shared value written by the animation never
+ * causes, and `withSequence` collapses to its last frame so the level never
+ * sweeps.
  *
  * So the reaction's PAYLOAD is tested directly (fireVerdictFeedback), the
  * mapping that decides it is tested pure (resolveVerdictTone), and the shared
@@ -31,21 +32,6 @@ import {
   useCardVerdict,
   VERDICT_TONE,
 } from '@/hooks/review/useCardVerdict';
-
-/**
- * Plain functions, not jest.fn(). The global mock in jest.setup.js is built
- * from jest.fn()s, and this project runs with `resetMocks: true` — which strips
- * every mock's implementation before each test, leaving scheduleOnUI a no-op
- * that silently swallows the worklet. Every assertion below would then pass or
- * fail for a reason that has nothing to do with the verdict.
- */
-jest.mock('react-native-worklets', () => ({
-  scheduleOnUI: (callback: (...args: unknown[]) => void, ...args: unknown[]) => callback(...args),
-  scheduleOnRN:
-    (callback: (...args: unknown[]) => void) =>
-    (...args: unknown[]) =>
-      callback(...args),
-}));
 
 jest.mock('@/utils/haptics', () => ({
   commitFeedback: jest.fn(),

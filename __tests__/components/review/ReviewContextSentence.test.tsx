@@ -25,6 +25,7 @@
 import { describe, expect, jest, test } from '@jest/globals';
 import { render } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
 import { ReviewContextSentence } from '@/components/review/ReviewContextSentence';
 import { STRINGS } from '@/constants/strings';
@@ -105,23 +106,12 @@ function makeExample(overrides: Partial<WordExample> = {}): WordExample {
   };
 }
 
-/** Local, because jest.setup stubs `StyleSheet.flatten` with the identity
- *  function — a style array comes back as an array, so reading `.color` off it
- *  silently yields undefined and every style assertion would pass vacuously. */
-function flattenStyle(style: unknown): Record<string, unknown> {
-  if (Array.isArray(style)) {
-    return style.reduce<Record<string, unknown>>(
-      (merged, entry) => ({ ...merged, ...flattenStyle(entry) }),
-      {},
-    );
-  }
-  return style && typeof style === 'object' ? (style as Record<string, unknown>) : {};
-}
-
 /** True when at least one node showing `text` is painted `color`. Order-agnostic:
  *  a segment and the word that contains it can both match the text. */
 function someNodeIsColored(nodes: { props: { style?: unknown } }[], color: string): boolean {
-  return nodes.some(node => flattenStyle(node.props.style)['color'] === color);
+  return nodes.some(
+    node => StyleSheet.flatten(node.props.style as StyleProp<TextStyle>)?.color === color,
+  );
 }
 
 /** The marker underline is a sibling node, present only on the target word —
@@ -132,7 +122,9 @@ function underlineColor(
   position: number,
 ): unknown {
   const node = queryByTestId(`example-word-${position}-underline`);
-  return node ? flattenStyle(node.props.style)['backgroundColor'] : undefined;
+  return node
+    ? StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>)?.backgroundColor
+    : undefined;
 }
 
 describe('ReviewContextSentence', () => {

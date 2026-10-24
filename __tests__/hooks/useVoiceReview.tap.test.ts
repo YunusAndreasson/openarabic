@@ -48,12 +48,10 @@ const callbacks = {
 const { __mocks } = require('react-native-audio-api');
 
 beforeEach(() => {
-  // `resetMocks` strips the shared AudioManager mock's default resolutions, and
-  // an unresolved permission check reads as a refusal — which is exactly the
-  // state in which hands-free is supposed to keep the tap.
+  // The shared AudioManager mock grants the microphone; an unresolved
+  // permission check would read as a refusal — which is exactly the state in
+  // which hands-free is supposed to keep the tap.
   __resetMicPermissionForTests();
-  __mocks.AudioManager.checkRecordingPermissions.mockResolvedValue('Granted');
-  __mocks.AudioManager.requestRecordingPermissions.mockResolvedValue('Granted');
 
   const state = {
     settings: { voiceEnabled: true, voiceDebugEnabled: false },

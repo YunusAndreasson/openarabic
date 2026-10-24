@@ -12,8 +12,9 @@ module.exports = {
   testTimeout: 15000,
   maxWorkers: '75%',
 
-  // resetMocks wipes every jest.fn() implementation before each test, and
-  // implies clearMocks.
+  // resetMocks wipes every jest.fn() implementation before each test (and
+  // implies clearMocks). Implementations a shared mock must keep are made with
+  // mockStable() in jest.setup.js, which re-applies them right after the reset.
   resetMocks: true,
   restoreMocks: true, // Restore original implementations
 

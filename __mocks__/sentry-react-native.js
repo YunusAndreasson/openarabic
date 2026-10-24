@@ -58,7 +58,7 @@ module.exports = {
   addBreadcrumb: jest.fn(),
   withScope: callback => callback(mockScope()),
   captureFeedback: jest.fn(),
-  reactNavigationIntegration: jest.fn(() => ({
+  reactNavigationIntegration: mockStable(() => ({
     registerNavigationContainer: jest.fn(),
   })),
   init: jest.fn(),

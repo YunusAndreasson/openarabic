@@ -10,6 +10,7 @@
 import { render } from '@testing-library/react-native';
 import { describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 
 import { ICON_SYMBOLS, MATERIAL_SYMBOL_FONTS } from '@/constants/icons';
 
@@ -23,16 +24,6 @@ const { Icon: AndroidIcon } = jest.requireActual<typeof import('@/components/ui/
 // The Android glyph is hidden from screen readers unless labelled; queries skip
 // hidden elements unless asked.
 const HIDDEN = { includeHiddenElements: true };
-
-function flattenStyle(style: unknown): Record<string, unknown> {
-  if (Array.isArray(style)) {
-    return style.reduce<Record<string, unknown>>(
-      (merged, entry) => ({ ...merged, ...flattenStyle(entry) }),
-      {},
-    );
-  }
-  return style && typeof style === 'object' ? (style as Record<string, unknown>) : {};
-}
 
 describe('Icon on iOS', () => {
   test('asks expo-symbols for the SF Symbol, at the size and colour given', () => {
@@ -59,12 +50,12 @@ describe('Icon on Android', () => {
       String.fromCharCode(ICON_SYMBOLS['trash-outline'].android.codepoint),
       HIDDEN,
     );
-    const style = flattenStyle(glyph.props.style);
+    const style = StyleSheet.flatten(glyph.props.style);
 
-    expect(style.fontFamily).toBe(MATERIAL_SYMBOL_FONTS.OUTLINED);
-    expect(style.fontSize).toBe(20);
-    expect(style.width).toBe(20);
-    expect(style.color).toBe('#123456');
+    expect(style?.fontFamily).toBe(MATERIAL_SYMBOL_FONTS.OUTLINED);
+    expect(style?.fontSize).toBe(20);
+    expect(style?.width).toBe(20);
+    expect(style?.color).toBe('#123456');
     // Symbols hold their size at large font scales, as the Ionicons did.
     expect(glyph.props.allowFontScaling).toBe(false);
   });
@@ -73,7 +64,7 @@ describe('Icon on Android', () => {
     const { getByText } = render(<AndroidIcon name="trash" size={20} />);
     const glyph = getByText(String.fromCharCode(ICON_SYMBOLS.trash.android.codepoint), HIDDEN);
 
-    expect(flattenStyle(glyph.props.style).fontFamily).toBe(MATERIAL_SYMBOL_FONTS.FILLED);
+    expect(StyleSheet.flatten(glyph.props.style)?.fontFamily).toBe(MATERIAL_SYMBOL_FONTS.FILLED);
   });
 
   test('keeps a bare glyph away from TalkBack, but not a labelled one', () => {
