@@ -245,6 +245,7 @@ export const createReanimatedMock = () => {
     withRepeat: <T,>(value: T) => value,
     // CSS transition easing helpers
     cubicBezier: () => 'cubic-bezier(mock)',
+    ReduceMotion: { System: 'system', Always: 'always', Never: 'never' },
     // Utilities
     runOnJS: (fn: Function) => fn,
     interpolate: (value: number) => value,

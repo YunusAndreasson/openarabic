@@ -326,6 +326,9 @@ jest.mock('react-native-reanimated', () => {
     // and any component rendering one fails with "Element type is invalid".
     // The __mocks__ copy of this mock already sets it; the two must agree.
     __esModule: true,
+    // The real enum's values. Hooks pass `ReduceMotion.Never` to the
+    // animations that are opacity only (useCardVerdict, useOpacityAnimation).
+    ReduceMotion: { System: 'system', Always: 'always', Never: 'never' },
     // Cancellation
     cancelAnimation: jest.fn(() => undefined),
     // Core animation values

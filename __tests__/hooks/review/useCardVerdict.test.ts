@@ -22,6 +22,7 @@
 
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
+import * as Reanimated from 'react-native-reanimated';
 
 import { VERDICT } from '@/constants/animation';
 import {
@@ -297,5 +298,38 @@ describe('useCardVerdict', () => {
     act(() => result.current.playVerdict('known', 'card-1'));
 
     expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.CORRECT);
+  });
+});
+
+// With the OS setting on, Reanimated's withSequence plays only its last step and
+// withDelay drops its delay, so a level left on the system setting went 0 → 0
+// for a pass and 0 → RESIDUAL for a miss — it never crossed HAPTIC_AT, and a
+// Reduce Motion learner got neither the ring nor the grade haptic. The mock
+// collapses every sequence to its last step whatever it is told, so what is
+// pinned here is the opt-out itself.
+describe('useCardVerdict under Reduce Motion', () => {
+  test('both verdict levels opt out, because the ring is an opacity change', () => {
+    const sequence = jest.spyOn(Reanimated, 'withSequence');
+    const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
+
+    act(() => result.current.playVerdict('known', 'card-1'));
+    act(() => result.current.playVerdict('unknown', 'card-1'));
+
+    expect(sequence).toHaveBeenCalledTimes(2);
+    for (const call of sequence.mock.calls) {
+      expect(call[0]).toBe(Reanimated.ReduceMotion.Never);
+    }
+  });
+
+  test('the wince keeps the system setting, because it is real movement', () => {
+    const timing = jest.spyOn(Reanimated, 'withTiming');
+    const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
+
+    act(() => result.current.playVerdict('unknown', 'card-1', 'recognizer'));
+
+    expect(timing).toHaveBeenCalledWith(1, VERDICT.SHAKE.SWEEP);
+    expect(VERDICT.SHAKE.SWEEP).not.toHaveProperty('reduceMotion');
   });
 });

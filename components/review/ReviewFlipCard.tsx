@@ -477,11 +477,13 @@ export function ReviewFlipCard({
    * silently: `withTiming` and the layout builders both default to
    * `ReduceMotion.System`, and Reanimated's response is to assign `toValue` on
    * the first frame and mark the animation finished (animation/util.js) — so
-   * with the setting on, the flip is instant, the verdict is instant, and the
-   * example sentence's FadeIn is instant.
+   * with the setting on, the flip is instant and the example sentence's FadeIn
+   * is instant. The verdict is the deliberate exception: its ring is an opacity
+   * change, so useCardVerdict runs it on `ReduceMotion.Never` — instant, its
+   * level never crossed the threshold its haptic hangs off.
    *
-   * The CSS API is the exception. Reanimated 4.5 has no reduced-motion handling
-   * in it at all — not in `lib/module/css`, not in `Common/cpp/reanimated/CSS`,
+   * The CSS API is the exception. Reanimated (still in 4.7) has no reduced-motion
+   * handling in it at all — not in `lib/module/css`, not in `Common/cpp/reanimated/CSS`,
    * and `ReducedMotionConfig` only feeds the shared-value path. So the one thing
    * left moving on a reduce-motion device was this: a card that slides 18px and
    * scales while everything around it snaps. That is exactly backwards — a

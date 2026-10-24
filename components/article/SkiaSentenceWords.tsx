@@ -194,20 +194,22 @@ const SentenceWordsInternal = function SkiaSentenceWords({
     }
   };
 
-  // The tutorial pulse: the first word's marker breathes between subtle and
-  // full. `withRepeat`/`withTiming` follow the OS reduce-motion setting
-  // (`ReduceMotion.System`), where the marker simply stays solid. The CSS
-  // animation this replaces ignored that setting.
+  // The tutorial pulse: the first word's marker breathes between full and
+  // subtle. `withRepeat`/`withTiming` follow the OS reduce-motion setting
+  // (`ReduceMotion.System`), where an infinite reversing repeat holds its START
+  // value — so the pulse starts at FULL and breathes down, and with the setting
+  // on the marker stays solid. It used to start at SUBTLE and breathe up, which
+  // the same rule parked at 30%. The CSS animation this replaces ignored the
+  // setting altogether.
   const markerPulse = useSharedValue<number>(LAYOUT.OPACITY.FULL);
   useEffect(() => {
+    markerPulse.set(LAYOUT.OPACITY.FULL);
     if (!highlightFirstWord) {
-      markerPulse.set(LAYOUT.OPACITY.FULL);
       return;
     }
-    markerPulse.set(LAYOUT.OPACITY.SUBTLE);
     markerPulse.set(
       withRepeat(
-        withTiming(LAYOUT.OPACITY.FULL, {
+        withTiming(LAYOUT.OPACITY.SUBTLE, {
           duration: HIGHLIGHT_PULSE_MS,
           easing: HIGHLIGHT_PULSE_EASING,
         }),

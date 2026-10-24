@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import type { WithTimingConfig } from 'react-native-reanimated';
-import { cancelAnimation, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import {
+  cancelAnimation,
+  ReduceMotion,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { MIN_OPACITY_DURATION, TIMING_CONFIG } from '@/constants/animation';
@@ -48,6 +54,12 @@ export interface FadeAnimationResult {
  * This is deliberately NOT a Reanimated CSS `animationName` keyframe: those are
  * declarative and fire on mount, whereas the review flow has to start a fade at
  * an arbitrary moment (card graded, prompt finished) and run work when it lands.
+ *
+ * Runs on `ReduceMotion.Never`, delay included. A fade is not movement, which is
+ * the app's one Reduce Motion rule (see useMotionStyle) — and under the system
+ * setting Reanimated jumped the fade to its end and skipped the delay, so the
+ * review card vanished the instant it was graded and took the verdict beat it
+ * was holding for (useCardVerdict) with it.
  */
 export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAnimationResult => {
   const { initialOpacity = 1, duration: rawDuration = TIMING_CONFIG.MEDIUM.duration } = options;
@@ -58,6 +70,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   const [timingConfig] = useState<WithTimingConfig>(() => ({
     duration,
     easing: TIMING_CONFIG.MEDIUM.easing,
+    reduceMotion: ReduceMotion.Never,
   }));
 
   // Guards against a completion callback firing into an unmounted tree.
@@ -82,7 +95,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
       // withDelay wraps the timing rather than preceding it, so the completion
       // callback still belongs to the same animation and still fires at
       // delay + duration on the one clock.
-      opacity.set(delayMs > 0 ? withDelay(delayMs, fade) : fade);
+      opacity.set(delayMs > 0 ? withDelay(delayMs, fade, ReduceMotion.Never) : fade);
     },
     [opacity, timingConfig, isMounted],
   );
