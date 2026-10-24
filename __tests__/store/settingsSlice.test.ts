@@ -21,14 +21,14 @@ import reducer, {
   setAudioShuffleEnabled,
   setDailyWordLimit,
   setHapticsEnabled,
-  setReminderTime,
+  reminderClockSet,
+  remindersToggled,
   setVoiceEnabled,
   setVoiceOfferDismissed,
   setWordTapShowsTooltip,
   type SettingsState,
 } from '../../store/settingsSlice';
 import { AudioLanguage } from '@/types/enums';
-import type { ReminderTime } from '@/types/notifications.types';
 import { defaultPreloadedState } from '@/__tests__/helpers/testStore';
 
 describe('settingsSlice reducers', () => {
@@ -53,25 +53,22 @@ describe('settingsSlice reducers', () => {
     };
   });
 
-  describe('setReminderTime', () => {
-    test('sets reminder time with enabled true', () => {
-      const newReminderTime: ReminderTime = {
-        hour: 8,
-        minute: 30,
-        enabled: true,
-      };
-      const state = reducer(initialState, setReminderTime(newReminderTime));
-      expect(state.reminderTime).toEqual(newReminderTime);
+  describe('reminder events', () => {
+    test('toggling reminders keeps the chosen time', () => {
+      const timed = reducer(initialState, reminderClockSet({ hour: 8, minute: 30 }));
+
+      const on = reducer(timed, remindersToggled(true));
+      expect(on.reminderTime).toEqual({ hour: 8, minute: 30, enabled: true });
+
+      const off = reducer(on, remindersToggled(false));
+      expect(off.reminderTime).toEqual({ hour: 8, minute: 30, enabled: false });
     });
 
-    test('sets reminder time with enabled false', () => {
-      const newReminderTime: ReminderTime = {
-        hour: 22,
-        minute: 0,
-        enabled: false,
-      };
-      const state = reducer(initialState, setReminderTime(newReminderTime));
-      expect(state.reminderTime).toEqual(newReminderTime);
+    test('setting the time keeps whether reminders are on', () => {
+      const on = reducer(initialState, remindersToggled(true));
+
+      const state = reducer(on, reminderClockSet({ hour: 22, minute: 15 }));
+      expect(state.reminderTime).toEqual({ hour: 22, minute: 15, enabled: true });
     });
   });
 

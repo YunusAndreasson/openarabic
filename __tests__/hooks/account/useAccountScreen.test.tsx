@@ -2,10 +2,11 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
 import { useAccountScreen } from '@/hooks/account/useAccountScreen';
+import { reminderClockSet, remindersToggled } from '@/store/settingsSlice';
 
 const mockClearCache = jest.fn(async (..._args: unknown[]) => undefined);
 const mockGetCacheSize = jest.fn(async (..._args: unknown[]) => 1024);
-const mockUpdateReminderTime = jest.fn(async (..._args: unknown[]) => undefined);
+const mockDispatch = jest.fn();
 const mockEnsurePermissions = jest.fn(async (..._args: unknown[]) => true);
 const mockRecordAccepted = jest.fn();
 const mockClearPersistedQueryCache = jest.fn(async (..._args: unknown[]) => undefined);
@@ -50,13 +51,12 @@ jest.mock('@/hooks/audio/useAudioCache', () => ({
   useAudioCache: () => ({ clearCache: mockClearCache, getCacheSize: mockGetCacheSize }),
 }));
 
-jest.mock('@/hooks/notifications/useReminders', () => ({
-  useReminders: () => ({
-    reminderTime: mockReminderTime,
-    updateReminderTime: mockUpdateReminderTime,
-    formatReminderTime: (hour: number, minute: number) =>
-      `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
-  }),
+// The global react-redux stub has a fixed state and a dispatch that drops
+// actions, so the reminder setting and its dispatch are mocked at the hooks.
+jest.mock('@/store/hooks', () => ({
+  useAppDispatch: () => mockDispatch,
+  useAppSelector: (selector: (state: { settings: { reminderTime: unknown } }) => unknown) =>
+    selector({ settings: { reminderTime: mockReminderTime } }),
 }));
 
 jest.mock('@/services/notificationService', () => ({
@@ -107,7 +107,6 @@ describe('useAccountScreen', () => {
     mockClearCache.mockResolvedValue(undefined);
     mockClearPersistedQueryCache.mockResolvedValue(undefined);
     mockEnsurePermissions.mockResolvedValue(true);
-    mockUpdateReminderTime.mockResolvedValue(undefined);
     mockStopAudio.mockResolvedValue(undefined);
     mockTrackSignOut.mockResolvedValue(undefined);
     mockSignOut.mockResolvedValue({ error: null });
@@ -135,7 +134,7 @@ describe('useAccountScreen', () => {
       await result.current.handleReminderToggle(true);
     });
 
-    expect(mockUpdateReminderTime).not.toHaveBeenCalled();
+    expect(mockDispatch).not.toHaveBeenCalled();
     expect(alertSpy).toHaveBeenCalledWith(
       expect.any(String),
       expect.any(String),
@@ -151,7 +150,29 @@ describe('useAccountScreen', () => {
     });
 
     expect(mockRecordAccepted).toHaveBeenCalledTimes(1);
-    expect(mockUpdateReminderTime).toHaveBeenCalledWith({ enabled: true, hour: 19, minute: 0 });
+    expect(mockDispatch).toHaveBeenCalledWith(remindersToggled(true));
+  });
+
+  test('turns reminders off without asking for permission', async () => {
+    mockReminderTime = { enabled: true, hour: 19, minute: 0 };
+    const { result } = renderHook(() => useAccountScreen());
+
+    await act(async () => {
+      await result.current.handleReminderToggle(false);
+    });
+
+    expect(mockEnsurePermissions).not.toHaveBeenCalled();
+    expect(mockRecordAccepted).not.toHaveBeenCalled();
+    expect(mockDispatch).toHaveBeenCalledWith(remindersToggled(false));
+  });
+
+  test('sets the reminder time as its own event', () => {
+    const { result } = renderHook(() => useAccountScreen());
+
+    act(() => result.current.handleTimeSet(7, 45));
+
+    expect(mockDispatch).toHaveBeenCalledWith(reminderClockSet({ hour: 7, minute: 45 }));
+    expect(result.current.formatReminderTime(7, 5)).toBe('07:05');
   });
 
   test('stops audio and signs out only after destructive confirmation', async () => {

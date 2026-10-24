@@ -95,8 +95,19 @@ const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
-    setReminderTime: (state, action: PayloadAction<ReminderTime>) => {
-      state.reminderTime = action.payload;
+    /**
+     * Reminders switched on or off; the chosen time is kept. Event reducers
+     * rather than a whole-object setter: every caller used to read the current
+     * `reminderTime`, spread it and write it back, which is three places to
+     * write back a stale copy.
+     */
+    remindersToggled: (state, action: PayloadAction<boolean>) => {
+      state.reminderTime.enabled = action.payload;
+    },
+    /** A new reminder time chosen; whether reminders are on is kept. */
+    reminderClockSet: (state, action: PayloadAction<Pick<ReminderTime, 'hour' | 'minute'>>) => {
+      state.reminderTime.hour = action.payload.hour;
+      state.reminderTime.minute = action.payload.minute;
     },
     setArabicFont: (state, action: PayloadAction<ArabicFontName>) => {
       state.arabicFont = action.payload;
@@ -291,7 +302,8 @@ export const selectVoiceEnabled = (state: { settings: { voiceEnabled?: boolean }
   state.settings.voiceEnabled === true;
 
 export const {
-  setReminderTime,
+  remindersToggled,
+  reminderClockSet,
   setArabicFont,
   setArabicFontSize,
   setAudioLanguagePreference,

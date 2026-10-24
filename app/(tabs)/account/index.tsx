@@ -205,7 +205,7 @@ const AccountScreen = () => {
         initialMinute={reminderTime.minute}
         isVisible={showTimePicker}
         onClose={handleTimePickerClose}
-        onTimeSet={(hour, minute) => void handleTimeSet(hour, minute)}
+        onTimeSet={handleTimeSet}
       />
 
       {/* Unified SettingsPicker Modal - Controlled Mode */}
