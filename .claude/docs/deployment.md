@@ -76,7 +76,11 @@ eas config
 
 ## OTA Pre-flight Checklist
 
-Native dependency updates require a new binary. Runtime `1448.5.7` adds the
+Native dependency updates require a new binary. Runtime `1448.5.9` carries the
+2026-10-23 `yarn fullupgrade` (`react-native-skia` 3.7.4, `mixpanel-react-native`
+4 and the Expo 58.0.17 native modules, `expo-modules-core` among them); JS built
+from it must never be aimed at `1448.5.7` (build 281), whose binary links the
+older versions. Runtime `1448.5.7` adds the
 native symbols (`expo-symbols`, the Android Material Symbols fonts and the
 native `@expo/ui` switch) and drops `@react-native-community/datetimepicker`;
 JS that renders `Icon` must never be aimed at `1448.5.6`, which lacks them.
