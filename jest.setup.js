@@ -57,10 +57,25 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   multiRemove: mockStable(async () => undefined),
 }));
 
-// AI-optimized timer configuration
+// Jest's own fake clock, starting at a fixed instant, so `jest.setSystemTime`
+// works everywhere. (A `Date` subclass used to pin `new Date()` and
+// `Date.now()` on top of it, which turned setSystemTime into a no-op until a
+// suite called useFakeTimers again.) `advanceTimers` lets timers, and the
+// clock, move with real time, so code awaiting a timeout needs no manual
+// advance; nextTick and setImmediate stay real for the async plumbing.
+//
+// This holds only until something re-installs fake timers. Importing
+// @testing-library/react-native does, with Jest's defaults (RNTL swaps in real
+// timers to capture them, then calls `jest.useFakeTimers({ legacyFakeTimers:
+// false })`): in a suite that imports RNTL the clock starts at the real time,
+// does not advance on its own, and fakes nextTick and setImmediate too. Moving
+// these options to jest.config.js `fakeTimers` would make them survive that,
+// but turns on real-time advancing in every RNTL suite, and frame-stepping
+// tests (advanceTimersToNextFrame) then depend on how long earlier tests took.
 jest.useFakeTimers({
+  now: new Date('2024-01-15T12:00:00.000Z'),
   advanceTimers: true,
-  doNotFake: ['nextTick', 'setImmediate'], // Keep these real for better async testing
+  doNotFake: ['nextTick', 'setImmediate'],
 });
 
 // Mock expo-router/react-navigation: loading it pulls in MaskedViewNative which
@@ -791,22 +806,6 @@ global.fetch = mockStable(async (url, _options = {}) => {
 
   return mockResponse;
 });
-
-// Enhanced date/time mocking for consistent testing
-const mockDate = new Date('2024-01-15T12:00:00.000Z');
-global.Date = class extends Date {
-  constructor(...args) {
-    if (args.length === 0) {
-      super(mockDate);
-    } else {
-      super(...args);
-    }
-  }
-
-  static now() {
-    return mockDate.getTime();
-  }
-};
 
 // No Intl stand-in: the real one is there, and `toLocaleDateString` and
 // friends never read the global binding anyway.
