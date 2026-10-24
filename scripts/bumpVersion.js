@@ -2,6 +2,16 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 
 const moment = require('moment-hijri');
+const prettier = require('prettier');
+
+// Through Prettier, so the bump commit CI pushes stays formatted: plain
+// JSON.stringify expands the short arrays Prettier keeps inline in app.json and
+// drops the final newline, which `prettier --check` then flags on every release.
+async function writeJson(filePath, data) {
+  const options = await prettier.resolveConfig(filePath);
+  const source = JSON.stringify(data, null, 2);
+  fs.writeFileSync(filePath, await prettier.format(source, { ...options, filepath: filePath }));
+}
 
 function runCheck(cmd) {
   try {
@@ -121,10 +131,10 @@ expo.ios.buildNumber = newBuildNumber.toString(); // Set unified build number
 if (!expo.android) expo.android = {};
 expo.android.versionCode = newBuildNumber; // Set unified build number
 
-fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2));
-
 // Update package.json with full version including build number
 pkg.version = newFullVersion;
-fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
 
-// Version bump completed successfully
+Promise.all([writeJson(appJsonPath, appJson), writeJson(pkgPath, pkg)]).catch(error => {
+  console.error(error);
+  process.exit(1);
+});
