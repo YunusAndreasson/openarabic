@@ -1,11 +1,19 @@
+const { transformIgnorePatterns: expoTransformIgnorePatterns } = require('jest-expo/jest-preset');
+
 module.exports = {
   preset: 'jest-expo',
   setupFilesAfterEnv: ['./jest.setup.js'],
 
-  // No `transform` or `transformIgnorePatterns` here: jest-expo's apply. Its
-  // babel-jest runs babel-preset-expo with the iOS caller (so EXPO_OS inlines
-  // to "ios"), and its ignore list already lets react-native, expo and
-  // @react-navigation packages through. @tanstack resolves to CommonJS.
+  // No `transform` here: jest-expo's applies. Its babel-jest runs
+  // babel-preset-expo with the iOS caller (so EXPO_OS inlines to "ios").
+  //
+  // Its ignore list already lets react-native, expo and @react-navigation
+  // packages through; immer is added, because under the `react-native` export
+  // condition it resolves to an ES-module build (Redux Toolkit loads it).
+  // @tanstack resolves to CommonJS.
+  transformIgnorePatterns: expoTransformIgnorePatterns.map(pattern =>
+    pattern.replace('/node_modules/(?!(', '/node_modules/(?!(immer|'),
+  ),
 
   // The one place the timeout and the worker count are set: the package.json
   // scripts no longer pass them, and jest.setup.js no longer calls setTimeout.
@@ -52,10 +60,6 @@ module.exports = {
   moduleNameMapper: {
     // Static file imports (mobile-only optimized)
     '\\.(jpg|jpeg|png|gif|otf|svg|ttf|mp4|wav|mp3|m4a|aac|oga)$': '<rootDir>/__mocks__/fileMock.js',
-
-    // Immer mocks
-    '^immer$': '<rootDir>/__mocks__/immer.js',
-    '^immer/(.*)$': '<rootDir>/__mocks__/immer.js',
 
     // Core React Native mocks
     'react-native-skia': '<rootDir>/__mocks__/react-native-skia.js',
