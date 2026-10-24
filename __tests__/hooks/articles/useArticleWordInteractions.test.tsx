@@ -7,14 +7,11 @@
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
 
-// Unmock React Query to test real hook behavior
-jest.unmock('@tanstack/react-query');
-
 import type { QueryClient } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { describe, expect, it, jest } from '@jest/globals';
 
-import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { fsrsQueries } from '@/constants/queries';
 import {
   useArticleWordInteractions,
@@ -63,6 +60,7 @@ jest.mock('@/services/studyWordsFSRS', () => ({
 
 describe('useArticleWordInteractions', () => {
   let queryClient: QueryClient;
+  let wrapper: HookTestWrapper;
   // Derived from the hook's own options type: a bare `jest.Mock` is
   // `Mock<UnknownFunction>`, which makes every `.mockResolvedValue()` below
   // unchecked and the mock unassignable to the option it fills.
@@ -97,7 +95,7 @@ describe('useArticleWordInteractions', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    queryClient = createTestQueryClient();
+    ({ wrapper, queryClient } = createHookTestWrapper());
     mockHandleRootPress = jest.fn(async (..._args: unknown[]) => true);
     mockRefetchStudyWords = jest.fn(async (..._args: unknown[]) => undefined);
   });
@@ -105,11 +103,6 @@ describe('useArticleWordInteractions', () => {
   afterEach(() => {
     queryClient.clear();
   });
-
-  const wrapper = ({ children }: { children: React.ReactNode }) => {
-    const { QueryClientProvider } = require('@tanstack/react-query');
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-  };
 
   test('initializes with no active tooltip and closed modal', () => {
     const { result } = renderHook(

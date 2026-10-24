@@ -15,9 +15,6 @@
  * - Note: No test.concurrent() - tests share mock state and need isolation
  */
 
-// Unmock React Query to test real hook behavior
-jest.unmock('@tanstack/react-query');
-
 import { useEffect, useRef } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';

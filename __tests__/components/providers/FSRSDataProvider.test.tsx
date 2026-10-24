@@ -6,8 +6,6 @@
  * reading it — see the provider for why that keep-alive is load-bearing.
  */
 
-jest.unmock('@tanstack/react-query');
-
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import type { QueryClient } from '@tanstack/react-query';
 import { QueryClientProvider } from '@tanstack/react-query';

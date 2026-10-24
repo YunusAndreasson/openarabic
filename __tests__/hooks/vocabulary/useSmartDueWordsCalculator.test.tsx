@@ -8,15 +8,13 @@
  * - ✅ jest.mocked() for type-safe mocking
  */
 
-jest.unmock('@tanstack/react-query');
-
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, afterEach, describe, expect, jest, test } from '@jest/globals';
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { QueryClient, useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
-import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsCalculator';
 
 // Mock auth hook
@@ -67,12 +65,13 @@ jest.mock('@/constants/queries', () => {
 
 describe('useSmartDueWordsCalculator', () => {
   let queryClient: QueryClient;
+  let wrapper: HookTestWrapper;
   let appStateListeners: ((state: AppStateStatus) => void)[] = [];
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    queryClient = createTestQueryClient();
+    ({ wrapper, queryClient } = createHookTestWrapper());
     appStateListeners = [];
 
     // Mock AppState.currentState and addEventListener
@@ -93,10 +92,6 @@ describe('useSmartDueWordsCalculator', () => {
   afterEach(() => {
     jest.useRealTimers();
   });
-
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
 
   // Helper to simulate app state change
   const simulateAppStateChange = (newState: AppStateStatus) => {

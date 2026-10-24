@@ -1,12 +1,7 @@
-// The real client: the deletion clears its cache, and jest.setup.js mocks the
-// library for every suite by default.
-jest.unmock('@tanstack/react-query');
-
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import type { PropsWithChildren } from 'react';
 
+import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { STRINGS } from '@/constants/strings';
 import { useAccountDeletion } from '@/hooks/account/useAccountDeletion';
 import { AccountDeletionService } from '@/services/accountDeletion';
@@ -46,10 +41,13 @@ jest.mock('@/utils/haptics', () => ({
 const getCurrentUserEmail = jest.mocked(AccountDeletionService.getCurrentUserEmail);
 const deleteAccountService = jest.mocked(AccountDeletionService.deleteAccount);
 
-function wrapper({ children }: PropsWithChildren) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-}
+// The real client: the deletion clears its cache. One per test, kept across
+// re-renders (a client built inside the wrapper was a new, empty cache on every
+// render of the hook).
+let wrapper: HookTestWrapper;
+beforeEach(() => {
+  ({ wrapper } = createHookTestWrapper());
+});
 
 describe('useAccountDeletion identity', () => {
   beforeEach(() => {

@@ -8,14 +8,12 @@
  * SECOND daily allowance right on top of a quick-start.
  */
 
-jest.unmock('@tanstack/react-query');
-
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
 import React from 'react';
 
-import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { useAddCommonWords } from '@/hooks/practice/useAddCommonWords';
 
 const mockShowToast = jest.fn();
@@ -63,10 +61,11 @@ jest.mock('@/utils/errorHandling', () => ({
 
 describe('useAddCommonWords', () => {
   let queryClient: QueryClient;
+  let wrapper: HookTestWrapper;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    queryClient = createTestQueryClient();
+    ({ wrapper, queryClient } = createHookTestWrapper());
 
     mockGetCommonRoots.mockResolvedValue(
       Array.from({ length: 10 }, (_, i) => ({
@@ -79,10 +78,6 @@ describe('useAddCommonWords', () => {
     );
     mockIncrementDailyWordCount.mockResolvedValue(true);
   });
-
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
 
   test('reserves the daily quota once per word actually added', async () => {
     mockAddMultipleRoots.mockResolvedValue(4);

@@ -8,8 +8,6 @@
  * -  jest.mocked() for type-safe mocking
  */
 
-jest.unmock('@tanstack/react-query');
-
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';

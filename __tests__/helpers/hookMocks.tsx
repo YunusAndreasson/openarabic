@@ -241,3 +241,6 @@ export function createHookTestWrapper(options?: {
 
   return { wrapper, queryClient, store };
 }
+
+/** The wrapper `createHookTestWrapper` returns, for a suite that rebuilds it per test. */
+export type HookTestWrapper = ReturnType<typeof createHookTestWrapper>['wrapper'];

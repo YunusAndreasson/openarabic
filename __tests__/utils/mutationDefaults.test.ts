@@ -17,9 +17,6 @@ import {
 } from '@tanstack/react-query';
 import { State } from 'ts-fsrs';
 
-// The suite-wide mock replaces QueryClient; this exercises the real scheduler.
-jest.unmock('@tanstack/react-query');
-
 jest.mock('@/services/studyWordsFSRS', () => ({
   studyWordsFSRSService: {
     updateWordAndReview: jest.fn(),

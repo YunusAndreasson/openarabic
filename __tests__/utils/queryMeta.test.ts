@@ -6,8 +6,6 @@
  * analytics events for one failure.
  */
 
-jest.unmock('@tanstack/react-query');
-
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { MutationCache, MutationObserver, QueryCache, QueryClient } from '@tanstack/react-query';
 
