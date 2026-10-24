@@ -2,6 +2,45 @@
  * Shared authentication utilities
  */
 
+import { STRINGS } from '@/constants/strings';
+import { fillTemplate } from '@/utils/fillTemplate';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export const PASSWORD_REQUIREMENTS = {
+  minLength: 8,
+} as const;
+
+/**
+ * What is wrong with an email address, as the field shows it; `''` when
+ * nothing is. Pure, so the sign-in/sign-up forms and anything else that takes
+ * an address agree on the rule.
+ */
+export function getEmailError(value: string): string {
+  if (!value) return STRINGS.ERROR_EMPTY_EMAIL;
+  if (!EMAIL_REGEX.test(value)) return STRINGS.ENTER_VALID_EMAIL;
+  return '';
+}
+
+/**
+ * What is wrong with a password, as the field shows it; `''` when nothing is.
+ * The auth forms and the reset-password screen used to carry a copy each.
+ */
+export function getPasswordError(value: string): string {
+  if (!value) return STRINGS.ENTER_PASSWORD;
+  if (value.length < PASSWORD_REQUIREMENTS.minLength) {
+    return fillTemplate(STRINGS.PASSWORD_USE_AT_LEAST_TEMPLATE, {
+      minLength: PASSWORD_REQUIREMENTS.minLength,
+    });
+  }
+  return '';
+}
+
+/** The spoken hint on a new-password field, built from the same minimum. */
+export const NEW_PASSWORD_ACCESSIBILITY_HINT = fillTemplate(STRINGS.NEW_PASSWORD_HINT_TEMPLATE, {
+  minLength: PASSWORD_REQUIREMENTS.minLength,
+});
+
 /**
  * The `code` a native module rejected with, as a string; undefined when there
  * is none.

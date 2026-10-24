@@ -10,7 +10,8 @@
 import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 
-import { PASSWORD_REQUIREMENTS, useAuthForm } from '@/hooks/auth/useAuthForm';
+import { useAuthForm } from '@/hooks/auth/useAuthForm';
+import { PASSWORD_REQUIREMENTS } from '@/utils/authUtils';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -158,16 +159,6 @@ describe('useAuthForm', () => {
       result.current.validatePassword('Password1');
     });
     expect(result.current.passwordError).toBe('');
-  });
-
-  test('toggles registration mode', () => {
-    const { result } = renderHook(() => useAuthForm());
-
-    expect(result.current.isRegistering).toBeTruthy();
-    act(() => {
-      result.current.toggleMode();
-    });
-    expect(result.current.isRegistering).toBeFalsy();
   });
 
   test('calls supabase on sign in', async () => {
@@ -492,6 +483,77 @@ describe('useAuthForm', () => {
 
       expect(mockSignInWithPassword).toHaveBeenCalled();
       expect(result.current.passwordError).toBe('');
+    });
+  });
+
+  describe('resetPassword', () => {
+    test('confirms the email was sent even if the form has gone by then', async () => {
+      const { supabase } = require('@/services/supabase');
+      let resolveReset: ((value: { data: object; error: null }) => void) | undefined;
+      jest.mocked(supabase.auth.resetPasswordForEmail).mockImplementation(
+        () =>
+          new Promise(resolve => {
+            resolveReset = resolve;
+          }),
+      );
+
+      const { result, unmount } = renderHook(() => useAuthForm());
+      act(() => {
+        result.current.setEmail('user@example.com');
+      });
+
+      let pending: Promise<void> | undefined;
+      await act(async () => {
+        pending = result.current.resetPassword();
+        await Promise.resolve();
+      });
+      await waitFor(() => {
+        expect(resolveReset).toBeDefined();
+      });
+
+      unmount();
+      await act(async () => {
+        resolveReset?.({ data: {}, error: null });
+        await pending;
+      });
+
+      expect(mockShowSuccessToast).toHaveBeenCalledWith(STRINGS.RESET_PASSWORD_EMAIL_SENT, 5000);
+    });
+  });
+
+  describe('a form dismissed during the pre-flight', () => {
+    test('sends no request at all', async () => {
+      let resolveProbe: ((value: { isConnected: boolean }) => void) | undefined;
+      mockNetInfoFetch.mockImplementation(
+        () =>
+          new Promise(resolve => {
+            resolveProbe = resolve;
+          }),
+      );
+
+      const { result, unmount } = renderHook(() => useAuthForm());
+      act(() => {
+        result.current.setEmail('new@example.com');
+        result.current.setPassword('Password123');
+      });
+
+      let pending: Promise<void> | undefined;
+      act(() => {
+        pending = result.current.signUpWithEmail();
+      });
+      await waitFor(() => {
+        expect(resolveProbe).toBeDefined();
+      });
+
+      // Creating an account, signing in and sending an email are not state
+      // updates: none may go out once the learner has left the form.
+      unmount();
+      await act(async () => {
+        resolveProbe?.({ isConnected: true });
+        await pending;
+      });
+
+      expect(mockSignUp).not.toHaveBeenCalled();
     });
   });
 

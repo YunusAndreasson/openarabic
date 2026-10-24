@@ -87,6 +87,10 @@ try {
 
 const TAB_ROUTE_OPTIONS = { animation: 'fade' } as const;
 const AUTH_ROUTE_OPTIONS = { animation: 'fade' } as const;
+// Declared here rather than from inside the page, where an animation set by
+// <Stack.Screen options> only applies after the screen has mounted. The header
+// is already hidden by the root screen options.
+const RESET_PASSWORD_ROUTE_OPTIONS = { animation: 'fade' } as const;
 const ROOT_SCREEN_LISTENERS = {
   transitionEnd: (event: { data: { closing: boolean } }) => {
     if (event.data.closing) flushPendingSheetNavigation();
@@ -725,6 +729,9 @@ function AppContent() {
                 <Stack.Protected guard={!isAuthenticated} redirectTo={ROUTE_PATHS.EXPLORE_TAB}>
                   <Stack.Screen name="auth" options={AUTH_ROUTE_OPTIONS} />
                 </Stack.Protected>
+
+                {/* Unguarded: a reset link opens it signed in or signed out */}
+                <Stack.Screen name="reset-password" options={RESET_PASSWORD_ROUTE_OPTIONS} />
 
                 {/* Audio overlays - mini-player and sleep timer */}
               </Stack>

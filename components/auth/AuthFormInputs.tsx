@@ -6,6 +6,7 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedInput } from '@/components/primitives/ThemedInput';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { NEW_PASSWORD_ACCESSIBILITY_HINT } from '@/utils/authUtils';
 
 interface AuthEmailInputProps {
   value: string;
@@ -134,9 +135,7 @@ function AuthPasswordInput({
         value={value}
         testID={testID}
         accessibilityLabel="Password"
-        accessibilityHint={
-          isSignUp ? 'Enter a password with at least 8 characters' : 'Enter your password'
-        }
+        accessibilityHint={isSignUp ? NEW_PASSWORD_ACCESSIBILITY_HINT : 'Enter your password'}
         onBlur={onBlur}
         onChangeText={onChangeText}
         onRightIconPress={handleTogglePassword}

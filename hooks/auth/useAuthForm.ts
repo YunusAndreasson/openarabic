@@ -1,4 +1,3 @@
-import NetInfo from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -9,16 +8,10 @@ import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { metaEvents } from '@/services/metaEvents';
 import { supabase } from '@/services/supabase';
+import { getEmailError, getPasswordError } from '@/utils/authUtils';
 import { handleError, showSuccessToast } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
-
-/**
- * Email validation regex and password requirements
- */
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-export const PASSWORD_REQUIREMENTS = {
-  minLength: 8,
-} as const;
+import { isKnownOffline } from '@/utils/network';
 
 export interface UseAuthFormReturn {
   email: string;
@@ -28,13 +21,19 @@ export interface UseAuthFormReturn {
   loading: boolean;
   emailError: string;
   passwordError: string;
-  isRegistering: boolean;
   validateEmail: (email: string) => boolean;
   validatePassword: (password: string) => boolean;
   signInWithEmail: () => Promise<void>;
   signUpWithEmail: () => Promise<void>;
-  toggleMode: () => void;
   resetPassword: () => Promise<void>;
+}
+
+/** How a request that THREW is reported; a resolved `{ error }` is the request's own to handle. */
+interface AuthRequestFailure {
+  toastMessage: string;
+  analyticsEventName: string;
+  /** Shown under the password field as well, when the form has room for it. */
+  fieldError?: string;
 }
 
 /**
@@ -45,7 +44,6 @@ export function useAuthForm(): UseAuthFormReturn {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(true); // Default to Create Account for new user acquisition
 
   // Validation state
   const [emailError, setEmailError] = useState('');
@@ -63,134 +61,104 @@ export function useAuthForm(): UseAuthFormReturn {
     };
   }, []);
 
-  const validateEmail = useCallback(
-    (value: string) => {
-      if (!value) {
-        if (isMountedRef.current) setEmailError(STRINGS.ERROR_EMPTY_EMAIL);
-        return false;
+  const validateEmail = useCallback((value: string) => {
+    const error = getEmailError(value);
+    setEmailError(error);
+    return !error;
+  }, []);
+
+  const validatePassword = useCallback((value: string) => {
+    const error = getPasswordError(value);
+    setPasswordError(error);
+    return !error;
+  }, []);
+
+  /**
+   * One auth request, start to finish: the offline pre-flight, the loading
+   * state, and the report if it throws.
+   *
+   * supabase-js has no built-in timeout: a signIn/signUp/resetPassword call made
+   * while offline hangs indefinitely on the fetch rather than rejecting, leaving
+   * the button stuck in a loading state with no way to recover short of leaving
+   * the screen. Checking reachability first fails fast with a visible error
+   * instead. It is a courtesy pre-flight, never a gate: `isKnownOffline` only
+   * answers true for a definite `isConnected === false` and fails open when the
+   * probe itself does — see its comment for the two ways a stricter check made
+   * sign-in impossible.
+   */
+  const runAuthRequest = useCallback(
+    async (request: () => Promise<void>, failure: AuthRequestFailure): Promise<void> => {
+      if (await isKnownOffline()) {
+        setPasswordError(STRINGS.NO_INTERNET_CONNECTION);
+        void handleError(new Error('No network connection available'), {
+          toastMessage: STRINGS.NO_INTERNET_CONNECTION,
+          analyticsEventName: 'Auth_No_Network',
+          captureSentry: false,
+          trackAnalytics: false,
+          showToast: true,
+        });
+        return;
       }
-      if (!EMAIL_REGEX.test(value)) {
-        if (isMountedRef.current) setEmailError(STRINGS.ENTER_VALID_EMAIL);
-        return false;
+
+      // The one mount check left in this hook, because what follows is not a
+      // state update: it creates an account, signs in (and navigates), or
+      // sends an email. A form dismissed during the pre-flight sends nothing.
+      if (!isMountedRef.current) return;
+      setLoading(true);
+
+      try {
+        await request();
+      } catch (err) {
+        if (failure.fieldError) setPasswordError(failure.fieldError);
+        void handleError(err, {
+          toastMessage: failure.toastMessage,
+          analyticsEventName: failure.analyticsEventName,
+          sentrySeverity: 'error',
+        });
+      } finally {
+        setLoading(false);
       }
-      if (isMountedRef.current) setEmailError('');
-      return true;
     },
     [isMountedRef],
   );
-
-  const validatePassword = useCallback(
-    (value: string) => {
-      if (!value) {
-        if (isMountedRef.current) setPasswordError(STRINGS.ENTER_PASSWORD);
-        return false;
-      }
-      if (value.length < PASSWORD_REQUIREMENTS.minLength) {
-        if (isMountedRef.current)
-          setPasswordError(
-            STRINGS.PASSWORD_USE_AT_LEAST_TEMPLATE.replace(
-              '{minLength}',
-              PASSWORD_REQUIREMENTS.minLength.toString(),
-            ),
-          );
-        return false;
-      }
-      if (isMountedRef.current) setPasswordError('');
-      return true;
-    },
-    [isMountedRef],
-  );
-
-  // supabase-js has no built-in timeout: a signIn/signUp/resetPassword call made
-  // while offline hangs indefinitely on the fetch rather than rejecting, leaving
-  // the button stuck in a loading state with no way to recover short of leaving
-  // the screen. Checking reachability first (same pattern as refreshSession in
-  // useProvideAuth) fails fast with a visible error instead.
-  //
-  // Fails OPEN, deliberately. This is a courtesy pre-flight, not an
-  // authorization gate — its only job is to turn a guaranteed hang into a fast,
-  // visible error, so it must never be able to block an attempt that would have
-  // worked. Two ways the naive version did exactly that:
-  //
-  // - `isConnected` is `boolean | null`, and null means UNKNOWN, not offline.
-  //   Truthiness-testing it told a connected user on a platform reporting null
-  //   that they had no internet.
-  // - If `NetInfo.fetch()` rejects or the native module is missing, the throw
-  //   escaped from here straight out of signInWithEmail — the call sits OUTSIDE
-  //   that function's try block — so the button silently did nothing at all and
-  //   sign-in was impossible. Strictly worse than the hang this prevents.
-  //
-  // So: only a definitive `false` counts as offline. Anything else proceeds and
-  // lets the real request decide.
-  const checkNetworkConnected = useCallback(async (): Promise<boolean> => {
-    let isDefinitelyOffline = false;
-    try {
-      const netState = await NetInfo.fetch();
-      isDefinitelyOffline = netState?.isConnected === false;
-    } catch {
-      isDefinitelyOffline = false;
-    }
-
-    if (!isDefinitelyOffline) return true;
-
-    if (isMountedRef.current) setPasswordError(STRINGS.NO_INTERNET_CONNECTION);
-    void handleError(new Error('No network connection available'), {
-      toastMessage: STRINGS.NO_INTERNET_CONNECTION,
-      analyticsEventName: 'Auth_No_Network',
-      captureSentry: false,
-      trackAnalytics: false,
-      showToast: true,
-    });
-    return false;
-  }, [isMountedRef]);
 
   const signInWithEmail = useCallback(async () => {
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
     if (!isEmailValid || !isPasswordValid) return;
 
-    if (!(await checkNetworkConnected())) return;
-
-    if (!isMountedRef.current) return;
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        if (!isMountedRef.current) return;
-        // Show inline error so it's visible even when auth screen overlays the toast
-        setPasswordError(error.message);
-        void handleError(error, {
-          toastMessage: `${STRINGS.SIGN_IN_FAILED}. ${error.message}`,
-          analyticsEventName: 'Sign_In_Error',
-          sentrySeverity: 'error',
+    await runAuthRequest(
+      async () => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
         });
-      } else {
+
+        if (error) {
+          // Show inline error so it's visible even when auth screen overlays the toast
+          setPasswordError(error.message);
+          void handleError(error, {
+            toastMessage: `${STRINGS.SIGN_IN_FAILED}. ${error.message}`,
+            analyticsEventName: 'Sign_In_Error',
+            sentrySeverity: 'error',
+          });
+          return;
+        }
+
         await analytics.identify(data.user.id, {
           last_sign_in: new Date().toISOString(),
         });
         await analytics.trackSignIn('email');
         successFeedback();
         router.replace(ROUTE_PATHS.EXPLORE_TAB);
-      }
-    } catch (err) {
-      if (!isMountedRef.current) return;
-      setPasswordError(STRINGS.PLEASE_TRY_AGAIN);
-      void handleError(err instanceof Error ? err : new Error('Sign in error'), {
+      },
+      {
         toastMessage: `${STRINGS.SIGN_IN_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
         analyticsEventName: 'Sign_In_Error',
-        sentrySeverity: 'error',
-      });
-    } finally {
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [email, password, validateEmail, validatePassword, isMountedRef, checkNetworkConnected]);
+        fieldError: STRINGS.PLEASE_TRY_AGAIN,
+      },
+    );
+  }, [email, password, validateEmail, validatePassword, runAuthRequest]);
 
   const signUpWithEmail = useCallback(async () => {
     const isEmailValid = validateEmail(email);
@@ -199,30 +167,27 @@ export function useAuthForm(): UseAuthFormReturn {
       return;
     }
 
-    if (!(await checkNetworkConnected())) return;
-
-    if (!isMountedRef.current) return;
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (error) {
-        if (!isMountedRef.current) return;
-        // "User already registered" is expected user behavior, not a system error
-        const isAlreadyRegistered = error.message?.toLowerCase().includes('already registered');
-        setPasswordError(error.message);
-        void handleError(error, {
-          toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${error.message}`,
-          analyticsEventName: 'Sign_Up_Error',
-          captureSentry: !isAlreadyRegistered,
-          sentrySeverity: 'error',
+    await runAuthRequest(
+      async () => {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
         });
-      } else {
+        if (error) {
+          // "User already registered" is expected user behavior, not a system error
+          const isAlreadyRegistered = error.message.toLowerCase().includes('already registered');
+          setPasswordError(error.message);
+          void handleError(error, {
+            toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${error.message}`,
+            analyticsEventName: 'Sign_Up_Error',
+            captureSentry: !isAlreadyRegistered,
+            sentrySeverity: 'error',
+          });
+          return;
+        }
+
         // Check if email confirmation is disabled (session created immediately)
-        const hasImmediateSession = !!data?.session;
+        const hasImmediateSession = !!data.session;
 
         // CRITICAL: Show toast immediately before any async operations that might unmount component
         successFeedback();
@@ -241,7 +206,7 @@ export function useAuthForm(): UseAuthFormReturn {
         }
 
         // Analytics can happen asynchronously without blocking UX
-        if (data?.user) {
+        if (data.user) {
           analytics
             .identify(data.user.id, {
               email: data.user.email,
@@ -255,27 +220,14 @@ export function useAuthForm(): UseAuthFormReturn {
           // Silent failure for analytics
         });
         metaEvents.logSignUp('email');
-      }
-    } catch (err) {
-      if (!isMountedRef.current) return;
-      setPasswordError(STRINGS.PLEASE_TRY_AGAIN);
-      void handleError(err instanceof Error ? err : new Error('Sign up error'), {
+      },
+      {
         toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
         analyticsEventName: 'Sign_Up_Error',
-        sentrySeverity: 'error',
-      });
-    } finally {
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [email, password, validateEmail, validatePassword, isMountedRef, checkNetworkConnected]);
-
-  const toggleMode = useCallback(() => {
-    setIsRegistering(!isRegistering);
-    setEmailError('');
-    setPasswordError('');
-  }, [isRegistering]);
+        fieldError: STRINGS.PLEASE_TRY_AGAIN,
+      },
+    );
+  }, [email, password, validateEmail, validatePassword, runAuthRequest]);
 
   const resetPassword = useCallback(async (): Promise<void> => {
     const isEmailValid = validateEmail(email);
@@ -292,50 +244,40 @@ export function useAuthForm(): UseAuthFormReturn {
       return;
     }
 
-    if (!(await checkNetworkConnected())) return;
-
-    if (!isMountedRef.current) return;
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'open-arabic://reset-password',
-      });
-
-      if (error) {
-        if (!isMountedRef.current) return;
-        // Supabase rate limiting is expected user behavior (spamming reset button), not a system error
-        const isRateLimit = error.message?.includes('you can only request this after');
-        if (!isRateLimit) {
-          Sentry.captureException(error, {
-            tags: { location: 'password_reset' },
-            level: 'warning',
-          });
-        }
-        void handleError(error, {
-          toastMessage: isRateLimit ? STRINGS.PLEASE_TRY_AGAIN : STRINGS.RESET_PASSWORD_ERROR,
-          analyticsEventName: 'Password_Reset_Error',
-          captureSentry: false, // Already handled above or skipped for rate limits
-          sentrySeverity: 'warning',
+    await runAuthRequest(
+      async () => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: 'open-arabic://reset-password',
         });
-      } else {
-        if (!isMountedRef.current) return;
-        // Show long-lasting success toast (5 seconds)
+
+        if (error) {
+          // Supabase rate limiting is expected user behavior (spamming reset button), not a system error
+          const isRateLimit = error.message.includes('you can only request this after');
+          if (!isRateLimit) {
+            Sentry.captureException(error, {
+              tags: { location: 'password_reset' },
+              level: 'warning',
+            });
+          }
+          void handleError(error, {
+            toastMessage: isRateLimit ? STRINGS.PLEASE_TRY_AGAIN : STRINGS.RESET_PASSWORD_ERROR,
+            analyticsEventName: 'Password_Reset_Error',
+            captureSentry: false, // Already handled above or skipped for rate limits
+            sentrySeverity: 'warning',
+          });
+          return;
+        }
+
+        // No mount check: the email has been sent, and saying so must not
+        // depend on the form still being on screen. Long-lasting (5 s).
         showSuccessToast(STRINGS.RESET_PASSWORD_EMAIL_SENT, 5000);
-      }
-    } catch (err) {
-      if (!isMountedRef.current) return;
-      void handleError(err instanceof Error ? err : new Error('Password reset error'), {
+      },
+      {
         toastMessage: STRINGS.RESET_PASSWORD_ERROR,
         analyticsEventName: 'Password_Reset_Error',
-        sentrySeverity: 'error',
-      });
-    } finally {
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [email, validateEmail, isMountedRef, checkNetworkConnected]);
+      },
+    );
+  }, [email, validateEmail, runAuthRequest]);
 
   return {
     email,
@@ -345,12 +287,10 @@ export function useAuthForm(): UseAuthFormReturn {
     loading,
     emailError,
     passwordError,
-    isRegistering,
     validateEmail,
     validatePassword,
     signInWithEmail,
     signUpWithEmail,
-    toggleMode,
     resetPassword,
   };
 }

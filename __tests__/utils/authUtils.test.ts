@@ -1,6 +1,36 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { getErrorCode, isCancellationError } from '@/utils/authUtils';
+import { STRINGS } from '@/constants/strings';
+import {
+  NEW_PASSWORD_ACCESSIBILITY_HINT,
+  PASSWORD_REQUIREMENTS,
+  getEmailError,
+  getErrorCode,
+  getPasswordError,
+  isCancellationError,
+} from '@/utils/authUtils';
+
+describe('field rules', () => {
+  test('an email is required, then must look like one', () => {
+    expect(getEmailError('')).toBe(STRINGS.ERROR_EMPTY_EMAIL);
+    expect(getEmailError('not-an-email')).toBe(STRINGS.ENTER_VALID_EMAIL);
+    expect(getEmailError('learner@example.com')).toBe('');
+  });
+
+  test('a password is required, then must reach the minimum length', () => {
+    expect(getPasswordError('')).toBe(STRINGS.ENTER_PASSWORD);
+    expect(getPasswordError('a'.repeat(PASSWORD_REQUIREMENTS.minLength - 1))).toBe(
+      `Use at least ${PASSWORD_REQUIREMENTS.minLength} characters`,
+    );
+    expect(getPasswordError('a'.repeat(PASSWORD_REQUIREMENTS.minLength))).toBe('');
+  });
+
+  test('the spoken hint names the same minimum', () => {
+    expect(NEW_PASSWORD_ACCESSIBILITY_HINT).toBe(
+      `Enter a password with at least ${PASSWORD_REQUIREMENTS.minLength} characters`,
+    );
+  });
+});
 
 describe('getErrorCode', () => {
   test('reads a native code as a string, whatever type it arrived as', () => {

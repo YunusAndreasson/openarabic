@@ -523,6 +523,7 @@ export const STRINGS = {
   ENTER_PASSWORD: 'Enter your password',
   NO_INTERNET_CONNECTION: 'No internet connection. Check your connection and try again.',
   PASSWORD_USE_AT_LEAST_TEMPLATE: 'Use at least {minLength} characters',
+  NEW_PASSWORD_HINT_TEMPLATE: 'Enter a password with at least {minLength} characters',
   SHOW_PASSWORD: 'Show password',
   HIDE_PASSWORD: 'Hide password',
   FORGOT_PASSWORD: 'Forgot password?',
