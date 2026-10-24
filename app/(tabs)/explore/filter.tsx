@@ -1,4 +1,3 @@
-import { ErrorState, LoadingState } from '@/components/common';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, type JSX } from 'react';
@@ -8,6 +7,7 @@ import type { CategoryId } from '@/types/branded.types';
 import type { FilterParams } from '@/types/navigation.types';
 import { parsePositiveIntParam } from '@/utils/routeParams';
 
+import { ScreenStateHandler } from '@/components/common/ScreenStateHandler';
 import { FilteredArticleView } from '@/components/explore';
 import { articleQueries } from '@/constants/queries';
 import { getArticleRoute } from '@/utils/routeBuilders';
@@ -26,8 +26,6 @@ export default function FilterScreen(): JSX.Element {
     ...articleQueries.all(),
     select: data =>
       filterId === undefined ? [] : data.filter(article => article.category.id === filterId),
-    refetchOnMount: false,
-    refetchOnReconnect: true,
   });
 
   // Stable identity: FilteredArticleView's renderItem depends on this callback
@@ -39,13 +37,15 @@ export default function FilterScreen(): JSX.Element {
   // `isFetching`, a reconnect or an Explore pull-to-refresh swapped a list the
   // learner was scrolling for a spinner and threw away their place; a failed
   // background refetch likewise keeps the cached list on screen.
-  if (isPending) {
-    return <LoadingState />;
-  }
-
-  if (isError && articles === undefined) {
-    return <ErrorState message={STRINGS.FAILED_TO_LOAD_ARTICLES} onRetry={() => void refetch()} />;
-  }
-
-  return <FilteredArticleView articles={articles} onArticlePress={handleArticlePress} />;
+  return (
+    <ScreenStateHandler
+      isLoading={isPending}
+      isError={isError && articles === undefined}
+      errorMessage={STRINGS.FAILED_TO_LOAD_ARTICLES}
+      onRetry={() => void refetch()}
+    >
+      {/* Always defined past both gates; the fallback is for the type. */}
+      <FilteredArticleView articles={articles ?? []} onArticlePress={handleArticlePress} />
+    </ScreenStateHandler>
+  );
 }

@@ -8,8 +8,10 @@ import { useAuth } from '@/hooks/auth';
 import { useHasStudyWords } from '@/hooks/vocabulary/useFSRSQueries';
 
 /**
- * The Practice tab's `headerRight` — opens the full word list, and hides itself
- * until the learner has words to look at.
+ * The Practice tab's header tool (its layout's `leftComponent`: leading on iOS,
+ * inboard of the Review button on Android — see `createTabHeaderOptions`) —
+ * opens the full word list, and hides itself until the learner has words to
+ * look at.
  *
  * Lives here rather than in `components/ui` because it is not a primitive: it
  * reaches into FSRS data and the router. A `components/ui` component should be

@@ -1,5 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -16,6 +16,7 @@ import {
   SCOPE_LABELS,
 } from '@/components/practice';
 import { SettingsPicker, TextLink } from '@/components/ui';
+import { HeaderSearchBar } from '@/components/ui/HeaderSearchBar';
 import type { SettingsPickerOption } from '@/components/ui/SettingsPicker';
 import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
@@ -251,9 +252,9 @@ export default function DictionaryScreen(): JSX.Element {
    *
    * It was pinned deliberately — how the list is sorted is system status, and as
    * a scrolling header it leaves the screen on the first flick, taking the only
-   * way to change the sort with it. But this is the one screen in the app with a
-   * `Stack.SearchBar`, and on iOS that becomes a UISearchController living in the
-   * navigation bar. In that configuration UIKit lays the screen's content out
+   * way to change the sort with it. But this screen has a header search bar
+   * (`HeaderSearchBar`), and on iOS that becomes a UISearchController living in
+   * the navigation bar. In that configuration UIKit lays the screen's content out
    * from the top of the window, UNDER the bars, and expects the scroll view to
    * compensate — which is what `contentInsetAdjustmentBehavior="automatic"` below
    * does. That inset reaches the scroll view and nothing else, so a pinned
@@ -339,22 +340,7 @@ export default function DictionaryScreen(): JSX.Element {
       safeAreaEdges={['left', 'right']}
       style={styles.container}
     >
-      {/* Native header search bar (UISearchController on iOS, SearchView on
-          Android). Declarative in SDK 57 — it renders null and folds its props
-          into the parent Stack's header options, so it replaces the old
-          useLayoutEffect + navigation.setOptions round-trip. */}
-      <Stack.SearchBar
-        placeholder={STRINGS.SEARCH_WORDS}
-        hideWhenScrolling={false}
-        autoCapitalize="none"
-        onChangeText={event => setSearchQuery(event.nativeEvent.text)}
-        onCancelButtonPress={() => setSearchQuery('')}
-        onClose={() => setSearchQuery('')}
-        // Android SearchView colors (iOS adapts to the theme on its own)
-        headerIconColor={colors.text}
-        textColor={colors.text}
-        hintTextColor={colors.textTertiary}
-      />
+      <HeaderSearchBar placeholder={STRINGS.SEARCH_WORDS} onQueryChange={setSearchQuery} />
       {isLoading ? (
         <LoadingState />
       ) : (

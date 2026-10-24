@@ -1,4 +1,4 @@
-import { Stack, router, useNavigation } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import type { NativeStackNavigationProp } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
 import { Platform, StyleSheet } from 'react-native';
@@ -6,10 +6,10 @@ import type { SearchBarCommands } from 'react-native-screens';
 
 import { SearchResultList } from '@/components/explore';
 import { ThemedView } from '@/components/primitives/ThemedView';
+import { HeaderSearchBar } from '@/components/ui/HeaderSearchBar';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useArticleSearch } from '@/hooks/articles/useArticleSearch';
-import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import { getArticleRoute } from '@/utils/routeBuilders';
 
@@ -34,7 +34,6 @@ type SearchScreenNavigation = NativeStackNavigationProp<Record<string, object | 
  * deliberate — see the note on `SearchResultList`.
  */
 export default function SearchScreen(): JSX.Element {
-  const colors = useColors();
   const navigation = useNavigation<SearchScreenNavigation>();
   const [query, setQuery] = useState('');
   const searchBarRef = useRef<SearchBarCommands>(null);
@@ -90,22 +89,11 @@ export default function SearchScreen(): JSX.Element {
 
   return (
     <ThemedView style={styles.container}>
-      {/* Native header search bar (UISearchController on iOS, SearchView on
-          Android). Declarative in SDK 57 — it renders null and folds its props
-          into this screen's header options. */}
-      <Stack.SearchBar
+      <HeaderSearchBar
         ref={searchBarRef}
         autoFocus
         placeholder={STRINGS.SEARCH_TEXTS_PLACEHOLDER}
-        hideWhenScrolling={false}
-        autoCapitalize="none"
-        onChangeText={event => setQuery(event.nativeEvent.text)}
-        onCancelButtonPress={() => setQuery('')}
-        onClose={() => setQuery('')}
-        // Android SearchView colors (iOS adapts to the theme on its own)
-        headerIconColor={colors.text}
-        textColor={colors.text}
-        hintTextColor={colors.textTertiary}
+        onQueryChange={setQuery}
       />
       <SearchResultList
         results={results}

@@ -2,9 +2,12 @@ import { Stack } from 'expo-router';
 import { useCallback, type JSX } from 'react';
 
 import { ExploreSearchButton } from '@/components/explore/ExploreSearchButton';
-import { CloseButton } from '@/components/ui';
 import { STRINGS } from '@/constants/strings';
-import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
+import {
+  createNavigationOptions,
+  createTabHeaderOptions,
+  renderCloseButton,
+} from '@/utils/navigation';
 import { useColors } from '@/hooks/theme/useColors';
 import { AppTab } from '@/types/enums';
 import type { FilterParams } from '@/types/navigation.types';
@@ -27,7 +30,6 @@ function getFilterTitle(params: FilterParams | undefined): string {
   return STRINGS.CATEGORY;
 }
 
-const renderCloseButton = () => <CloseButton />;
 const renderSearchButton = () => <ExploreSearchButton />;
 
 export default function LibraryLayout(): JSX.Element {

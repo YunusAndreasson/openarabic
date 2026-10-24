@@ -75,12 +75,11 @@ import { reportQueryFailure } from '@/utils/queryMeta';
 import { retryWhileOnline } from '@/utils/queryRetry';
 import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
 
-const TAB_ROUTE_OPTIONS = { animation: 'fade' } as const;
-const AUTH_ROUTE_OPTIONS = { animation: 'fade' } as const;
-// Declared here rather than from inside the page, where an animation set by
-// <Stack.Screen options> only applies after the screen has mounted. The header
-// is already hidden by the root screen options.
-const RESET_PASSWORD_ROUTE_OPTIONS = { animation: 'fade' } as const;
+// The tabs, the auth group and the password reset all fade. Declared here
+// rather than from inside a page, where an animation set by <Stack.Screen
+// options> only applies after the screen has mounted. Their headers are
+// already hidden by the root screen options.
+const FADE_ROUTE_OPTIONS = { animation: 'fade' } as const;
 const ROOT_SCREEN_LISTENERS = {
   transitionEnd: (event: { data: { closing: boolean } }) => {
     if (event.data.closing) flushPendingSheetNavigation();
@@ -566,9 +565,9 @@ function AppContent() {
   );
   const rootScreenOptions = useMemo(
     () => ({
+      // Every root screen hides its header, so no other header option here
+      // would ever apply.
       headerShown: false,
-      headerTitle: '',
-      headerShadowVisible: false,
       contentStyle: { backgroundColor: colors.background },
     }),
     [colors.background],
@@ -615,7 +614,7 @@ function AppContent() {
                       Declarative guards mount directly into the right route, so
                       the race is gone — fade matches the auth screen for a
                       symmetric sign-in / sign-out transition. */}
-                  <Stack.Screen name="(tabs)" options={TAB_ROUTE_OPTIONS} />
+                  <Stack.Screen name="(tabs)" options={FADE_ROUTE_OPTIONS} />
                   <Stack.Screen
                     name="article/[id]"
                     options={createNavigationOptions(colors, {
@@ -647,7 +646,6 @@ function AppContent() {
                        */
                       presentation: 'fullScreenModal',
                       gestureEnabled: false,
-                      fullScreenGestureEnabled: false,
                     })}
                   />
                   <Stack.Screen
@@ -671,11 +669,11 @@ function AppContent() {
 
                 {/* Unauthenticated routes — on sign-in auth redirects to Explore */}
                 <Stack.Protected guard={!isAuthenticated} redirectTo={ROUTE_PATHS.EXPLORE_TAB}>
-                  <Stack.Screen name="auth" options={AUTH_ROUTE_OPTIONS} />
+                  <Stack.Screen name="auth" options={FADE_ROUTE_OPTIONS} />
                 </Stack.Protected>
 
                 {/* Unguarded: a reset link opens it signed in or signed out */}
-                <Stack.Screen name="reset-password" options={RESET_PASSWORD_ROUTE_OPTIONS} />
+                <Stack.Screen name="reset-password" options={FADE_ROUTE_OPTIONS} />
 
                 {/* Audio overlays - mini-player and sleep timer */}
               </Stack>

@@ -169,9 +169,9 @@ function PracticeWordDetail({ rootId }: { readonly rootId: RootId }): JSX.Elemen
       style={styles.container}
     >
       {/* The header said the literal word "Word" above whichever word you had
-          opened. `setOptions` merges, so the layout's CloseButton and its
-          fallback title both stay. */}
-      <Stack.Screen options={{ title: englishText || STRINGS.WORD_DETAIL_TITLE }} />
+          opened. Stack.Title sets the title alone, so the layout's CloseButton
+          and the rest of its header options stay. */}
+      <Stack.Title>{englishText || STRINGS.WORD_DETAIL_TITLE}</Stack.Title>
       <ScrollView
         testID="dictionary-word-content"
         style={styles.scrollView}

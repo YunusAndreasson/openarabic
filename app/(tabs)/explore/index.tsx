@@ -73,10 +73,7 @@ export default function ExploreScreen(): JSX.Element {
     isError: isCatalogError,
     isFetching: isCatalogFetching,
     refetch: refetchCatalog,
-  } = useQuery({
-    ...articleQueries.all(),
-    refetchOnMount: false, // Don't refetch on mount if we have data
-  });
+  } = useQuery(articleQueries.all());
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
