@@ -27,7 +27,7 @@ import reducer, {
   setWordTapShowsTooltip,
   type SettingsState,
 } from '../../store/settingsSlice';
-import { AudioLanguage, DisplayLanguage } from '@/types/enums';
+import { AudioLanguage } from '@/types/enums';
 import type { ReminderTime } from '@/types/notifications.types';
 import { defaultPreloadedState } from '@/__tests__/helpers/testStore';
 
@@ -46,7 +46,6 @@ describe('settingsSlice reducers', () => {
       arabicFontSize: 20,
       audioLanguagePreference: AudioLanguage.ENGLISH_ARABIC,
       audioShuffleEnabled: false,
-      displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH,
       dailyWordLimit: 10,
       adaptiveNewWordPacingEnabled: true,
       wordTapShowsTooltip: false,
@@ -174,10 +173,10 @@ describe('settingsSlice reducers', () => {
     });
 
     test('defaults to true when rehydrated from a pre-flag install (key absent)', () => {
-      // Regression: persistConfig has no version/migrate, so redux-persist's
-      // autoMergeLevel1 leaves this key `undefined` for every install that
-      // predates the field. A bare truthiness read silently disables pacing;
-      // the selector must fall back to the documented `true` default instead.
+      // Regression: before persistConfig merged two levels deep, redux-persist
+      // left this key `undefined` for every install that predated the field. A
+      // bare truthiness read silently disabled pacing; the selector falls back
+      // to the documented `true` default instead.
       expect(selectAdaptiveNewWordPacingEnabled({ settings: {} })).toBe(true);
     });
   });
@@ -258,7 +257,7 @@ describe('settingsSlice reducers', () => {
 
   // Speak-the-answer ships ON. The offer card and its dismissal flag remain for
   // the installed base, whose persisted `voiceEnabled: false` survives
-  // rehydration untouched — they are what those two booleans are still for.
+  // rehydration — they are what those two booleans are still for.
   describe('speak-the-answer offer', () => {
     const defaults = () => reducer(undefined, { type: '@@INIT' });
 
@@ -281,8 +280,8 @@ describe('settingsSlice reducers', () => {
     });
 
     it('an existing install that turned voice off stays off', () => {
-      // redux-persist reconciles with autoMergeLevel1, so a stored `false` wins
-      // over the new default. This is why the flip needs no migration.
+      // A stored `false` wins over the new default on rehydrate (see
+      // persistConfig.test.ts, which runs the real reconciler).
       const off = reducer(defaults(), setVoiceEnabled(false));
       expect(off.voiceEnabled).toBe(false);
       expect(reducer(off, { type: '@@OTHER' }).voiceEnabled).toBe(false);
