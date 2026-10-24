@@ -11,7 +11,7 @@ import { ThemedText } from '@/components/primitives/ThemedText';
 import { ReaderPressable } from '@/components/article/ReaderPressable';
 import { SkiaSentenceWords } from '@/components/article/SkiaSentenceWords';
 import { FONTS } from '@/constants/fonts';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { RootId } from '@/types/branded.types';
@@ -102,7 +102,7 @@ const ArticleSentenceInternal = function ArticleSentence({
       ...styles.englishText,
       fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
       color: colors.englishText,
-      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.LOOSE,
     }),
     [colors.englishText],
   );

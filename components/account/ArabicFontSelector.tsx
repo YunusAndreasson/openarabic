@@ -1,9 +1,10 @@
 // Deliberately NOT @expo/ui/community/slider: its SliderProps has no
-// onSlidingStart/onSlidingComplete and no accessibility pass-through. This
-// slider commits to persisted state once per drag (handleSlidingComplete →
-// setFontSize); driving that from onValueChange would write to redux-persist on
-// every frame and re-render every Arabic sample with it. The community package
-// is not deprecated — revisit only if @expo/ui grows a release event.
+// onSlidingStart/onSlidingComplete (it does pass accessibilityLabel and -Hint
+// through now, though still no accessibilityValue). This slider commits to
+// persisted state once per drag (handleSlidingComplete → setFontSize); driving
+// that from onValueChange would write to redux-persist on every frame and
+// re-render every Arabic sample with it. The community package is not
+// deprecated — revisit only if @expo/ui grows a release event.
 import { Icon } from '@/components/ui';
 import Slider from '@react-native-community/slider';
 import { useState } from 'react';
@@ -20,6 +21,7 @@ import {
 } from '@/hooks/account/useArabicFontSelector';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ArabicFontName } from '@/store/settingsSlice';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 interface FontPreviewCardProps {
   option: ArabicFontOption;
@@ -98,6 +100,7 @@ export const ArabicFontSelector = () => {
   };
 
   const displayFontSize = isSliding ? localFontSize : selectedFontSize;
+  const roundedFontSize = Math.round(displayFontSize);
 
   const scrollContentStyle = {
     gap: LAYOUT.SPACING.SMALL,
@@ -110,12 +113,12 @@ export const ArabicFontSelector = () => {
         <View style={styles.sliderHeader}>
           <ThemedText type="body">{STRINGS.FONT_SIZE}</ThemedText>
           <ThemedText colorName="textTertiary" type="caption">
-            {Math.round(displayFontSize)}px
+            {fillTemplate(STRINGS.FONT_SIZE_VALUE, { size: roundedFontSize })}
           </ThemedText>
         </View>
         <View style={styles.sliderRow}>
           <ThemedText colorName="textTertiary" style={styles.sliderLabel}>
-            A
+            {STRINGS.FONT_SIZE_SAMPLE_LETTER}
           </ThemedText>
           <Slider
             accessibilityLabel={STRINGS.FONT_SIZE}
@@ -123,8 +126,8 @@ export const ArabicFontSelector = () => {
             accessibilityValue={{
               min: fontSizeRange.MIN,
               max: fontSizeRange.MAX,
-              now: Math.round(displayFontSize),
-              text: `${Math.round(displayFontSize)} pixels`,
+              now: roundedFontSize,
+              text: fillTemplate(STRINGS.FONT_SIZE_VALUE_A11Y, { size: roundedFontSize }),
             }}
             style={styles.slider}
             minimumValue={fontSizeRange.MIN}
@@ -139,7 +142,7 @@ export const ArabicFontSelector = () => {
             thumbTintColor={colors.tint}
           />
           <ThemedText colorName="textTertiary" style={styles.sliderLabelLarge}>
-            A
+            {STRINGS.FONT_SIZE_SAMPLE_LETTER}
           </ThemedText>
         </View>
       </BaseCard>

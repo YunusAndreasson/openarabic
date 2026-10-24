@@ -77,10 +77,8 @@ function SettingsPickerComponent<T>({
                     <View style={styles.optionContent}>
                       <ThemedText
                         type="body"
-                        style={[
-                          styles.optionTitle,
-                          { color: isSelected ? colors.tint : colors.text },
-                        ]}
+                        colorName={isSelected ? 'tint' : 'text'}
+                        style={styles.optionTitle}
                       >
                         {option.title}
                       </ThemedText>

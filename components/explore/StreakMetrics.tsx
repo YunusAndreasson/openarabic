@@ -13,21 +13,24 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
   // stay in one ink — colouring them apart implied a distinction that isn't
   // there. (Colour on a MetricCard is now reserved for values that mean
   // good/bad, e.g. memory health on the practice screen.)
+  //
+  // Numbers, not strings: MetricCard formats a number (1,000), and a value
+  // handed over as `.toString()` skipped that and read "1000".
   const metricData = useMemo(
     () => [
       {
         id: 'current',
-        value: metrics.currentStreak.toString(),
+        value: metrics.currentStreak,
         label: STRINGS.STUDY_STREAK_CURRENT,
       },
       {
         id: 'longest',
-        value: metrics.longestStreak.toString(),
+        value: metrics.longestStreak,
         label: STRINGS.STUDY_STREAK_LONGEST,
       },
       {
         id: 'total',
-        value: metrics.totalReadingDays.toString(),
+        value: metrics.totalReadingDays,
         label: STRINGS.STUDY_STREAK_TOTAL,
       },
     ],

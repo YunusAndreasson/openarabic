@@ -16,7 +16,7 @@ import { withOpacity } from '@/utils/colorUtils';
  * reliably drew, which is why nobody noticed BaseCard's default tier was one
  * step too heavy.
  *
- * `boxShadow` is spec-compliant and New-Architecture-only (we are on RN 0.86).
+ * `boxShadow` is spec-compliant and New-Architecture-only (which this app is).
  * It renders on Android 9+, it takes a spread, and — because CSS scopes
  * `overflow` to an element's CHILDREN — an element's own box-shadow is not
  * clipped by it.

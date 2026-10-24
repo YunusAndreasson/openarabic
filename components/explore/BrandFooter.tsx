@@ -5,7 +5,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT, LETTER_SPACING } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import pkg from '@/package.json';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 interface BrandFooterProps {
   /** Show version and copyright info (default: false, use true for Settings page) */
@@ -22,16 +24,18 @@ function getOtaLabel(): string {
   // `||`, not `??`: on a build with no channel configured `Updates.channel` is an
   // empty string rather than null, which `??` passes through and renders as a
   // dangling separator ("OTA embedded · ").
-  const channel = Updates.channel || 'unknown';
-  if (!id) return `OTA embedded · ${channel}`;
-  return `OTA ${id.slice(0, 8)} · ${channel}`;
+  const channel = Updates.channel || STRINGS.OTA_CHANNEL_UNKNOWN;
+  if (!id) return fillTemplate(STRINGS.OTA_EMBEDDED, { channel });
+  return fillTemplate(STRINGS.OTA_UPDATE, { id: id.slice(0, 8), channel });
 }
 
 export const BrandFooter = memo(({ showDetails = false }: BrandFooterProps) => {
   // Use pkg.version directly to ensure build number is included (format: "1447.5.37+188")
   const versionString = pkg.version || '0.0.0';
-  const [version, buildNumber] = versionString.split('+');
-  const versionDisplay = buildNumber ? `Version ${version} (${buildNumber})` : `Version ${version}`;
+  const [version = versionString, buildNumber] = versionString.split('+');
+  const versionDisplay = buildNumber
+    ? fillTemplate(STRINGS.APP_VERSION_WITH_BUILD, { version, build: buildNumber })
+    : fillTemplate(STRINGS.APP_VERSION, { version });
   const otaLabel = showDetails ? getOtaLabel() : null;
 
   return (
@@ -47,7 +51,7 @@ export const BrandFooter = memo(({ showDetails = false }: BrandFooterProps) => {
         </ThemedText>
       )}
       <ThemedText type="caption" colorName="textTertiary" style={styles.copyright}>
-        © {CURRENT_YEAR} OpenArabic
+        {fillTemplate(STRINGS.COPYRIGHT, { year: CURRENT_YEAR })}
       </ThemedText>
       <Image
         source={require('@/assets/images/oaLogo.png')}

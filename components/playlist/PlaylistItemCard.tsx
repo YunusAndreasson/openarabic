@@ -156,7 +156,6 @@ export const PlaylistItemCard = memo(
           <View style={styles.deleteButtonContainer}>
             <IconButton
               accessibilityLabel={fillTemplate(STRINGS.PLAYLIST_A11Y_REMOVE_ARTICLE, { title })}
-              hapticType="selection"
               icon="trash"
               size="small"
               tone="destructive"

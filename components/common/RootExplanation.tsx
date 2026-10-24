@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { ListRow } from '@/components/common/ListRow';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { DisclosureChevron } from '@/components/ui/DisclosureChevron';
-import { LAYOUT, getCompactArabicFontSize } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, getCompactArabicFontSize } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
 import type { RootId } from '@/types/branded.types';
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
   },
   prose: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.RELAXED,
     marginTop: LAYOUT.SPACING.SMALL,
   },
   block: {

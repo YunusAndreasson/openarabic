@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { ColorCodedText, Dot } from '@/components/common';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -43,17 +43,13 @@ const LEGEND = [
 /** One worked phrase per combination of parts the legend names. */
 const EXAMPLES = [
   // Conjunction + Article
-  { arabic: 'وَالْبَيْتِ', english: 'and the house', breakdown: 'و (and) + ال (the) + root word' },
+  { arabic: 'وَالْبَيْتِ', ...STRINGS.GRAMMAR_EXAMPLES.AND_THE_HOUSE },
   // Preposition + Possessive
-  { arabic: 'بِكِتَابِي', english: 'with my book', breakdown: 'ب (with) + root + ي (my)' },
+  { arabic: 'بِكِتَابِي', ...STRINGS.GRAMMAR_EXAMPLES.WITH_MY_BOOK },
   // Conjunction + Verb + Plural
-  { arabic: 'فَقَالُوا', english: 'so they said', breakdown: 'ف (so) + root + وا (they/plural)' },
+  { arabic: 'فَقَالُوا', ...STRINGS.GRAMMAR_EXAMPLES.SO_THEY_SAID },
   // Preposition + Article + Plural
-  {
-    arabic: 'لِلْمُسْلِمِينَ',
-    english: 'to the Muslims',
-    breakdown: 'ل (to) + ال (the) + root + ين (plural)',
-  },
+  { arabic: 'لِلْمُسْلِمِينَ', ...STRINGS.GRAMMAR_EXAMPLES.TO_THE_MUSLIMS },
 ] as const;
 
 /**
@@ -159,9 +155,9 @@ const styles = StyleSheet.create({
   noteContainer: {
     marginTop: LAYOUT.SPACING.SMALL,
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    borderTopWidth: 1,
+    borderTopWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
   noteText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
 });
