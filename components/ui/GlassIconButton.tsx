@@ -52,11 +52,11 @@ export interface GlassIconButtonProps {
   /**
    * Pressable implementation. Defaults to react-native's.
    *
-   * Pass react-native-gesture-handler's when an RNGH ancestor owns the gesture
-   * arena — an RNGH ancestor beats descendants using the JS responder system, so
-   * a react-native Pressable nested under one silently stops receiving taps.
-   * The article reader wraps its whole content in an RNGH Pressable to dismiss
-   * the word tooltip, which is exactly that situation.
+   * Pass react-native-gesture-handler's when a gesture-handler ancestor owns
+   * the touch — it beats descendants on the JS responder system, so a
+   * react-native Pressable nested under one silently stops receiving taps. The
+   * article reader's tap detector is exactly that; its controls pass
+   * `ReaderPressable`.
    */
   PressableComponent?: ComponentType<PressableLikeProps>;
   testID?: string;

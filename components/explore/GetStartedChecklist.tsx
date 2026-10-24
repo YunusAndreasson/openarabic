@@ -1,4 +1,4 @@
-import { Icon } from '@/components/ui';
+import { GlyphButton, Icon } from '@/components/ui';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -159,15 +159,11 @@ const GetStartedChecklistComponent = ({
             </ThemedText>
             {/* A bare glyph, not a filled button: putting the card away is the
                 least important thing on it, and it should look it. */}
-            <Pressable
+            <GlyphButton
               accessibilityLabel={STRINGS.CHECKLIST_DISMISS_A11Y}
-              accessibilityRole="button"
-              hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-              style={({ pressed }) => pressed && styles.pressed}
+              icon="close"
               onPress={dismiss}
-            >
-              <Icon name="close" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.textTertiary} />
-            </Pressable>
+            />
           </View>
 
           {items.map(item => (
@@ -230,9 +226,6 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-  },
-  pressed: {
-    opacity: LAYOUT.OPACITY.PRESSED,
   },
   row: {
     flexDirection: 'row',

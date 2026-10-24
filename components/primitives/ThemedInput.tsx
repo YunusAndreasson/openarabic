@@ -1,8 +1,9 @@
+import { GlyphButton } from '@/components/ui/GlyphButton';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import type { Ref } from 'react';
 import { useCallback, useMemo, useState } from 'react';
-import type { GestureResponderEvent, TextInputInstance, TextInputProps } from 'react-native';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import type { TextInputInstance, TextInputProps } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { FONTS } from '@/constants/fonts';
@@ -17,17 +18,25 @@ import { useColors } from '@/hooks/theme/useColors';
  */
 const FOCUS_RING_WIDTH = LAYOUT.INPUT.BORDER_WIDTH.FOCUSED - LAYOUT.INPUT.BORDER_WIDTH.DEFAULT;
 
-interface ThemedInputProps extends TextInputProps {
+interface ThemedInputBaseProps extends TextInputProps {
   icon?: IconName;
-  rightIcon?: IconName;
-  /** What the right icon does, for screen readers — it has no text to fall back on. */
-  rightIconAccessibilityLabel?: string;
   error?: string;
   hint?: string;
-  onRightIconPress?: (e: GestureResponderEvent) => void;
+  onRightIconPress?: () => void;
   style?: TextInputProps['style'];
   ref?: Ref<TextInputInstance>;
 }
+
+/** A right icon is a button with no text, so it comes with what it does. */
+type ThemedInputProps = ThemedInputBaseProps &
+  (
+    | { rightIcon?: undefined; rightIconAccessibilityLabel?: undefined }
+    | {
+        rightIcon: IconName;
+        /** What the right icon does, for screen readers — it has no text to fall back on. */
+        rightIconAccessibilityLabel: string;
+      }
+  );
 
 const InputIcon = ({
   name,
@@ -46,36 +55,6 @@ const InputIcon = ({
     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
     style={styles.leftIcon}
   />
-);
-
-const RightInputIcon = ({
-  name,
-  isFocused,
-  error,
-  colors,
-  onPress,
-  accessibilityLabel,
-}: {
-  name: IconName;
-  isFocused: boolean;
-  error?: string;
-  colors: ReturnType<typeof useColors>;
-  onPress?: (e: GestureResponderEvent) => void;
-  accessibilityLabel?: string;
-}) => (
-  <Pressable
-    accessibilityLabel={accessibilityLabel}
-    accessibilityRole="button"
-    hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-    onPress={onPress}
-    style={({ pressed }) => [styles.rightIcon, pressed && styles.rightIconPressed]}
-  >
-    <Icon
-      color={error ? colors.error : isFocused ? colors.tint : colors.icon}
-      name={name}
-      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-    />
-  </Pressable>
 );
 
 export function ThemedInput({
@@ -155,12 +134,12 @@ export function ThemedInput({
           {...props}
         />
         {rightIcon ? (
-          <RightInputIcon
+          <GlyphButton
             accessibilityLabel={rightIconAccessibilityLabel}
-            colors={colors}
-            error={error}
-            isFocused={isFocused}
-            name={rightIcon}
+            color={error ? colors.error : isFocused ? colors.tint : colors.icon}
+            icon={rightIcon}
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            style={styles.rightIcon}
             onPress={onRightIconPress}
           />
         ) : null}
@@ -225,9 +204,6 @@ const styles = StyleSheet.create({
   },
   rightIcon: {
     marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  rightIconPressed: {
-    opacity: LAYOUT.OPACITY.PRESSED,
   },
   wrapper: {
     marginVertical: LAYOUT.SPACING.TINY,

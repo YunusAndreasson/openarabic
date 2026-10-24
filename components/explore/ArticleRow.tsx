@@ -19,7 +19,7 @@ interface ArticleRowProps {
   onPress?: (article: Article) => void;
   /** The rail size: a smaller title for a card in a horizontal rail. */
   compact?: boolean;
-  /** Forwarded to the card. Rows inside the article reader need gesture-handler's. */
+  /** Forwarded to the card. Inside the article reader, pass `ReaderPressable`. */
   PressableComponent?: ComponentType<PressableLikeProps>;
 }
 
