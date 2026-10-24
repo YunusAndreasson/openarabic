@@ -2,10 +2,10 @@ module.exports = {
   preset: 'jest-expo',
   setupFilesAfterEnv: ['./jest.setup.js'],
 
-  // Transform ES modules that Jest can't handle
-  transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|react-native-skia|@tanstack/.*|immer))',
-  ],
+  // No `transform` or `transformIgnorePatterns` here: jest-expo's apply. Its
+  // babel-jest runs babel-preset-expo with the iOS caller (so EXPO_OS inlines
+  // to "ios"), and its ignore list already lets react-native, expo and
+  // @react-navigation packages through. @tanstack resolves to CommonJS.
 
   // The one place the timeout and the worker count are set: the package.json
   // scripts no longer pass them, and jest.setup.js no longer calls setTimeout.
@@ -117,19 +117,6 @@ module.exports = {
     '!**/*.d.ts',
     '!**/coverage/**',
   ],
-
-  // Enhanced transform configuration
-  // NOTE: babel-jest automatically uses babel.config.js
-  // Only specify test-specific transforms here
-  transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': [
-      'babel-jest',
-      {
-        presets: ['babel-preset-expo'],
-        plugins: [['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }]],
-      },
-    ],
-  },
 
   coverageThreshold: {
     global: {

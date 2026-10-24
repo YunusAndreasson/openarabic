@@ -24,8 +24,6 @@
     "@expo/agent-cli",
     "@expo-google-fonts/material-symbols",
     "babel-preset-expo",
-    "babel-jest",
-    "@babel/plugin-transform-react-jsx",
     "@eslint/js",
     "@swmansion/argent",
     "eslint-plugin-react"
