@@ -1,11 +1,11 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
 
 import { SectionLabel } from '@/components/common';
-import { rootEnrichmentQueries } from '@/constants/queries';
-import { getWordDetailRoute, ROUTE_PATHS } from '@/constants/routes';
+import { ROUTE_PATHS } from '@/constants/routes';
+import { getWordDetailRoute } from '@/utils/routeBuilders';
 import { STRINGS } from '@/constants/strings';
+import { useRootEnrichmentPrefetch } from '@/hooks/vocabulary/useRootEnrichmentPrefetch';
 import { useWordsToRevisit } from '@/hooks/vocabulary/useWordsToRevisit';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -45,7 +45,7 @@ const HARDEST_RAIL_LIMIT = 10;
  * states. A learner with nothing to revisit should see a reading tab.
  */
 export function HardestWordsSection(): JSX.Element | null {
-  const queryClient = useQueryClient();
+  const prefetchRootEnrichment = useRootEnrichmentPrefetch();
   const { leeches, totalCount, isLoading, isError } = useWordsToRevisit();
 
   if (isLoading || isError || leeches.length === 0) return null;
@@ -55,11 +55,8 @@ export function HardestWordsSection(): JSX.Element | null {
   const handleWordPress = (word: StudyWord) => {
     // Warm the root explanation before the sheet asks for it — the same
     // prefetch-on-tap the dictionary does, and the reason its word screen has
-    // the panel painted by the time the push lands. `query`, not the
-    // deprecated `prefetchQuery`: same effect (writes into the cache, does not
-    // return data to a render), but `prefetchQuery`'s built-in error
-    // swallowing has to be done explicitly here instead.
-    void queryClient.query(rootEnrichmentQueries.detail(word.root_id)).catch(() => undefined);
+    // the panel painted by the time the push lands.
+    prefetchRootEnrichment(word.root_id);
     router.push(getWordDetailRoute(word.root_id));
   };
 

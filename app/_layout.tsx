@@ -49,7 +49,7 @@ import {
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
-import { ROUTE_PATHS } from '@/constants/routes';
+import { ROUTE_PATHS, SHEET_ROUTES } from '@/constants/routes';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useUpdateReady } from '@/hooks/app/useUpdateReady';
 import { useNotificationResponseRouting } from '@/hooks/notifications/useNotificationResponseRouting';
@@ -75,12 +75,11 @@ import { reportQueryFailure } from '@/utils/queryMeta';
 import { retryWhileOnline } from '@/utils/queryRetry';
 import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
 
-const TAB_ROUTE_OPTIONS = { animation: 'fade' } as const;
-const AUTH_ROUTE_OPTIONS = { animation: 'fade' } as const;
-// Declared here rather than from inside the page, where an animation set by
-// <Stack.Screen options> only applies after the screen has mounted. The header
-// is already hidden by the root screen options.
-const RESET_PASSWORD_ROUTE_OPTIONS = { animation: 'fade' } as const;
+// The tabs, the auth group and the password reset all fade. Declared here
+// rather than from inside a page, where an animation set by <Stack.Screen
+// options> only applies after the screen has mounted. Their headers are
+// already hidden by the root screen options.
+const FADE_ROUTE_OPTIONS = { animation: 'fade' } as const;
 const ROOT_SCREEN_LISTENERS = {
   transitionEnd: (event: { data: { closing: boolean } }) => {
     if (event.data.closing) flushPendingSheetNavigation();
@@ -566,9 +565,9 @@ function AppContent() {
   );
   const rootScreenOptions = useMemo(
     () => ({
+      // Every root screen hides its header, so no other header option here
+      // would ever apply.
       headerShown: false,
-      headerTitle: '',
-      headerShadowVisible: false,
       contentStyle: { backgroundColor: colors.background },
     }),
     [colors.background],
@@ -615,7 +614,7 @@ function AppContent() {
                       Declarative guards mount directly into the right route, so
                       the race is gone — fade matches the auth screen for a
                       symmetric sign-in / sign-out transition. */}
-                  <Stack.Screen name="(tabs)" options={TAB_ROUTE_OPTIONS} />
+                  <Stack.Screen name="(tabs)" options={FADE_ROUTE_OPTIONS} />
                   <Stack.Screen
                     name="article/[id]"
                     options={createNavigationOptions(colors, {
@@ -647,7 +646,6 @@ function AppContent() {
                        */
                       presentation: 'fullScreenModal',
                       gestureEnabled: false,
-                      fullScreenGestureEnabled: false,
                     })}
                   />
                   <Stack.Screen
@@ -656,39 +654,26 @@ function AppContent() {
                       headerShown: false,
                     })}
                   />
-                  <Stack.Screen name="sleep-timer" options={createSheetOptions(colors, [0.4])} />
-                  {/* These four fit their contents: fixed-height charts, or a
-                      handful of rows, under a short header — no scrolling. See
-                      createSheetOptions for what 'fitToContents' requires of the
-                      screen's content. */}
-                  <Stack.Screen name="due-words" options={createSheetOptions(colors)} />
-                  <Stack.Screen name="memory-retention" options={createSheetOptions(colors)} />
-                  <Stack.Screen name="study-streak" options={createSheetOptions(colors)} />
-                  <Stack.Screen name="review-depth" options={createSheetOptions(colors)} />
-                  {/* The odd one out: up to 20 leech rows never fit their
-                      contents, so this sheet scrolls and needs a fixed detent.
-                      Its screen owns the sheet background because the scroll
-                      view has to be a direct child — the route file documents
-                      the layout react-native-screens requires. */}
-                  <Stack.Screen
-                    name="words-to-revisit"
-                    options={createSheetOptions(colors, [0.6, 1])}
-                  />
-                  {/* One saved word, root-level so the Explore rail can present
-                      it without changing tabs. Fixed detents for the same reason
-                      as the sheet above: a memory panel, a stat block and a root
-                      explanation do not fit their contents, so this one scrolls
-                      and its screen owns the two-child layout that requires. */}
-                  <Stack.Screen name="word-detail" options={createSheetOptions(colors, [0.6, 1])} />
+                  {/* The form sheets, from the one table that also tells the
+                      MiniPlayer to stand down (SHEET_ROUTES). Stack.Protected
+                      walks its children with Children.forEach, so the array
+                      flattens like any other children. */}
+                  {Object.entries(SHEET_ROUTES).map(([name, detents]) => (
+                    <Stack.Screen
+                      key={name}
+                      name={name}
+                      options={createSheetOptions(colors, detents)}
+                    />
+                  ))}
                 </Stack.Protected>
 
                 {/* Unauthenticated routes — on sign-in auth redirects to Explore */}
                 <Stack.Protected guard={!isAuthenticated} redirectTo={ROUTE_PATHS.EXPLORE_TAB}>
-                  <Stack.Screen name="auth" options={AUTH_ROUTE_OPTIONS} />
+                  <Stack.Screen name="auth" options={FADE_ROUTE_OPTIONS} />
                 </Stack.Protected>
 
                 {/* Unguarded: a reset link opens it signed in or signed out */}
-                <Stack.Screen name="reset-password" options={RESET_PASSWORD_ROUTE_OPTIONS} />
+                <Stack.Screen name="reset-password" options={FADE_ROUTE_OPTIONS} />
 
                 {/* Audio overlays - mini-player and sleep timer */}
               </Stack>

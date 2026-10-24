@@ -1,13 +1,13 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 
-import { getArticleRoute } from '@/constants/routes';
 import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useAppDispatch } from '@/store/hooks';
 import { setCustomOrder } from '@/store/playlistSlice';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
 import { selectionFeedback } from '@/utils/haptics';
+import { getArticleRoute } from '@/utils/routeBuilders';
 import { runWhenIdle } from '@/utils/runWhenIdle';
 
 interface ListenUIParams {
@@ -37,7 +37,7 @@ export const usePlaylistUI = ({ sortedReadingList, editMode }: ListenUIParams) =
         runWhenIdle(() => {
           prefetchArticle(articleId);
         });
-        router.push(getArticleRoute(articleId, article.title));
+        router.push(getArticleRoute(articleId));
       }
     },
     [prefetchArticle, sortedReadingList, editMode],

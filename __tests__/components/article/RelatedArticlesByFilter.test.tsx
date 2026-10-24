@@ -108,7 +108,7 @@ describe('RelatedArticlesByFilter', () => {
 
     expect(mockBack).not.toHaveBeenCalled();
     expect(mockPush).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith('/article/42?headerTitle=The%20Second%20Article');
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/article/[id]', params: { id: 42 } });
   });
 
   // Under "More from Ibn Kathīr" every card used to say "Ibn Kathīr", and under

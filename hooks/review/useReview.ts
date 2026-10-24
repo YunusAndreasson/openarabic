@@ -60,6 +60,7 @@ import {
   span as diagSpan,
   startDiagSession,
 } from '@/utils/reviewDiagnostics';
+import { dismissOrReplace } from '@/utils/sheetNavigation';
 import { generateStorageUrl } from '@/utils/storageUtils';
 
 /** Time tracking for one review session. Local to this hook — nothing else
@@ -1484,14 +1485,14 @@ export function useReview({
       () => {
         if (onClose) {
           onClose();
-        } else if (fromRemember || !router.canDismiss()) {
-          // `canDismiss` is false when the session is the only screen on the
-          // stack — opened from a reminder notification or a link while the app
-          // was closed. `dismiss()` is a no-op there, which left the ✕ and the
-          // completion screen's "Continue" both doing nothing.
+        } else if (fromRemember) {
           router.replace(ROUTE_PATHS.PRACTICE_TAB);
         } else {
-          router.dismiss();
+          // Replaces instead when the session is the only screen on the stack
+          // (opened from a reminder or a link while the app was closed), where
+          // `dismiss()` left the ✕ and the completion screen's "Continue" both
+          // doing nothing.
+          dismissOrReplace(ROUTE_PATHS.PRACTICE_TAB);
         }
       },
       100,

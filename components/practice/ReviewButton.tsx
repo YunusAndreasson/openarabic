@@ -3,7 +3,7 @@ import { useCallback, type JSX } from 'react';
 
 import { HeaderTextButton } from '@/components/ui';
 import { PRACTICE_DUE_WORDS_LIMIT } from '@/constants/queries';
-import { ROUTE_PATHS, getPracticeReviewRoute } from '@/constants/routes';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useDueWordsCount, useHasStudyWords } from '@/hooks/vocabulary/useFSRSQueries';
@@ -37,7 +37,7 @@ export function ReviewButton(): JSX.Element | null {
   const dueWordsCount = useDueWordsCount({ userId, limit: PRACTICE_DUE_WORDS_LIMIT });
 
   const handleStartReview = useCallback(() => {
-    router.push(getPracticeReviewRoute());
+    router.push(ROUTE_PATHS.REVIEW);
   }, []);
 
   // Matches the empty state's secondary CTA.

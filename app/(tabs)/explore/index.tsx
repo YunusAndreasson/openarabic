@@ -17,7 +17,6 @@ import {
 import { WelcomeIntro } from '@/components/tutorials/WelcomeIntro';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
-import { getArticleRoute, getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
@@ -31,6 +30,7 @@ import type { CategoryId } from '@/types/branded.types';
 import { pickStarterArticle } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
+import { getArticleRoute, getCategoryFilterRoute } from '@/utils/routeBuilders';
 
 /**
  * Generic helper to build entities (categories/authors) with article counts
@@ -73,10 +73,7 @@ export default function ExploreScreen(): JSX.Element {
     isError: isCatalogError,
     isFetching: isCatalogFetching,
     refetch: refetchCatalog,
-  } = useQuery({
-    ...articleQueries.all(),
-    refetchOnMount: false, // Don't refetch on mount if we have data
-  });
+  } = useQuery(articleQueries.all());
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -109,7 +106,7 @@ export default function ExploreScreen(): JSX.Element {
   const handleOpenFirstText = useCallback(() => {
     const starter = pickStarterArticle(articlesData, starterProgressMap);
     if (starter) {
-      router.push(getArticleRoute(starter.id, starter.title, true));
+      router.push(getArticleRoute(starter.id, { disableAutoScroll: true }));
     }
   }, [articlesData, starterProgressMap]);
 

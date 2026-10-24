@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
-import { useEffect, useState } from 'react';
-import { BackHandler, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomSheetHeader, BottomSheetStateHandler, ListRow } from '@/components/common';
@@ -12,6 +12,7 @@ import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { useAndroidBackHandler } from '@/hooks/ui/useAndroidBackHandler';
 import { useWordsToRevisit } from '@/hooks/vocabulary/useWordsToRevisit';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -165,14 +166,7 @@ export default function WordsToRevisitScreen(): JSX.Element {
   // Android's hardware/gesture back would otherwise close the whole sheet
   // while a word is open inline — this returns to the list first, the same
   // place the on-screen back control lands.
-  useEffect(() => {
-    if (Platform.OS !== 'android' || selectedRootId === null) return;
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      setSelectedRootId(null);
-      return true;
-    });
-    return () => subscription.remove();
-  }, [selectedRootId]);
+  useAndroidBackHandler(selectedRootId !== null, () => setSelectedRootId(null));
 
   if (selectedRootId !== null) {
     return <WordDetailContent rootId={selectedRootId} onBack={() => setSelectedRootId(null)} />;
@@ -228,7 +222,7 @@ export default function WordsToRevisitScreen(): JSX.Element {
 const styles = StyleSheet.create({
   header: {
     // Clears the OS grabber pill, which otherwise draws through the title.
-    paddingTop: LAYOUT.SPACING.XLARGE,
+    paddingTop: LAYOUT.BOTTOM_SHEET.GRABBER_CLEARANCE,
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
   list: {

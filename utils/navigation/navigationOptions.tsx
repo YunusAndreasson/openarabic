@@ -26,7 +26,6 @@ export function createNavigationOptions(
   colors: {
     background: string;
     headingText: string;
-    shadow: string;
   },
   options: {
     isRegularScreen?: boolean;
@@ -100,13 +99,13 @@ export function createNavigationOptions(
     return baseOptions;
   }
 
-  // Native modal behavior - unified across platforms with glass support
+  // Native modal behavior - unified across platforms with glass support.
+  // No gesture options: swipe-to-dismiss is already on by default, and
+  // `fullScreenGestureEnabled` / `animationMatchesGesture` do not affect a
+  // modally presented screen.
   return {
     presentation: 'modal', // Standard modal with backdrop
     animation: 'slide_from_bottom', // Android: Slide up from bottom like iOS
-    gestureEnabled: true,
-    fullScreenGestureEnabled: true, // iOS: Allow full-screen swipe to dismiss
-    animationMatchesGesture: true, // iOS: Sync swipe gesture with slide animation
     // A modal is dismissed by its CloseButton, not a chevron. Without this a
     // modal opened over a tab root shows both, which reads as two different
     // ways out that do different things.

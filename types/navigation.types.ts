@@ -22,6 +22,6 @@
 export type FilterParams = {
   /** Category id, as it survives the URL: a string to be parsed. */
   id?: string;
-  /** Category display name, URI-encoded. */
+  /** Category display name, already decoded: the router decodes the query string. */
   name?: string;
 };

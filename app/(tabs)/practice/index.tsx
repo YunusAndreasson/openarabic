@@ -5,8 +5,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { ThemedView } from '@/components/primitives/ThemedView';
-import { ErrorState, LoadingState } from '@/components/common';
+import { ScreenStateHandler } from '@/components/common/ScreenStateHandler';
 import { PracticeEmptyState, PracticeStatCards } from '@/components/practice';
 import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
@@ -43,6 +42,9 @@ const MOUNT_FADE_IN_STYLE = fadeInStyle(
   // this fade ran on before fadeInStyle gained a timing argument.
   'ease',
 );
+
+// Module-level, so the state handler is handed the same element every render.
+const PRACTICE_EMPTY_STATE = <PracticeEmptyState />;
 
 export default function PracticeScreen(): JSX.Element {
   const { user } = useAuth();
@@ -239,74 +241,58 @@ export default function PracticeScreen(): JSX.Element {
     [miniPlayerClearance],
   );
 
-  // Show error message if there was an error loading data
-  if (shouldShowError) {
-    return (
-      <ThemedView style={styles.container}>
-        <ErrorState message={STRINGS.FAILED_TO_LOAD_PRACTICE_DATA} onRetry={handleRetry} />
-      </ThemedView>
-    );
-  }
-
-  // Initial-load gate: while the words queries are first loading, don't flash
-  // the empty state (with its live "Add common words" CTA). Gate on v5
-  // isLoading (= isPending && isFetching) — NOT bare isPending, which stays
-  // true forever for restore-gated/enabled-gated queries that never fetch.
-  if (isLoading && !hasAnyStudyWords) {
-    return (
-      <ThemedView style={styles.container}>
-        <LoadingState />
-      </ThemedView>
-    );
-  }
-
-  // Empty state — no ScrollView needed, just center in full screen
-  if (!hasAnyStudyWords) {
-    return (
-      <ThemedView useSafeArea={false} style={styles.container}>
-        <PracticeEmptyState />
-      </ThemedView>
-    );
-  }
-
   // The start-review CTA lives in the navigation bar now (`ReviewButton`), not
   // as a pinned pill over the list: it is a once-per-visit action, and a
   // full-width button plus its scrim were spending a thumb's worth of screen
   // and covering the stat cards the learner came to read.
 
   return (
-    <ScrollView
-      testID="practice-dashboard"
-      // Scroll direction drives the tab bar out of the way on Android; on iOS
-      // UIKit reads this same scroll view itself. See `useTabBarAutoHide`.
-      {...tabBarAutoHide}
-      // `flex: 1` makes this ScrollView fill the route's content view so
-      // UIKit recognises it as the screen's primary scrollable. Without it
-      // the ScrollView only grows to its children's height — the large title
-      // never collapses on scroll even though the bar background fade fires.
-      style={styles.container}
-      contentInsetAdjustmentBehavior="automatic"
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={scrollContentStyle}
+    <ScreenStateHandler
+      isError={Boolean(shouldShowError)}
+      errorMessage={STRINGS.FAILED_TO_LOAD_PRACTICE_DATA}
+      onRetry={handleRetry}
+      // Initial-load gate: while the words queries are first loading, don't
+      // flash the empty state (with its live "Add common words" CTA). Gate on v5
+      // isLoading (= isPending && isFetching) — NOT bare isPending, which stays
+      // true forever for restore-gated/enabled-gated queries that never fetch.
+      isLoading={isLoading && !hasAnyStudyWords}
+      // Empty state — no ScrollView needed, just center in full screen
+      isEmpty={!hasAnyStudyWords}
+      empty={PRACTICE_EMPTY_STATE}
     >
-      <Animated.View style={VOCABULARY_SECTION_STYLE}>
-        <PracticeStatCards
-          dueWords={shown.cost.dueWords}
-          reviewedToday={shown.cost.reviewedToday}
-          recallableWords={shown.memory.recallableWords}
-          hasMeasuredMemory={shown.memory.hasMeasuredMemory}
-          distribution={shown.memory.distribution}
-          forecast={shown.cost.forecast}
-          currentStreak={shown.habit.currentStreak}
-          hasStreak={shown.habit.hasStreak}
-          totalReviews={shown.habit.totalReviews}
-          onDuePress={handleDuePress}
-          onStreakPress={handleStreakPress}
-          onMemoryPress={handleMemoryStrengthInfo}
-          onReviewsPress={handleReviewsPress}
-        />
-      </Animated.View>
-    </ScrollView>
+      <ScrollView
+        testID="practice-dashboard"
+        // Scroll direction drives the tab bar out of the way on Android; on iOS
+        // UIKit reads this same scroll view itself. See `useTabBarAutoHide`.
+        {...tabBarAutoHide}
+        // `flex: 1` makes this ScrollView fill the route's content view so
+        // UIKit recognises it as the screen's primary scrollable. Without it
+        // the ScrollView only grows to its children's height — the large title
+        // never collapses on scroll even though the bar background fade fires.
+        style={styles.container}
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={scrollContentStyle}
+      >
+        <Animated.View style={VOCABULARY_SECTION_STYLE}>
+          <PracticeStatCards
+            dueWords={shown.cost.dueWords}
+            reviewedToday={shown.cost.reviewedToday}
+            recallableWords={shown.memory.recallableWords}
+            hasMeasuredMemory={shown.memory.hasMeasuredMemory}
+            distribution={shown.memory.distribution}
+            forecast={shown.cost.forecast}
+            currentStreak={shown.habit.currentStreak}
+            hasStreak={shown.habit.hasStreak}
+            totalReviews={shown.habit.totalReviews}
+            onDuePress={handleDuePress}
+            onStreakPress={handleStreakPress}
+            onMemoryPress={handleMemoryStrengthInfo}
+            onReviewsPress={handleReviewsPress}
+          />
+        </Animated.View>
+      </ScrollView>
+    </ScreenStateHandler>
   );
 }
 

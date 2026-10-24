@@ -134,7 +134,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
+    // Clears the OS grabber pill, which on iOS otherwise draws through the title.
+    paddingTop: LAYOUT.BOTTOM_SHEET.GRABBER_CLEARANCE,
   },
   optionsGrid: {
     flexDirection: 'row',

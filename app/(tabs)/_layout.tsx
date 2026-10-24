@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
-import { useEffect, useMemo } from 'react';
-import { BackHandler, Platform } from 'react-native';
+import { useMemo } from 'react';
+import { Platform } from 'react-native';
 
 import { router, usePathname } from 'expo-router';
 
@@ -12,31 +12,28 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
 import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
+import { useAndroidBackHandler } from '@/hooks/ui/useAndroidBackHandler';
 import { useIsTabBarHidden } from '@/hooks/ui/useTabBarAutoHide';
 import { useDueWordsCount } from '@/hooks/vocabulary/useFSRSQueries';
 import { formatDueCount } from '@/utils/dueCountText';
 
-// Tab roots that are not the home tab — hardware back returns to Explore from
-// these instead of exiting the app (standard Android back pattern). Nested
-// screens are untouched: their pathnames don't match, so back pops normally.
-const NON_HOME_TAB_ROOT_PATHS = ['/practice', '/playlist', '/account'];
+// Tab roots that are not the home tab, as `usePathname` spells them — hardware
+// back returns to Explore from these instead of exiting the app (standard
+// Android back pattern). Nested screens are untouched: their pathnames don't
+// match, so back pops normally. Derived from the tab list, so a new tab gets
+// the same treatment without being added here by hand.
+const NON_HOME_TAB_ROOT_PATHS: ReadonlySet<string> = new Set(
+  TAB_SCREENS.filter(screen => screen.name !== 'explore').map(screen => `/${screen.name}`),
+);
 
+// A component of its own so the pathname subscription re-renders only this,
+// not the tab navigator.
 function AndroidTabBackHandler(): null {
   const pathname = usePathname();
 
-  useEffect(() => {
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (NON_HOME_TAB_ROOT_PATHS.includes(pathname)) {
-        router.navigate(ROUTE_PATHS.EXPLORE_TAB);
-        return true;
-      }
-      return false;
-    });
-    // jest-expo's BackHandler shim returns undefined even though the native type
-    // promises a subscription; keep cleanup tolerant in tests and older shims.
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    return () => subscription?.remove();
-  }, [pathname]);
+  useAndroidBackHandler(NON_HOME_TAB_ROOT_PATHS.has(pathname), () => {
+    router.navigate(ROUTE_PATHS.EXPLORE_TAB);
+  });
 
   return null;
 }

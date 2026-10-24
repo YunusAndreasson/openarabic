@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { Fragment, memo, useCallback } from 'react';
 
 import { SectionLabel } from '@/components/common';
-import { getArticleRoute } from '@/constants/routes';
+import { getArticleRoute } from '@/utils/routeBuilders';
 import type { DiscoveryRail } from '@/hooks/explore/useExploreRails';
 import type { Article } from '@/types/articles.types';
 
@@ -22,7 +22,7 @@ const DiscoverySectionsComponent = ({ rails }: DiscoverySectionsProps) => {
 
   const handleArticlePress = useCallback(
     (article: Article) => {
-      router.push(getArticleRoute(article.id, article.title, true));
+      router.push(getArticleRoute(article.id, { disableAutoScroll: true }));
     },
     [router],
   );

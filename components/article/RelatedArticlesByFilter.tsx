@@ -13,10 +13,10 @@ import { Pressable } from 'react-native-gesture-handler';
 import { SectionLabel } from '@/components/common';
 import { PlaylistItemCard } from '@/components/playlist';
 import { LAYOUT } from '@/constants/layout';
-import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
+import { getArticleRoute } from '@/utils/routeBuilders';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleProgressPercentage, type ReadingProgressLookup } from '@/utils/progressUtils';
 import {
@@ -63,8 +63,8 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     // the reader back to Explore and then raced a push into the middle of the
     // pop animation, with an uncancelled timer left to fire after unmount.
     const handleArticlePress = useCallback(
-      (articleId: ArticleId, title: string) => {
-        router.push(getArticleRoute(articleId, title));
+      (articleId: ArticleId, _title: string) => {
+        router.push(getArticleRoute(articleId));
       },
       [router],
     );

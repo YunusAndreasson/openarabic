@@ -165,7 +165,7 @@ describe('ArticleCard Component', () => {
 
       // Should navigate to article detail screen
       expect(mockPush).toHaveBeenCalled();
-      expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('/article/'));
+      expect(mockPush).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/article/[id]' }));
     });
 
     test('includes article ID in navigation path', () => {
@@ -179,7 +179,9 @@ describe('ArticleCard Component', () => {
 
       fireEvent.press(getByTestId('article-card'));
 
-      expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('/42'));
+      expect(mockPush).toHaveBeenCalledWith(
+        expect.objectContaining({ params: expect.objectContaining({ id: 42 }) }),
+      );
     });
   });
 
@@ -483,7 +485,12 @@ describe('ArticleCard Component', () => {
       fireEvent.press(getByTestId('card'));
 
       // Regression: Ensure route follows /article/[id] pattern
-      expect(mockPush).toHaveBeenCalledWith(expect.stringMatching(/\/article\/123/));
+      expect(mockPush).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pathname: '/article/[id]',
+          params: expect.objectContaining({ id: 123 }),
+        }),
+      );
     });
 
     test('should format author and category correctly', () => {

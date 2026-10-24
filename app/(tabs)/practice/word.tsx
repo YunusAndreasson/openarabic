@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
@@ -23,27 +23,53 @@ import { PulsatingLoader } from '@/components/ui';
 import { LAYOUT, MIN_TOUCH_TARGET, getCompactArabicFontSize } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
-import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useResetWordProgress, useSentencesByWord } from '@/hooks/vocabulary';
 import { useSavedWordDetail } from '@/hooks/vocabulary/useSavedWordDetail';
 import type { SentenceArticle } from '@/services/sentences';
 import type { RootId } from '@/types/branded.types';
-import { handleError } from '@/utils/errorHandling';
 import { getNextReviewLabel } from '@/utils/fsrsUtils';
 import { getArticleRoute, getPracticeWordRoute } from '@/utils/routeBuilders';
+import { useRootIdParam } from '@/utils/routeParams';
 import { getWordUsage, type WordForm } from '@/utils/wordUsage';
 import { dismissAllThenNavigate } from '@/utils/sheetNavigation';
 
 const SENTENCE_EXAMPLES_LIMIT = 5;
 
+/** Stands in for the word while there is none to show: a spinner, or why not. */
+function WordPlaceholder({ message }: { readonly message?: string }): JSX.Element {
+  return (
+    <ThemedView style={styles.container}>
+      <View style={styles.loadingContainer}>
+        {message === undefined ? (
+          <LoadingState />
+        ) : (
+          <ThemedText align="center" colorName="secondaryText" type="body">
+            {message}
+          </ThemedText>
+        )}
+      </View>
+    </ThemedView>
+  );
+}
+
 export default function PracticeWordScreen(): JSX.Element {
+  const rootId = useRootIdParam();
+
+  // The app always pushes this screen with a real id, but a deep link can
+  // carry anything. Without a usable one the screen says the link is broken,
+  // rather than claiming a word is missing from the list after a lookup.
+  if (rootId === undefined) {
+    return <WordPlaceholder message={STRINGS.WORD_SHEET_INVALID_LINK} />;
+  }
+
+  return <PracticeWordDetail rootId={rootId} />;
+}
+
+function PracticeWordDetail({ rootId }: { readonly rootId: RootId }): JSX.Element {
   const router = useRouter();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
-  const { rootId: rootIdParam } = useLocalSearchParams<{ rootId?: string }>();
-  const rootId = Number(rootIdParam) as RootId;
 
   // The word itself, its memory, enrichment, hero style and audio — shared with
   // the root-level word sheet (WordDetailContent), so the two cannot disagree.
@@ -66,8 +92,7 @@ export default function PracticeWordScreen(): JSX.Element {
   // wrap across two lines, and at hero size two would fill the screen.
   const formFontSize = getCompactArabicFontSize(readingFontSize);
 
-  const { toggleRootMutation } = useStudyWordMutations();
-  const toggleRoot = toggleRootMutation.mutateAsync;
+  const { handleRootPress } = useStudyWordMutations();
   const { confirmReset } = useResetWordProgress();
 
   const {
@@ -86,8 +111,7 @@ export default function PracticeWordScreen(): JSX.Element {
   }, [word, confirmReset]);
 
   const handleRemove = useCallback(() => {
-    if (!user?.id || !word) return;
-    const userId = user.id;
+    if (!word) return;
     const wordRootId = word.root_id;
     Alert.alert(STRINGS.REMOVE_WORD_TITLE, STRINGS.REMOVE_WORD_CONFIRM, [
       { text: STRINGS.CANCEL, style: 'cancel' },
@@ -95,20 +119,16 @@ export default function PracticeWordScreen(): JSX.Element {
         text: STRINGS.REMOVE,
         style: 'destructive',
         onPress: () => {
-          // Optimistic cache update removes the word immediately; failures
-          // revert the cache and surface a toast.
-          toggleRoot({ userId, rootId: wordRootId, intent: 'remove' }).catch(error =>
-            handleError(error, {
-              showToast: true,
-              toastMessage: STRINGS.FAILED_TO_DELETE_WORD,
-              captureSentry: !__DEV__,
-            }),
-          );
+          // Explicit intent, so a stale cache can never turn this into a
+          // re-add. The optimistic cache update removes the word at once; a
+          // failure reverts it and is reported once, by the mutation's own
+          // onError (toast and Sentry).
+          void handleRootPress(wordRootId, 'remove');
           router.back();
         },
       },
     ]);
-  }, [user, word, toggleRoot, router]);
+  }, [word, handleRootPress, router]);
 
   // Distinguish "still fetching" from "not in the list" from "the fetch
   // failed" — all three used to render the same "not in your practice list"
@@ -116,19 +136,8 @@ export default function PracticeWordScreen(): JSX.Element {
   // read as a correct answer about a word that was never there. Mirrors the
   // three-way gate `BottomSheetStateHandler` gives the root-level word sheet.
   if (!word) {
-    return (
-      <ThemedView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          {isLoading ? (
-            <LoadingState />
-          ) : (
-            <ThemedText align="center" colorName="secondaryText" type="body">
-              {error ? STRINGS.WORD_SHEET_ERROR : STRINGS.WORD_NOT_FOUND}
-            </ThemedText>
-          )}
-        </View>
-      </ThemedView>
-    );
+    if (isLoading) return <WordPlaceholder />;
+    return <WordPlaceholder message={error ? STRINGS.WORD_SHEET_ERROR : STRINGS.WORD_NOT_FOUND} />;
   }
 
   const nextReviewLabel = getNextReviewLabel(word.fsrs_due);
@@ -150,7 +159,7 @@ export default function PracticeWordScreen(): JSX.Element {
     // `dismissAllThenNavigate`, not `push`: this screen sits inside the
     // dictionary's modal and the reader is itself a root-level modal, so the
     // stack has to be emptied before the reader can present.
-    dismissAllThenNavigate(getArticleRoute(article.id, article.title, true, sentenceId));
+    dismissAllThenNavigate(getArticleRoute(article.id, { disableAutoScroll: true, sentenceId }));
   };
 
   return (
@@ -160,9 +169,9 @@ export default function PracticeWordScreen(): JSX.Element {
       style={styles.container}
     >
       {/* The header said the literal word "Word" above whichever word you had
-          opened. `setOptions` merges, so the layout's CloseButton and its
-          fallback title both stay. */}
-      <Stack.Screen options={{ title: englishText || STRINGS.WORD_DETAIL_TITLE }} />
+          opened. Stack.Title sets the title alone, so the layout's CloseButton
+          and the rest of its header options stay. */}
+      <Stack.Title>{englishText || STRINGS.WORD_DETAIL_TITLE}</Stack.Title>
       <ScrollView
         testID="dictionary-word-content"
         style={styles.scrollView}
