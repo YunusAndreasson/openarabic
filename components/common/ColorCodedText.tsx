@@ -6,6 +6,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { ColoredSegment } from '@/types/vocabulary.types';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
+import { hasGrammarColour } from '@/utils/skiaParagraphBuilder';
 
 import { SkiaColoredArabic } from './SkiaColoredArabic';
 
@@ -92,10 +93,8 @@ export const ColorCodedText = memo<ColorCodedTextProps>(
 
     // Check if any segment has a non-default color
     const hasColoredComponents = useMemo(
-      () =>
-        coloredSegments.length > 0 &&
-        coloredSegments.some(seg => seg.color !== colors.text && seg.color !== colors.arabicText),
-      [coloredSegments, colors.text, colors.arabicText],
+      () => hasGrammarColour(coloredSegments, colors),
+      [coloredSegments, colors],
     );
 
     // Arabic joins cursively, and a per-segment <Text> cannot: each nested Text
