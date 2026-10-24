@@ -20,6 +20,7 @@ import { articlesService } from '@/services/articles';
 import { bookmarkService } from '@/services/bookmark';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
+import type { BookmarkItem } from '@/types/bookmark.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { articleId, authorId, categoryId, rootId, userId } from '@/__tests__/helpers/ids';
 
@@ -33,6 +34,13 @@ const mockBookmarkService = bookmarkService as jest.Mocked<typeof bookmarkServic
 const mockStudyWordsFSRSService = studyWordsFSRSService as jest.Mocked<
   typeof studyWordsFSRSService
 >;
+
+/** Every queryFn calls its service as a managed request (reported once by the cache). */
+const MANAGED = expect.objectContaining({ managed: true });
+
+/** A reading-list row for an article; only `article_id` matters to saved state. */
+const savedArticle = (id: number) =>
+  ({ user_id: 'u1', article_id: id, added_at: '2024-01-01T00:00:00Z' }) as unknown as BookmarkItem;
 
 describe('useArticleData', () => {
   let queryClient: QueryClient;
@@ -149,7 +157,7 @@ describe('useArticleData', () => {
 
     // Mock service responses
     mockArticlesService.getArticleById.mockResolvedValue(mockArticle);
-    mockBookmarkService.isInReadingList.mockResolvedValue(true);
+    mockBookmarkService.getReadingList.mockResolvedValue([savedArticle(1)]);
     mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue(mockStudyWords);
 
     const { result } = renderHook(() => useArticleData(articleId(1), 'u1'), { wrapper });
@@ -175,18 +183,21 @@ describe('useArticleData', () => {
     expect(words?.map(w => w.id)).toEqual([21, 20]); // Sorted by position
 
     // Verify services were called correctly
-    expect(mockArticlesService.getArticleById).toHaveBeenCalledWith(1);
-    expect(mockBookmarkService.isInReadingList).toHaveBeenCalledWith('u1', 1);
+    expect(mockArticlesService.getArticleById).toHaveBeenCalledWith(1, MANAGED);
+    // Saved state is read off the reading list, not asked of the server per article
+    expect(mockBookmarkService.getReadingList).toHaveBeenCalledWith('u1', MANAGED);
     // getFSRSWords is called with userId and forStats option (no cooldown - uses fsrsQueries.all)
-    expect(mockStudyWordsFSRSService.getFSRSWords).toHaveBeenCalledWith('u1', {
-      forStats: false,
-    });
+    expect(mockStudyWordsFSRSService.getFSRSWords).toHaveBeenCalledWith(
+      'u1',
+      { forStats: false },
+      MANAGED,
+    );
   });
 
   test('handles missing data gracefully with real React Query', async () => {
     // Mock services to return no data
     mockArticlesService.getArticleById.mockRejectedValue(new Error('Not found'));
-    mockBookmarkService.isInReadingList.mockResolvedValue(false);
+    mockBookmarkService.getReadingList.mockResolvedValue([]);
     mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue([]);
 
     const { result } = renderHook(() => useArticleData(undefined, undefined), { wrapper });
@@ -220,7 +231,7 @@ describe('useArticleData', () => {
     };
 
     mockArticlesService.getArticleById.mockResolvedValue(mockArticle);
-    mockBookmarkService.isInReadingList.mockResolvedValue(false);
+    mockBookmarkService.getReadingList.mockResolvedValue([]);
     mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue([]);
 
     // First render
@@ -243,7 +254,7 @@ describe('useArticleData', () => {
     // Mock service failures
     const networkError = new Error('Network request failed');
     mockArticlesService.getArticleById.mockRejectedValue(networkError);
-    mockBookmarkService.isInReadingList.mockResolvedValue(false);
+    mockBookmarkService.getReadingList.mockResolvedValue([]);
     mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue([]);
 
     const { result } = renderHook(() => useArticleData(articleId(1), 'u1'), { wrapper });
@@ -261,7 +272,7 @@ describe('useArticleData', () => {
     expect(result.current.article).toBeUndefined();
 
     // Service was called but failed
-    expect(mockArticlesService.getArticleById).toHaveBeenCalledWith(1);
+    expect(mockArticlesService.getArticleById).toHaveBeenCalledWith(1, MANAGED);
 
     // Derived state should handle undefined article gracefully
     expect(result.current.sortedSentences).toEqual([]);
@@ -280,7 +291,7 @@ describe('useArticleData', () => {
 
   test('reports an article the published catalogue does not list as missing, not as a failure', async () => {
     mockArticlesService.getArticleById.mockRejectedValue(new Error('Article not found: 99'));
-    mockBookmarkService.isInReadingList.mockResolvedValue(false);
+    mockBookmarkService.getReadingList.mockResolvedValue([]);
     mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue([]);
     // The catalogue lists article 1 only. Kept past the test client's gcTime 0,
     // since nothing observes it here.
@@ -297,7 +308,7 @@ describe('useArticleData', () => {
 
   test('treats a failed fetch of a listed article as retryable, and a retry as loading', async () => {
     mockArticlesService.getArticleById.mockRejectedValue(new Error('Network request failed'));
-    mockBookmarkService.isInReadingList.mockResolvedValue(false);
+    mockBookmarkService.getReadingList.mockResolvedValue([]);
     mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue([]);
     queryClient.setQueryDefaults(['articles'], { gcTime: Infinity });
     queryClient.setQueryData(['articles'], [{ id: articleId(1) }]);
@@ -315,5 +326,29 @@ describe('useArticleData', () => {
 
     await waitFor(() => expect(result.current.isLoadingArticle).toBe(true));
     expect(result.current.isArticleError).toBe(false);
+  });
+
+  // The saved state is a select of the reading list, so saving or removing the
+  // article anywhere (the playlist's delete included) shows here at once; the
+  // old per-article query never refetched on mount and went stale.
+  test('derives the saved state from the cached reading list', async () => {
+    mockArticlesService.getArticleById.mockReturnValue(new Promise(() => undefined));
+    mockBookmarkService.getReadingList.mockResolvedValue([savedArticle(2)]);
+    mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue([]);
+
+    const { result } = renderHook(() => useArticleData(articleId(1), 'u1'), { wrapper });
+
+    await waitFor(() => expect(mockBookmarkService.getReadingList).toHaveBeenCalled());
+    expect(result.current.isInReadingList).toBe(false);
+
+    act(() => {
+      queryClient.setQueryData(['readingList', 'u1'], [savedArticle(2), savedArticle(1)]);
+    });
+    await waitFor(() => expect(result.current.isInReadingList).toBe(true));
+
+    act(() => {
+      queryClient.setQueryData(['readingList', 'u1'], [savedArticle(2)]);
+    });
+    await waitFor(() => expect(result.current.isInReadingList).toBe(false));
   });
 });

@@ -1,8 +1,9 @@
-import { Rating } from 'ts-fsrs';
+import { Rating, State } from 'ts-fsrs';
 import type { Grade, StepUnit } from 'ts-fsrs';
 
 import { WORD_CONFIDENCES } from '@/types/review.types';
 import type { WordConfidence } from '@/types/review.types';
+import { MILLISECONDS_PER_HOUR } from '@/utils/dateTimeUtils';
 
 const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
 const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
@@ -106,6 +107,48 @@ export const RECALLED_CONFIDENCE: ReadonlySet<WordConfidence> = new Set(
 );
 
 export const DEFAULT_SESSION_COOLDOWN_HOURS = 2;
+
+/**
+ * The two short-step states: FSRS schedules them minutes out on purpose
+ * (learning_steps 1m/10m, relearning_steps 5m/10m) — they are the words the
+ * learner has not got right yet.
+ */
+export const SHORT_STEP_STATES = [State.Learning, State.Relearning] as const;
+
+/**
+ * States exempt from the post-session cooldown: New (never asked) plus both
+ * short-step states, whose whole purpose is to come back within minutes.
+ *
+ * One list for both sides of the rule — the server filter in
+ * `studyWordsFSRSService.getFSRSWords` and the client mirror in
+ * `filterDueWords` — because two hand-written `(0,1,3)` lists is how the two
+ * sides drift apart.
+ */
+export const COOLDOWN_EXEMPT_STATES = [State.New, ...SHORT_STEP_STATES] as const;
+
+/** Whether `state` is one of the minute-scale {@link SHORT_STEP_STATES}. */
+export const isShortStepState = (state: State | null | undefined): boolean =>
+  SHORT_STEP_STATES.some(shortStep => shortStep === state);
+
+/** Whether `state` is exempt from the session cooldown ({@link COOLDOWN_EXEMPT_STATES}). */
+export const isCooldownExemptState = (state: State | null | undefined): boolean =>
+  COOLDOWN_EXEMPT_STATES.some(exempt => exempt === state);
+
+/**
+ * Whether the post-session cooldown is in force at `nowMs`: a session finished
+ * less than `cooldownHours` ago. The one statement of the window that the due
+ * query, its client-side mirror and the reminder planner each used to write out.
+ */
+export function isSessionCooldownActive(
+  lastCompletedAt: number | undefined,
+  cooldownHours: number,
+  nowMs: number,
+): boolean {
+  return (
+    typeof lastCompletedAt === 'number' &&
+    nowMs - lastCompletedAt < cooldownHours * MILLISECONDS_PER_HOUR
+  );
+}
 
 /**
  * How many due words the review session holds in its priority heap at once.

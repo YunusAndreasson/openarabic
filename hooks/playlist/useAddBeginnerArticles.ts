@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { articleQueries, audioQueries } from '@/constants/queries';
+import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
@@ -14,6 +14,7 @@ import { ToastType } from '@/types/enums';
 import { getBeginnerArticles } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
+import { managedRequest } from '@/utils/supabaseHelpers';
 
 /** Number of beginner articles to add */
 const BEGINNER_ARTICLE_COUNT = 10;
@@ -34,7 +35,7 @@ interface UseAddBeginnerArticlesResult {
 /**
  * One-tap quick start for the Playlist empty state: adds a set of
  * beginner-friendly articles to the user's reading list. Idempotent —
- * addToReadingList is an upsert on (user_id, article_id).
+ * addManyToReadingList is an upsert on (user_id, article_id).
  */
 export function useAddBeginnerArticles(
   options?: UseAddBeginnerArticlesOptions,
@@ -63,18 +64,12 @@ export function useAddBeginnerArticles(
         throw new Error('No beginner articles available');
       }
 
-      // Add beginner articles to the reading list; allSettled so one flaky
-      // network call doesn't fail the whole batch (upsert makes retries safe)
-      const results = await Promise.allSettled(
-        beginnerArticleIds.map(id => bookmarkService.addToReadingList(user.id, id)),
-      );
-      const addedCount = results.filter(result => result.status === 'fulfilled').length;
+      // One upsert for the whole set: it succeeds or fails as one, so a failure
+      // is one report and one toast — ten parallel requests could fail as ten.
+      // Articles already in the list are left as they are, so a retry is safe.
+      await bookmarkService.addManyToReadingList(user.id, beginnerArticleIds, managedRequest());
 
-      if (addedCount === 0) {
-        throw new Error('Failed to add beginner articles');
-      }
-
-      return { addedCount };
+      return { addedCount: beginnerArticleIds.length };
     },
     onSuccess: ({ addedCount }) => {
       if (!user?.id) return;
@@ -92,8 +87,7 @@ export function useAddBeginnerArticles(
       dispatch(resetEditMode('playlist'));
 
       // Invalidate queries in background (UI updates when ready)
-      void queryClient.invalidateQueries({ queryKey: ['readingList', user.id] });
-      void audioQueries.invalidateAll(queryClient, user.id);
+      void readingProgressQueries.onListChanged(queryClient, user.id);
 
       // Call onSuccess callback
       options?.onSuccess?.();

@@ -25,6 +25,9 @@ jest.mock('@tanstack/react-query', () => ({
   QueryClient: jest.fn(),
   QueryClientProvider: ({ children }: { children: ReactNode }) => children,
   queryOptions: jest.fn(options => options),
+  // Called at module scope by utils/mutationDefaults (the grade mutation's
+  // shared options), so a plain function: resetMocks would empty a jest.fn.
+  mutationOptions: (options: unknown) => options,
 }));
 
 // Plain functions (not jest.fn): resetMocks wipes jest.fn implementations
@@ -169,7 +172,7 @@ describe('useFSRS', () => {
       mutateAsync: jest.fn((..._args: unknown[]) => Promise.resolve(true)),
     } as never);
 
-    mockStudyWordsFSRSService.updateWordAndReview.mockResolvedValue(true);
+    mockStudyWordsFSRSService.updateWordAndReview.mockResolvedValue(undefined);
   });
 
   afterEach(() => {

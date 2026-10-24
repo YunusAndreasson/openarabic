@@ -36,20 +36,12 @@ export interface GetFSRSWordsOptions {
   onlyDue?: boolean;
   forStats?: boolean;
   limit?: number;
-  sortByDifficultyAndStability?: boolean;
-  reviewedOnly?: boolean;
   /**
    * Session cooldown: Exclude words reviewed within this many hours.
    * Useful to prevent words from appearing immediately after a study session.
    * Default: 0 (no cooldown), common values: 1-24 hours
    */
   sessionCooldownHours?: number;
-  /**
-   * Server-side filter for vocabulary category. The two branches are exact
-   * complements of `isMasteredWord` (state Review + stability >=
-   * MASTERY_MIN_STABILITY) — see that predicate for the rule itself.
-   */
-  category?: 'learning' | 'mastered';
 }
 
 export interface UseFSRSOptions {

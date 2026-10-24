@@ -2,7 +2,7 @@ import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { Tables } from '@/types/database.types';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
-import { executeQuery } from '@/utils/supabaseHelpers';
+import { executeQuery, type RequestOptions } from '@/utils/supabaseHelpers';
 
 const errorConfig = {
   load: createServiceErrorConfig('categories', 'load', {
@@ -11,12 +11,11 @@ const errorConfig = {
 };
 
 export const categoriesService = {
-  async getCategories(): Promise<Tables<'categories'>[]> {
-    const data = await executeQuery(
+  getCategories(request: RequestOptions = {}): Promise<Tables<'categories'>[]> {
+    return executeQuery(
       () => supabase.from('categories').select('id, name').order('name'),
       errorConfig.load,
+      request,
     );
-
-    return data ?? [];
   },
 };

@@ -53,28 +53,37 @@ let mixpanelInstance: MixpanelInstance | null = null;
 
 // React Native global for development mode detection
 declare const __DEV__: boolean;
-let isInitialized = false;
 
-const initializeMixpanel = async (): Promise<void> => {
-  if (isInitialized || !MIXPANEL_TOKEN) {
-    return; // Already initialized or no token
+const startMixpanel = async (token: string): Promise<void> => {
+  const { Mixpanel } = require('mixpanel-react-native');
+
+  // Official v3.1.2 initialization pattern
+  const trackAutomaticEvents = false;
+  mixpanelInstance = new Mixpanel(token.trim(), trackAutomaticEvents);
+  if (mixpanelInstance) {
+    await mixpanelInstance.init();
+  }
+};
+
+/**
+ * The one initialization in flight or done. Memoised as a promise, not a flag:
+ * a flag set only once `init()` resolved let concurrent first calls each see it
+ * unset, and each construct and initialise its own Mixpanel instance.
+ */
+let initialization: Promise<void> | null = null;
+
+const initializeMixpanel = (): Promise<void> => {
+  if (!MIXPANEL_TOKEN) {
+    return Promise.resolve(); // No token
   }
 
-  try {
-    const { Mixpanel } = require('mixpanel-react-native');
-
-    // Official v3.1.2 initialization pattern
-    const trackAutomaticEvents = false;
-    mixpanelInstance = new Mixpanel(MIXPANEL_TOKEN.trim(), trackAutomaticEvents);
-    if (mixpanelInstance) {
-      await mixpanelInstance.init();
-    }
-
-    isInitialized = true;
-  } catch {
+  initialization ??= startMixpanel(MIXPANEL_TOKEN).catch(() => {
     // Analytics initialization failed - silently continue without analytics
-    // This is expected behavior when MIXPANEL_TOKEN is not configured
-  }
+    // This is expected behavior when MIXPANEL_TOKEN is not configured.
+    // Forgotten, so a later call tries again, as a failed init always has.
+    initialization = null;
+  });
+  return initialization;
 };
 
 /**

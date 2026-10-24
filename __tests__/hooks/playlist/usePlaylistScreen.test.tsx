@@ -72,7 +72,6 @@ import { simpleAudioService as mockSimpleAudioService } from '@/services/audioPl
 
 jest.mock('@/services/audioPlaylist', () => ({
   enhancedAudioService: {
-    getReadingListEnhancedTracks: jest.fn(),
     generateEnhancedAudioTrack: jest.fn(),
   },
   warmTrackCache: jest.fn(),
@@ -90,6 +89,11 @@ jest.mock('@/services/analytics', () => ({
   analytics: {
     track: jest.fn(),
   },
+}));
+
+// The delete goes through the reading-list mutation hook, which reads the toast.
+jest.mock('@/components/providers', () => ({
+  useToast: () => ({ showToast: jest.fn() }),
 }));
 
 // Mock haptics
@@ -127,6 +131,11 @@ jest.mock('@/constants/animation', () => ({
 const mockFetchReadingList = jest.fn(async (): Promise<unknown[]> => []);
 jest.mock('@/constants/queries', () => ({
   readingProgressQueries: {
+    // The real one: what a delete refreshes is part of what is under test.
+    onListChanged: (...args: unknown[]) =>
+      jest
+        .requireActual<typeof import('@/constants/queries')>('@/constants/queries')
+        .readingProgressQueries.onListChanged(...(args as [QueryClient, string])),
     // Mirrors the real factory's `placeholderData: []`. Without it this mock
     // never had the state the app has — v5 reporting success before the first
     // fetch — and the loading test passed while the screen showed a false
@@ -217,7 +226,6 @@ describe('usePlaylistScreen', () => {
     jest.mocked(mockSimpleAudioService.stop).mockResolvedValue(undefined);
     jest.mocked(mockSimpleAudioService.play).mockResolvedValue(true);
     jest.mocked(mockSimpleAudioService.playPlaylist).mockResolvedValue(true);
-    jest.mocked(mockEnhancedAudioService.getReadingListEnhancedTracks).mockResolvedValue([]);
     jest.mocked(mockEnhancedAudioService.generateEnhancedAudioTrack).mockResolvedValue(null);
     jest.mocked(mockBookmarkService.removeFromReadingList).mockResolvedValue(undefined);
   });
@@ -546,6 +554,7 @@ describe('usePlaylistScreen', () => {
       expect(mockBookmarkService.removeFromReadingList).toHaveBeenCalledWith(
         mockUser.id,
         articleId(1),
+        expect.objectContaining({ managed: true }),
       );
     });
 
@@ -563,7 +572,7 @@ describe('usePlaylistScreen', () => {
       expect(selectionFeedback).toHaveBeenCalled();
     });
 
-    test('invalidates reading list queries', async () => {
+    test('refreshes the reading list and the tracks of every audio language', async () => {
       const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
       const { result } = renderHook(() => usePlaylistScreen(), {
@@ -575,12 +584,31 @@ describe('usePlaylistScreen', () => {
       });
 
       expect(invalidateQueriesSpy).toHaveBeenCalledTimes(2);
-      expect(invalidateQueriesSpy).toHaveBeenNthCalledWith(1, {
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
         queryKey: ['readingList', mockUser.id],
       });
-      expect(invalidateQueriesSpy).toHaveBeenNthCalledWith(2, {
-        queryKey: ['enhancedAudioTracks', mockUser.id, AudioLanguage.ARABIC_ONLY],
+      // Every language, not just the one playing: the other's tracks were
+      // left listing the deleted article.
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ['enhancedAudioTracks', mockUser.id],
       });
+    });
+
+    test('tracks the removal like the reader does', async () => {
+      const { analytics } = require('@/services/analytics');
+
+      const { result } = renderHook(() => usePlaylistScreen(), {
+        wrapper: createWrapper(),
+      });
+
+      await act(async () => {
+        await result.current.handleDelete(1 as ArticleId);
+      });
+
+      expect(analytics.track).toHaveBeenCalledWith(
+        'Article Bookmarked',
+        expect.objectContaining({ article_id: 1, action: 'remove' }),
+      );
     });
 
     test('handles error gracefully', async () => {

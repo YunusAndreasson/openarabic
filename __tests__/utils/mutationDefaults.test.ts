@@ -27,12 +27,26 @@ jest.mock('@/services/studyWordsFSRS', () => ({
   },
 }));
 
+jest.mock('@/services/bookmark', () => ({
+  bookmarkService: {
+    addToReadingList: jest.fn(),
+    removeFromReadingList: jest.fn(),
+  },
+}));
+
+import { bookmarkService } from '@/services/bookmark';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { FSRSWordUpdate } from '@/types/fsrs.types';
-import type { RootId } from '@/types/branded.types';
-import { FSRS_GRADE_MUTATION_KEY, registerMutationDefaults } from '@/utils/mutationDefaults';
-
-type GradeVariables = { userId: string; rootId: RootId; update: FSRSWordUpdate };
+import type { ArticleId, RootId } from '@/types/branded.types';
+import {
+  fsrsGradeMutation,
+  readingListAddMutation,
+  readingListRemoveMutation,
+  registerMutationDefaults,
+  studyWordToggleMutation,
+  type FSRSGradeVariables,
+  type ReadingListVariables,
+} from '@/utils/mutationDefaults';
 
 const gradeWithReps = (reps: number): FSRSWordUpdate => ({
   fsrs_difficulty: 5,
@@ -56,10 +70,19 @@ function createClient(): QueryClient {
 
 /** Queue a grade the way a restored mutation runs: key only, mutationFn from the defaults. */
 function queueGrade(client: QueryClient, reps: number): void {
-  const observer = new MutationObserver<unknown, Error, GradeVariables>(client, {
-    mutationKey: FSRS_GRADE_MUTATION_KEY,
+  const observer = new MutationObserver<unknown, Error, FSRSGradeVariables>(client, {
+    mutationKey: fsrsGradeMutation.mutationKey,
   });
   observer.mutate({ userId: 'user-1', rootId: 7 as RootId, update: gradeWithReps(reps) });
+}
+
+/** Kill and relaunch: whatever was paused goes through the persisted cache. */
+function restart(client: QueryClient): QueryClient {
+  const persisted = JSON.parse(JSON.stringify(dehydrate(client))) as ReturnType<typeof dehydrate>;
+  client.clear(); // the killed process takes its in-memory writes with it
+  const restartedClient = createClient();
+  hydrate(restartedClient, persisted);
+  return restartedClient;
 }
 
 describe('registerMutationDefaults', () => {
@@ -82,7 +105,6 @@ describe('registerMutationDefaults', () => {
         await new Promise(resolve => setTimeout(resolve, delayMs));
         storedReps = update.fsrs_reps;
         inFlight.splice(inFlight.indexOf(update.fsrs_reps), 1);
-        return true;
       });
 
     onlineManager.setOnline(false);
@@ -101,13 +123,7 @@ describe('registerMutationDefaults', () => {
         .map(m => m.state.isPaused),
     ).toEqual([true, true, true]);
 
-    // Kill and relaunch: the paused writes go through the persisted cache.
-    const persisted = JSON.parse(JSON.stringify(dehydrate(offlineClient))) as ReturnType<
-      typeof dehydrate
-    >;
-    offlineClient.clear(); // the killed process takes its in-memory writes with it
-    const restartedClient = createClient();
-    hydrate(restartedClient, persisted);
+    const restartedClient = restart(offlineClient);
 
     onlineManager.setOnline(true);
     await restartedClient.resumePausedMutations();
@@ -115,5 +131,44 @@ describe('registerMutationDefaults', () => {
     expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalledTimes(3);
     expect(maxConcurrent).toBe(1);
     expect(storedReps).toBe(3);
+  });
+
+  // The playlist's delete and the reader's bookmark now go through these
+  // mutations, so a paused one has to survive a restart like a grade does.
+  test('a playlist change made offline still runs after a restart', async () => {
+    jest.mocked(bookmarkService.removeFromReadingList).mockResolvedValue(undefined);
+
+    onlineManager.setOnline(false);
+    const offlineClient = createClient();
+    new MutationObserver<unknown, Error, ReadingListVariables>(offlineClient, {
+      mutationKey: readingListRemoveMutation.mutationKey,
+    }).mutate({ userId: 'user-1', articleId: 3 as ArticleId });
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    const restartedClient = restart(offlineClient);
+    onlineManager.setOnline(true);
+    await restartedClient.resumePausedMutations();
+
+    expect(bookmarkService.removeFromReadingList).toHaveBeenCalledWith(
+      'user-1',
+      3 as ArticleId,
+      expect.objectContaining({ managed: true }),
+    );
+  });
+
+  // The guarantee that replaced a "keep the two in sync" comment: the hooks
+  // spread these very objects, so the registered default IS the hook's options.
+  test.each([
+    ['grade', fsrsGradeMutation],
+    ['study-word toggle', studyWordToggleMutation],
+    ['reading-list add', readingListAddMutation],
+    ['reading-list remove', readingListRemoveMutation],
+  ] as const)('registers the %s mutation under its own key', (_name, mutation) => {
+    const client = createClient();
+
+    expect(client.getMutationDefaults(mutation.mutationKey)).toMatchObject({
+      mutationFn: mutation.mutationFn,
+      scope: mutation.scope,
+    });
   });
 });

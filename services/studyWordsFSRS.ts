@@ -1,9 +1,9 @@
 import { State } from 'ts-fsrs';
 
-import { MASTERY_MIN_STABILITY } from '@/constants/fsrs';
+import { COOLDOWN_EXEMPT_STATES } from '@/constants/fsrs';
 import { STARTER_ROOT_IDS, STARTER_WORD_COUNT } from '@/constants/starterWords';
 import { STRINGS } from '@/constants/strings';
-import { supabase } from '@/services/supabase';
+import { checkAuthentication, supabase } from '@/services/supabase';
 import type { RootId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import type { FSRSWordUpdate, GetFSRSWordsOptions } from '@/types/fsrs.types';
@@ -11,16 +11,14 @@ import type { StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { MILLISECONDS_PER_HOUR } from '@/utils/dateTimeUtils';
 import { createBulkFSRSEntries, createInitialFSRSEntry } from '@/utils/fsrsInitializers';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
-import { executeAuthenticatedQuery, executeQuery } from '@/utils/supabaseHelpers';
+import {
+  executeAuthenticatedQuery,
+  executeQuery,
+  fetchAllPages,
+  signalOf,
+  type RequestOptions,
+} from '@/utils/supabaseHelpers';
 import { mapToStudyWord } from '@/utils/typeMappers';
-
-/**
- * States exempt from the post-session cooldown: New (never asked) plus both
- * short-step states, whose whole purpose is to come back within minutes. Named
- * because the same exemption is re-applied client-side in `filterDueWords`, and
- * two hand-written `(0,1,3)` lists is how the two sides drift apart.
- */
-const COOLDOWN_EXEMPT_STATES = [State.New, State.Learning, State.Relearning] as const;
 
 const errorConfig = {
   load: createServiceErrorConfig('study_words_fsrs', 'load', {
@@ -69,7 +67,11 @@ export interface StudyWordMutationResult {
 
 export const studyWordsFSRSService = {
   // Fetch study words with FSRS parameters
-  async getFSRSWords(userId: string, options: GetFSRSWordsOptions = {}): Promise<StudyWord[]> {
+  async getFSRSWords(
+    userId: string,
+    options: GetFSRSWordsOptions = {},
+    request: RequestOptions = {},
+  ): Promise<StudyWord[]> {
     // Builds the query fresh each call so an unbounded fetch (see below) can
     // re-run it per page — a Postgrest query builder can't be re-ranged after
     // it has already been awaited once.
@@ -131,10 +133,6 @@ export const studyWordsFSRSService = {
       // Add filters after the select
       let filteredQuery = selectQuery.eq('user_id', userId);
 
-      if (options.reviewedOnly) {
-        filteredQuery = filteredQuery.not('fsrs_last_review', 'is', null).gt('fsrs_reps', 0);
-      }
-
       // Add due date filter if requested
       if (options.onlyDue) {
         const now = new Date().toISOString();
@@ -170,34 +168,11 @@ export const studyWordsFSRSService = {
         );
       }
 
-      // Apply category filters server-side to reduce payload. The two branches
-      // are exact complements of `isMasteredWord`, expressed in PostgREST —
-      // they share its constants so the boundary cannot land in two places and
-      // strand a word in neither category.
-      if (options.category === 'mastered') {
-        filteredQuery = filteredQuery
-          .eq('fsrs_state', State.Review)
-          .gte('fsrs_stability', MASTERY_MIN_STABILITY);
-      } else if (options.category === 'learning') {
-        // New words are due for their first review, not learning. Only the short
-        // steps, or a graduated word that has not held long enough yet.
-        filteredQuery = filteredQuery.or(
-          `fsrs_state.in.(${State.Learning},${State.Relearning}),` +
-            `and(fsrs_state.eq.${State.Review},fsrs_stability.lt.${MASTERY_MIN_STABILITY})`,
-        );
-      }
-
-      if (options.sortByDifficultyAndStability) {
-        filteredQuery = filteredQuery
-          .order('fsrs_difficulty', { ascending: false })
-          .order('fsrs_stability', { ascending: true })
-          .order('fsrs_last_review', { ascending: false });
-      } else {
-        // Order by due date
-        filteredQuery = filteredQuery.order('fsrs_due', { ascending: true });
-      }
-
-      return filteredQuery;
+      // Due date first, then `root_id`: unique per user, so the order is total.
+      // Bulk-added words share one `fsrs_due` (one `now` stamps them all), and
+      // pages of a tied order have no stable boundary — a heavy learner's full
+      // list could repeat a word on two pages and lose another entirely.
+      return filteredQuery.order('fsrs_due', { ascending: true }).order('root_id');
     };
 
     const queryErrorConfig = {
@@ -205,7 +180,6 @@ export const studyWordsFSRSService = {
       analyticsProperties: {
         ...(options.onlyDue !== undefined && { onlyDue: options.onlyDue }),
         ...(options.forStats !== undefined && { forStats: options.forStats }),
-        ...(options.category !== undefined && { category: options.category }),
       },
     };
 
@@ -213,10 +187,12 @@ export const studyWordsFSRSService = {
     if (options.limit) {
       // Caller wants a specific page/cap (e.g. the due-review chunk) — a
       // single request is correct here.
+      const limit = options.limit;
       data = await executeAuthenticatedQuery(
         userId,
-        () => buildFilteredQuery().limit(options.limit as number),
+        () => buildFilteredQuery().limit(limit).abortSignal(signalOf(request)),
         queryErrorConfig,
+        request,
       );
     } else {
       // No cap requested: the caller wants this user's FULL word list (used
@@ -226,22 +202,15 @@ export const studyWordsFSRSService = {
       // normal account, but a heavy learner's real total, dictionary
       // listing, and search all went quietly wrong past 1000 saved words.
       // Page through everything instead.
-      const PAGE_SIZE = 1000;
-      const pages = [];
-      for (let offset = 0; ; offset += PAGE_SIZE) {
-        const page = await executeAuthenticatedQuery(
-          userId,
-          () => buildFilteredQuery().range(offset, offset + PAGE_SIZE - 1),
-          queryErrorConfig,
-        );
-        pages.push(...(page ?? []));
-        if (!page || page.length < PAGE_SIZE) break;
-      }
-      data = pages;
+      await checkAuthentication(userId);
+      data = await fetchAllPages(
+        (from, to, signal) => buildFilteredQuery().range(from, to).abortSignal(signal),
+        { errorConfig: queryErrorConfig, request },
+      );
     }
 
     // Type-safe mapping from database rows to StudyWord interface
-    return (data || []).map(row => mapToStudyWord(row, userId));
+    return data.map(row => mapToStudyWord(row, userId));
   },
 
   // Update FSRS parameters for a study word
@@ -249,10 +218,11 @@ export const studyWordsFSRSService = {
     userId: string,
     rootId: RootId,
     update: FSRSWordUpdate,
-  ): Promise<boolean> {
+    request: RequestOptions = {},
+  ): Promise<void> {
     // Direct UPDATE - simpler than RPC, no database migration needed
     // RLS policies ensure user can only update their own words
-    const data = await executeAuthenticatedQuery(
+    await executeAuthenticatedQuery(
       userId,
       () =>
         supabase
@@ -269,15 +239,13 @@ export const studyWordsFSRSService = {
             fsrs_last_review: update.fsrs_last_review,
           })
           .eq('user_id', userId)
-          .eq('root_id', rootId)
-          .select(),
+          .eq('root_id', rootId),
       {
         ...errorConfig.update,
         analyticsProperties: { rootId },
       },
+      request,
     );
-
-    return Boolean(data && data.length > 0);
   },
 
   // Toggle FSRS study for roots
@@ -293,6 +261,7 @@ export const studyWordsFSRSService = {
     userId: string,
     rootId: RootId,
     intent?: StudyWordIntent,
+    request: RequestOptions = {},
   ): Promise<StudyWordMutationResult> {
     // Check if a study entry already exists for this root
     // Using maybeSingle() returns null instead of throwing PGRST116 error
@@ -309,6 +278,7 @@ export const studyWordsFSRSService = {
         ...errorConfig.toggleCheck,
         analyticsProperties: { rootId },
       },
+      request,
     );
 
     if (intent === 'add' && existing) {
@@ -324,6 +294,7 @@ export const studyWordsFSRSService = {
             ...errorConfig.toggleDelete,
             analyticsProperties: { rootId },
           },
+          request,
         );
       }
       return { inStudyList: false, changed: !!existing };
@@ -332,22 +303,17 @@ export const studyWordsFSRSService = {
     // Create a new FSRS card for the root with proper initial values
     const newEntry = createInitialFSRSEntry(userId, rootId);
 
-    await executeAuthenticatedQuery(userId, () => supabase.from('study_words').insert(newEntry), {
-      ...errorConfig.toggleInsert,
-      analyticsProperties: { rootId },
-    });
+    await executeAuthenticatedQuery(
+      userId,
+      () => supabase.from('study_words').insert(newEntry),
+      {
+        ...errorConfig.toggleInsert,
+        analyticsProperties: { rootId },
+      },
+      request,
+    );
 
     return { inStudyList: true, changed: true };
-  },
-
-  /** Compatibility wrapper for callers that only need the resulting state. */
-  async toggleFSRSStudyRoot(
-    userId: string,
-    rootId: RootId,
-    intent?: StudyWordIntent,
-  ): Promise<boolean> {
-    const result = await this.setFSRSStudyRoot(userId, rootId, intent);
-    return result.inStudyList;
   },
 
   /**
@@ -396,8 +362,10 @@ export const studyWordsFSRSService = {
       errorConfig.addMultipleCheck,
     );
 
-    const existingRootIds = new Set((existingData ?? []).map(row => row.root_id));
-    const newRootIds = rootIds.filter(id => !existingRootIds.has(id));
+    // In the caller's order (a Set keeps insertion order), each root once.
+    const newRootIds = [
+      ...new Set(rootIds).difference(new Set(existingData.map(row => row.root_id))),
+    ];
 
     if (newRootIds.length === 0) return 0;
 

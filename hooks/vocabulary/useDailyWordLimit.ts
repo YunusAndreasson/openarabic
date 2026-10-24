@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
 import { useAppSelectorShallow } from '@/store/hooks';
 import { selectAdaptiveNewWordPacingEnabled, selectDailyWordLimit } from '@/store/settingsSlice';
+import { createSerialQueue } from '@/utils/createSerialQueue';
 import { parseSupabaseTimestamp, toLocalDateString } from '@/utils/dateTimeUtils';
 import { computeAdaptiveNewLimit, type AdaptiveNewLimit } from '@/utils/newWordPacing';
 import { readRecentRecall } from '@/utils/recallSignalStorage';
@@ -15,16 +16,7 @@ const DAILY_WORD_RESET_KEY = STORAGE_KEYS.DAILY_WORD_RESET_DATE;
 // AsyncStorage has no compare-and-swap operation. Keep every read/modify/write
 // of the shared quota behind one module-level queue so separate hook instances
 // cannot reserve or release the same slot concurrently.
-let dailyCountQueue: Promise<void> = Promise.resolve();
-
-function enqueueDailyCountOperation<T>(operation: () => Promise<T>): Promise<T> {
-  const result = dailyCountQueue.then(operation, operation);
-  dailyCountQueue = result.then(
-    () => undefined,
-    () => undefined,
-  );
-  return result;
-}
+const enqueueDailyCountOperation = createSerialQueue();
 
 async function getDailyWordCountUnlocked(currentDate: string): Promise<number> {
   const lastResetDate = await AsyncStorage.getItem(DAILY_WORD_RESET_KEY);

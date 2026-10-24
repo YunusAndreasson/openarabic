@@ -19,9 +19,10 @@ import { supabase } from '@/services/supabase';
 import { ToastType } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
+import { fillTemplate } from '@/utils/fillTemplate';
 import { lightFeedback } from '@/utils/haptics';
 import { recordAccepted } from '@/utils/notificationPromptStorage';
-import { clearPersistedQueryCache } from '@/utils/queryPersistence';
+import { flushPersistedQueryCache } from '@/utils/queryPersistence';
 
 /** iOS never re-prompts, so a refused reminder toggle can only point at Settings. */
 function showEnableNotificationsAlert(): void {
@@ -65,7 +66,7 @@ export const useAccountScreen = () => {
 
     Alert.alert(
       STRINGS.CLEAR_CACHE,
-      STRINGS.CLEAR_CACHE_CONFIRMATION.replace('{size}', formatBytes(cacheSize)),
+      fillTemplate(STRINGS.CLEAR_CACHE_CONFIRMATION, { size: formatBytes(cacheSize) }),
       [
         {
           text: STRINGS.CANCEL,
@@ -81,11 +82,16 @@ export const useAccountScreen = () => {
                 await clearCache();
                 setCacheSize(0);
 
-                // Clear React Query in-memory cache
-                queryClient.clear();
+                // Drop every cached query — but only the queries. A paused
+                // mutation is a write the server has not seen yet (an offline
+                // review grade, a word saved on the train), and `clear()`
+                // empties the mutation cache too, discarding it for good.
+                queryClient.removeQueries();
 
-                // Clear React Query persisted AsyncStorage cache
-                await clearPersistedQueryCache();
+                // Overwrite the persisted copy with what is left: no queries,
+                // and those pending writes, so they still resume after a
+                // restart.
+                await flushPersistedQueryCache(queryClient);
 
                 // No success dialog: the row's own size line already turns
                 // into "Nothing to clear", which is the confirmation.
@@ -140,7 +146,7 @@ export const useAccountScreen = () => {
 
   const handleResetReadingProgress = () => {
     if (!user?.id) {
-      Alert.alert(STRINGS.ERROR, 'No user ID available');
+      Alert.alert(STRINGS.ERROR, STRINGS.NO_USER_ID_AVAILABLE);
       return;
     }
 
@@ -163,19 +169,20 @@ export const useAccountScreen = () => {
                 // Delete all reading progress from database (or reset to 0 if RLS blocks DELETE)
                 await ReadingProgressService.deleteAllProgress(user.id);
 
-                // Completely remove all reading progress queries from cache
-                // Using removeQueries instead of invalidate to force complete cache clear
-                queryClient.removeQueries({
-                  queryKey: readingProgressQueries.bulk(user.id).queryKey,
-                });
-                queryClient.removeQueries({
-                  queryKey: readingProgressQueries.readingList(user.id).queryKey,
-                });
-
-                // Refetch to populate cache with fresh (empty or reset) data
-                await queryClient.refetchQueries({
-                  queryKey: readingProgressQueries.bulk(user.id).queryKey,
-                });
+                // Reset, not invalidate: the old positions must not stay on
+                // screen while the refetch is in flight, so the entries go back
+                // to their initial state and every mounted one refetches the
+                // fresh (empty or reset) rows. Removing them and then calling
+                // refetchQueries — as this did — refetched nothing: refetch only
+                // touches entries that exist, and removal had just deleted them.
+                await Promise.all([
+                  queryClient.resetQueries({
+                    queryKey: readingProgressQueries.bulk(user.id).queryKey,
+                  }),
+                  queryClient.resetQueries({
+                    queryKey: readingProgressQueries.readingList(user.id).queryKey,
+                  }),
+                ]);
 
                 // A toast, not a dialog: there is nothing to answer, and the
                 // settings screen itself shows no reading position to update.

@@ -1,10 +1,7 @@
-import type { Article, Author } from '@/types/articles.types';
-import type { Tables } from '@/types/database.types';
-
 /**
  * Bookmark item combining user/article relation with article details
+ *
+ * Typed from the reading-list query itself (services/bookmark.ts), so it is
+ * exactly what that select returns.
  */
-export interface BookmarkItem extends Tables<'reading_list'> {
-  /** Full article details including author information */
-  articles: Article & { author: Author };
-}
+export type { BookmarkItem } from '@/services/bookmark';

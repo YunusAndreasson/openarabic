@@ -32,41 +32,35 @@ export type StudyWordQueryRow = Pick<StudyWordRow, FSRSColumn | 'root_id' | 'cre
 };
 
 export function mapToSentenceWord(item: SentenceWordRow): SentenceWord {
-  const base = item as Tables<'sentence_words'>;
   return {
-    ...base,
-    root_id: base.root_id as RootId,
+    ...item,
+    root_id: item.root_id as RootId,
     root: item.root ?? null,
     word_type: item.word_type ?? null,
   };
 }
 
 function mapToArticleSentence(item: ArticleSentenceRow): ArticleSentence {
-  const base = item as Tables<'article_sentences'>;
   const sentenceWords = Array.isArray(item.sentence_words)
     ? item.sentence_words.map(mapToSentenceWord)
     : [];
   return {
-    ...base,
+    ...item,
     sentence_words: sentenceWords,
   };
 }
 
 export function mapToArticle(item: ArticleRow): Article {
-  const base = item as Tables<'articles'>;
-  const published = (item as { published?: boolean | null }).published ?? false;
-
   // Ensure we have the required relations
   if (!item.category || !item.author) {
     throw new Error('Article missing required category or author data');
   }
 
   return {
-    ...base,
-    id: base.id as ArticleId,
-    published,
-    category_id: base.category_id as CategoryId,
-    author_id: base.author_id as AuthorId,
+    ...item,
+    id: item.id as ArticleId,
+    category_id: item.category_id as CategoryId,
+    author_id: item.author_id as AuthorId,
     article_sentences: Array.isArray(item.article_sentences)
       ? item.article_sentences.map(mapToArticleSentence)
       : [],

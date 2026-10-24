@@ -6,12 +6,12 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { audioQueries, readingProgressQueries } from '@/constants/queries';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { useReadingListMutations } from '@/hooks/articles/useReadingListMutations';
 // Use direct service access to avoid frequent parent re-renders from time updates
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import { enhancedAudioService, warmTrackCache } from '@/services/audioPlaylist';
 import { simpleAudioService, type SourceTrackedAudioTrack } from '@/services/audioPlayer';
-import { bookmarkService } from '@/services/bookmark';
 import { useAppDispatch, useAppSelector, useAppSelectorShallow } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/playlistSlice';
 import type { ArticleId } from '@/types/branded.types';
@@ -228,25 +228,21 @@ export const usePlaylistScreen = () => {
 
   // Sleep timer handlers are handled by useGlobalAudioState
 
+  // The playlist's delete is the reader's bookmark removal — the same
+  // mutation — so it gets the same analytics, the same refresh of everything
+  // the list feeds (the tracks in every audio language included), and the same
+  // offline queueing: a delete made offline lands when the connection returns.
+  const { removeFromReadingListMutation } = useReadingListMutations();
+
   const handleDelete = async (articleId: ArticleId) => {
     if (!user?.id) return;
     try {
       selectionFeedback();
-      await bookmarkService.removeFromReadingList(user.id, articleId);
+      await removeFromReadingListMutation.mutateAsync({ userId: user.id, articleId });
       dispatch(removeFromCustomOrder(articleId));
-
-      // Immediately update the specific article's reading list status
-      queryClient.setQueryData(['readingList', user.id, articleId], false);
-
-      // Then invalidate related queries to ensure consistency
-      void queryClient.invalidateQueries({
-        queryKey: readingProgressQueries.readingList(user.id).queryKey,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: audioQueries.tracks(user.id, audioPreference).queryKey,
-      });
-    } catch (error) {
-      void handleError(error);
+    } catch {
+      // Already reported, once: the request's own failure by the mutation
+      // cache, and the mutation's by its onError.
     }
   };
 

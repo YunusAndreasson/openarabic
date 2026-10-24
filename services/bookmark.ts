@@ -1,21 +1,21 @@
+import type { QueryData } from '@supabase/supabase-js';
+
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { ArticleId } from '@/types/branded.types';
-import type { BookmarkItem } from '@/types/bookmark.types';
 import { createServiceErrorConfigs } from '@/utils/serviceErrorConfig';
-import { executeAuthenticatedQuery } from '@/utils/supabaseHelpers';
+import { executeAuthenticatedQuery, type RequestOptions } from '@/utils/supabaseHelpers';
 
 const errorConfig = {
   readingList: createServiceErrorConfigs('reading_list', {
     load: { toastMessage: STRINGS.FAILED_TO_LOAD_BOOKMARKS },
     add: { toastMessage: STRINGS.FAILED_TO_ADD_TO_READING_LIST },
     remove: { toastMessage: STRINGS.FAILED_TO_REMOVE_FROM_READING_LIST },
-    check: {
-      toastMessage: STRINGS.FAILED_TO_CHECK_READING_LIST_STATUS,
-      showToast: false,
-    },
   }),
 };
+
+/** The reading list's unique key — what makes adding an already-saved article a no-op. */
+const READING_LIST_CONFLICT_KEY = 'user_id,article_id';
 
 export const bookmarkService = {
   /**
@@ -23,24 +23,65 @@ export const bookmarkService = {
    * @param userId - The user ID
    * @param articleId - The article ID to add to reading list
    */
-  async addToReadingList(userId: string, articleId: ArticleId): Promise<void> {
+  async addToReadingList(
+    userId: string,
+    articleId: ArticleId,
+    request: RequestOptions = {},
+  ): Promise<void> {
     await executeAuthenticatedQuery(
       userId,
       () =>
         supabase
           .from('reading_list')
-          .upsert({ user_id: userId, article_id: articleId }, { onConflict: 'user_id,article_id' }),
+          .upsert(
+            { user_id: userId, article_id: articleId },
+            { onConflict: READING_LIST_CONFLICT_KEY },
+          ),
       {
         ...errorConfig.readingList.add,
         analyticsProperties: { articleId },
       },
+      request,
+    );
+  },
+
+  /**
+   * Adds several articles to the reading list in ONE request.
+   *
+   * One upsert of every row rather than a request per article: it succeeds or
+   * fails as a whole, so a failure is reported (and toasted) once instead of
+   * once per article, and articles already in the list are left as they are.
+   */
+  async addManyToReadingList(
+    userId: string,
+    articleIds: readonly ArticleId[],
+    request: RequestOptions = {},
+  ): Promise<void> {
+    if (articleIds.length === 0) return;
+
+    await executeAuthenticatedQuery(
+      userId,
+      () =>
+        supabase.from('reading_list').upsert(
+          articleIds.map(articleId => ({ user_id: userId, article_id: articleId })),
+          { onConflict: READING_LIST_CONFLICT_KEY },
+        ),
+      {
+        ...errorConfig.readingList.add,
+        analyticsProperties: { count: articleIds.length },
+      },
+      request,
     );
   },
 
   /**
    * Removes an article from the reading list
    */
-  async removeFromReadingList(userId: string, articleId: ArticleId): Promise<void> {
+  async removeFromReadingList(
+    userId: string,
+    articleId: ArticleId,
+    request: RequestOptions = {},
+  ): Promise<void> {
     await executeAuthenticatedQuery(
       userId,
       () =>
@@ -49,49 +90,35 @@ export const bookmarkService = {
         ...errorConfig.readingList.remove,
         analyticsProperties: { articleId },
       },
+      request,
     );
   },
 
   /**
-   * Checks if an article is in the user's reading list
-   */
-  async isInReadingList(userId: string, articleId: ArticleId): Promise<boolean> {
-    try {
-      const data = await executeAuthenticatedQuery(
-        userId,
-        () =>
-          supabase
-            .from('reading_list')
-            .select('article_id')
-            .eq('user_id', userId)
-            .eq('article_id', articleId)
-            .maybeSingle(),
-        {
-          ...errorConfig.readingList.check,
-          analyticsProperties: { articleId },
-        },
-      );
-      return Boolean(data);
-    } catch (error) {
-      // PGRST116 = "not found" error from Supabase (shouldn't happen with maybeSingle, but kept for safety)
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'PGRST116') {
-        return false;
-      }
-      throw error;
-    }
-  },
-
-  /**
    * Gets the user's reading list
+   *
+   * Also the one source of "is this article saved": the reader derives it from
+   * this list's cache (`useArticleData`) instead of asking the server per article.
    */
-  async getReadingList(userId: string): Promise<BookmarkItem[]> {
-    const data = await executeAuthenticatedQuery(
+  getReadingList(userId: string, request: RequestOptions = {}): Promise<BookmarkItem[]> {
+    return executeAuthenticatedQuery(
       userId,
-      () =>
-        supabase
-          .from('reading_list')
-          .select(
-            `
+      () => readingListQuery(userId),
+      errorConfig.readingList.load,
+      request,
+    );
+  },
+};
+
+/**
+ * The reading list, newest first, with each article in the shape the playlist
+ * and the audio tracks read.
+ */
+function readingListQuery(userId: string) {
+  return supabase
+    .from('reading_list')
+    .select(
+      `
         user_id,
         article_id,
         added_at,
@@ -112,27 +139,16 @@ export const bookmarkService = {
           article_sentences(id)
         )
       `,
-          )
-          .eq('user_id', userId)
-          .order('added_at', { ascending: false }),
-      errorConfig.readingList.load,
-    );
+    )
+    .eq('user_id', userId)
+    .order('added_at', { ascending: false });
+}
 
-    // The nested `articles!inner(...)` join is beyond what the generated types
-    // express, so the shape is asserted here. `.overrideTypes<BookmarkItem[]>()`
-    // on the query (as `articlesService.getArticles` uses) reads tidier, but it
-    // is the same unchecked override one step earlier — no more checking, and a
-    // runtime method the query mocks would have to grow. Not worth the churn.
-    return (data ?? []) as BookmarkItem[];
-  },
-
-  async getArticleIds(userId: string): Promise<number[]> {
-    const data = await executeAuthenticatedQuery(
-      userId,
-      () => supabase.from('reading_list').select('article_id').eq('user_id', userId),
-      errorConfig.readingList.load,
-    );
-
-    return (data ?? []).map(item => item.article_id);
-  },
-};
+/**
+ * One reading-list row, typed from the select above — supabase-js parses the
+ * nested `articles!inner(...)` join into exactly this. It used to be a
+ * hand-written type claiming a whole `Article` (branded ids, `published`,
+ * `book`, full sentence rows), none of which the query selects, kept true only
+ * by an `as` cast.
+ */
+export type BookmarkItem = QueryData<ReturnType<typeof readingListQuery>>[number];

@@ -457,7 +457,12 @@ describe('Reading to Dictionary Flow', () => {
       });
 
       expect(toggleResult).toBeTruthy();
-      expect(mockSetFSRSStudyRoot).toHaveBeenCalledWith(mockUserId, 501, undefined);
+      expect(mockSetFSRSStudyRoot).toHaveBeenCalledWith(
+        mockUserId,
+        501,
+        undefined,
+        expect.objectContaining({ managed: true }),
+      );
     });
 
     test('respects daily word limit when adding new words', async () => {

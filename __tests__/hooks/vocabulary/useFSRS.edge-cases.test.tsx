@@ -392,6 +392,7 @@ describe('useFSRS Hook - Edge Cases', () => {
           fsrs_lapses: 3,
           fsrs_state: State.Relearning,
         }),
+        expect.objectContaining({ managed: true }),
       );
     });
 
