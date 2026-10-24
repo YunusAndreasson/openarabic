@@ -5,8 +5,7 @@
     "components/**/*.{android,ios,native}.{ts,tsx}",
     "*.config.{js,ts,mjs}",
     "plugins/**/*.js",
-    "scripts/**/*.{ts,mjs}",
-    "__tests__/**/*.{test,spec}.{ts,tsx}"
+    "scripts/**/*.{ts,mjs}"
   ],
   "project": [
     "**/*.{js,jsx,ts,tsx}",
@@ -15,15 +14,12 @@
     "!**/docs/**",
     "!**/translate/**",
     "!**/supabase/migrations/**",
-    "!**/admin-dashboard/**",
-    "!**/__mocks__/**"
+    "!**/admin-dashboard/**"
   ],
-  "jest": false,
-  "ignore": ["admin-dashboard/**", "types/database.types.ts", "jest.setup.js"],
+  "ignore": ["admin-dashboard/**", "types/database.types.ts"],
   "ignoreDependencies": [
     "@expo/agent-cli",
     "@expo-google-fonts/material-symbols",
-    "babel-preset-expo",
     "@eslint/js",
     "@swmansion/argent",
     "eslint-plugin-react"
