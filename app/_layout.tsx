@@ -10,7 +10,6 @@ import {
   Stack,
   ThemeProvider as NavigationThemeProvider,
   useNavigationContainerRef,
-  useRouter,
 } from 'expo-router';
 import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -47,6 +46,7 @@ import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useUpdateReady } from '@/hooks/app/useUpdateReady';
+import { useNotificationResponseRouting } from '@/hooks/notifications/useNotificationResponseRouting';
 import { useSmartNotifications } from '@/hooks/notifications/useSmartNotifications';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { GlobalAudioStateProvider } from '@/hooks/audio/useGlobalAudioState';
@@ -59,28 +59,13 @@ import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsC
 import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
-import {
-  cleanupNotifications,
-  clearNotificationNavigationCallback,
-  handleNotificationResponse,
-  initializeNotifications,
-  setNotificationNavigationCallback,
-} from '@/services/notificationService';
+import { cleanupNotifications, initializeNotifications } from '@/services/notificationService';
 import { persistor, store } from '@/store/store';
 import { handleError } from '@/utils/errorHandling';
 import { registerMutationDefaults } from '@/utils/mutationDefaults';
 import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
 import { flushPersistedQueryCache, PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
 import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
-import type * as NotificationsModule from 'expo-notifications';
-
-// expo-notifications is unavailable in Expo Go on Android (SDK 53+).
-let Notifications: typeof NotificationsModule | null = null;
-try {
-  Notifications = require('expo-notifications');
-} catch {
-  // expo-notifications unavailable in Expo Go on Android (SDK 53+)
-}
 
 const TAB_ROUTE_OPTIONS = { animation: 'fade' } as const;
 const AUTH_ROUTE_OPTIONS = { animation: 'fade' } as const;
@@ -296,7 +281,6 @@ function AppContent() {
   const { isLoading: isAuthLoading, session } = useAuth();
   const userId = session?.user?.id;
   const navigationRef = useNavigationContainerRef();
-  const router = useRouter();
 
   // Runtime font load for Expo Go + Android — see RUNTIME_FONT_MAP above
   const [fontsLoaded, fontError] = useFonts(NEEDS_RUNTIME_FONTS ? RUNTIME_FONT_MAP : {});
@@ -461,47 +445,9 @@ function AppContent() {
     }
   }, [appReady]);
 
-  // Set up notification navigation callback
-  useEffect(() => {
-    if (!appReady) return;
-
-    // Set navigation callback for when user taps notifications
-    setNotificationNavigationCallback((path: string) => {
-      router.navigate(path);
-    });
-
-    return () => {
-      clearNotificationNavigationCallback();
-    };
-  }, [appReady, router]);
-
-  // Handle cold start notifications (when app launches from notification)
-  useEffect(() => {
-    if (!appReady) return;
-
-    const handleColdStartNotification = async () => {
-      try {
-        if (!Notifications) return;
-
-        const response = Notifications.getLastNotificationResponse();
-
-        if (response) {
-          handleNotificationResponse(response, path => router.navigate(path), { coldStart: true });
-
-          // Clear the last notification response to prevent re-handling on next launch
-          Notifications.clearLastNotificationResponse();
-        }
-      } catch (error) {
-        // Silently handle cold start notification errors
-        void handleError(error, {
-          showToast: false,
-          analyticsEventName: 'Cold_Start_Notification_Error',
-        });
-      }
-    };
-
-    void handleColdStartNotification();
-  }, [appReady, router]);
+  // Notification taps — the one that launched the app, then every later one —
+  // open their screen once the navigator is up.
+  useNotificationResponseRouting(appReady);
 
   // Cleanup notifications, background tasks and audio on unmount.
   //
