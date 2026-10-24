@@ -3,6 +3,7 @@ import { useFocusEffect } from 'expo-router';
 
 import { STRINGS } from '@/constants/strings';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
+import { fillTemplate } from '@/utils/fillTemplate';
 
 /**
  * The one-line standing under the "New words per day" row.
@@ -45,7 +46,7 @@ export const useDailyWordLimitSummary = (): string | null => {
         const used = await getDailyWordCount();
         const remaining = Math.max(0, effective - used);
         if (!cancelled) {
-          setSummary(STRINGS.DAILY_LIMIT_LEFT_TODAY.replace('{count}', String(remaining)));
+          setSummary(fillTemplate(STRINGS.DAILY_LIMIT_LEFT_TODAY, { count: remaining }));
         }
       };
 
