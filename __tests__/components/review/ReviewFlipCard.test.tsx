@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { createRef } from 'react';
 
 import type { ReviewCardHandle } from '@/components/review/ReviewFlipCard';
-import { ReviewFlipCard } from '@/components/review/ReviewFlipCard';
+import { ReviewFlipCard, faceStyle } from '@/components/review/ReviewFlipCard';
+import { LAYOUT } from '@/constants/layout';
 
 const mockTranslateX = {
   get: jest.fn(() => 120),
@@ -198,5 +199,40 @@ describe('ReviewFlipCard voice miss', () => {
 
     expect(view.getByText(notHeard)).toBeTruthy();
     expect(view.queryByText('Book')).toBeNull();
+  });
+});
+
+/**
+ * The two faces share one worklet. A resting face must carry NO transform —
+ * a perspective at rest makes iOS resample the whole face through a projective
+ * map (see RESTING_TRANSFORM) — while the other face holds its half turn.
+ */
+describe('ReviewFlipCard faceStyle', () => {
+  const turn = (progress: number, offset: number) => [
+    { perspective: LAYOUT.PERSPECTIVE.CARD },
+    { rotateY: `${offset + progress * 180}deg` },
+  ];
+
+  test('the front rests flat on the question and turns away from it', () => {
+    expect(faceStyle(0, 0, 0.2).transform).toEqual([]);
+    expect(faceStyle(0.3, 0, 0.2).transform).toEqual(turn(0.3, 0));
+    expect(faceStyle(1, 0, 0.2).transform).toEqual(turn(1, 0));
+  });
+
+  test('the back holds its half turn and rests flat on the answer', () => {
+    expect(faceStyle(0, 1, 0.2).transform).toEqual(turn(0, 180));
+    expect(faceStyle(0.3, 1, 0.2).transform).toEqual(turn(0.3, 180));
+    expect(faceStyle(1, 1, 0.2).transform).toEqual([]);
+  });
+
+  // An edge-on card still casts its full blur, so the shadow has to fade on the
+  // same seam mask as the fill or the collapsed card wears a vertical smear.
+  test('the shadow fades on the same mask as the face', () => {
+    for (const restsAt of [0, 1] as const) {
+      for (const progress of [0, 0.45, 0.5, 1]) {
+        const face = faceStyle(progress, restsAt, 0.2);
+        expect(face.shadowOpacity).toBeCloseTo(0.2 * face.opacity);
+      }
+    }
   });
 });
