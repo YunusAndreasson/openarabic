@@ -9,6 +9,14 @@ import { FONTS } from '@/constants/fonts';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
+/**
+ * A focused field's ring, drawn as an outline outside the 1pt border. Together
+ * they make the FOCUSED weight. It used to be the border itself growing from 1
+ * to 2pt, which moved the text, the icons and the placeholder 1pt inwards
+ * every time the field gained or lost focus; an outline takes no layout.
+ */
+const FOCUS_RING_WIDTH = LAYOUT.INPUT.BORDER_WIDTH.FOCUSED - LAYOUT.INPUT.BORDER_WIDTH.DEFAULT;
+
 interface ThemedInputProps extends TextInputProps {
   icon?: IconName;
   rightIcon?: IconName;
@@ -80,6 +88,7 @@ export function ThemedInput({
   onBlur,
   error,
   hint,
+  multiline = false,
   ref,
   ...props
 }: ThemedInputProps) {
@@ -92,21 +101,19 @@ export function ThemedInput({
   // green and focusing an input changed nothing. Worse, a resting field was
   // already outlined in the accent colour, so nothing on the form could look
   // more active than the fields around it.
-  const containerStyles = useMemo(
-    () => [
+  const containerStyles = useMemo(() => {
+    const ringColor = error ? colors.error : isFocused ? colors.tint : colors.border;
+    return [
       styles.container,
-      {
-        backgroundColor: colors.elevation1,
-        borderColor: error ? colors.error : isFocused ? colors.tint : colors.border,
-      },
-      isFocused && styles.containerFocused,
-    ],
-    [colors.border, colors.elevation1, colors.error, colors.tint, error, isFocused],
-  );
+      multiline && styles.containerMultiline,
+      { backgroundColor: colors.elevation1, borderColor: ringColor },
+      isFocused && { outlineColor: ringColor, outlineWidth: FOCUS_RING_WIDTH },
+    ];
+  }, [colors.border, colors.elevation1, colors.error, colors.tint, error, isFocused, multiline]);
 
   const inputStyle = useMemo(
-    () => [styles.input, { color: colors.text }, style],
-    [colors.text, style],
+    () => [styles.input, multiline && styles.inputMultiline, { color: colors.text }, style],
+    [colors.text, multiline, style],
   );
 
   const handleFocus = useCallback(
@@ -131,14 +138,18 @@ export function ThemedInput({
         {icon ? (
           <InputIcon colors={colors} error={error} isFocused={isFocused} name={icon} />
         ) : null}
+        {/* The defaults suit the single-line fields this mostly draws — an email,
+            a password, a confirmation word. A multiline field is prose, so it
+            gets the platform's sentence-case and autocorrect back. */}
         <TextInput
           ref={ref}
-          autoCapitalize="none"
-          autoCorrect={false}
+          autoCapitalize={multiline ? 'sentences' : 'none'}
+          autoCorrect={multiline}
+          multiline={multiline}
           placeholderTextColor={colors.textTertiary}
           selectionColor={colors.tint}
           style={inputStyle}
-          textAlignVertical="center"
+          textAlignVertical={multiline ? 'top' : 'center'}
           onBlur={handleBlur}
           onFocus={handleFocus}
           {...props}
@@ -182,8 +193,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
   },
-  containerFocused: {
-    borderWidth: LAYOUT.INPUT.BORDER_WIDTH.FOCUSED,
+  // A text area: it opens at MULTILINE_MIN_HEIGHT, grows with its text to
+  // MULTILINE_HEIGHT, then scrolls inside itself.
+  containerMultiline: {
+    alignItems: 'stretch',
+    height: 'auto',
+    minHeight: LAYOUT.INPUT.MULTILINE_MIN_HEIGHT,
+    maxHeight: LAYOUT.INPUT.MULTILINE_HEIGHT,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   helperTextContainer: {
     marginLeft: LAYOUT.SPACING.TINY,
@@ -198,6 +215,10 @@ const styles = StyleSheet.create({
     height: '100%',
     paddingVertical: 0,
     textAlignVertical: 'center',
+  },
+  inputMultiline: {
+    height: 'auto',
+    textAlignVertical: 'top',
   },
   leftIcon: {
     marginRight: LAYOUT.SPACING.MEDIUM,
