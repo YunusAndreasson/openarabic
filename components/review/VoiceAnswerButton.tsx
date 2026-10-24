@@ -40,7 +40,7 @@ import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ReviewActionButton } from '@/components/review/ReviewActionButton';
-import { TIMING_CONFIG } from '@/constants/animation';
+import { CSS_EASING, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { VoicePhase } from '@/hooks/review/useVoiceReview';
@@ -262,6 +262,7 @@ export const VoiceAnswerButton = ({
           opacity: standDown ? LAYOUT.OPACITY.MEDIUM : LAYOUT.OPACITY.FULL,
           transitionProperty: 'opacity',
           transitionDuration: TIMING_CONFIG.FAST.duration,
+          transitionTimingFunction: CSS_EASING.OUT_CUBIC,
         },
       ]}
     >

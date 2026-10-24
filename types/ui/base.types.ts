@@ -6,7 +6,7 @@ import type {
   StyleProp,
   ViewStyle,
 } from 'react-native';
-import type { AnimatedStyle } from 'react-native-reanimated';
+import type { AnimatedStyle, CSSStyle } from 'react-native-reanimated';
 
 /**
  * The subset of pressable props the shared primitives actually pass down.
@@ -15,14 +15,16 @@ import type { AnimatedStyle } from 'react-native-reanimated';
  * react-native-gesture-handler's differ (their press and hover event types are
  * unrelated), so a prop typed as either one rejects the other component
  * outright. Naming only what is used keeps both assignable, which is the whole
- * point — see the `PressableComponent` prop on `BaseCard` and `GlassIconButton`.
+ * point — see the `PressableComponent` prop on `BaseCard`, `GlassIconButton`
+ * and `ListRow`.
  */
 export interface PressableLikeProps {
   children?: React.ReactNode;
   onPress?: () => void;
   onPressIn?: () => void;
   onPressOut?: () => void;
-  style?: StyleProp<ViewStyle>;
+  /** Either form both pressables accept, the pressed-state callback included. */
+  style?: StyleProp<ViewStyle> | ((state: { pressed: boolean }) => StyleProp<ViewStyle>);
   hitSlop?: number | Insets;
   disabled?: boolean;
   android_ripple?: PressableAndroidRippleConfig;
@@ -74,8 +76,13 @@ export interface BaseComponentProps extends BaseStyleProps {
 export type AnimatedStyleProp<T> = AnimatedStyle<T> | StyleProp<T>;
 
 /**
- * Reanimated v4 CSS keyframe animations use properties (animationName, animationDuration, etc.)
- * that aren't part of React Native's ViewStyle. This type enables clean casting at animation
- * definition sites instead of repeating `as unknown as ViewStyle`.
+ * A view style for Reanimated 4's CSS API: keyframe animations (`animationName`,
+ * `animationDuration`, …) and transitions (`transitionProperty`, …) on top of
+ * the view's own style.
+ *
+ * Reanimated's own type, so a misspelt key, a keyframe that is not a style, or
+ * a duration in the wrong unit is a compile error. It used to be
+ * `ViewStyle & Record<string, unknown>`, which accepted all three — and needed
+ * an `as` cast at half its call sites besides.
  */
-export type ReanimatedCSSAnimationStyle = ViewStyle & Record<string, unknown>;
+export type ReanimatedCSSAnimationStyle = CSSStyle<ViewStyle>;

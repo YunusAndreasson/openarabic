@@ -8,8 +8,9 @@
  */
 
 import { render } from '@testing-library/react-native';
-import { describe, expect, test } from '@jest/globals';
+import { describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import { ProgressBar } from '@/components/common/ProgressBar';
 
@@ -149,6 +150,24 @@ describe('ProgressBar', () => {
         transitionProperty: 'width',
         transitionDuration: '500ms',
       });
+    });
+
+    // A growing width is movement, and the CSS API animates it whatever the
+    // OS setting says — it used to, here.
+    test('jumps to the new width under Reduce Motion', () => {
+      jest.mocked(useReducedMotion).mockReturnValue(true);
+
+      const { toJSON } = render(<ProgressBar progress={50} />);
+
+      const fill = fillStyle(toJSON() as RenderedNode);
+      expect(fill.width).toBe('50%');
+      expect(fill).not.toHaveProperty('transitionProperty');
+    });
+
+    test('carries no transition when the caller asked for no animation', () => {
+      const { toJSON } = render(<ProgressBar progress={50} animationDuration={0} />);
+
+      expect(fillStyle(toJSON() as RenderedNode)).not.toHaveProperty('transitionProperty');
     });
   });
 

@@ -11,6 +11,7 @@
 import { describe, expect, jest, test } from '@jest/globals';
 import { render } from '@testing-library/react-native';
 import React from 'react';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import {
   VoiceListeningIndicator,
@@ -62,6 +63,19 @@ describe('VoiceListeningIndicator', () => {
     const { queryByText } = renderIndicator('opening');
     expect(queryByText(STRINGS.VOICE_LISTENING)).toBeNull();
     expect(queryByText(STRINGS.VOICE_CHECKING)).toBeNull();
+  });
+
+  // The opening breath is opacity only — the substitution Reduce Motion asks
+  // for, not motion it removes. It used to be dropped, which left a still grey
+  // row of stubs while the mic opened.
+  test('the opening breath plays under Reduce Motion too', () => {
+    jest.mocked(useReducedMotion).mockReturnValue(true);
+
+    const { toJSON } = renderIndicator('opening');
+
+    const json = toJSON() as unknown as { children: { props: { style: unknown } }[] };
+    const barRow = [json.children[0]?.props.style].flat(Infinity);
+    expect(barRow).toContainEqual(expect.objectContaining({ animationIterationCount: 'infinite' }));
   });
 
   test('a live mic names itself once, on the card', () => {

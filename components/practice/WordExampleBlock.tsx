@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ArticleSentence } from '@/components/article/ArticleSentence';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Icon } from '@/components/ui';
+import { DisclosureChevron } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -62,13 +62,7 @@ const WordExampleBlockComponent = ({
           >
             {article.title}
           </ThemedText>
-          {canOpen ? (
-            <Icon
-              color={colors.textTertiary}
-              name="chevron-forward"
-              size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
-            />
-          ) : null}
+          {canOpen ? <DisclosureChevron /> : null}
         </View>
       ) : null}
 

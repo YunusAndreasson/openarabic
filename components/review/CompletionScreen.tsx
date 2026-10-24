@@ -1,14 +1,14 @@
 import { Icon } from '@/components/ui';
 import { Link } from 'expo-router';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
-import Animated, { FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { NotificationPrimingCard } from '@/components/review/NotificationPrimingCard';
 import { VoicePrimingCard } from '@/components/review/VoicePrimingCard';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { TIMING_CONFIG } from '@/constants/animation';
+import { checkPopEntering, TIMING_CONFIG } from '@/constants/animation';
 
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -24,23 +24,16 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { SessionMetrics } from '@/types/review.types';
 import { successFeedback } from '@/utils/haptics';
 
-/** A small pop with no wobble: Reanimated's own "gentle" ratio. */
-const ICON_DAMPING_RATIO = 0.75;
-
 // Layout animation builders hoisted to module level per Reanimated best practices
 // Success haptic fires from the checkmark's completion callback so it lands on the
-// exact frame the zoom-in settles (no estimated setTimeout offset).
-// The duration goes INTO springify: a bare `.springify()` resets the duration
-// set before it, which ran the default physics spring for ~0.8s and landed the
-// haptic half a second after the pop. A perceptual 120ms ends at ~180ms.
-const ENTERING_ICON = ZoomIn.springify(TIMING_CONFIG.FAST.duration)
-  .dampingRatio(ICON_DAMPING_RATIO)
-  .withCallback(finished => {
-    'worklet';
-    if (finished) {
-      scheduleOnRN(successFeedback);
-    }
-  });
+// exact frame the zoom-in settles (no estimated setTimeout offset). The pop
+// itself, and why its duration goes into springify, is `checkPopEntering`.
+const ENTERING_ICON = checkPopEntering().withCallback(finished => {
+  'worklet';
+  if (finished) {
+    scheduleOnRN(successFeedback);
+  }
+});
 // Nothing else on this screen animates in. The title, the rows and the button
 // used to arrive in a staggered cascade (seven delays, up to 320ms) — motion
 // performing a celebration rather than telling the learner anything. The
@@ -88,7 +81,9 @@ export const CompletionScreen = ({
   const { streak } = useStudyStreak();
   const currentDailyStreak = streak?.currentStreak ?? 0;
 
-  // Handle review completion logic (query invalidation, analytics, haptics)
+  // Completion side effects: analytics and the learner's local ledgers. Not
+  // the query refresh — useReview's finalizeSession runs that as this screen
+  // appears — and not the success haptic, which is the checkmark's below.
   useReviewCompletion(sessionMetrics);
 
   const sessionRows = useEncouragingMetrics(sessionMetrics, currentDailyStreak);
@@ -174,10 +169,11 @@ export const CompletionScreen = ({
 
       {/* Action Button - Anchored to bottom */}
       <View style={styles.buttonContainer}>
-        {/* `onContinue` (useReview's handleClose) stops audio, settles pending
-            grade writes, invalidates the FSRS queries and then navigates — the
-            same path the close button takes. The Link fallbacks only apply when
-            no handler is supplied.
+        {/* `onContinue` (useReview's handleClose) stops audio and navigates —
+            the same path the close button takes. The session's writes were
+            already settled and the FSRS queries refreshed when this screen
+            appeared (finalizeSession), so Continue has nothing left to wait
+            on. The Link fallbacks only apply when no handler is supplied.
 
             hapticType="selection" overrides ThemedButton's 'light' default —
             tier 0 in utils/haptics. The success notification has already fired

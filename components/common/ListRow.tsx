@@ -1,10 +1,11 @@
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable as RNPressable, StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress, type HapticType } from '@/hooks/ui/useButtonPress';
+import type { PressableLikeProps } from '@/types/ui/base.types';
 
 interface ListRowProps {
   children: ReactNode;
@@ -29,6 +30,14 @@ interface ListRowProps {
   accessibilityLabel?: string;
   accessibilityRole?: 'button' | 'link';
   style?: StyleProp<ViewStyle>;
+  /**
+   * The pressable a pressable row renders. React Native's by default; a row
+   * inside a gesture-handler swipeable passes gesture-handler's, which
+   * negotiates with the swipe's native pan (see WordListRow). The same seam
+   * `BaseCard` and `GlassIconButton` offer, and the press lock comes with the
+   * row either way.
+   */
+  PressableComponent?: ComponentType<PressableLikeProps>;
 }
 
 /**
@@ -49,6 +58,7 @@ export const ListRow = ({
   accessibilityLabel,
   accessibilityRole = 'button',
   style,
+  PressableComponent = RNPressable,
 }: ListRowProps) => {
   const colors = useColors();
   const { handlePress, rippleConfig } = useButtonPress({ onPress, hapticType });
@@ -81,17 +91,17 @@ export const ListRow = ({
   }
 
   return (
-    <Pressable
+    <PressableComponent
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityRole}
       android_ripple={rippleConfig}
       // The ripple is Android-only; without a pressed fill an iOS row gave no
-      // sign it was touched. Same fill as WordListRow.
+      // sign it was touched.
       style={({ pressed }) => [rowStyle, pressed && { backgroundColor: colors.elevation2 }]}
       onPress={handlePress}
     >
       {children}
-    </Pressable>
+    </PressableComponent>
   );
 };
 

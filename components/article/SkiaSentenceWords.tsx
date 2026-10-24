@@ -17,7 +17,6 @@ import {
 } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 import {
-  Easing,
   useAnimatedReaction,
   useSharedValue,
   withRepeat,
@@ -36,6 +35,7 @@ import {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { BREATHE_EASING, BREATHE_HALF_PERIOD, TIMING_CONSTANTS } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -51,14 +51,6 @@ import {
   WORD_PADDING,
   type SentenceWordMetrics,
 } from '@/utils/sentenceWordLayout';
-
-// Long-press threshold: long enough not to fire during scroll hesitation,
-// short enough to feel instant (RNGH default is 500ms)
-const LONG_PRESS_DELAY_MS = 400;
-
-/** One half of the tutorial marker's breathing cycle, as the CSS pulse ran it. */
-const HIGHLIGHT_PULSE_MS = 800;
-const HIGHLIGHT_PULSE_EASING = Easing.bezier(0.42, 0, 0.58, 1); // CSS ease-in-out
 
 /** The id type of the reader's `activeWordIdSV` (`ArticleSentenceProps`). */
 type WordId = string | number;
@@ -194,22 +186,25 @@ const SentenceWordsInternal = function SkiaSentenceWords({
     }
   };
 
-  // The tutorial pulse: the first word's marker breathes between subtle and
-  // full. `withRepeat`/`withTiming` follow the OS reduce-motion setting
-  // (`ReduceMotion.System`), where the marker simply stays solid. The CSS
-  // animation this replaces ignored that setting.
+  // The tutorial pulse: the first word's marker breathes between full and
+  // subtle. `withRepeat`/`withTiming` follow the OS reduce-motion setting
+  // (`ReduceMotion.System`), where an infinite reversing repeat holds its START
+  // value — so the pulse starts at FULL and breathes down, and with the setting
+  // on the marker stays solid. It used to start at SUBTLE and breathe up, which
+  // the same rule parked at 30%. The CSS animation this replaces ignored the
+  // setting altogether.
   const markerPulse = useSharedValue<number>(LAYOUT.OPACITY.FULL);
   useEffect(() => {
+    markerPulse.set(LAYOUT.OPACITY.FULL);
     if (!highlightFirstWord) {
-      markerPulse.set(LAYOUT.OPACITY.FULL);
       return;
     }
-    markerPulse.set(LAYOUT.OPACITY.SUBTLE);
     markerPulse.set(
       withRepeat(
-        withTiming(LAYOUT.OPACITY.FULL, {
-          duration: HIGHLIGHT_PULSE_MS,
-          easing: HIGHLIGHT_PULSE_EASING,
+        withTiming(LAYOUT.OPACITY.SUBTLE, {
+          // One leg of the breath, as the CSS pulse this replaced ran it.
+          duration: BREATHE_HALF_PERIOD.TUTORIAL_MARKER,
+          easing: BREATHE_EASING,
         }),
         -1,
         true,
@@ -498,7 +493,7 @@ function WordTarget({ word, onWordPress, onWordLongPress, style, children }: Wor
       testID={testID}
       onPress={handlePress}
       onLongPress={onWordLongPress ? handleLongPress : undefined}
-      delayLongPress={LONG_PRESS_DELAY_MS}
+      delayLongPress={TIMING_CONSTANTS.WORD_LONG_PRESS_DELAY}
       {...accessibilityProps}
       accessibilityRole="button"
       accessibilityHint={onWordPress ? STRINGS.ARABIC_WORD_A11Y_HINT : undefined}

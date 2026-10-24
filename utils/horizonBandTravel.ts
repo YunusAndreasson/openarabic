@@ -51,9 +51,8 @@ const STAGGER = HORIZON_TRAVEL.STAGGER;
 /**
  * Where in the sweep a dot sets off, by its place in the departure order.
  *
- * The one definition of the stagger. The drawing reads it every frame and the
- * haptics read it once to find when each dot lands, so the ticks cannot drift
- * off the dots they belong to.
+ * The one definition of the stagger; the drawing reads it on every frame of
+ * the sweep.
  */
 export function departureShare(index: number, count: number): number {
   'worklet';

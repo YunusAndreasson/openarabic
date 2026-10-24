@@ -1,14 +1,13 @@
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, { cubicBezier } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
-import { TIMING_CONFIG } from '@/constants/animation';
+import { CSS_EASING, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
+import { useMotionStyle } from '@/hooks/animations/useMotionStyle';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ProgressBarProps } from '@/types/ui/loader.types';
-
-// CSS easing equivalent of Easing.out(Easing.cubic)
-const PROGRESS_EASING = cubicBezier(0.33, 1, 0.68, 1);
+import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 
 /**
  * An animated, crash-resistant progress bar component that displays progress.
@@ -54,19 +53,30 @@ function ProgressBarComponent({
     style,
   ] as StyleProp<ViewStyle>;
 
-  // Fill styles with CSS transition for smooth width animation
+  // The fill's width eases to each new value on a CSS transition. A growing
+  // width is movement, so Reduce Motion gets the new width at once
+  // (`useMotionStyle`) — the CSS API would otherwise animate it regardless — and
+  // so does a caller that asked for no animation (`animationDuration` 0).
+  const widthTransition: ReanimatedCSSAnimationStyle | null =
+    animationDuration > 0
+      ? {
+          transitionProperty: 'width',
+          transitionDuration: `${animationDuration}ms`,
+          transitionTimingFunction: CSS_EASING.OUT_CUBIC,
+        }
+      : null;
+  const transition = useMotionStyle(widthTransition);
+
   const transitionFillStyle = [
     defaultStyles.fill,
     {
       backgroundColor: progressFillColor,
       borderRadius: height / 2,
-      width: `${safeProgress}%`,
-      transitionProperty: 'width',
-      transitionDuration: `${animationDuration}ms`,
-      transitionTimingFunction: PROGRESS_EASING,
+      width: `${safeProgress}%` as const,
     },
+    transition,
     fillStyle,
-  ] as StyleProp<ViewStyle>;
+  ];
 
   return (
     <View style={containerStyle}>

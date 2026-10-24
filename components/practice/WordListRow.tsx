@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, type ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 // Gesture-handler's Pressable, NOT react-native's. The dictionary wraps this row
 // in a `ReanimatedSwipeable`, and RN's Pressable runs on the JS responder
@@ -7,14 +7,14 @@ import { StyleSheet, View } from 'react-native';
 // every swipe also fired onPress — the word detail opened on top of the actions
 // the swipe had just revealed. Kept here, not only in the swipeable caller, so
 // both word lists take the same code path.
-import { Pressable } from 'react-native-gesture-handler';
+import { Pressable as GHPressable } from 'react-native-gesture-handler';
 
+import { ListRow } from '@/components/common/ListRow';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Icon } from '@/components/ui';
+import { DisclosureChevron } from '@/components/ui';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-
-const CHEVRON_SIZE = 14;
+import type { PressableLikeProps } from '@/types/ui/base.types';
 
 interface WordListRowProps {
   /** The vocalised headword — `roots.letters`. */
@@ -59,15 +59,17 @@ interface WordListRowProps {
  * the gloss in one, beside it in the other — which quietly implied they were
  * different kinds of thing.
  *
- * **Why this is not `components/common/ListRow`**, whose row metrics it
- * otherwise matches exactly (`compact` density is the same 8dp padding): the
- * dictionary wraps this in a `ReanimatedSwipeable`, and that needs
- * gesture-handler's `Pressable` to negotiate with the native pan — see the
- * import note above for what RN's does instead. `ListRow` hard-codes RN's via
- * `useButtonPress` and has no component override, so using it here would mean
- * widening a primitive that eight other screens depend on in order to serve
- * one caller. The duplication is deliberate and it is exactly two style rules;
- * if `ListRow` ever gains a `PressableComponent` prop, fold this into it.
+ * It is `components/common/ListRow` (`compact` density, its divider, its
+ * pressed fill and its press lock) on gesture-handler's `Pressable`, which the
+ * dictionary's `ReanimatedSwipeable` needs to negotiate with its native pan —
+ * see the import note above for what RN's does instead. It used to be a copy of
+ * ListRow for that one reason, and the copy skipped ListRow's press lock, so a
+ * double-tap could push the word screen twice.
+ *
+ * A pressable row is announced as a button exactly when it is one: ListRow's
+ * default. Lifting the composition out of ListRow once silently dropped it, and
+ * both word lists read out their contents and then stopped, with no sign they
+ * could be opened.
  */
 const WordListRowComponent = ({
   arabic,
@@ -76,72 +78,56 @@ const WordListRowComponent = ({
   onPress,
   accessibilityLabel,
   divider = false,
-}: WordListRowProps) => {
-  const colors = useColors();
-
-  // A flat row has no card press-scale, so feedback comes from the surface: an
-  // Android ripple plus a pressed background on both platforms.
-  const rippleConfig = useMemo(
-    () => ({ color: colors.navigationRipple, borderless: false, foreground: true }),
-    [colors.navigationRipple],
-  );
-
-  const pressableStyle = useCallback(
-    ({ pressed }: { pressed: boolean }) => [
-      styles.row,
-      divider && {
-        borderBottomWidth: LAYOUT.BORDER.WIDTH.HAIRLINE,
-        borderBottomColor: colors.border,
-      },
-      pressed && { backgroundColor: colors.elevation2 },
-    ],
-    [colors.border, colors.elevation2, divider],
-  );
-
-  return (
-    <Pressable
-      accessibilityLabel={accessibilityLabel}
-      // Announced as a button exactly when it is one. `ListRow` defaults this
-      // to 'button' and the revisit sheet used to get it for free; lifting the
-      // composition out of ListRow silently dropped it, so both word lists read
-      // out their contents and then stopped, with no sign they could be opened.
-      accessibilityRole={onPress ? 'button' : undefined}
-      android_ripple={rippleConfig}
-      disabled={!onPress}
-      style={pressableStyle}
-      onPress={onPress}
+}: WordListRowProps) => (
+  <ListRow
+    density="compact"
+    divider={divider}
+    onPress={onPress}
+    accessibilityLabel={accessibilityLabel}
+    PressableComponent={WordRowPressable}
+    style={styles.row}
+  >
+    <ThemedText
+      type="caption"
+      colorName="secondaryText"
+      align="left"
+      numberOfLines={1}
+      style={styles.gloss}
     >
-      <ThemedText
-        type="caption"
-        colorName="secondaryText"
-        align="left"
-        numberOfLines={1}
-        style={styles.gloss}
-      >
-        {gloss}
-      </ThemedText>
-      <ThemedText type="arabicCompact" align="right" numberOfLines={1} style={styles.arabic}>
-        {arabic}
-      </ThemedText>
-      {/* Trailing magnitude and chevron travel together on a tighter gap: they
+      {gloss}
+    </ThemedText>
+    <ThemedText type="arabicCompact" align="right" numberOfLines={1} style={styles.arabic}>
+      {arabic}
+    </ThemedText>
+    {/* Trailing magnitude and chevron travel together on a tighter gap: they
           are one accessory, and a full gap between them would cost the meaning
           another 12dp of width. */}
-      <View style={styles.trailing}>
-        {trailing}
-        {onPress ? (
-          <Icon name="chevron-forward" size={CHEVRON_SIZE} color={colors.textTertiary} />
-        ) : null}
-      </View>
-    </Pressable>
+    <View style={styles.trailing}>
+      {trailing}
+      {onPress ? <DisclosureChevron /> : null}
+    </View>
+  </ListRow>
+);
+
+/**
+ * Gesture-handler's Pressable with this list's own ripple: the whole row, drawn
+ * over its content. A flat row has no card press-scale, so the feedback comes
+ * from the surface, and ListRow's default ripple is a touch-target-sized circle
+ * (`createAndroidRipple`) rather than the edge-to-edge one these rows have
+ * always had.
+ */
+function WordRowPressable(props: PressableLikeProps) {
+  const colors = useColors();
+  return (
+    <GHPressable
+      {...props}
+      android_ripple={{ color: colors.navigationRipple, borderless: false, foreground: true }}
+    />
   );
-};
+}
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
     // Floor for very small Arabic font settings — also stops the 44px swipe
     // action buttons from dictating the row height in the dictionary.
     minHeight: MIN_TOUCH_TARGET.LARGE,

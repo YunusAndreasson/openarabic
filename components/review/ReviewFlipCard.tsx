@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
+import { CSS_EASING, TIMING_CONFIG, VERDICT } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
@@ -166,7 +166,10 @@ const CARD_ENTRANCE: ReanimatedCSSAnimationStyle = {
     to: { transform: [{ translateY: 0 }, { scale: 1 }] },
   },
   animationDuration: TIMING_CONFIG.CARD_EXIT.duration,
-  animationTimingFunction: 'ease-out',
+  // CARD_EXIT's own curve. CSS 'ease-out' is not Easing.out(Easing.cubic) —
+  // see CSS_EASING — so the rise used to run a different curve from the fade
+  // it is timed to land with.
+  animationTimingFunction: CSS_EASING.OUT_CUBIC,
   animationFillMode: 'both',
 };
 
@@ -477,11 +480,13 @@ export function ReviewFlipCard({
    * silently: `withTiming` and the layout builders both default to
    * `ReduceMotion.System`, and Reanimated's response is to assign `toValue` on
    * the first frame and mark the animation finished (animation/util.js) — so
-   * with the setting on, the flip is instant, the verdict is instant, and the
-   * example sentence's FadeIn is instant.
+   * with the setting on, the flip is instant and the example sentence's FadeIn
+   * is instant. The verdict is the deliberate exception: its ring is an opacity
+   * change, so useCardVerdict runs it on `ReduceMotion.Never` — instant, its
+   * level never crossed the threshold its haptic hangs off.
    *
-   * The CSS API is the exception. Reanimated 4.5 has no reduced-motion handling
-   * in it at all — not in `lib/module/css`, not in `Common/cpp/reanimated/CSS`,
+   * The CSS API is the exception. Reanimated (still in 4.7) has no reduced-motion
+   * handling in it at all — not in `lib/module/css`, not in `Common/cpp/reanimated/CSS`,
    * and `ReducedMotionConfig` only feeds the shared-value path. So the one thing
    * left moving on a reduce-motion device was this: a card that slides 18px and
    * scales while everything around it snaps. That is exactly backwards — a

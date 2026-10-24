@@ -110,17 +110,14 @@ export interface InkOverhang {
  * painted extent — as opposed to the font-metrics box `getRectsForRange`
  * reports.
  *
- * Returns null when the running native module predates the API (added in Skia
- * 2.8.0) so callers can fall back to an estimate.
+ * Returns null when there is nothing to measure — no path, or a line with no
+ * geometry — or the measurement throws, so callers can fall back to an
+ * estimate.
  *
  * @param paragraph A paragraph already laid out at `layoutWidth`
  * @param layoutWidth The width passed to `paragraph.layout()`
  */
 const measureInkOverhang = (paragraph: SkParagraph, layoutWidth: number): InkOverhang | null => {
-  if (typeof paragraph.getPath !== 'function') {
-    return null;
-  }
-
   try {
     const path = paragraph.getPath(0);
     if (!path) {
@@ -193,8 +190,8 @@ const VERTICAL_INK_EM: Record<SkiaFontFamily, { top: number; bottom: number }> =
  * reserve the canvas clips edge glyphs and the paragraph can force-break
  * the word onto a hidden second line.
  *
- * Only used when the native module can't measure the real bleed — see
- * `measureInkOverhang`, which supersedes these estimates on Skia >= 2.8.0.
+ * Only used when the real bleed cannot be measured — see `measureInkOverhang`,
+ * whose measurement supersedes these estimates whenever it returns one.
  */
 const INK_BLEED_EM: Record<SkiaFontFamily, number> = {
   'Noto Sans Arabic': 0.08,
@@ -277,7 +274,7 @@ export const measureParagraphCanvas = (
 };
 
 /** Builds a Skia paragraph from colored text segments with consistent diacritics spacing. */
-export const buildColoredParagraph = (config: ParagraphConfig): SkParagraph | null => {
+const buildColoredParagraph = (config: ParagraphConfig): SkParagraph | null => {
   if (config.segments.length === 0) {
     return null;
   }
@@ -285,30 +282,46 @@ export const buildColoredParagraph = (config: ParagraphConfig): SkParagraph | nu
 };
 
 /** Builds a single-color paragraph for words without colored segments. */
-export const buildSimpleParagraph = (config: SimpleParagraphConfig): SkParagraph | null => {
+const buildSimpleParagraph = (config: SimpleParagraphConfig): SkParagraph | null => {
   if (!config.text) {
     return null;
   }
   return buildParagraphFromSegments([{ text: config.text, color: config.color }], config);
 };
 
-/** The two theme colours a reader word is painted in when it carries no grammar colour. */
+/** The two theme colours a word is painted in when it carries no grammar colour. */
 interface WordParagraphColors {
   text: string;
   arabicText: string;
 }
 
+/**
+ * Whether any segment carries a grammar colour, rather than one of the plain
+ * text colours.
+ *
+ * A segment set painted only in `text`/`arabicText` is the same picture as
+ * plain text, so every caller draws the cheaper single run for it. The one
+ * definition for the reader's words, `SkiaColoredArabic` and `ColorCodedText`,
+ * which each used to spell the comparison out.
+ */
+export const hasGrammarColour = (
+  segments: readonly Pick<ColoredSegment, 'color'>[],
+  colors: WordParagraphColors,
+): boolean => segments.some(seg => seg.color !== colors.text && seg.color !== colors.arabicText);
+
 interface WordParagraphConfig {
   word: Pick<SentenceWord, 'word_form' | 'coloredSegments'>;
   colors: WordParagraphColors;
+  /** The single run's colour when the word carries no grammar colour. Defaults to `arabicText`. */
+  plainColor?: string;
   fontSize: number;
   fontFamily: SkiaFontFamily;
   fontManager?: SkTypefaceFontProvider | null;
 }
 
 /**
- * The paragraph for one reader word: grammar-coloured when its segments carry
- * a colour, a single run in `arabicText` otherwise.
+ * The paragraph for one Arabic word or phrase: grammar-coloured when its
+ * segments carry a colour, a single run in `plainColor` otherwise.
  *
  * Selection is never carried by the glyph colour: repainting a saved word in
  * the brand tint both shouted and overwrote the grammar colours it covered. The
@@ -320,6 +333,7 @@ interface WordParagraphConfig {
 export const buildWordParagraph = ({
   word,
   colors,
+  plainColor = colors.arabicText,
   fontSize,
   fontFamily,
   fontManager,
@@ -329,13 +343,8 @@ export const buildWordParagraph = ({
   }
 
   const segments = word.coloredSegments ?? [];
-  // A segment set painted only in the plain text colours is the same picture as
-  // plain text: build the cheaper single-run paragraph for it.
-  const hasComponents = segments.some(
-    seg => seg.color !== colors.text && seg.color !== colors.arabicText,
-  );
 
-  if (hasComponents) {
+  if (hasGrammarColour(segments, colors)) {
     return buildColoredParagraph({
       segments,
       fontSize,
@@ -350,7 +359,7 @@ export const buildWordParagraph = ({
   return buildSimpleParagraph({
     text: word.word_form,
     fontSize,
-    color: colors.arabicText,
+    color: plainColor,
     fontFamily,
     fontManager,
     textDirection: TextDirection.RTL,
