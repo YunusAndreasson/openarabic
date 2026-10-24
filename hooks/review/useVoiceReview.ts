@@ -85,7 +85,7 @@ import { lightFeedback, warningFeedback } from '@/utils/haptics';
 import { getArmStages, markArmTap } from '@/utils/armTelemetry';
 import { getPromptSnapshot, recordPromptCut } from '@/utils/promptTelemetry';
 import { countDiag, mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
-import { matchSingleWord } from '@/utils/voiceMatching';
+import { matchSingleWord, suggestAfterMiss } from '@/utils/voiceMatching';
 import type { MatchMethod, VoiceSuggestion } from '@/utils/voiceMatching';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
 
@@ -266,18 +266,6 @@ interface UseVoiceReviewArgs {
 
 /** Shared empty list so the optional grading inputs keep a stable identity. */
 const EMPTY_STRINGS: readonly string[] = [];
-
-/** Similarity below this counts as a "clean miss" — a clearly recognized but
- *  wrong word. Anything between this and FUZZY_MIN_SIMILARITY (0.70) is
- *  ambiguous: surface the answer and let the user judge. Picked so that
- *  "date" vs "bee" (sim ~0.25) auto-Unknowns while a 5-char word with two
- *  edits ("growth" vs "groth", sim ~0.83) goes to the match path. */
-const CLEAN_MISS_MAX_SIMILARITY = 0.5;
-
-/** Minimum transcript length to trust the heard word. A single-character emit
- *  ("a", "i") is almost always Parakeet hedging on near-silence — show the
- *  "didn't catch that" fallback and suggest a retry instead. */
-const CLEAN_MISS_MIN_TRANSCRIPT_CHARS = 2;
 
 /** Transient arm() failures tolerated per card before we stop retrying and let
  *  the learner grade by hand. Small on purpose — a mic that needs four goes is
@@ -1163,20 +1151,7 @@ export function useVoiceReview({
       // auto-advancing — a transcription error must never burn an FSRS attempt
       // without showing the learner what was heard and offering an override.
       // `suggestion` only nudges which button to emphasise; nothing auto-fires.
-      const heardReliable =
-        match.method !== 'hallucination' &&
-        match.normalizedSpoken.length >= CLEAN_MISS_MIN_TRANSCRIPT_CHARS;
-      let suggestion: VoiceResult['suggestion'];
-      if (!heardReliable) {
-        // Silence / hallucination: the transcript can't be trusted — retry.
-        suggestion = 'retry';
-      } else if (match.similarity < CLEAN_MISS_MAX_SIMILARITY) {
-        // Confident, clearly different word — lean Unknown.
-        suggestion = 'unknown';
-      } else {
-        // Ambiguous band (sim 0.50–0.70): let the learner judge.
-        suggestion = null;
-      }
+      const { heardReliable, suggestion } = suggestAfterMiss(match);
       if (heardReliable) {
         // Heard a real word and it was not the answer. Mark the card wrong NOW,
         // not when the learner presses a button to be told so: it used to sit
