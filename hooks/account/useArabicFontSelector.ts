@@ -1,9 +1,15 @@
 import { useCallback } from 'react';
 
-import { ARABIC_FONT_NAMES, resolveArabicFont } from '@/constants/fonts';
-import { ARABIC_FONT_SIZE, clampArabicFontSize } from '@/constants/layout';
+import { ARABIC_FONT_NAMES } from '@/constants/fonts';
+import { ARABIC_FONT_SIZE } from '@/constants/layout';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setArabicFont, setArabicFontSize, type ArabicFontName } from '@/store/settingsSlice';
+import {
+  selectArabicFont,
+  selectArabicFontSize,
+  setArabicFont,
+  setArabicFontSize,
+  type ArabicFontName,
+} from '@/store/settingsSlice';
 
 export interface ArabicFontOption {
   name: ArabicFontName;
@@ -80,14 +86,12 @@ export const useArabicFontSelector = (): UseArabicFontSelectorResult => {
   // Resolved so the picker marks the face that is actually rendering. An
   // unfamiliar persisted name left all five cards unselected while the account
   // row above claimed "Noto Sans".
-  const selectedFont = useAppSelector(state => resolveArabicFont(state.settings.arabicFont));
+  const selectedFont = useAppSelector(selectArabicFont);
   // Clamped, not raw: the slider cannot represent a value outside its own range,
   // so a persisted out-of-range size would leave the thumb pinned at one end
   // while the readout claimed something else — and dragging from there would
   // read as the control lying about what it is set to.
-  const selectedFontSize = useAppSelector(state =>
-    clampArabicFontSize(state.settings.arabicFontSize),
-  );
+  const selectedFontSize = useAppSelector(selectArabicFontSize);
 
   const selectFont = useCallback(
     (fontName: ArabicFontName) => {

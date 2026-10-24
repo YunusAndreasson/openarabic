@@ -61,7 +61,7 @@ beforeEach(() => {
   } as unknown as RootState;
   jest.mocked(useAppSelectorShallow).mockImplementation(selector => selector(state));
   jest.mocked(useAppDispatch).mockReturnValue(jest.fn());
-  jest.mocked(useToast).mockReturnValue({ showToast: jest.fn(), showImportantToast: jest.fn() });
+  jest.mocked(useToast).mockReturnValue({ showToast: jest.fn() });
   voice = {
     enabled: true,
     isReady: true,

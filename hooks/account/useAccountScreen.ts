@@ -10,14 +10,16 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAudioCache } from '@/hooks/audio/useAudioCache';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useReminders } from '@/hooks/notifications/useReminders';
 import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { ensurePermissions } from '@/services/notificationService';
 import { ReadingProgressService } from '@/services/readingProgress';
 import { supabase } from '@/services/supabase';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { reminderClockSet, remindersToggled } from '@/store/settingsSlice';
 import { ToastType } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
+import { format24HourTime } from '@/utils/dateTimeUtils';
 import { handleError } from '@/utils/errorHandling';
 import { fillTemplate } from '@/utils/fillTemplate';
 import { lightFeedback } from '@/utils/haptics';
@@ -33,7 +35,8 @@ function showEnableNotificationsAlert(): void {
 }
 
 export const useAccountScreen = () => {
-  const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();
+  const dispatch = useAppDispatch();
+  const reminderTime = useAppSelector(state => state.settings.reminderTime);
   const { clearCache, getCacheSize } = useAudioCache();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -218,25 +221,18 @@ export const useAccountScreen = () => {
           showEnableNotificationsAlert();
           return;
         }
-      }
 
-      if (enabled) {
         // The user made the choice here — the completion-screen priming card
         // should never ask again.
         void recordAccepted();
       }
 
-      try {
-        const newReminderTime = { ...reminderTime, enabled };
-        await updateReminderTime(newReminderTime);
-        void analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_TOGGLED, { enabled });
-        lightFeedback();
-      } catch (error) {
-        void handleError(error, { showToast: false });
-        Alert.alert(STRINGS.ERROR, 'Could not update reminders. Please try again.');
-      }
+      // useSmartNotifications watches this setting and reschedules the plan.
+      dispatch(remindersToggled(enabled));
+      void analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_TOGGLED, { enabled });
+      lightFeedback();
     },
-    [reminderTime, updateReminderTime],
+    [dispatch],
   );
 
   const handleTimePickerOpen = useCallback(() => {
@@ -248,17 +244,11 @@ export const useAccountScreen = () => {
   }, []);
 
   const handleTimeSet = useCallback(
-    async (hour: number, minute: number) => {
-      try {
-        const newReminderTime = { ...reminderTime, hour, minute };
-        await updateReminderTime(newReminderTime);
-        lightFeedback();
-      } catch (error) {
-        void handleError(error, { showToast: false });
-        Alert.alert(STRINGS.ERROR, 'Could not update the reminder time. Please try again.');
-      }
+    (hour: number, minute: number) => {
+      dispatch(reminderClockSet({ hour, minute }));
+      lightFeedback();
     },
-    [reminderTime, updateReminderTime],
+    [dispatch],
   );
 
   const handleSupportContact = useCallback(() => {
@@ -267,7 +257,7 @@ export const useAccountScreen = () => {
 
   return {
     reminderTime,
-    formatReminderTime,
+    formatReminderTime: format24HourTime,
     showTimePicker,
     handleTimePickerOpen,
     handleTimePickerClose,

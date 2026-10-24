@@ -13,7 +13,6 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 const mockReplace = jest.fn();
 
 jest.mock('expo-router', () => ({
-  Stack: { Screen: () => null },
   useLocalSearchParams: jest.fn(),
   useRouter: () => ({ replace: mockReplace }),
 }));

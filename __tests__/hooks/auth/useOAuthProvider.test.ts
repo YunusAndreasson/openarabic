@@ -20,7 +20,6 @@ jest.mock('@sentry/react-native', () => ({
   addBreadcrumb: jest.fn(),
   captureException: jest.fn(),
 }));
-jest.mock('@/hooks/common/useMountSafety');
 
 import {
   useOAuthProvider,
@@ -33,7 +32,6 @@ import { analytics } from '@/services/analytics';
 import { successFeedback } from '@/utils/haptics';
 import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 import { captureException } from '@sentry/react-native';
-import { useMountSafety } from '@/hooks/common/useMountSafety';
 import {
   createAuthErrorMock,
   createSessionMock,
@@ -46,7 +44,6 @@ const mockSuccessFeedback = jest.mocked(successFeedback);
 const mockHandleError = jest.mocked(handleError);
 const mockAuthBreadcrumb = jest.mocked(authBreadcrumb);
 const mockSentryCaptureException = jest.mocked(captureException);
-const mockUseMountSafety = jest.mocked(useMountSafety);
 
 describe('useOAuthProvider', () => {
   // Default mock implementations
@@ -67,9 +64,6 @@ describe('useOAuthProvider', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Default mount safety - component is mounted
-    mockUseMountSafety.mockReturnValue({ current: true });
 
     // Default Supabase mocks
     // `jest.mock('@/services/supabase')` automocks the module export but not the
@@ -224,22 +218,14 @@ describe('useOAuthProvider', () => {
       const { result } = renderHook(() => useOAuthProvider(config));
       await result.current.signIn();
 
-      expect(mockSentryCaptureException).toHaveBeenCalledWith(
-        expect.any(Error),
-        expect.objectContaining({
-          tags: {
-            location: 'google_auth',
-            step: 'module_load',
-          },
-        }),
-      );
-
       expect(mockHandleError).toHaveBeenCalledWith(
         expect.any(Error),
         expect.objectContaining({
           toastMessage: expect.stringContaining('Google Sign In not available'),
+          sentryTags: { location: 'google_auth', step: 'module_load', errorCode: 'unknown' },
         }),
       );
+      expect(config.executeSignIn).not.toHaveBeenCalled();
     });
 
     test('should use custom module not available message', async () => {
@@ -345,17 +331,14 @@ describe('useOAuthProvider', () => {
       const { result } = renderHook(() => useOAuthProvider(config));
       await result.current.signIn();
 
-      expect(mockSentryCaptureException).toHaveBeenCalledWith(
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'No ID token returned from Google Sign In' }),
         expect.objectContaining({
-          message: 'No ID token returned from Google Sign In',
-        }),
-        expect.objectContaining({
-          tags: {
-            location: 'google_auth',
-            step: 'token_validation',
-          },
+          toastMessage: expect.stringContaining('no auth token received'),
+          sentryTags: expect.objectContaining({ step: 'token_validation' }),
         }),
       );
+      expect(mockSupabase.auth.signInWithIdToken).not.toHaveBeenCalled();
     });
   });
 
@@ -375,13 +358,14 @@ describe('useOAuthProvider', () => {
       const { result } = renderHook(() => useOAuthProvider(config));
       await result.current.signIn();
 
-      expect(mockSentryCaptureException).toHaveBeenCalledWith(
+      expect(mockHandleError).toHaveBeenCalledWith(
         supabaseError,
         expect.objectContaining({
-          tags: {
+          toastMessage: expect.stringContaining('server authentication failed'),
+          sentryTags: expect.objectContaining({
             location: 'google_auth',
-            step: 'supabase_signin',
-          },
+            step: 'supabase_exchange',
+          }),
         }),
       );
     });
@@ -402,51 +386,98 @@ describe('useOAuthProvider', () => {
       const { result } = renderHook(() => useOAuthProvider(config));
       await result.current.signIn();
 
-      expect(mockSentryCaptureException).toHaveBeenCalledWith(
-        authError,
+      expect(mockHandleError).toHaveBeenCalledWith(
         expect.objectContaining({
-          tags: {
+          message: 'Supabase authentication failed: Invalid credentials',
+          originalError: authError,
+        }),
+        expect.objectContaining({
+          sentryTags: expect.objectContaining({
             location: 'apple_auth',
-            step: 'supabase_response',
-          },
+            step: 'supabase_exchange',
+          }),
         }),
       );
+    });
+  });
+
+  describe('Failure reporting', () => {
+    test('a failed Apple sheet is a provider failure, not a server one', async () => {
+      // React Native builds the error from the NSError. Its text names
+      // com.apple.AuthenticationServices, and the old step guess matched
+      // `includes('auth')` on it: the learner was told "Apple sign-in
+      // succeeded, but server authentication failed".
+      const nativeError = Object.assign(
+        new Error(
+          'The operation couldn’t be completed. (com.apple.AuthenticationServices.AuthorizationError error 1000.)',
+        ),
+        { code: '1000', domain: 'com.apple.AuthenticationServices.AuthorizationError' },
+      );
+      const config: OAuthProviderConfig = {
+        provider: 'apple',
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => {
+          throw nativeError;
+        }),
+      };
+
+      const { result } = renderHook(() => useOAuthProvider(config));
+      await result.current.signIn();
+
+      const options = mockHandleError.mock.calls[0]?.[1];
+      expect(options?.toastMessage).toContain('Step: Apple sign-in failed');
+      expect(options?.toastMessage).not.toContain('server authentication failed');
+      expect(options?.sentryTags).toEqual({
+        location: 'apple_auth',
+        step: 'provider_signin',
+        errorCode: '1000',
+      });
+      expect(mockSupabase.auth.signInWithIdToken).not.toHaveBeenCalled();
+    });
+
+    test('every failure is reported once, through handleError', async () => {
+      mockSupabase.auth.signInWithIdToken = jest.fn(async (..._args: unknown[]) => {
+        throw new Error('Network error');
+      });
+      const config: OAuthProviderConfig = {
+        provider: 'google',
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => ({ idToken: 'token' })),
+      };
+
+      const { result } = renderHook(() => useOAuthProvider(config));
+      await result.current.signIn();
+
+      expect(mockHandleError).toHaveBeenCalledTimes(1);
+      expect(mockSentryCaptureException).not.toHaveBeenCalled();
     });
   });
 
   describe('User Cancellation', () => {
-    test('should handle user cancellation silently (code -5 - Google iOS)', async () => {
-      // -5 is kGIDSignInErrorCodeCanceled (Google iOS user cancelled)
-      const cancellationError = Object.assign(new Error('User cancelled'), { code: -5 });
-
+    test('a sign-in the user backed out of resolves null and is silent', async () => {
+      // google-signin 16 resolves a cancelled response, never a rejection.
       const config: OAuthProviderConfig = {
         provider: 'google',
         loadModule: jest.fn(async (..._args: unknown[]) => {}),
-        executeSignIn: jest.fn(async (..._args: unknown[]) => {
-          throw cancellationError;
-        }),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => null),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
       await result.current.signIn();
 
-      // Should add diagnostic breadcrumb with isCancellation: true
-      expect(mockAuthBreadcrumb).toHaveBeenCalledWith(
-        'Google Sign In error caught',
-        expect.objectContaining({ isCancellation: true }),
-        'info',
-      );
-
-      // Should NOT call handleError
+      expect(mockAuthBreadcrumb).toHaveBeenCalledWith('Google sign-in cancelled by the user');
+      expect(mockSupabase.auth.signInWithIdToken).not.toHaveBeenCalled();
       expect(mockHandleError).not.toHaveBeenCalled();
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
 
-    test('should handle user cancellation silently (code 12501 - Google Android)', async () => {
-      // 12501 is SIGN_IN_CANCELLED (Google Android user cancelled)
-      const cancellationError = Object.assign(new Error('User cancelled'), { code: 12501 });
+    test('an Apple cancel (code 1001) is silent', async () => {
+      const cancellationError = Object.assign(new Error('The user canceled'), { code: '1001' });
 
       const config: OAuthProviderConfig = {
-        provider: 'google',
+        provider: 'apple',
         loadModule: jest.fn(async (..._args: unknown[]) => {}),
         executeSignIn: jest.fn(async (..._args: unknown[]) => {
           throw cancellationError;
@@ -456,43 +487,42 @@ describe('useOAuthProvider', () => {
       const { result } = renderHook(() => useOAuthProvider(config));
       await result.current.signIn();
 
-      // Should add diagnostic breadcrumb with isCancellation: true
       expect(mockAuthBreadcrumb).toHaveBeenCalledWith(
-        'Google Sign In error caught',
-        expect.objectContaining({ isCancellation: true }),
+        'Apple Sign In error caught',
+        expect.objectContaining({ isCancellation: true, step: 'provider_signin' }),
         'info',
       );
       expect(mockHandleError).not.toHaveBeenCalled();
     });
   });
 
-  describe('Mount Safety', () => {
-    test('should not update state if component unmounted', async () => {
-      const mountedRef = { current: true };
-      mockUseMountSafety.mockReturnValue(mountedRef);
-
+  describe('Loading', () => {
+    test('is set while the flow runs and cleared when it fails', async () => {
+      let rejectSignIn: ((error: Error) => void) | undefined;
       const config: OAuthProviderConfig = {
         provider: 'google',
         loadModule: jest.fn(async (..._args: unknown[]) => {}),
-        executeSignIn: jest.fn(async (..._args: unknown[]) => {
-          // Simulate unmount during async operation
-          mountedRef.current = false;
-          return { idToken: 'token' };
-        }),
+        executeSignIn: jest.fn(
+          (..._args: unknown[]) =>
+            new Promise<OAuthSignInResult>((_resolve, reject) => {
+              rejectSignIn = reject;
+            }),
+        ),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
 
-      // Should start loading
       const signInPromise = result.current.signIn();
       await waitFor(() => {
-        expect(result.current.loading).toBeTruthy();
+        expect(result.current.loading).toBe(true);
       });
 
+      rejectSignIn?.(new Error('Network connection failed'));
       await signInPromise;
 
-      // Loading state should not be updated after unmount
-      // Note: In the actual hook, setLoading(false) is guarded by isMountedRef.current
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
   });
 

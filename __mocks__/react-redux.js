@@ -8,7 +8,6 @@ const mockState = {
     arabicFontSize: 20,
     audioLanguagePreference: 'english_arabic',
     audioShuffleEnabled: false,
-    displayLanguagePreference: 'arabic_english',
     dailyWordLimit: 10,
     adaptiveNewWordPacingEnabled: true,
   },

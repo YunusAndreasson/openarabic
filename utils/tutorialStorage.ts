@@ -3,9 +3,8 @@
  * Handles AsyncStorage operations for tutorial completion state with fail-safe error handling
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import { TUTORIALS, type TutorialId } from '@/constants/tutorials';
+import { clearFlag, readFlag, setFlag } from '@/utils/createJsonStore';
 import { handleError } from '@/utils/errorHandling';
 import { scopedKey } from '@/constants/storageKeys';
 
@@ -22,8 +21,7 @@ async function isTutorialCompleted(
 ): Promise<boolean> {
   try {
     const config = TUTORIALS[tutorialId];
-    const value = await AsyncStorage.getItem(scopedKey(config.storageKey, userId));
-    return value === 'true';
+    return await readFlag(scopedKey(config.storageKey, userId));
   } catch (error) {
     void handleError(error, {
       showToast: false,
@@ -45,7 +43,7 @@ export async function markTutorialCompleted(
 ): Promise<void> {
   try {
     const config = TUTORIALS[tutorialId];
-    await AsyncStorage.setItem(scopedKey(config.storageKey, userId), 'true');
+    await setFlag(scopedKey(config.storageKey, userId));
   } catch (error) {
     void handleError(error, {
       showToast: false,
@@ -64,7 +62,7 @@ export async function resetAllTutorials(userId?: string | null): Promise<void> {
     await Promise.all(
       tutorialIds.map(id => {
         const config = TUTORIALS[id];
-        return AsyncStorage.removeItem(scopedKey(config.storageKey, userId));
+        return clearFlag(scopedKey(config.storageKey, userId));
       }),
     );
   } catch (error) {

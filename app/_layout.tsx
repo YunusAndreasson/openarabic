@@ -16,7 +16,6 @@ import {
   Stack,
   ThemeProvider as NavigationThemeProvider,
   useNavigationContainerRef,
-  useRouter,
 } from 'expo-router';
 import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -49,11 +48,11 @@ import {
 } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
-import { Theme } from '@/constants/colors';
 import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useUpdateReady } from '@/hooks/app/useUpdateReady';
+import { useNotificationResponseRouting } from '@/hooks/notifications/useNotificationResponseRouting';
 import { useSmartNotifications } from '@/hooks/notifications/useSmartNotifications';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { GlobalAudioStateProvider } from '@/hooks/audio/useGlobalAudioState';
@@ -61,21 +60,13 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { getSkiaGpuContext } from '@/hooks/theme/useSkiaGpuAvailable';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsCalculator';
 import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
-import {
-  cleanupNotifications,
-  clearNotificationNavigationCallback,
-  handleNotificationResponse,
-  initializeNotifications,
-  setNotificationNavigationCallback,
-} from '@/services/notificationService';
-import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
-import type { RootState } from '@/store/store';
+import { cleanupNotifications, initializeNotifications } from '@/services/notificationService';
 import { persistor, store } from '@/store/store';
-import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
 import { registerMutationDefaults } from '@/utils/mutationDefaults';
 import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
@@ -83,18 +74,13 @@ import { flushPersistedQueryCache, PERSISTENCE_OPTIONS } from '@/utils/queryPers
 import { reportQueryFailure } from '@/utils/queryMeta';
 import { retryWhileOnline } from '@/utils/queryRetry';
 import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
-import type * as NotificationsModule from 'expo-notifications';
-
-// expo-notifications is unavailable in Expo Go on Android (SDK 53+).
-let Notifications: typeof NotificationsModule | null = null;
-try {
-  Notifications = require('expo-notifications');
-} catch {
-  // expo-notifications unavailable in Expo Go on Android (SDK 53+)
-}
 
 const TAB_ROUTE_OPTIONS = { animation: 'fade' } as const;
 const AUTH_ROUTE_OPTIONS = { animation: 'fade' } as const;
+// Declared here rather than from inside the page, where an animation set by
+// <Stack.Screen options> only applies after the screen has mounted. The header
+// is already hidden by the root screen options.
+const RESET_PASSWORD_ROUTE_OPTIONS = { animation: 'fade' } as const;
 const ROOT_SCREEN_LISTENERS = {
   transitionEnd: (event: { data: { closing: boolean } }) => {
     if (event.data.closing) flushPendingSheetNavigation();
@@ -306,9 +292,9 @@ Sentry.setTag('expo_update_runtime_version', Updates.runtimeVersion ?? 'unknown'
 Sentry.setTag('expo_update_is_embedded', String(Updates.isEmbeddedLaunch));
 
 function AppContent() {
-  const dispatch = useAppDispatch();
-  const theme = useAppSelectorShallow((state: RootState) => state.theme.theme);
-  const isDark = theme === Theme.Dark;
+  // A stored null theme reads as the default, Dark, through selectTheme — so
+  // there is nothing to normalise into the store on launch any more.
+  const isDark = useIsDarkMode();
   const [appReady, setAppReady] = useState(false);
   const [initialSessionStartedAt] = useState(() => Date.now());
   const activeSessionStartedAt = useRef(initialSessionStartedAt);
@@ -317,7 +303,6 @@ function AppContent() {
   const { isLoading: isAuthLoading, session } = useAuth();
   const userId = session?.user?.id;
   const navigationRef = useNavigationContainerRef();
-  const router = useRouter();
 
   // Runtime font load for Expo Go + Android — see RUNTIME_FONT_MAP above
   const [fontsLoaded, fontError] = useFonts(NEEDS_RUNTIME_FONTS ? RUNTIME_FONT_MAP : {});
@@ -424,14 +409,6 @@ function AppContent() {
     };
   }, [isDark, colors.tint, colors.background]);
 
-  // Set default theme based on system preference if none is set yet
-  useEffect(() => {
-    if (!theme) {
-      // Use dark theme (Midnight Summer) as the default for new users
-      dispatch(setTheme(Theme.Dark)); // Default to dark theme for comfortable evening study
-    }
-  }, [dispatch, theme]);
-
   // Handle preloading app data - start when auth is ready
   useEffect(() => {
     if (!isAuthLoading && !isLoaded && !hasTriggeredPreload.current) {
@@ -490,47 +467,9 @@ function AppContent() {
     }
   }, [appReady]);
 
-  // Set up notification navigation callback
-  useEffect(() => {
-    if (!appReady) return;
-
-    // Set navigation callback for when user taps notifications
-    setNotificationNavigationCallback((path: string) => {
-      router.navigate(path);
-    });
-
-    return () => {
-      clearNotificationNavigationCallback();
-    };
-  }, [appReady, router]);
-
-  // Handle cold start notifications (when app launches from notification)
-  useEffect(() => {
-    if (!appReady) return;
-
-    const handleColdStartNotification = async () => {
-      try {
-        if (!Notifications) return;
-
-        const response = Notifications.getLastNotificationResponse();
-
-        if (response) {
-          handleNotificationResponse(response, path => router.navigate(path), { coldStart: true });
-
-          // Clear the last notification response to prevent re-handling on next launch
-          Notifications.clearLastNotificationResponse();
-        }
-      } catch (error) {
-        // Silently handle cold start notification errors
-        void handleError(error, {
-          showToast: false,
-          analyticsEventName: 'Cold_Start_Notification_Error',
-        });
-      }
-    };
-
-    void handleColdStartNotification();
-  }, [appReady, router]);
+  // Notification taps — the one that launched the app, then every later one —
+  // open their screen once the navigator is up.
+  useNotificationResponseRouting(appReady);
 
   // Cleanup notifications, background tasks and audio on unmount.
   //
@@ -747,6 +686,9 @@ function AppContent() {
                 <Stack.Protected guard={!isAuthenticated} redirectTo={ROUTE_PATHS.EXPLORE_TAB}>
                   <Stack.Screen name="auth" options={AUTH_ROUTE_OPTIONS} />
                 </Stack.Protected>
+
+                {/* Unguarded: a reset link opens it signed in or signed out */}
+                <Stack.Screen name="reset-password" options={RESET_PASSWORD_ROUTE_OPTIONS} />
 
                 {/* Audio overlays - mini-player and sleep timer */}
               </Stack>

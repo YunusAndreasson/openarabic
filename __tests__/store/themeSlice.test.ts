@@ -6,8 +6,18 @@
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
 
-import reducer, { setTheme, type ThemeState } from '../../store/themeSlice';
+import reducer, { selectTheme, setTheme, type ThemeState } from '../../store/themeSlice';
 import { Theme } from '@/constants/colors';
+
+describe('selectTheme', () => {
+  test('a stored theme is read as stored', () => {
+    expect(selectTheme({ theme: { theme: Theme.Light } })).toBe(Theme.Light);
+  });
+
+  test('a rehydrated null is the shipped default — the one fallback every reader shares', () => {
+    expect(selectTheme({ theme: { theme: null } })).toBe(Theme.Dark);
+  });
+});
 
 describe('themeSlice reducers', () => {
   let initialState: ThemeState;

@@ -24,27 +24,29 @@
  *
  * Testing Implications:
  * - Tests should verify "does not throw" for expected failures
- * - Mock BackgroundTask.getStatusAsync() to test different scenarios
- * - Focus on: error handling, graceful fallback, status checks
+ * - Mock BackgroundTask.registerTaskAsync() to test different scenarios
+ * - Focus on: error handling, graceful fallback
  * - Don't test Expo Background Task internals (third-party responsibility)
  *
  * Configuration Requirements (Optional):
- * - iOS: UIBackgroundModes = ['fetch'] in Info.plist
+ * - iOS: UIBackgroundModes includes 'processing', and BGTaskSchedulerPermittedIdentifiers
+ *   includes 'com.expo.modules.backgroundtask.processing' (the expo-background-task
+ *   config plugin adds both)
  * - Android: Permissions and background service configuration
  * - If missing, app silently continues without background updates
  */
 
-import NetInfo from '@react-native-community/netinfo';
 import * as BackgroundTask from 'expo-background-task';
 import * as TaskManager from 'expo-task-manager';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { setAppBadgeCount, syncSmartNotifications } from '@/services/notificationService';
+import { setAppBadgeCount, syncReminderPlan } from '@/services/notificationService';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
-import { buildNotificationPlan } from '@/utils/notificationPlanner';
+import { isKnownOffline } from '@/utils/network';
 import { readSmartReminderPrefs } from '@/utils/smartReminderPrefs';
+import { toError } from '@/utils/toError';
 import { isDueAt } from '@/utils/wordClassification';
 
 // Background task name
@@ -58,8 +60,7 @@ const BACKGROUND_FETCH_TASK = 'background-due-words-calculation';
 TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
   try {
     // Check network connectivity before making any requests
-    const netState = await NetInfo.fetch();
-    if (netState.isConnected === false) {
+    if (await isKnownOffline()) {
       // No network - fail silently (expected in background)
       return BackgroundTask.BackgroundTaskResult.Failed;
     }
@@ -97,22 +98,13 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
     // is the primary scheduler; this run corrects multi-device staleness.
     const prefs = await readSmartReminderPrefs();
     if (prefs?.enabled) {
-      const plan = buildNotificationPlan({
-        words,
-        now: new Date(),
-        preferredHour: prefs.hour,
-        preferredMinute: prefs.minute,
-        ...(prefs.lastSessionCompletedAt !== undefined
-          ? { lastSessionCompletedAt: prefs.lastSessionCompletedAt }
-          : {}),
-      });
-      await syncSmartNotifications(plan, 'background-task');
+      await syncReminderPlan(words, prefs, 'background-task');
     }
 
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch (error) {
     // Check if it's a network error - these are expected in background
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = toError(error).message;
     const isNetworkError =
       errorMessage.includes('Network request failed') ||
       errorMessage.includes('network') ||
@@ -139,30 +131,25 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
  */
 export async function registerBackgroundTasks(): Promise<void> {
   try {
-    // Check if background task is available
-    const status = await BackgroundTask.getStatusAsync();
-
-    if (status === BackgroundTask.BackgroundTaskStatus.Available) {
-      // Register the background task with minimum 15-minute interval
-      await BackgroundTask.registerTaskAsync(BACKGROUND_FETCH_TASK, {
-        minimumInterval: 15, // 15 minutes
-      });
-
-      // Background task registered successfully
-    } else {
-      // Background task is not available on this device
-      // Silently skip - this is expected when Background Fetch is not configured
-    }
+    // No availability pre-check: registerTaskAsync already returns early when
+    // the status is Restricted (simulators, Expo Go) or the task is registered.
+    // Register the background task with minimum 15-minute interval
+    await BackgroundTask.registerTaskAsync(BACKGROUND_FETCH_TASK, {
+      minimumInterval: 15, // 15 minutes
+    });
   } catch (error) {
-    // Handle specific error about Background Fetch not being configured
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    // The module's own messages for a build without the background mode
+    // ("Background Task has not been configured. To enable it, add `process`
+    // to `UIBackgroundModes`…") and for a missing native module (an
+    // UnavailabilityError naming registerTaskAsync).
+    const errorMessage = toError(error).message;
     const isNotConfiguredError =
-      errorMessage.includes('Background Fetch has not been configured') ||
+      errorMessage.includes('Background Task has not been configured') ||
       errorMessage.includes('UIBackgroundModes') ||
       errorMessage.includes('registerTaskAsync');
 
     if (isNotConfiguredError) {
-      // Silently ignore - Background Fetch is optional and not configured
+      // Silently ignore - background tasks are optional and not configured
       return;
     }
 

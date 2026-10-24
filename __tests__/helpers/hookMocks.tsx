@@ -41,7 +41,6 @@ const createAuthMockDefaults = () => ({
   signIn: jest.fn(async (..._args: unknown[]) => undefined),
   signUp: jest.fn(async (..._args: unknown[]) => undefined),
   signOut: jest.fn(async (..._args: unknown[]) => undefined),
-  refreshSession: jest.fn(async (..._args: unknown[]) => undefined),
 });
 
 export const createAuthMock = (

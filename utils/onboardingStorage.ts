@@ -1,12 +1,10 @@
 /**
  * Onboarding storage utilities
  * Persists the "Get started" checklist progress as a single JSON blob with
- * fail-safe error handling (mirrors utils/tutorialStorage.ts). A small
- * in-module cache + listener set lets UI update live when steps complete
- * from anywhere in the app (mutation callbacks, audio playback, etc.).
+ * fail-safe error handling (mirrors utils/tutorialStorage.ts). The last state
+ * read or written is held in an external store, so UI updates live when steps
+ * complete from anywhere in the app (mutation callbacks, audio playback, etc.).
  */
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
   ONBOARDING_STATE_VERSION,
@@ -14,8 +12,10 @@ import {
   type OnboardingProgressState,
   type OnboardingStep,
 } from '@/constants/onboarding';
-import { handleError } from '@/utils/errorHandling';
 import { scopedKey } from '@/constants/storageKeys';
+import { createExternalStore } from '@/utils/createExternalStore';
+import { createJsonStore, decodeFields } from '@/utils/createJsonStore';
+import { createSerialQueue } from '@/utils/createSerialQueue';
 
 function createState(overrides: Partial<OnboardingProgressState> = {}): OnboardingProgressState {
   return {
@@ -29,12 +29,42 @@ function createState(overrides: Partial<OnboardingProgressState> = {}): Onboardi
   };
 }
 
-let cachedState: OnboardingProgressState | null = null;
+/**
+ * The blob at one account's key. Built per operation from the key captured
+ * when the operation started — never derived from the active user later, so
+ * a write that lands after an account switch cannot reach the new account.
+ */
+const progressStore = (storageKey: string) =>
+  createJsonStore<OnboardingProgressState>({
+    key: storageKey,
+    decode: raw =>
+      decodeFields(raw, createState(), {
+        version: 'number',
+        initializedAt: 'string',
+        dismissed: 'boolean',
+        readFirstText: 'boolean',
+        saveFirstWord: 'boolean',
+        listenToAudio: 'boolean',
+        practiceFirstWord: 'boolean',
+        completedAt: 'string',
+      }),
+    empty: () => createState(),
+    // FAIL-SAFE: a dismissed state, so the checklist and welcome intro never
+    // show to an unknown cohort. Not persisted, so a transient error is retried
+    // next launch.
+    onReadError: () => createState({ dismissed: true, initializedAt: new Date().toISOString() }),
+    report: {
+      read: { showToast: false, analyticsEventName: 'Onboarding_Storage_Read_Error' },
+      write: { showToast: false, analyticsEventName: 'Onboarding_Storage_Write_Error' },
+    },
+  });
+
+/** The active account's state as last read or written; null until the first load. */
+const progress = createExternalStore<OnboardingProgressState | null>(null);
 let activeUserId: string | null = null;
 let accountGeneration = 0;
 let stateRevision = 0;
-let mutationQueue: Promise<void> = Promise.resolve();
-const listeners = new Set<() => void>();
+const enqueueMutation = createSerialQueue();
 
 const getStorageKey = (): string => scopedKey(ONBOARDING_STORAGE_KEY, activeUserId);
 
@@ -51,23 +81,13 @@ function isCurrentScope(scope: AccountScope): boolean {
   return scope.generation === accountGeneration && scope.storageKey === getStorageKey();
 }
 
-function enqueueMutation<T>(operation: () => Promise<T>): Promise<T> {
-  const result = mutationQueue.then(operation, operation);
-  mutationQueue = result.then(
-    () => undefined,
-    () => undefined,
-  );
-  return result;
-}
-
 /** Switch the in-memory/persistent checklist scope when the auth user changes. */
 export function setOnboardingStorageUser(userId: string | null): void {
   if (activeUserId === userId) return;
   activeUserId = userId;
   accountGeneration += 1;
   stateRevision += 1;
-  cachedState = null;
-  notifyListeners();
+  progress.set(null);
 }
 
 /**
@@ -75,15 +95,12 @@ export function setOnboardingStorageUser(userId: string | null): void {
  * Returns an unsubscribe function. Designed for useSyncExternalStore.
  */
 export function subscribeOnboarding(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
+  return progress.subscribe(listener);
 }
 
 /** Synchronous snapshot for useSyncExternalStore; null until first load. */
 export function getCachedOnboardingState(): OnboardingProgressState | null {
-  return cachedState;
+  return progress.get();
 }
 
 /**
@@ -97,54 +114,26 @@ export async function loadOnboardingState(): Promise<OnboardingProgressState> {
 }
 
 async function loadOnboardingStateForScope(scope: AccountScope): Promise<OnboardingProgressState> {
-  if (isCurrentScope(scope) && cachedState) return cachedState;
+  const cached = progress.get();
+  if (isCurrentScope(scope) && cached) return cached;
   const revisionAtStart = stateRevision;
-  try {
-    const raw = await AsyncStorage.getItem(scope.storageKey);
-    const loadedState = raw
-      ? { ...createState(), ...(JSON.parse(raw) as Partial<OnboardingProgressState>) }
-      : createState();
+  const loadedState = await progressStore(scope.storageKey).read();
 
-    // Ignore reads made stale by either an account switch or a newer mutation.
-    if (isCurrentScope(scope) && revisionAtStart === stateRevision) {
-      cachedState = loadedState;
-      notifyListeners();
-    }
-    return loadedState;
-  } catch (error) {
-    void handleError(error, {
-      showToast: false,
-      analyticsEventName: 'Onboarding_Storage_Read_Error',
-    });
-    const failSafe = createState({ dismissed: true, initializedAt: new Date().toISOString() });
-    if (isCurrentScope(scope) && revisionAtStart === stateRevision) {
-      cachedState = failSafe;
-      notifyListeners();
-    }
-    return failSafe;
+  // Ignore reads made stale by either an account switch or a newer mutation.
+  if (isCurrentScope(scope) && revisionAtStart === stateRevision) {
+    progress.set(loadedState);
   }
-}
-
-function notifyListeners(): void {
-  listeners.forEach(listener => listener());
+  return loadedState;
 }
 
 async function writeState(next: OnboardingProgressState, scope: AccountScope): Promise<void> {
   if (!isCurrentScope(scope)) return;
 
   stateRevision += 1;
-  cachedState = next;
-  notifyListeners();
-  try {
-    // Use the key captured with the operation. Never derive a destination from
-    // mutable auth state after asynchronous work has started.
-    await AsyncStorage.setItem(scope.storageKey, JSON.stringify(next));
-  } catch (error) {
-    void handleError(error, {
-      showToast: false,
-      analyticsEventName: 'Onboarding_Storage_Write_Error',
-    });
-  }
+  progress.set(next);
+  // Use the key captured with the operation. Never derive a destination from
+  // mutable auth state after asynchronous work has started.
+  await progressStore(scope.storageKey).write(next);
 }
 
 /**

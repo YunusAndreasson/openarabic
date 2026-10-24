@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { STORAGE_KEYS, sharedAccountStorageKeys } from '@/constants/storageKeys';
+import { resetNotificationPromptState } from '@/utils/notificationPromptStorage';
 
 /**
  * Record `userId` as the account now signed in on this device, and report
@@ -24,6 +25,10 @@ export async function claimDeviceForAccount(userId: string): Promise<boolean> {
   const switched = previousUserId !== null;
   if (switched) {
     await AsyncStorage.multiRemove(sharedAccountStorageKeys());
+    // The one module that caches a removed key in memory. Left alone, it kept
+    // serving the previous account's prompt state and wrote it back under the
+    // new account at the next update.
+    resetNotificationPromptState();
   }
   await AsyncStorage.setItem(STORAGE_KEYS.LAST_SIGNED_IN_USER, userId);
   return switched;

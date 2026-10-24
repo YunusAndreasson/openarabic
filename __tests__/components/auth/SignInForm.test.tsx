@@ -32,9 +32,11 @@ jest.mock('@/hooks/animations', () =>
 
 // Mock expo-router
 const mockRouterPush = jest.fn();
+const mockRouterDismissTo = jest.fn();
 jest.mock('expo-router', () => ({
   router: {
     push: (...args: unknown[]) => mockRouterPush(...args),
+    dismissTo: (...args: unknown[]) => mockRouterDismissTo(...args),
   },
 }));
 
@@ -122,12 +124,13 @@ describe('SignInForm', () => {
       });
     });
 
-    test('navigates to sign up when create account pressed', () => {
+    test('navigates to sign up when create account pressed, without stacking', () => {
       const { getByTestId } = render(<SignInForm />);
 
       fireEvent.press(getByTestId('navigate-to-sign-up-link'));
 
-      expect(mockRouterPush).toHaveBeenCalledWith('/auth/sign-up');
+      expect(mockRouterDismissTo).toHaveBeenCalledWith('/auth/sign-up');
+      expect(mockRouterPush).not.toHaveBeenCalled();
     });
 
     test('calls setEmail when email input changes', () => {

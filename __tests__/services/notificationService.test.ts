@@ -47,11 +47,16 @@ jest.mock('@/constants/colors', () => ({
   },
 }));
 
+jest.mock('@/utils/notificationPlanner', () => ({
+  buildNotificationPlan: jest.fn(),
+}));
+
 // Import after mocks
 import * as Notifications from 'expo-notifications';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { analytics } from '@/services/analytics';
 import { handleError } from '@/utils/errorHandling';
+import { buildNotificationPlan } from '@/utils/notificationPlanner';
 
 // Get access to mock functions from expo-notifications mock.
 //
@@ -69,7 +74,6 @@ const NotificationsMock = Notifications as typeof Notifications & {
     | 'setNotificationHandler'
     | 'setNotificationCategoryAsync'
     | 'setNotificationChannelAsync'
-    | 'addNotificationReceivedListener'
     | 'addNotificationResponseReceivedListener'
     | 'addNotificationsDroppedListener'
     | 'getPermissionsAsync'
@@ -80,14 +84,14 @@ const NotificationsMock = Notifications as typeof Notifications & {
     | 'getAllScheduledNotificationsAsync'
     | 'setBadgeCountAsync'
     | 'getBadgeCountAsync'
+    | 'getLastNotificationResponse'
+    | 'clearLastNotificationResponse'
   >;
 };
 
 const mockSetNotificationHandler = NotificationsMock.__mocks.setNotificationHandler;
 const mockSetNotificationCategoryAsync = NotificationsMock.__mocks.setNotificationCategoryAsync;
 const mockSetNotificationChannelAsync = NotificationsMock.__mocks.setNotificationChannelAsync;
-const mockAddNotificationReceivedListener =
-  NotificationsMock.__mocks.addNotificationReceivedListener;
 const mockAddNotificationResponseReceivedListener =
   NotificationsMock.__mocks.addNotificationResponseReceivedListener;
 const mockAddNotificationsDroppedListener =
@@ -103,6 +107,8 @@ const mockGetAllScheduledNotificationsAsync =
   NotificationsMock.__mocks.getAllScheduledNotificationsAsync;
 const mockSetBadgeCountAsync = NotificationsMock.__mocks.setBadgeCountAsync;
 const mockGetBadgeCountAsync = NotificationsMock.__mocks.getBadgeCountAsync;
+const mockGetLastNotificationResponse = NotificationsMock.__mocks.getLastNotificationResponse;
+const mockClearLastNotificationResponse = NotificationsMock.__mocks.clearLastNotificationResponse;
 
 // Import service after mocks - service runs setNotificationHandler on load
 import * as notificationService from '@/services/notificationService';
@@ -225,6 +231,31 @@ describe('notificationService', () => {
       expect(mockRequestPermissionsAsync).not.toHaveBeenCalled();
     });
 
+    test('does not re-ask an Android permission that was finally denied', async () => {
+      Platform.OS = 'android';
+      mockGetPermissionsAsync.mockResolvedValueOnce(
+        createPermissionsMock('denied', { canAskAgain: false }),
+      );
+
+      const granted = await notificationService.ensurePermissions();
+
+      expect(granted).toBe(false);
+      expect(mockRequestPermissionsAsync).not.toHaveBeenCalled();
+    });
+
+    test('asks again on Android while the denial is not final', async () => {
+      Platform.OS = 'android';
+      mockGetPermissionsAsync.mockResolvedValueOnce(
+        createPermissionsMock('denied', { canAskAgain: true }),
+      );
+      mockRequestPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('granted'));
+
+      const granted = await notificationService.ensurePermissions();
+
+      expect(granted).toBe(true);
+      expect(mockRequestPermissionsAsync).toHaveBeenCalledTimes(1);
+    });
+
     test('should handle iOS ephemeral status as not granted', async () => {
       Platform.OS = 'ios';
       mockGetPermissionsAsync.mockResolvedValueOnce(
@@ -338,6 +369,29 @@ describe('notificationService', () => {
       expect(handleError).toHaveBeenCalled();
     });
 
+    test('syncReminderPlan builds the plan from the reminder setting and schedules it', async () => {
+      const plan = [makePlan({ identifier: 'srs-due-from-prefs' })];
+      jest.mocked(buildNotificationPlan).mockReturnValue(plan);
+
+      const scheduled = await notificationService.syncReminderPlan(
+        [],
+        { hour: 8, minute: 30, enabled: true, lastSessionCompletedAt: 1_700_000_000_000 },
+        'test',
+      );
+
+      expect(buildNotificationPlan).toHaveBeenCalledWith({
+        words: [],
+        now: expect.any(Date),
+        preferredHour: 8,
+        preferredMinute: 30,
+        lastSessionCompletedAt: 1_700_000_000_000,
+      });
+      expect(scheduled).toBe(1);
+      expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ identifier: 'srs-due-from-prefs' }),
+      );
+    });
+
     test('cancelSmartNotifications does not throw on errors', async () => {
       mockGetAllScheduledNotificationsAsync.mockRejectedValueOnce(new Error('boom'));
 
@@ -415,18 +469,6 @@ describe('notificationService', () => {
   });
 
   describe('Notification Listeners and Navigation', () => {
-    test('should set and clear navigation callback', () => {
-      const callback = jest.fn();
-      notificationService.setNotificationNavigationCallback(callback);
-      // Callback is set (internal state)
-
-      notificationService.clearNotificationNavigationCallback();
-      // Callback is cleared (internal state)
-
-      // Just verify these don't throw
-      expect(callback).toBeDefined();
-    });
-
     test('should handle cleanup when no listeners exist', () => {
       expect(() => notificationService.cleanupNotifications()).not.toThrow();
     });
@@ -543,6 +585,40 @@ describe('notificationService', () => {
         type: 'srs-due',
         coldStart: true,
       });
+    });
+
+    test('observing routes the tap that launched the app, once, and clears it', () => {
+      const navigate = jest.fn();
+      mockGetLastNotificationResponse.mockReturnValue(
+        buildResponse({ type: 'srs-due', identifier: 'cold-start' }),
+      );
+      const remove = jest.fn();
+      mockAddNotificationResponseReceivedListener.mockReturnValue({ remove });
+
+      const unsubscribe = notificationService.observeNotificationResponses(navigate);
+
+      expect(navigate).toHaveBeenCalledWith('/practice');
+      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, {
+        type: 'srs-due',
+        coldStart: true,
+      });
+      expect(mockClearLastNotificationResponse).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
+      expect(remove).toHaveBeenCalledTimes(1);
+    });
+
+    test('observing routes every later tap through the response listener', () => {
+      const navigate = jest.fn();
+      mockGetLastNotificationResponse.mockReturnValue(null);
+      mockAddNotificationResponseReceivedListener.mockReturnValue({ remove: jest.fn() });
+
+      notificationService.observeNotificationResponses(navigate);
+      const listener = mockAddNotificationResponseReceivedListener.mock.calls[0]?.[0];
+      listener?.(buildResponse({ type: 'srs-slipping', identifier: 'warm-tap' }));
+
+      expect(navigate).toHaveBeenCalledWith('/practice');
+      expect(mockClearLastNotificationResponse).not.toHaveBeenCalled();
     });
 
     test('ignores notifications without a routable type', () => {

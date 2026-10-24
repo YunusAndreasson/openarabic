@@ -8,17 +8,18 @@
  */
 
 import { renderHook } from '@testing-library/react-native';
-
-import { Theme } from '@/constants/colors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useColorScheme } from 'react-native';
 
-// Mock the selector hook so we can control the returned theme
+import { Theme } from '@/constants/colors';
+import { useIsDarkMode, useNativeColorScheme } from '@/hooks/theme/useThemeDetection';
+
+// The stored theme, read through the real selector.
+let mockStoredTheme: Theme | null = Theme.Dark;
 jest.mock('@/store/hooks', () => ({
-  useAppSelectorShallow: jest.fn(),
+  useAppSelector: (selector: (state: { theme: { theme: Theme | null } }) => unknown) =>
+    selector({ theme: { theme: mockStoredTheme } }),
 }));
 
-const mockedSelector = require('@/store/hooks').useAppSelectorShallow as jest.Mock;
 const mockedUseColorScheme = useColorScheme as jest.Mock;
 
 describe('useIsDarkMode', () => {
@@ -27,7 +28,7 @@ describe('useIsDarkMode', () => {
   });
 
   test('returns true when theme is dark', () => {
-    mockedSelector.mockReturnValue(Theme.Dark);
+    mockStoredTheme = Theme.Dark;
 
     const { result } = renderHook(() => useIsDarkMode());
 
@@ -35,46 +36,40 @@ describe('useIsDarkMode', () => {
   });
 
   test('returns false when theme is light', () => {
-    mockedSelector.mockReturnValue(Theme.Light);
+    mockStoredTheme = Theme.Light;
 
     const { result } = renderHook(() => useIsDarkMode());
 
     expect(result.current).toBeFalsy();
   });
 
-  test('falls back to system preference when theme is null', () => {
-    mockedSelector.mockReturnValue(null);
-    mockedUseColorScheme.mockReturnValue('dark');
-
-    const { result } = renderHook(() => useIsDarkMode());
-
-    expect(result.current).toBeTruthy();
-    expect(mockedUseColorScheme).toHaveBeenCalled();
-  });
-
-  test('returns false for light system preference fallback', () => {
-    mockedSelector.mockReturnValue(null);
+  test('a stored null theme is the shipped default, Dark, whatever the OS says', () => {
+    // The OS-appearance fallback is gone: every reader of an unset theme now
+    // agrees on Dark, and no theme reader subscribes to the system scheme.
+    mockStoredTheme = null;
     mockedUseColorScheme.mockReturnValue('light');
 
     const { result } = renderHook(() => useIsDarkMode());
 
-    expect(result.current).toBeFalsy();
+    expect(result.current).toBe(true);
+    expect(mockedUseColorScheme).not.toHaveBeenCalled();
   });
 
   test('returns false for sepia theme', () => {
-    mockedSelector.mockReturnValue(Theme.Sepia);
+    mockStoredTheme = Theme.Sepia;
 
     const { result } = renderHook(() => useIsDarkMode());
 
     expect(result.current).toBeFalsy();
   });
+});
 
-  test('handles undefined selector return', () => {
-    mockedSelector.mockReturnValue(undefined);
-    mockedUseColorScheme.mockReturnValue('light');
+describe('useNativeColorScheme', () => {
+  test('follows the app theme, with sepia as light', () => {
+    mockStoredTheme = Theme.Sepia;
+    expect(renderHook(() => useNativeColorScheme()).result.current).toBe('light');
 
-    const { result } = renderHook(() => useIsDarkMode());
-
-    expect(result.current).toBeFalsy();
+    mockStoredTheme = Theme.Dark;
+    expect(renderHook(() => useNativeColorScheme()).result.current).toBe('dark');
   });
 });

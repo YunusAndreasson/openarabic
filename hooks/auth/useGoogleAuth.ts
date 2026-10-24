@@ -1,31 +1,19 @@
-import NetInfo from '@react-native-community/netinfo';
+import type * as GoogleSigninLibrary from '@react-native-google-signin/google-signin';
 import * as Sentry from '@sentry/react-native';
 import { useEffect, useState } from 'react';
-import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
-import { isCancellationError } from '@/utils/authUtils';
-import { authBreadcrumb } from '@/utils/errorHandling';
 
-/** Type for dynamically imported Google Sign In module */
-interface GoogleSignInModule {
-  configure: (options: {
-    webClientId: string;
-    iosClientId?: string | undefined;
-    offlineAccess?: boolean;
-  }) => void | Promise<void>;
-  hasPlayServices: (options: { showPlayServicesUpdateDialog: boolean }) => Promise<void>;
-  /** Resolves `{ type: 'cancelled' }` when the user backs out — it does not throw. */
-  signIn: () => Promise<
-    | {
-        type: 'success';
-        data: {
-          idToken?: string | null;
-          user?: { email?: string; name?: string | null };
-          serverAuthCode?: string | null;
-        };
-      }
-    | { type: 'cancelled'; data: null }
-  >;
-}
+import { useOAuthProvider } from '@/hooks/auth/useOAuthProvider';
+import { delay } from '@/utils/async';
+import { getErrorCode } from '@/utils/authUtils';
+import { authBreadcrumb } from '@/utils/errorHandling';
+import { isKnownOffline } from '@/utils/network';
+
+/**
+ * The library's own module type. `import type` is erased under
+ * `verbatimModuleSyntax`, so the guarded `require()` below stays the only
+ * runtime load and Expo Go never evaluates the native module.
+ */
+type GoogleSignInModule = typeof GoogleSigninLibrary;
 
 /**
  * Google Sign In ships as a native module, so it is simply absent in Expo Go.
@@ -40,16 +28,23 @@ let cachedGoogleSignin: GoogleSignInModule | null | undefined;
 function getGoogleSignin(): GoogleSignInModule | null {
   if (cachedGoogleSignin === undefined) {
     try {
-      const mod = require('@react-native-google-signin/google-signin') as {
-        GoogleSignin?: GoogleSignInModule;
-      };
-      cachedGoogleSignin = mod.GoogleSignin ?? null;
+      cachedGoogleSignin =
+        require('@react-native-google-signin/google-signin') as GoogleSignInModule;
     } catch {
       cachedGoogleSignin = null;
     }
   }
   return cachedGoogleSignin;
 }
+
+/**
+ * The native module rejects with INTERNAL_ERROR as the STRING '8'; a strict
+ * comparison against the number never matched, so this retry once never ran.
+ */
+const INTERNAL_ERROR_CODE = '8';
+/** One retry for INTERNAL_ERROR, after a linear backoff. */
+const MAX_SIGN_IN_RETRIES = 1;
+const RETRY_BACKOFF_MS = 1000;
 
 /**
  * Hook return type for Google authentication
@@ -82,8 +77,8 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     const configure = async (): Promise<void> => {
       try {
         // Guard: skip if native module is unavailable (Expo Go)
-        const GoogleSignin = getGoogleSignin();
-        if (!GoogleSignin) return;
+        const google = getGoogleSignin();
+        if (!google) return;
 
         // Get Web Client ID from environment
         const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
@@ -101,7 +96,9 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
           return;
         }
 
-        await GoogleSignin.configure({
+        // Synchronous in v16: it starts the native configure and signIn()
+        // awaits it, so there is nothing to wait for here.
+        google.GoogleSignin.configure({
           webClientId,
           iosClientId, // Optional: iOS-specific client ID
           offlineAccess: false, // We only need the ID token, not refresh tokens
@@ -130,106 +127,64 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     provider: 'google',
 
     loadModule: async () => {
-      const GoogleSignin = getGoogleSignin();
-      if (!GoogleSignin || !isConfigured) {
+      const google = getGoogleSignin();
+      if (!google || !isConfigured) {
         throw new Error('Google Sign In not available');
       }
 
-      return GoogleSignin;
+      return google;
     },
 
-    executeSignIn: async (module: unknown): Promise<OAuthSignInResult> => {
-      const GoogleSignin = module as GoogleSignInModule;
+    executeSignIn: async ({ GoogleSignin, isCancelledResponse }) => {
       // Check Play Services availability (Android)
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
-      // Sign in with retry logic for INTERNAL_ERROR
-      let userInfo: Awaited<ReturnType<GoogleSignInModule['signIn']>> | undefined;
-      let signInAttempt = 0;
-      const maxRetries = 1;
-
-      while (signInAttempt <= maxRetries) {
+      // Sign in, retrying INTERNAL_ERROR once. A failed attempt is a
+      // breadcrumb, not a report: useOAuthProvider reports the sign-in once.
+      let response: GoogleSigninLibrary.SignInResponse | undefined;
+      let attempt = 0;
+      while (!response) {
         try {
-          if (signInAttempt > 0) {
-            // Check network before retry
-            const netState = await NetInfo.fetch();
-            // `null` means not yet known; only a definite `false` is offline.
-            if (netState.isConnected === false) {
+          if (attempt > 0) {
+            if (await isKnownOffline()) {
               throw new Error('No network connection available');
             }
-
-            // Wait before retry (exponential backoff)
-            await new Promise<void>(resolve => setTimeout(resolve, 1000 * signInAttempt));
-
-            authBreadcrumb(`Retrying Google Sign In (attempt ${signInAttempt + 1})`);
+            await delay(RETRY_BACKOFF_MS * attempt);
+            authBreadcrumb(`Retrying Google Sign In (attempt ${attempt + 1})`);
           }
 
-          userInfo = await GoogleSignin.signIn();
-          break; // Success
+          response = await GoogleSignin.signIn();
         } catch (signInError) {
-          const errorCode =
-            typeof signInError === 'object' && signInError && 'code' in signInError
-              ? signInError.code
-              : 'unknown';
+          const errorCode = getErrorCode(signInError);
+          const shouldRetry = errorCode === INTERNAL_ERROR_CODE && attempt < MAX_SIGN_IN_RETRIES;
 
-          // Retry only for INTERNAL_ERROR (code 8) on first attempt. The native
-          // module rejects with the code as a STRING, so a strict comparison
-          // against the number never matched and this retry never ran.
-          const isInternalError = String(errorCode) === '8';
-          const shouldRetry = isInternalError && signInAttempt < maxRetries;
+          authBreadcrumb(
+            `Google sign-in attempt ${attempt + 1} failed`,
+            { errorCode: errorCode ?? 'unknown', willRetry: shouldRetry },
+            shouldRetry ? 'warning' : 'error',
+          );
 
-          // Skip Sentry for user cancellations — useOAuthProvider handles these silently
-          if (!isCancellationError(signInError)) {
-            Sentry.captureException(signInError, {
-              tags: {
-                location: 'google_auth',
-                step: 'google_signin',
-                attempt: signInAttempt + 1,
-                willRetry: shouldRetry,
-              },
-              level: shouldRetry ? 'warning' : 'error',
-              extra: {
-                errorCode,
-                errorMessage:
-                  signInError instanceof Error ? signInError.message : String(signInError),
-              },
-            });
-          }
-
-          if (shouldRetry) {
-            signInAttempt++;
-            continue;
-          }
-
-          throw signInError;
+          if (!shouldRetry) throw signInError;
+          attempt += 1;
         }
       }
 
-      // Backing out of the account picker RESOLVES with { type: 'cancelled' } —
-      // google-signin stopped throwing for it in v13. Unhandled, it fell through
-      // to the missing-token branch below: a Sentry warning plus a 15-second
-      // "update Google Play Services" toast for someone who changed their mind.
-      // Raised as a cancellation, useOAuthProvider handles it silently, like
-      // every other cancel.
-      if (userInfo?.type === 'cancelled') {
-        throw new Error('Google Sign-In cancelled by user');
-      }
+      // Backing out of the account picker RESOLVES with a cancelled response —
+      // google-signin stopped throwing for it in v13, and v16 also turns the
+      // native SIGN_IN_CANCELLED code into one. Unhandled, it fell through to
+      // the missing-token branch below: a 15-second "update Google Play
+      // Services" toast for someone who changed their mind.
+      if (isCancelledResponse(response)) return null;
 
-      if (!userInfo?.data.idToken) {
-        // Log what we actually received for debugging
-        // Downgraded to warning: this is typically a Google Play Services environmental issue
-        // on low-end Android devices, not an app bug
-        Sentry.captureException(new Error('Google Sign-In completed but no ID token returned'), {
-          tags: {
-            location: 'google_auth',
-            step: 'token_validation',
-          },
-          level: 'warning',
-          extra: {
-            hasUser: !!userInfo?.data.user,
-            hasServerAuthCode: !!userInfo?.data.serverAuthCode,
-          },
-        });
+      const { idToken, user, serverAuthCode } = response.data;
+      if (!idToken) {
+        // Typically a Google Play Services environmental issue on low-end
+        // Android devices, not an app bug. No email on the trail.
+        authBreadcrumb(
+          'Google Sign-In completed but no ID token returned',
+          { hasServerAuthCode: !!serverAuthCode },
+          'warning',
+        );
 
         throw new Error(
           'Google Sign-In failed. Please try updating Google Play Services or clearing Google app data.',
@@ -237,27 +192,21 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       }
 
       return {
-        idToken: userInfo.data.idToken,
+        idToken,
         userInfo: {
-          email: userInfo.data.user?.email,
-          name: userInfo.data.user?.name ?? undefined,
+          email: user.email,
+          name: user.name ?? undefined,
         },
       };
     },
 
     handleProviderError: (error: unknown) => {
-      if (!getGoogleSignin()) return undefined;
+      const google = getGoogleSignin();
+      if (!google) return undefined;
 
       // Handle Play Services not available (Android)
-      const { statusCodes } = require('@react-native-google-signin/google-signin');
-
-      if (
-        statusCodes &&
-        error &&
-        typeof error === 'object' &&
-        'code' in error &&
-        error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE
-      ) {
+      const { isErrorWithCode, statusCodes } = google;
+      if (isErrorWithCode(error) && error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
         return 'Google Play Services not available. Please update.';
       }
 

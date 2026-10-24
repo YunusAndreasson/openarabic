@@ -7,7 +7,6 @@ import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAccountDeletion } from '@/hooks/account/useAccountDeletion';
-import { router } from 'expo-router';
 
 const DeleteAccountScreen = () => {
   const {
@@ -16,22 +15,14 @@ const DeleteAccountScreen = () => {
     setConfirmationText,
     loading,
     confirmationError,
-    validateConfirmation,
     deleteAccount,
   } = useAccountDeletion();
 
-  const handleDeletePress = async () => {
-    if (!validateConfirmation(confirmationText)) {
-      return;
-    }
-
-    try {
-      await deleteAccount();
-      router.back();
-    } catch {
-      // Error is handled in the hook
-    }
-  };
+  // The hook owns the whole flow: it validates, navigates on success, and on
+  // failure reports and leaves this screen as it is. Popping it here after the
+  // call lost the typed confirmation on every failure, and queued a GO_BACK
+  // behind the hook's own navigation on success.
+  const handleDeletePress = () => void deleteAccount();
 
   return (
     <ScreenScaffold contentContainerStyle={styles.scrollContent}>
@@ -84,7 +75,7 @@ const DeleteAccountScreen = () => {
           autoCorrect={false}
           editable={!loading}
           error={confirmationError}
-          onSubmitEditing={() => void handleDeletePress()}
+          onSubmitEditing={handleDeletePress}
           returnKeyType="done"
         />
       </View>
@@ -96,7 +87,7 @@ const DeleteAccountScreen = () => {
         fullWidth
         title={loading ? STRINGS.ACCOUNT_DELETION_IN_PROGRESS : STRINGS.DELETE_ACCOUNT}
         tone="destructive"
-        onPress={() => void handleDeletePress()}
+        onPress={handleDeletePress}
       />
     </ScreenScaffold>
   );

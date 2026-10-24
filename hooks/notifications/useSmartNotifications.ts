@@ -3,15 +3,14 @@ import { useEffect, useEffectEvent, useRef } from 'react';
 import type { AppStateStatus } from 'react-native';
 import { AppState } from 'react-native';
 
-import { fsrsQueries } from '@/constants/queries';
+import { fsrsQueries, gated } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import {
   cancelSmartNotifications,
   dismissDeliveredSmartNotifications,
-  syncSmartNotifications,
+  syncReminderPlan,
 } from '@/services/notificationService';
 import { useAppSelector } from '@/store/hooks';
-import { buildNotificationPlan } from '@/utils/notificationPlanner';
 import { readSmartReminderPrefs, writeSmartReminderPrefs } from '@/utils/smartReminderPrefs';
 
 /**
@@ -37,10 +36,7 @@ export function useSmartNotifications(): void {
   const reminderTime = useAppSelector(state => state.settings.reminderTime);
 
   const userId = user?.id;
-  const { data: words } = useQuery({
-    ...fsrsQueries.all(userId ?? ''),
-    enabled: isAuthenticated && !!userId,
-  });
+  const { data: words } = useQuery(gated(fsrsQueries.all, userId));
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -65,10 +61,7 @@ export function useSmartNotifications(): void {
   /** Mirrors the setting, and the cooldown with it, for the headless task. */
   const writeMirror = useEffectEvent(async (): Promise<number | undefined> => {
     const lastSessionCompletedAt = await resolveLastCompletedAt();
-    await writeSmartReminderPrefs({
-      ...reminderTime,
-      ...(lastSessionCompletedAt === undefined ? {} : { lastSessionCompletedAt }),
-    });
+    await writeSmartReminderPrefs({ ...reminderTime, lastSessionCompletedAt });
     return lastSessionCompletedAt;
   });
 
@@ -86,14 +79,7 @@ export function useSmartNotifications(): void {
 
     // Keep the headless mirror's cooldown in step with the plan built here.
     const lastSessionCompletedAt = await writeMirror();
-    const plan = buildNotificationPlan({
-      words,
-      now: new Date(),
-      preferredHour: reminderTime.hour,
-      preferredMinute: reminderTime.minute,
-      ...(lastSessionCompletedAt === undefined ? {} : { lastSessionCompletedAt }),
-    });
-    await syncSmartNotifications(plan, trigger);
+    await syncReminderPlan(words, { ...reminderTime, lastSessionCompletedAt }, trigger);
   });
 
   const scheduleSync = useEffectEvent((trigger: string) => {

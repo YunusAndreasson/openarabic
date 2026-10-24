@@ -25,6 +25,7 @@ import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
 import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useAppSelectorShallow } from '@/store/hooks';
+import { selectVoiceEnabled } from '@/store/settingsSlice';
 import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import { useRecallableMemory } from '@/hooks/vocabulary/useMemoryInsights';
 import { isDueCountCapped } from '@/utils/dueCountText';
@@ -54,7 +55,7 @@ export default function PracticeScreen(): JSX.Element {
   const hasStreak = streak !== null;
 
   const { acquireEngine, offerHotwordGlosses } = useVoiceGrading();
-  const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  const voiceEnabled = useAppSelectorShallow(selectVoiceEnabled);
 
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);

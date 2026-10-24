@@ -28,17 +28,6 @@ export const AudioLanguage = {
 
 export type AudioLanguage = (typeof AudioLanguage)[keyof typeof AudioLanguage];
 
-/**
- * Display language preferences for UI text
- * Using const object for zero runtime overhead
- */
-export const DisplayLanguage = {
-  ARABIC_ONLY: 'arabic',
-  ARABIC_ENGLISH: 'bilingual',
-} as const;
-
-export type DisplayLanguage = (typeof DisplayLanguage)[keyof typeof DisplayLanguage];
-
 // ===== NAVIGATION & UI =====
 
 /**

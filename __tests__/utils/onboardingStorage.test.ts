@@ -168,6 +168,35 @@ describe('onboardingStorage', () => {
     expect((await module.loadOnboardingState()).completedAt).toBe(first);
   });
 
+  test('a blob written by an older build round-trips to the same bytes', async () => {
+    // Before practiceFirstWord existed, written in the order the old code
+    // produced. A write now adds the new step in the same place the old
+    // spread-merge put it, so nothing else about the stored bytes moves.
+    mockMemoryStore.set(
+      ONBOARDING_STORAGE_KEY,
+      '{"version":1,"dismissed":false,"readFirstText":true,"saveFirstWord":false,"listenToAudio":false,"initializedAt":"2026-07-20T10:00:00.000Z"}',
+    );
+
+    await freshModule().markOnboardingStep(OnboardingStep.SAVE_WORD);
+
+    expect(mockMemoryStore.get(ONBOARDING_STORAGE_KEY)).toBe(
+      '{"version":1,"dismissed":false,"readFirstText":true,"saveFirstWord":true,"listenToAudio":false,"practiceFirstWord":false,"initializedAt":"2026-07-20T10:00:00.000Z"}',
+    );
+  });
+
+  test('a stored flag of the wrong type reads as its default', async () => {
+    mockMemoryStore.set(
+      ONBOARDING_STORAGE_KEY,
+      '{"version":1,"dismissed":"yes","readFirstText":1,"saveFirstWord":false,"listenToAudio":false,"practiceFirstWord":false}',
+    );
+
+    const state = await freshModule().loadOnboardingState();
+
+    // Trusted as stored, "yes" suppressed the checklist and 1 ticked a step.
+    expect(state.dismissed).toBe(false);
+    expect(state.readFirstText).toBe(false);
+  });
+
   test('subscribers are notified on writes', async () => {
     const module = freshModule();
     const listener = jest.fn();

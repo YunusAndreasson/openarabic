@@ -3,7 +3,7 @@ import { memo, useCallback } from 'react';
 import { SettingsCard, SettingsSection } from '@/components/account';
 import { STRINGS } from '@/constants/strings';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
-import { setAudioShuffleEnabled } from '@/store/settingsSlice';
+import { selectAudioLanguage, setAudioShuffleEnabled } from '@/store/settingsSlice';
 import { AudioLanguage } from '@/types/enums';
 
 interface ListeningSectionProps {
@@ -20,9 +20,7 @@ interface ListeningSectionProps {
 export const ListeningSection = memo<ListeningSectionProps>(({ onAudioLanguagePress }) => {
   const dispatch = useAppDispatch();
 
-  const currentAudioLanguage = useAppSelectorShallow(
-    state => state.settings.audioLanguagePreference,
-  );
+  const currentAudioLanguage = useAppSelectorShallow(selectAudioLanguage);
   const audioShuffleEnabled = useAppSelectorShallow(state => state.settings.audioShuffleEnabled);
 
   const currentAudioLanguageText =
