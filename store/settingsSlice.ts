@@ -1,7 +1,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
-import type { ArabicFontName } from '@/constants/fonts';
+import { resolveArabicFont, type ArabicFontName } from '@/constants/fonts';
 import { ARABIC_FONT_SIZE, clampArabicFontSize } from '@/constants/layout';
 import { AudioLanguage, DisplayLanguage } from '@/types/enums';
 import type { ReminderTime } from '@/types/notifications.types';
@@ -255,6 +255,45 @@ export const selectVoiceDebugEnabled = (state: DeveloperVoiceSettingsState): boo
  * to match.
  */
 export const selectVoiceHandsFree = selectDefaultTrueSetting('voiceHandsFree');
+
+/**
+ * The reading settings, normalised once instead of at every reader.
+ *
+ * `resolveArabicFont` and `clampArabicFontSize` were each called at four sites,
+ * every one with its own comment re-explaining the rehydration hazard; the audio
+ * language was normalised at two and read raw at four more. A persisted value
+ * from an older build (a font this build no longer ships, a size outside the
+ * slider's range, an unknown language) is narrowed here, so no reader can see it.
+ */
+export const selectArabicFont = (state: { settings: { arabicFont?: unknown } }): ArabicFontName =>
+  resolveArabicFont(state.settings.arabicFont);
+
+export const selectArabicFontSize = (state: {
+  settings: { arabicFontSize?: number | null };
+}): number => clampArabicFontSize(state.settings.arabicFontSize);
+
+/** Arabic-only, or bilingual for anything else — the same rule the account row displays. */
+export const selectAudioLanguage = (state: {
+  settings: { audioLanguagePreference?: unknown };
+}): AudioLanguage =>
+  state.settings.audioLanguagePreference === AudioLanguage.ARABIC_ONLY
+    ? AudioLanguage.ARABIC_ONLY
+    : AudioLanguage.ENGLISH_ARABIC;
+
+/** Off unless the learner turned it on; a store from before the flag reads off, its default. */
+export const selectWordTapShowsTooltip = (state: {
+  settings: { wordTapShowsTooltip?: boolean };
+}): boolean => state.settings.wordTapShowsTooltip === true;
+
+/**
+ * Whether voice answers are on.
+ *
+ * Read raw at seven sites before this, where a key missing from an older store
+ * read `undefined` — off. `=== true` keeps exactly that behaviour; the
+ * versioned persist migration is what decides the value for those installs.
+ */
+export const selectVoiceEnabled = (state: { settings: { voiceEnabled?: boolean } }): boolean =>
+  state.settings.voiceEnabled === true;
 
 export const {
   setReminderTime,

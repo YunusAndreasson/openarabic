@@ -322,6 +322,15 @@ export const LAYOUT = {
 
   /** Common sizes for bottom sheet UI elements */
   BOTTOM_SHEET: {
+    /**
+     * Top padding that clears the OS sheet grabber (`sheetGrabberVisible: true`).
+     * iOS draws a pill a few points below the sheet's top edge; at `MEDIUM` (12)
+     * it landed on the first line of the header, which read as garbled text.
+     * Android never draws one for the `presentation: 'formSheet'` path —
+     * react-native-screens only reads `sheetGrabberVisible` on its standalone
+     * `<FormSheet>` — so the same space there would be dead space.
+     */
+    GRABBER_CLEARANCE: Platform.OS === 'android' ? SPACING_SCALE.MEDIUM : SPACING_SCALE.XLARGE,
     HEADER: {
       paddingHorizontal: SPACING_SCALE.MEDIUM, // 12 - consistent with practice bottom sheets
       paddingBottom: SPACING_SCALE.TINY, // 4 - consistent with practice bottom sheets

@@ -34,6 +34,18 @@ export function useCurrentTheme(): Theme {
 }
 
 /**
+ * The light/dark appearance to hand a NATIVE control — `GlassView`, a SwiftUI
+ * `Host`, the date picker.
+ *
+ * Those follow the OS appearance unless told otherwise, and the app's theme is
+ * its own setting (default Dark), so on a phone set to Light they drew
+ * light-appearance chrome under dark-theme glyphs. Sepia is a light theme.
+ */
+export function useNativeColorScheme(): 'light' | 'dark' {
+  return useCurrentTheme() === Theme.Dark ? 'dark' : 'light';
+}
+
+/**
  * Enhanced hook for theme detection that combines Redux state with system preferences
  * Uses both manual theme setting and automatic system detection
  * Gracefully falls back to system colors when Redux isn't ready

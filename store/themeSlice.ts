@@ -21,5 +21,12 @@ const themeSlice = createSlice({
   },
 });
 
+/**
+ * The theme to paint in. The state type allows `null` (redux-persist can hand
+ * one back from an old store), and that reads as the shipped default — the one
+ * fallback rule, instead of a different one at each reader.
+ */
+export const selectTheme = (state: { theme: ThemeState }): Theme => state.theme.theme ?? Theme.Dark;
+
 export const { setTheme } = themeSlice.actions;
 export default themeSlice.reducer;
