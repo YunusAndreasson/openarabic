@@ -34,7 +34,7 @@ export function StoreBadges({
         <a
           href={APP_STORE_URL}
           target="_blank"
-          rel="noopener noreferrer"
+          rel="noopener"
           aria-label="Download OpenArabic on the App Store"
           className="inline-flex rounded-xl transition-opacity duration-150 hover:opacity-85 active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
@@ -63,7 +63,7 @@ export function StoreBadges({
         <a
           href={PLAY_STORE_URL}
           target="_blank"
-          rel="noopener noreferrer"
+          rel="noopener"
           aria-label="Get OpenArabic on Google Play"
           className="inline-flex rounded-xl transition-opacity duration-150 hover:opacity-85 active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >

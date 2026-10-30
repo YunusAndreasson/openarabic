@@ -19,6 +19,12 @@ export const ANDROID_PACKAGE = 'com.edenmind.OpenArabic';
 export const APP_STORE_URL =
   'https://apps.apple.com/app/openarabic/id1594031029';
 
+/**
+ * From App Store Connect, App Analytics, Campaigns. Without it, the App Store
+ * ignores a campaign token, so tracked links lose their credit on iOS only.
+ */
+export const APP_STORE_PROVIDER_TOKEN = process.env.NEXT_PUBLIC_APP_STORE_PROVIDER_TOKEN;
+
 export const PLAY_STORE_URL =
   'https://play.google.com/store/apps/details?id=com.edenmind.OpenArabic';
 

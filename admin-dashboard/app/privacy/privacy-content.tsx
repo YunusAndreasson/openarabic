@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ChangeAnalyticsChoice } from '@/components/analytics-consent';
 import { Footer } from '@/components/footer';
 import { PublicHeader } from '@/components/public-header';
 import { supabase } from '@/lib/supabase';
@@ -92,15 +93,30 @@ export function PrivacyContent() {
 
             <h3 className="text-lg font-semibold mb-2">Mixpanel</h3>
             <p className="text-muted-foreground mb-4">
-              We use Mixpanel for analytics to understand app usage patterns and improve the
-              learning experience.
+              Only if you agree in the app, we use Mixpanel to understand which features get used
+              and to improve the learning experience. You can change this at any time in the app,
+              under Account, Privacy choices.
+            </p>
+
+            <h3 className="text-lg font-semibold mb-2">Meta (Facebook)</h3>
+            <p className="text-muted-foreground mb-4">
+              Only if you agree in the app, we share a small number of app events with Meta, so we
+              can tell whether an ad was worth running: that the app was opened, an account was
+              created, the intro was finished, or a practice session was completed. On Android your
+              device advertising ID is included. We do not send Meta your name, your email or what
+              you study, and we never ask to track you across other apps. You can change this at
+              any time in the app, under Account, Privacy choices.
             </p>
 
             <h3 className="text-lg font-semibold mb-2">Google Analytics</h3>
             <p className="text-muted-foreground mb-4">
-              We use Google Analytics to understand how visitors find and use our website. It
-              collects aggregated, anonymized usage data such as page views and referral sources.
+              Only if you agree on this website, we use Google Analytics to understand how visitors
+              find and use it, such as page views and referral sources. It sets cookies. Your
+              choice is stored in your browser.
             </p>
+            <div className="mb-4">
+              <ChangeAnalyticsChoice />
+            </div>
 
             <h3 className="text-lg font-semibold mb-2">Sentry</h3>
             <p className="text-muted-foreground mb-4">

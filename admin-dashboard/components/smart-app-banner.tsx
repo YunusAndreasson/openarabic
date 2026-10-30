@@ -66,7 +66,7 @@ export function SmartAppBanner({ platformInfo }: SmartAppBannerProps) {
 
   const handleDownload = useCallback(() => {
     if (platformInfo.appStoreUrl) {
-      window.open(platformInfo.appStoreUrl, '_blank', 'noopener,noreferrer');
+      window.open(platformInfo.appStoreUrl, '_blank', 'noopener');
     }
   }, [platformInfo.appStoreUrl]);
 

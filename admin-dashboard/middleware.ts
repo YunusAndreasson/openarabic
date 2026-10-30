@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { isPublicRoute } from '@/lib/public-routes';
+import { APP_STORE_PROVIDER_TOKEN } from '@/lib/app';
+import { withCampaign } from '@/lib/campaign-links';
 import { storeRedirectUrl } from '@/lib/user-agent';
 
 export async function middleware(request: NextRequest) {
@@ -15,7 +17,10 @@ export async function middleware(request: NextRequest) {
   if (pathname === '/download-app' || pathname === '/download-app/') {
     const storeUrl = storeRedirectUrl(request.headers.get('user-agent') || '');
     if (storeUrl) {
-      return NextResponse.redirect(new URL(storeUrl));
+      // Keep a tracked link's campaign: a store redirect is where it would otherwise end.
+      return NextResponse.redirect(
+        new URL(withCampaign(storeUrl, request.nextUrl.searchParams, APP_STORE_PROVIDER_TOKEN)),
+      );
     }
   }
 

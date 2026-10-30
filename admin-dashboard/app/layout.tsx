@@ -3,6 +3,7 @@ import { Inter, Newsreader } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
 import { LayoutWrapper } from '@/components/layout-wrapper';
+import { AnalyticsConsent } from '@/components/analytics-consent';
 import { SmartAppBanner } from '@/components/smart-app-banner';
 import { SiteStructuredData } from '@/components/site-structured-data';
 import { GoogleAnalytics } from '@/components/google-analytics';
@@ -109,7 +110,7 @@ export default async function RootLayout({
     >
       <head>
         {/* Google Analytics (gtag.js) — must be in <head> for Search Console
-            "Google Analytics" ownership verification. */}
+            "Google Analytics" ownership verification. Measures only after consent. */}
         <GoogleAnalytics />
 
         {/* Resource hints for faster external requests */}
@@ -128,6 +129,7 @@ export default async function RootLayout({
         <SiteStructuredData />
         <SmartAppBanner platformInfo={platformInfo} />
         <LayoutWrapper>{children}</LayoutWrapper>
+        <AnalyticsConsent />
       </body>
     </html>
   );
