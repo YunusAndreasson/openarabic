@@ -63,11 +63,19 @@ export function PrivacyContent() {
               performance, and app preferences (theme, audio settings, notifications).
             </p>
 
+            <h3 className="text-lg font-semibold mb-2">Voice Answers</h3>
+            <p className="text-muted-foreground mb-4">
+              If you turn on voice answers, the app uses your microphone and transcribes what it
+              hears on your device. The audio never leaves your device. The text of what it heard is
+              saved with your answer, so we can improve grading.
+            </p>
+
             <h3 className="text-lg font-semibold mb-2">Usage Analytics</h3>
             <p className="text-muted-foreground mb-4">
-              We use Mixpanel and Google Analytics to track basic events like sign in, sign up, and
-              practice sessions. This helps us understand how the app and website are used and
-              improve them.
+              Only if you agree, we use Mixpanel in the app to record basic events like sign in,
+              sign up, and practice sessions, and Google Analytics on this website to see how
+              visitors find and use it. This helps us understand how the app and website are used
+              and improve them.
             </p>
           </section>
 
@@ -93,19 +101,25 @@ export function PrivacyContent() {
 
             <h3 className="text-lg font-semibold mb-2">Mixpanel</h3>
             <p className="text-muted-foreground mb-4">
-              Only if you agree in the app, we use Mixpanel to understand which features get used
-              and to improve the learning experience. You can change this at any time in the app,
-              under Account, Privacy choices.
+              Only if you turn on App usage in the app, we send Mixpanel analytics to understand
+              which features get used and improve the learning experience: events such as signing
+              in or finishing a practice session, a random ID for this install, and your account ID
+              (and your email address, if you signed up with email). If Ad measurement is on as
+              well, on Android this includes the Google Play install referrer, which can say which
+              ad or link led to the install. You can change this at any time in the app, under
+              Settings, Privacy choices.
             </p>
 
             <h3 className="text-lg font-semibold mb-2">Meta (Facebook)</h3>
             <p className="text-muted-foreground mb-4">
-              Only if you agree in the app, we share a small number of app events with Meta, so we
-              can tell whether an ad was worth running: that the app was opened, an account was
-              created, the intro was finished, or a practice session was completed. On Android your
-              device advertising ID is included. We do not send Meta your name, your email or what
-              you study, and we never ask to track you across other apps. You can change this at
-              any time in the app, under Account, Privacy choices.
+              Only if you turn on Ad measurement in the app, we share a small number of app events
+              with Meta, so we can tell whether an ad was worth running: that the app was opened, an
+              account was created, the intro was finished, or a practice session was completed,
+              along with the technical details the Meta SDK attaches to them, such as device model
+              and system version. On Android your device advertising ID is included. We do not send
+              Meta your name, your email or what you study, and we never ask to track you across
+              other apps. You can change this at any time in the app, under Settings, Privacy
+              choices.
             </p>
 
             <h3 className="text-lg font-semibold mb-2">Google Analytics</h3>

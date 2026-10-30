@@ -15,7 +15,8 @@ const openSocialLink = (url: string) =>
   });
 
 /**
- * About — the legal documents and the maker's credit.
+ * About — the legal documents, the privacy choices they describe, and the maker's
+ * credit.
  *
  * The credit used to be a section of its own holding a single row; it reads the
  * same here and costs one fewer heading.
@@ -39,6 +40,13 @@ export const AboutSection = memo(() => {
           label={STRINGS.PRIVACY_POLICY}
           rightType="chevron"
           onPress={handlePrivacyPress}
+        />
+        <SettingsCard
+          icon="lock-closed"
+          label={STRINGS.PRIVACY_CHOICES}
+          rightType="chevron"
+          testID="settings-privacy-choices"
+          onPress={() => router.push(ROUTE_PATHS.ACCOUNT_PRIVACY_CHOICES)}
         />
         <SettingsCard
           icon="documents"

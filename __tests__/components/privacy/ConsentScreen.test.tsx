@@ -9,6 +9,7 @@ import { StyleSheet } from 'react-native';
 
 import { ConsentScreen } from '@/components/privacy/ConsentScreen';
 import PrivacyChoicesScreen from '@/app/(tabs)/account/privacy-choices';
+import SignedOutPrivacyChoicesScreen from '@/app/auth/privacy-choices';
 import { STRINGS } from '@/constants/strings';
 import { saveConsent } from '@/services/consent';
 import { applyConsentChoices } from '@/services/privacy';
@@ -62,18 +63,20 @@ describe('ConsentScreen', () => {
     ).toBeTruthy();
     expect(getByText('App usage')).toBeTruthy();
     expect(
-      getByText('Which features get used, so we can improve them. Sent to Mixpanel.'),
+      getByText(
+        'Which features get used, linked to your account, so we can improve them. Sent to Mixpanel.',
+      ),
     ).toBeTruthy();
     expect(getByText('Ad measurement')).toBeTruthy();
     expect(
       getByText(
-        "Whether an ad led someone to install and use the app, so we only pay for ads that help people. Sent to Meta. On Android this includes your device's advertising ID. We never send Meta your name, your email or what you study.",
+        "Whether an ad led someone to install and use the app, so we only pay for ads that help people. Sent to Meta. On Android this includes your device's advertising ID. If App usage is on too, Mixpanel also gets which ad or link it was. We never send Meta your name, your email or what you study.",
       ),
     ).toBeTruthy();
     expect(getByText('Allow both')).toBeTruthy();
     expect(getByText('Refuse both')).toBeTruthy();
     expect(getByText('Save my choices')).toBeTruthy();
-    expect(getByText('You can change this at any time in Account, Privacy choices.')).toBeTruthy();
+    expect(getByText('You can change this at any time in Settings, Privacy choices.')).toBeTruthy();
   });
 
   test('both toggles start off', () => {
@@ -192,5 +195,14 @@ describe('PrivacyChoicesScreen', () => {
     const { getByText } = render(<PrivacyChoicesScreen />);
 
     expect(getByText(STRINGS.CONSENT_INTRO)).toBeTruthy();
+  });
+
+  test('can be withdrawn from without an account', async () => {
+    await saveConsent({ analytics: true, measurement: true });
+    const { getByTestId } = render(<SignedOutPrivacyChoicesScreen />);
+
+    fireEvent.press(getByTestId('consent-toggle-measurement'));
+
+    expect(mockApply).toHaveBeenLastCalledWith({ analytics: true, measurement: false });
   });
 });

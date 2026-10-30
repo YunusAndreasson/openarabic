@@ -8,7 +8,8 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 
 /**
- * Legal links component showing Terms of Service and Privacy Policy
+ * Legal links component showing Terms of Service and Privacy Policy, plus Privacy
+ * choices: without an account this is the only way back to them.
  */
 export function LegalLinks() {
   const handleTermsPress = () => {
@@ -17,6 +18,10 @@ export function LegalLinks() {
 
   const handlePrivacyPress = () => {
     router.push(ROUTE_PATHS.AUTH_PRIVACY);
+  };
+
+  const handlePrivacyChoicesPress = () => {
+    router.push(ROUTE_PATHS.AUTH_PRIVACY_CHOICES);
   };
 
   return (
@@ -40,6 +45,14 @@ export function LegalLinks() {
           label={STRINGS.PRIVACY_POLICY}
           type="caption"
           onPress={handlePrivacyPress}
+        />
+      </View>
+      <View style={styles.linksRow}>
+        <TextLink
+          underline
+          label={STRINGS.PRIVACY_CHOICES}
+          type="caption"
+          onPress={handlePrivacyChoicesPress}
         />
       </View>
     </View>

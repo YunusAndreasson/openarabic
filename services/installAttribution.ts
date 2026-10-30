@@ -15,12 +15,13 @@
  * ONCE PER INSTALL, AND ONLY FOR A NEW INSTALL
  * ============================================
  * The first time this code runs it decides whether this is a new install, from
- * how long ago the app was installed. That step reads and writes only this
- * device, so it runs before any consent: otherwise someone who refused and changed
- * their mind three days later would read as an upgrade, and their install would be
- * lost to the funnel. An existing user upgrading has all three events marked
- * done without any being sent. That includes `Activated`, which is defined as the
- * first completed session: theirs was long ago.
+ * how long ago the app was installed and, on Android, whether it has been updated
+ * since. That step reads and writes only this device, so it runs before any
+ * consent: otherwise someone who refused and changed their mind three days later
+ * would read as an upgrade, and their install would be lost to the funnel. An
+ * existing user upgrading has all three events marked done without any being sent.
+ * That includes `Activated`, which is defined as the first completed session:
+ * theirs was long ago.
  *
  * A flag is written before its event is sent, so a crash between the two loses
  * one event and never sends one twice. A choice that is missing when an event
@@ -43,7 +44,7 @@ import { withTimeout } from '@/utils/async';
 import { createJsonStore, decodeFields } from '@/utils/createJsonStore';
 import { MILLISECONDS_PER_DAY } from '@/utils/dateTimeUtils';
 
-/** Older than this, the first run reads as an existing user upgrading. */
+/** Older than this, and updated since, the first run reads as an existing user upgrading. */
 const NEW_INSTALL_WINDOW_MS = MILLISECONDS_PER_DAY;
 
 /** Mixpanel cuts a string property at 255 bytes; the contract is 200 characters a part. */
@@ -113,12 +114,27 @@ const update = async (
   return next;
 };
 
-/** Throws when the install time can't be read, leaving it for the next launch. */
+/**
+ * Android records when the binary was last replaced, and one never replaced can't
+ * be an upgrade, however late it is first opened: someone who installs from an ad
+ * and opens the app two days later is still a new install. iOS keeps no such
+ * record, so there age decides alone.
+ */
+const hasBeenUpdated = async (installedAt: Date): Promise<boolean> => {
+  if (Platform.OS !== 'android') return true;
+
+  const updatedAt = await Application.getLastUpdateTimeAsync();
+  return updatedAt.getTime() > installedAt.getTime();
+};
+
+/** Throws when a time can't be read, leaving it for the next launch. */
 const classifyInstall = async (state: AttributionState): Promise<AttributionState> => {
   if (state.classified) return state;
 
   const installedAt = await Application.getInstallationTimeAsync();
-  const isUpgrade = Date.now() - installedAt.getTime() > NEW_INSTALL_WINDOW_MS;
+  const isUpgrade =
+    Date.now() - installedAt.getTime() > NEW_INSTALL_WINDOW_MS &&
+    (await hasBeenUpdated(installedAt));
 
   return update(state, {
     classified: true,

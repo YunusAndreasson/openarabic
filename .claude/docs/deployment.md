@@ -76,7 +76,12 @@ eas config
 
 ## OTA Pre-flight Checklist
 
-Native dependency updates require a new binary. Runtime `1448.5.9` carries the
+Native dependency updates require a new binary. Runtime `1448.5.10` carries the
+consent gating (`services/consent`, the Meta flags in `app.json` and the
+`react-native-fbsdk-next` patch). Only a binary built with them keeps the Meta SDK
+off before JS runs, so JS built from it must never be aimed at `1448.5.9`: it would
+ask for consent while that binary's SDK goes on sending to Meta for people who
+refused. Runtime `1448.5.9` carries the
 2026-10-23 `yarn fullupgrade` (`react-native-skia` 3.7.4, `mixpanel-react-native`
 4 and the Expo 58.0.17 native modules, `expo-modules-core` among them); JS built
 from it must never be aimed at `1448.5.7` (build 281), whose binary links the
@@ -91,12 +96,6 @@ Native 0.88), which in turn separates SDK 58 from every SDK 57 build (runtime
 native builds have shipped; until then `yarn ota` reaches no one on it. JS that
 imports `react-native-skia` must never be aimed at 1448.5.3, whose binaries
 link `@shopify/react-native-skia`.
-
-The consent gating (`services/consent`, the Meta flags in `app.json` and the
-`react-native-fbsdk-next` patch) needs a runtime newer than `1448.5.9`. Only a
-binary built with them keeps the Meta SDK off before JS runs, so the same JS aimed
-at `1448.5.9` would ask for consent while that binary's SDK goes on sending to Meta
-for people who refused.
 
 Before publishing an OTA, verify:
 

@@ -30,9 +30,6 @@ interface AccountSectionProps {
  * label carry the warning, and all three action rows already sit behind a
  * confirmation: an alert for the first two, a type-DELETE screen for the third.
  * None of them has a subtitle: each label already says what happens.
- *
- * Privacy choices lives here because the consent step and the privacy policy send
- * people to "Account, Privacy choices": this heading is what they look for.
  */
 export const AccountSection = memo<AccountSectionProps>(
   ({ email, onSignOut, onResetReadingProgress }) => {
@@ -47,13 +44,6 @@ export const AccountSection = memo<AccountSectionProps>(
     return (
       <SettingsSection title={STRINGS.ACCOUNT}>
         <SettingsCard icon="person-circle" label={STRINGS.SIGNED_IN_AS} subtitle={email} />
-        <SettingsCard
-          icon="shield-checkmark"
-          label={STRINGS.PRIVACY_CHOICES}
-          rightType="chevron"
-          testID="account-privacy-choices"
-          onPress={() => router.push(ROUTE_PATHS.ACCOUNT_PRIVACY_CHOICES)}
-        />
         <SettingsCard
           icon="log-out"
           label={STRINGS.SIGN_OUT}

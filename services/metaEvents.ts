@@ -16,7 +16,9 @@
  * - Android: app.json turns off auto-init, auto-logging and advertising ID
  *   collection in the manifest. FacebookInitProvider still calls sdkInitialize at
  *   process start, but until `FacebookSdk.fullyInitialize()` no Graph request gets
- *   a response, so nothing is delivered. `initializeSDK` is only that call: it
+ *   a response, so nothing is delivered. `initializeSDK` is that call, and through
+ *   .yarn/patches/react-native-fbsdk-next-* it then repeats `activateApp`, whose
+ *   one-time install report has otherwise always run too early to get through. It
  *   turns neither setting on, which is why `configureMeta` sets them itself.
  * - iOS: the SDK no longer has an auto-init flag, and this package's AppDelegate
  *   subscriber starts the SDK at launch for everyone. That fetches settings from
@@ -52,6 +54,12 @@
  *
  * `install_id` (services/installAttribution) is deliberately absent too. It joins
  * everything in Mixpanel, so it must never be sent to Meta.
+ *
+ * Meta's SDK 19 adds the Screen Title and AppLink URL to every event it logs, and a
+ * screen title here can name what someone is studying. This package pins the SDK to
+ * 18. Before moving to 19, turn off `AutoLogMetaDataEnabled` and
+ * `AutoLogProductImprovementEnabled` (`com.facebook.sdk.` in the Android manifest,
+ * `FBSDK` in the iOS Info.plist), or the promise above stops being true.
  *
  * The install/launch event (`fb_mobile_activate_app`) is logged natively by the
  * SDK once `configureMeta` has turned auto-logging on — it does not pass through

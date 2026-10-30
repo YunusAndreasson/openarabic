@@ -6,6 +6,7 @@ export const ROUTE_PATHS = {
   AUTH_SIGN_UP: '/auth/sign-up',
   AUTH_TERMS: '/auth/terms',
   AUTH_PRIVACY: '/auth/privacy',
+  AUTH_PRIVACY_CHOICES: '/auth/privacy-choices',
   EXPLORE_TAB: '/(tabs)/explore',
   EXPLORE_SEARCH: '/(tabs)/explore/search',
   /** The category list. Open it through `getCategoryFilterRoute`. */

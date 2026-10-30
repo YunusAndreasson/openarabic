@@ -962,17 +962,15 @@ export function useVoiceReview({
       });
 
       const match = matchSingleWord({ spoken: transcript, expected, ...readWidenings() });
+      // The words themselves stay out of both of these. Mixpanel and Sentry are third
+      // parties, and what someone says and studies belongs in voice_grading_attempts.
       void analytics.track(ANALYTICS_EVENTS.VOICE_MATCH, {
         matched: match.matched,
         method: match.method,
-        normalizedSpoken: match.normalizedSpoken,
-        normalizedExpected: match.normalizedExpected,
       });
       voiceBreadcrumb('voice.match', {
         matched: match.matched,
         method: match.method,
-        spoken: match.normalizedSpoken,
-        expected: match.normalizedExpected,
       });
       publishDebug(d => ({
         ...d,
@@ -1074,7 +1072,6 @@ export function useVoiceReview({
       }
       voiceBreadcrumb('voice.match.miss', {
         similarity: match.similarity,
-        spoken: match.normalizedSpoken,
         suggestion,
       });
       // Hold the attempt; the panel's accept/reject/retry logs it with the verdict.

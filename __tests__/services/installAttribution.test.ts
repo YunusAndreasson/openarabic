@@ -15,6 +15,8 @@ const mockPlatform = { OS: 'android' };
 const mockDevice = {
   installTime: 0,
   installTimeFails: false,
+  updateTime: 0,
+  updateTimeFails: false,
   referrer: 'utm_source=meta',
   referrerFails: false,
   referrerHangs: false,
@@ -40,6 +42,10 @@ jest.mock('expo-application', () => ({
   getInstallationTimeAsync: async () => {
     if (mockDevice.installTimeFails) throw new Error('no install time');
     return new Date(mockDevice.installTime);
+  },
+  getLastUpdateTimeAsync: async () => {
+    if (mockDevice.updateTimeFails) throw new Error('no update time');
+    return new Date(mockDevice.updateTime);
   },
   getInstallReferrerAsync: async () => {
     mockDevice.referrerReads += 1;
@@ -108,6 +114,9 @@ beforeEach(() => {
   Object.assign(mockDevice, {
     installTime: NOW - HOUR,
     installTimeFails: false,
+    // Later than any install in here, so an old one reads as updated since.
+    updateTime: NOW,
+    updateTimeFails: false,
     referrer: 'utm_source=meta',
     referrerFails: false,
     referrerHangs: false,
@@ -172,6 +181,38 @@ describe('First Open', () => {
 
     await launchAllowing(ANALYTICS_ONLY);
 
+    expect(count('First Open')).toBe(1);
+  });
+
+  test('an Android install never updated is new, however late it is first opened', async () => {
+    mockDevice.installTime = NOW - 72 * HOUR;
+    mockDevice.updateTime = mockDevice.installTime;
+
+    await launchAllowing(ALLOW_BOTH);
+
+    expect(count('First Open')).toBe(1);
+    expect(count('Install Attribution')).toBe(1);
+  });
+
+  test('iOS keeps no update time, so an install older than 24 hours is an upgrade', async () => {
+    mockPlatform.OS = 'ios';
+    mockDevice.installTime = NOW - 72 * HOUR;
+    mockDevice.updateTime = mockDevice.installTime;
+
+    await launchAllowing(ANALYTICS_ONLY);
+
+    expect(count('First Open')).toBe(0);
+  });
+
+  test('an update time that cannot be read sends nothing and is tried next launch', async () => {
+    mockDevice.installTime = NOW - 72 * HOUR;
+    mockDevice.updateTime = mockDevice.installTime;
+    mockDevice.updateTimeFails = true;
+    await launchAllowing(ANALYTICS_ONLY);
+    expect(mockAnalytics.calls).toEqual([]);
+
+    mockDevice.updateTimeFails = false;
+    await launchAllowing(ANALYTICS_ONLY);
     expect(count('First Open')).toBe(1);
   });
 

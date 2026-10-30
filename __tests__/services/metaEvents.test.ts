@@ -337,6 +337,19 @@ describe('metaEvents', () => {
     });
   });
 
+  // The SDK's own attempt at its one-time install report always runs before JS can
+  // allow it, so without this it fails on every launch, and nothing here would notice.
+  test('Android repeats activateApp once the SDK is allowed to send', () => {
+    const source = jest
+      .requireActual<typeof import('node:fs')>('node:fs')
+      .readFileSync(
+        require.resolve('react-native-fbsdk-next/android/src/main/java/com/facebook/reactnative/androidsdk/FBSettingsModule.java'),
+        'utf8',
+      );
+
+    expect(source).toContain('AppEventsLogger.activateApp');
+  });
+
   // The whole service is built on a try/catch, so a setter missing from the path it
   // loads would turn the SDK off for everyone without a sound. The real file, then.
   test('the settings module it loads really has the setters it calls', () => {
