@@ -1,0 +1,15 @@
+diff --git a/expo-module.config.json b/expo-module.config.json
+index ee0e803488a77144af0f6be64591cfceb5fcbb73..0df95dbe8736e57e4e8ef55c17d31e23e2d30ee7 100644
+--- a/expo-module.config.json
++++ b/expo-module.config.json
+@@ -3,8 +3,6 @@
+     "ios"
+   ],
+   "ios": {
+-    "appDelegateSubscribers": [
+-      "FacebookAppDelegate"
+-    ]
++    "appDelegateSubscribers": []
+   }
+ }
+\ No newline at end of file

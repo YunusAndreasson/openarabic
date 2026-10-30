@@ -599,6 +599,21 @@ export const STRINGS = {
     'We may suspend or terminate your access if you violate these terms. You may stop using OpenArabic at any time.',
   TERMS_CONTACT_TITLE: '10. Contact',
   TERMS_CONTACT: 'Questions about these terms? Contact us at ',
+  // Consent step and Privacy choices (components/privacy). A wording change that
+  // should ask everyone again also bumps CONSENT_VERSION in services/consent.
+  CONSENT_TITLE: 'Your privacy',
+  CONSENT_INTRO:
+    'OpenArabic is free and has no ads. With your permission, we measure how people find and use the app. Because OpenArabic is about Islamic texts, this data could suggest your religious beliefs. You choose, and the app works the same either way.',
+  CONSENT_ANALYTICS_LABEL: 'App usage',
+  CONSENT_ANALYTICS_DESC: 'Which features get used, so we can improve them. Sent to Mixpanel.',
+  CONSENT_MEASUREMENT_LABEL: 'Ad measurement',
+  CONSENT_MEASUREMENT_DESC:
+    "Whether an ad led someone to install and use the app, so we only pay for ads that help people. Sent to Meta. On Android this includes your device's advertising ID. We never send Meta your name, your email or what you study.",
+  CONSENT_ALLOW_BOTH: 'Allow both',
+  CONSENT_REFUSE_BOTH: 'Refuse both',
+  CONSENT_SAVE_CHOICES: 'Save my choices',
+  CONSENT_FOOTNOTE: 'You can change this at any time in Account, Privacy choices.',
+  PRIVACY_CHOICES: 'Privacy choices',
   // Privacy Policy - Full text
   PRIVACY_EFFECTIVE_DATE: 'Effective Date: January 1, 2025',
   PRIVACY_INTRO:
@@ -612,7 +627,7 @@ export const STRINGS = {
     'We store your reading progress, vocabulary lists, practice session history, review performance, and app preferences (theme, audio settings, notifications).',
   PRIVACY_COLLECTION_ANALYTICS: 'Usage Analytics',
   PRIVACY_COLLECTION_ANALYTICS_DESC:
-    'We use Mixpanel to track basic events like sign in, sign up, and practice sessions. This helps us understand how the app is used and improve it.',
+    'Only if you turn on App usage in Account, Privacy choices, we use Mixpanel to record basic events like sign in, sign up, and practice sessions. This helps us understand how the app is used and improve it.',
   PRIVACY_USE_TITLE: '2. How We Use Your Information',
   PRIVACY_USE:
     'We use your data to: provide the learning service, sync your progress across devices, personalize your learning experience, send practice reminders (if enabled), and improve the app.',
@@ -622,13 +637,13 @@ export const STRINGS = {
     'We use Supabase for authentication, database, and file storage. Your data is stored securely on their servers.',
   PRIVACY_THIRD_PARTY_MIXPANEL: 'Mixpanel',
   PRIVACY_THIRD_PARTY_MIXPANEL_DESC:
-    'We use Mixpanel for analytics to understand app usage patterns and improve the learning experience.',
+    'Only if you turn on App usage in Account, Privacy choices, we send Mixpanel analytics to understand app usage patterns and improve the learning experience: events such as signing in or finishing a practice session, a random ID for this install, and your account ID (and your email address, if you signed up with email). If Ad measurement is on as well, on Android this includes the Google Play install referrer, which can say which ad or link led to the install. With App usage off, nothing is sent to Mixpanel. You can withdraw at any time in Account, Privacy choices.',
   PRIVACY_THIRD_PARTY_SENTRY: 'Sentry',
   PRIVACY_THIRD_PARTY_SENTRY_DESC:
     'We use Sentry for error tracking and crash reporting to identify and fix issues that affect app stability and performance.',
   PRIVACY_THIRD_PARTY_META: 'Meta (Facebook)',
   PRIVACY_THIRD_PARTY_META_DESC:
-    'If you installed Open Arabic from a Facebook or Instagram ad, we share a small number of app events with Meta — that the app was opened, an account was created, the intro was finished, or a practice session was completed — so we can tell whether an ad was worth running. We do not send Meta your name, email, or what you study. On iOS we never ask to track you across other apps, so Meta only receives this in aggregate. On Android your device advertising ID is included; you can reset or limit it in Settings → Privacy → Ads.',
+    'Only if you turn on Ad measurement in Account, Privacy choices, we share a small number of app events with Meta — that the app was opened, an account was created, the intro was finished, or a practice session was completed — along with the technical details the Meta SDK attaches to them, such as device model and system version, so we can tell whether an ad was worth running. We do not send Meta your name, email, or what you study. On iOS we never ask to track you across other apps, so no advertising ID is included. On Android your device advertising ID is included; you can reset or limit it in Settings → Privacy → Ads. With Ad measurement off, nothing is sent to Meta. You can withdraw at any time in Account, Privacy choices.',
   PRIVACY_THIRD_PARTY_AUTH: 'Apple and Google',
   PRIVACY_THIRD_PARTY_AUTH_DESC:
     'If you sign in with Apple or Google, their privacy policies apply to the authentication process.',

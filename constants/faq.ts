@@ -159,7 +159,7 @@ export const FAQ_DATA: FAQCategoryData[] = [
         id: 'privacy-data',
         question: 'What data do you store?',
         answer:
-          'Your email, vocabulary and review history, playlist and preferences, so your progress syncs across devices. There are no ads.\n\nThree outside services see some of it. Mixpanel receives product analytics: events such as signing in or finishing a practice session. Sentry receives crash diagnostics so bugs can be fixed. If you installed OpenArabic from a Facebook or Instagram ad, Meta receives a few app events so we can tell whether the ad worked—never your name, your email or what you study.\n\nThe Privacy Policy, under About in Settings, has the full detail.',
+          "Your email, vocabulary and review history, playlist and preferences, so your progress syncs across devices. There are no ads.\n\nSentry receives crash diagnostics so bugs can be fixed. Two more services receive something only if you agree, in Account, Privacy choices. With App usage on, Mixpanel receives product analytics: events such as signing in or finishing a practice session. With Ad measurement on, Meta receives a few app events so we can tell whether an ad led someone to install and use the app, including your device's advertising ID on Android—never your name, your email or what you study. You can change either one at any time.\n\nThe Privacy Policy, under About in Settings, has the full detail.",
         category: FAQCategoryEnum.PRIVACY_DATA,
       },
     ],

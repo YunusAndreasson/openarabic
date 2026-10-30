@@ -8,6 +8,19 @@ export const MIXPANEL_TOKEN = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN;
 
 // Analytics token - gracefully handled by analytics service
 
+/**
+ * Mixpanel's data-residency endpoint. Optional: unset (or empty) leaves the SDK
+ * on its own default, because the project's region isn't known yet. It has to
+ * match the project's region once it is.
+ */
+export const MIXPANEL_SERVER_URL = process.env.EXPO_PUBLIC_MIXPANEL_SERVER_URL || undefined;
+
+/**
+ * The super property that joins an install's events together. The name is a
+ * contract with the system that reads them. Never send it to Meta.
+ */
+export const INSTALL_ID_PROPERTY = 'install_id';
+
 // Analytics event names - keep consistent across the app
 export const ANALYTICS_EVENTS = {
   // Authentication events
@@ -19,6 +32,12 @@ export const ANALYTICS_EVENTS = {
   APP_OPENED: 'App Opened',
   APP_BACKGROUNDED: 'App Backgrounded',
   APP_RESUMED: 'App Resumed',
+
+  // Install attribution (services/installAttribution). These three names are a
+  // contract with the system that reads them: never rename one.
+  FIRST_OPEN: 'First Open',
+  INSTALL_ATTRIBUTION: 'Install Attribution',
+  ACTIVATED: 'Activated',
 
   // Review/Practice session events
   REVIEW_SESSION_STARTED: 'Review Session Started',
@@ -117,8 +136,8 @@ export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTIC
  * where the Facebook SDK is not linked.
  *
  * `fb_mobile_activate_app` (install / launch) is NOT listed: the native SDK logs it
- * automatically via `autoLogAppEventsEnabled` in app.json. Only events we raise
- * ourselves belong here.
+ * automatically once services/metaEvents has turned auto-logging on, which happens
+ * only after consent. Only events we raise ourselves belong here.
  *
  * Keep this list short. Every event here is data shared with Meta, so add one only
  * when it is genuinely needed to judge whether an ad is paying for itself.

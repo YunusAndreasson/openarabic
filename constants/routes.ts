@@ -17,6 +17,7 @@ export const ROUTE_PATHS = {
   ACCOUNT_DELETE_ACCOUNT: '/(tabs)/account/DeleteAccount',
   ACCOUNT_FEEDBACK: '/(tabs)/account/feedback',
   ACCOUNT_ADVANCED: '/(tabs)/account/advanced',
+  ACCOUNT_PRIVACY_CHOICES: '/(tabs)/account/privacy-choices',
   TERMS: '/(tabs)/account/terms',
   PRIVACY: '/(tabs)/account/privacy',
   LEGAL: '/(tabs)/account/legal',

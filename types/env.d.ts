@@ -18,6 +18,7 @@ declare global {
 
       // Analytics configuration
       EXPO_PUBLIC_MIXPANEL_TOKEN?: string;
+      EXPO_PUBLIC_MIXPANEL_SERVER_URL?: string;
 
       // Google Sign In configuration
       EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?: string;

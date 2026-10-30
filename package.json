@@ -101,7 +101,7 @@
     "react-native-blob-util": "^0.24.0",
     "react-native-draggable-flatlist": "patch:react-native-draggable-flatlist@npm%3A4.0.3#~/.yarn/patches/react-native-draggable-flatlist-npm-4.0.3-4f5f75341e.patch",
     "react-native-executorch": "patch:react-native-executorch@npm%3A0.10.5#~/.yarn/patches/react-native-executorch-npm-0.10.5-ed40f33766.patch",
-    "react-native-fbsdk-next": "^13.4.3",
+    "react-native-fbsdk-next": "patch:react-native-fbsdk-next@npm%3A13.4.3#~/.yarn/patches/react-native-fbsdk-next-npm-13.4.3-e85e3d02f0.patch",
     "react-native-gesture-handler": "~3.3.0",
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.10.1",

@@ -17,6 +17,7 @@ interface BaseSettingsCardProps {
   textColor?: 'default' | 'error';
   backgroundColor?: string;
   onPress?: () => void;
+  testID?: string;
 }
 
 interface ChevronCardProps extends BaseSettingsCardProps {
@@ -77,6 +78,7 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
     textColor = 'default',
     backgroundColor,
     onPress,
+    testID,
   } = props;
 
   const cardStyle = backgroundColor ? [styles.card, { backgroundColor }] : styles.card;
@@ -140,6 +142,7 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
       accessibilityRole={isToggleRow ? 'switch' : undefined}
       accessibilityState={props.rightType === 'toggle' ? { checked: props.toggleValue } : undefined}
       accessibilityLabel={isToggleRow ? label : undefined}
+      testID={testID}
     >
       <View style={styles.content}>
         <View style={styles.left}>

@@ -92,6 +92,12 @@ native builds have shipped; until then `yarn ota` reaches no one on it. JS that
 imports `react-native-skia` must never be aimed at 1448.5.3, whose binaries
 link `@shopify/react-native-skia`.
 
+The consent gating (`services/consent`, the Meta flags in `app.json` and the
+`react-native-fbsdk-next` patch) needs a runtime newer than `1448.5.9`. Only a
+binary built with them keeps the Meta SDK off before JS runs, so the same JS aimed
+at `1448.5.9` would ask for consent while that binary's SDK goes on sending to Meta
+for people who refused.
+
 Before publishing an OTA, verify:
 
 1. **Local is in sync with origin** — `yarn release` auto-bumps app version

@@ -8,6 +8,32 @@
  * production. Ad attribution is strictly non-critical — a failure here must not
  * surface to the user or interrupt a study session.
  *
+ * NOTHING RUNS WITHOUT CONSENT
+ * ============================
+ * The SDK is off until the `measurement` choice in services/consent allows it, on
+ * every platform and including on upgrade from a version that never asked:
+ *
+ * - Android: app.json turns off auto-init, auto-logging and advertising ID
+ *   collection in the manifest. FacebookInitProvider still calls sdkInitialize at
+ *   process start, but until `FacebookSdk.fullyInitialize()` no Graph request gets
+ *   a response, so nothing is delivered. `initializeSDK` is only that call: it
+ *   turns neither setting on, which is why `configureMeta` sets them itself.
+ * - iOS: the SDK no longer has an auto-init flag, and this package's AppDelegate
+ *   subscriber starts the SDK at launch for everyone. That fetches settings from
+ *   Meta, and logs events too if Meta's server-side app setting overrides
+ *   `FacebookAutoLogAppEventsEnabled`, which it can. So the subscriber is removed by
+ *   .yarn/patches/react-native-fbsdk-next-*, and `initializeSDK` here is the first
+ *   the SDK hears of anything. The setters run after it on iOS, because iOS only
+ *   persists them once it has been configured.
+ *
+ * Both settings persist natively, on both platforms, which is what makes a
+ * withdrawal last across launches. A process that started the SDK cannot fully undo
+ * it, though: what is already queued would still go out, and on iOS the server-side
+ * override can keep logging session events. So `stop` also holds the event queue,
+ * and those stay on the device. Whatever is held goes out only if the person allows
+ * measurement again; on Android a flush on later launches gets nothing through,
+ * because nothing has called `fullyInitialize`.
+ *
  * AEM-ONLY (NO ATT PROMPT)
  * ========================
  * The app deliberately never shows Apple's App Tracking Transparency prompt.
@@ -17,15 +43,19 @@
  *   Event Measurement + SKAdNetwork. That yields campaign-level attribution, not
  *   user-level. It is enough to judge cost per install and cost per activation.
  * - Android: no prompt exists, so the Google Advertising ID IS collected (enabled
- *   via `advertiserIDCollectionEnabled` in app.json). Android attribution is
- *   therefore materially better than iOS. Expect the two platforms to disagree.
+ *   by `configureMeta`, after consent). Android attribution is therefore materially
+ *   better than iOS. Expect the two platforms to disagree.
  *
  * We do not call setUserID or setUserData (advanced matching). Campaign-level
  * attribution does not need them, and sending account identity to Meta is not a
  * trade this app makes. Do not add them without a deliberate decision.
  *
+ * `install_id` (services/installAttribution) is deliberately absent too. It joins
+ * everything in Mixpanel, so it must never be sent to Meta.
+ *
  * The install/launch event (`fb_mobile_activate_app`) is logged natively by the
- * SDK via `autoLogAppEventsEnabled` in app.json — it does not pass through here.
+ * SDK once `configureMeta` has turned auto-logging on — it does not pass through
+ * here.
  *
  * DO NOT ADD META TO `ios.privacyManifests.NSPrivacyTrackingDomains`
  * =================================================================
@@ -35,9 +65,10 @@
  * observe. The same trap applies to Mixpanel. `NSPrivacyTracking` is false for the
  * matching reason: with no ATT there is no IDFA, so nothing tracks across apps.
  */
-import { LogBox, NativeModules, Platform } from 'react-native';
+import { LogBox, Platform } from 'react-native';
 
 import { META_EVENTS } from '@/constants/analytics';
+import { isAllowed } from '@/services/consent';
 
 // The exception below is already caught (see resolveAppEventsLogger) and never
 // affects app behavior — react-native-fbsdk-next reads native constants at
@@ -55,15 +86,20 @@ type MetaEventParams = Record<string, string | number>;
 // Minimal surface of react-native-fbsdk-next that this module touches.
 interface MetaAppEventsLogger {
   logEvent(eventName: string, parameters?: MetaEventParams): void;
+  setFlushBehavior(flushBehavior: 'auto' | 'explicit_only'): void;
+  flush(): void;
 }
 
 interface MetaSettings {
   initializeSDK(): void;
   setAdvertiserTrackingEnabled(enabled: boolean): Promise<boolean>;
+  setAutoLogAppEventsEnabled(enabled: boolean): void;
+  setAdvertiserIDCollectionEnabled(enabled: boolean): void;
 }
 
 let appEventsLogger: MetaAppEventsLogger | null = null;
 let isSdkInitialized = false;
+let isEventQueueHeld = false;
 let loggerResolveAttempts = 0;
 
 /**
@@ -80,14 +116,26 @@ let loggerResolveAttempts = 0;
 const MAX_LOGGER_RESOLVE_ATTEMPTS = 2;
 
 /**
- * Resolve the SDK on first use.
- *
- * The require is lazy and guarded because the Facebook SDK is not linked in Expo
- * Go or under Jest — the same reason services/analytics.ts defers Mixpanel. A
- * miss here leaves appEventsLogger null and every call below becomes a no-op.
+ * Lazy and guarded because the Facebook SDK is not linked in Expo Go or under Jest
+ * — the same reason services/analytics.ts defers Mixpanel. `react-native-fbsdk-next`
+ * eagerly evaluates every barrel export, including AccessTokenTracker, so this
+ * loads only the module it needs: that prevents an unrelated login tracker from
+ * crashing first-run analytics on Android.
+ */
+const loadSettings = (): MetaSettings =>
+  require('react-native-fbsdk-next/lib/commonjs/FBSettings').default as MetaSettings;
+
+const setCollectionEnabled = (settings: MetaSettings, enabled: boolean): void => {
+  settings.setAutoLogAppEventsEnabled(enabled);
+  settings.setAdvertiserIDCollectionEnabled(enabled);
+};
+
+/**
+ * Switch the SDK on, once allowed. A miss on the require leaves appEventsLogger
+ * null and every call below becomes a no-op.
  */
 const configureMeta = (): void => {
-  if (isSdkInitialized) {
+  if (isSdkInitialized || !isAllowed('measurement')) {
     return;
   }
 
@@ -95,27 +143,36 @@ const configureMeta = (): void => {
   isSdkInitialized = true;
 
   try {
-    // `react-native-fbsdk-next` eagerly evaluates every barrel export, including
-    // AccessTokenTracker. Loading only the two modules used here prevents an
-    // unrelated login tracker from crashing first-run analytics on Android.
-    NativeModules['FBSettings']?.initializeSDK?.();
+    const Settings = loadSettings();
 
-    const Settings = require('react-native-fbsdk-next/lib/commonjs/FBSettings')
-      .default as MetaSettings;
-
-    // A checked-in native project can lag behind app.json plugin settings. Make
-    // initialization explicit before the first event so Android never reaches
-    // AppEventsLogger with an uninitialized FacebookSdk.
-    Settings.initializeSDK();
-
-    // Explicit on iOS even though the SDK already derives `false` from an
-    // undetermined ATT status. Stating it makes AEM-only mode deliberate rather
-    // than incidental, so a future ATT change has to be a conscious edit.
-    // iOS-only API — the Android native module does not implement it.
     if (Platform.OS === 'ios') {
+      Settings.initializeSDK();
+      setCollectionEnabled(Settings, true);
+
+      // Explicit on iOS even though the SDK already derives `false` from an
+      // undetermined ATT status. Stating it makes AEM-only mode deliberate rather
+      // than incidental, so a future ATT change has to be a conscious edit.
+      // iOS-only API — the Android native module does not implement it.
       Settings.setAdvertiserTrackingEnabled(false).catch(() => {
         // Already the effective default without ATT — nothing to recover.
       });
+    } else {
+      // Set first: once `initializeSDK` has run, the next flush may already be
+      // sending, and it should not go out without what was just allowed.
+      setCollectionEnabled(Settings, true);
+      Settings.initializeSDK();
+    }
+
+    if (isEventQueueHeld) {
+      isEventQueueHeld = false;
+      resolveAppEventsLogger()?.setFlushBehavior('auto');
+    }
+
+    // The SDK logs the launch natively, before JS is up, and that flush fails the
+    // "not fully initialized" check and goes back to disk. Nothing else would send
+    // it for someone who only reads, whose session raises no event of its own.
+    if (Platform.OS !== 'ios') {
+      resolveAppEventsLogger()?.flush();
     }
   } catch {
     // SDK unavailable (Expo Go / Jest / unlinked build) — stay a no-op.
@@ -147,13 +204,51 @@ const resolveAppEventsLogger = (): MetaAppEventsLogger | null => {
 };
 
 export const metaEvents = {
+  /** Measurement is allowed, now or from an earlier launch: switch the SDK on. */
+  start: (): void => {
+    configureMeta();
+  },
+
+  /**
+   * Measurement is not allowed: turn the SDK's settings off and hold its queue
+   * (see NOTHING RUNS WITHOUT CONSENT above), then release the latch so a later
+   * grant configures it again. services/privacy calls this only where Meta can have
+   * been switched on, so a refusal on a device that never allowed it stays no call.
+   */
+  stop: (): void => {
+    const wasStarted = isSdkInitialized;
+    isSdkInitialized = false;
+
+    try {
+      // iOS ignores its settings until something starts the SDK, and nothing will.
+      if (Platform.OS === 'ios' && !wasStarted) return;
+
+      setCollectionEnabled(loadSettings(), false);
+
+      if (wasStarted) {
+        isEventQueueHeld = true;
+        resolveAppEventsLogger()?.setFlushBehavior('explicit_only');
+      }
+    } catch {
+      // SDK unavailable — there is nothing running to stop.
+    } finally {
+      loggerResolveAttempts = 0;
+    }
+  },
+
   /**
    * Log a Meta app event. Prefer the named helpers below over calling this with
    * an ad-hoc string, so the full set of data shared with Meta stays greppable
    * in constants/analytics.ts.
+   *
+   * Dropped, not queued, unless measurement is allowed.
    */
   log: (eventName: string, params?: MetaEventParams): void => {
     try {
+      if (!isAllowed('measurement')) {
+        return;
+      }
+
       configureMeta();
       resolveAppEventsLogger()?.logEvent(eventName, params);
     } catch {

@@ -1,4 +1,4 @@
-import { describe, expect, test } from '@jest/globals';
+import { describe, expect, jest, test } from '@jest/globals';
 
 import { STRINGS } from '@/constants/strings';
 import {
@@ -8,6 +8,7 @@ import {
   getErrorCode,
   getPasswordError,
   isCancellationError,
+  isNewAccount,
 } from '@/utils/authUtils';
 
 describe('field rules', () => {
@@ -72,5 +73,39 @@ describe('isCancellationError', () => {
   test('falls back to the message only when there is no code', () => {
     expect(isCancellationError(new Error('User dismissed the sheet'))).toBe(true);
     expect(isCancellationError(new Error('Network request failed'))).toBe(false);
+  });
+});
+
+describe('isNewAccount', () => {
+  const NOW = Date.parse('2026-10-30T12:00:00.000Z');
+
+  test.each([
+    ['created this instant', '2026-10-30T12:00:00.000Z'],
+    ['created a minute ago to the millisecond', '2026-10-30T11:59:00.000Z'],
+    ['as Supabase Auth writes it, with microseconds', '2026-10-30T11:59:30.123456Z'],
+    ['as Postgres writes it', '2026-10-30 11:59:30+00'],
+    // created_at is the server's clock and now the device's, and a device running
+    // behind must not lose the sign-up.
+    ['created slightly in the future of a slow device clock', '2026-10-30T12:00:30.000Z'],
+  ])('%s is new', (_label, createdAt) => {
+    expect(isNewAccount(createdAt, NOW)).toBe(true);
+  });
+
+  test.each([
+    ['created just over a minute ago', '2026-10-30T11:58:59.999Z'],
+    ['created long ago', '2024-01-15T12:00:00.000Z'],
+    ['too far in the future to be clock skew', '2026-10-30T12:01:00.001Z'],
+    ['not a date', 'yesterday-ish'],
+    ['empty', ''],
+    ['missing', undefined],
+  ])('%s is not new', (_label, createdAt) => {
+    expect(isNewAccount(createdAt, NOW)).toBe(false);
+  });
+
+  test('defaults to the current time', () => {
+    jest.setSystemTime(NOW);
+
+    expect(isNewAccount('2026-10-30T11:59:30.000Z')).toBe(true);
+    expect(isNewAccount('2026-10-30T11:58:30.000Z')).toBe(false);
   });
 });

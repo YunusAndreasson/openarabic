@@ -3,6 +3,7 @@
  */
 
 import { STRINGS } from '@/constants/strings';
+import { timestampMs } from '@/utils/dateTimeUtils';
 import { fillTemplate } from '@/utils/fillTemplate';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -10,6 +11,21 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PASSWORD_REQUIREMENTS = {
   minLength: 8,
 } as const;
+
+/** How long after `created_at` a sign-in still counts as the account's creation. */
+const NEW_ACCOUNT_WINDOW_MS = 60 * 1000;
+
+/**
+ * Whether an account was created just now. An ID-token exchange reports a sign-up
+ * and a returning sign-in the same way, so this is the only way to tell them apart.
+ *
+ * Absolute, because `created_at` is the server's clock and `now` the device's: one
+ * running behind sees a new account as created slightly in the future. A timestamp
+ * that is missing or doesn't parse reads as not new.
+ */
+export function isNewAccount(createdAt: string | undefined, now: number = Date.now()): boolean {
+  return Math.abs(now - timestampMs(createdAt)) <= NEW_ACCOUNT_WINDOW_MS;
+}
 
 /**
  * What is wrong with an email address, as the field shows it; `''` when

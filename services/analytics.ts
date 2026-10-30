@@ -21,13 +21,21 @@
  * - ❌ NEVER throws exceptions
  * - ❌ NEVER logs errors in production
  *
+ * CONSENT GATE
+ * ============
+ * Mixpanel is not constructed or initialised until the `analytics` choice in
+ * services/consent allows it, so before that there is no network at all. Every
+ * call first waits for the stored choice to load and then returns silently unless
+ * it allows the call, so a first-launch `App Opened` is dropped rather than
+ * queued. services/privacy starts and stops tracking when the choice changes.
+ *
  * Testing Implications:
  * - Tests should verify "does not throw" rather than mock internals
  * - No need to test Mixpanel SDK behavior (third-party responsibility)
  * - Focus on: method signatures, type safety, error resilience
  *
  * Features:
- * - Lazy initialization (only when first analytics call is made)
+ * - Lazy initialization (only when first allowed analytics call is made)
  * - Automatic fallback when Mixpanel is unavailable
  * - Silent success operation (no production logging)
  * - Type-safe interface
@@ -35,21 +43,43 @@
 
 // Minimal interface for analytics properties
 import type { AnalyticsEventName } from '@/constants/analytics';
-import { ANALYTICS_EVENTS, MIXPANEL_TOKEN } from '@/constants/analytics';
+import {
+  ANALYTICS_EVENTS,
+  INSTALL_ID_PROPERTY,
+  MIXPANEL_SERVER_URL,
+  MIXPANEL_TOKEN,
+} from '@/constants/analytics';
+import { isAllowed, loadConsent } from '@/services/consent';
 
 type AnalyticsProperties = Record<string, string | number | boolean | null | undefined>;
 
 // Minimal interface for Mixpanel instance
 interface MixpanelInstance {
-  init(): Promise<void>;
+  init(
+    optOutTrackingDefault?: boolean,
+    superProperties?: AnalyticsProperties,
+    serverURL?: string,
+  ): Promise<void>;
   identify(userId: string): Promise<void>;
   getPeople(): Promise<{ set: (properties: AnalyticsProperties) => void }>;
   track(event: string, properties?: AnalyticsProperties): Promise<void>;
   reset(): Promise<void>;
+  registerSuperProperties(properties: AnalyticsProperties): void;
+  hasOptedOutTracking(): Promise<boolean>;
+  optInTracking(): void;
+  optOutTracking(): void;
 }
 
 // Analytics instance and initialization state
 let mixpanelInstance: MixpanelInstance | null = null;
+
+/**
+ * Kept here as well as on the instance because Mixpanel forgets them. `reset()`
+ * and `optOutTracking()` both clear the super properties and the identity, and
+ * the instance may not exist yet when they arrive.
+ */
+let installId: string | null = null;
+let identifiedUserId: string | null = null;
 
 // React Native global for development mode detection
 declare const __DEV__: boolean;
@@ -57,12 +87,11 @@ declare const __DEV__: boolean;
 const startMixpanel = async (token: string): Promise<void> => {
   const { Mixpanel } = require('mixpanel-react-native');
 
-  // Official v3.1.2 initialization pattern
   const trackAutomaticEvents = false;
-  mixpanelInstance = new Mixpanel(token.trim(), trackAutomaticEvents);
-  if (mixpanelInstance) {
-    await mixpanelInstance.init();
-  }
+  const instance: MixpanelInstance = new Mixpanel(token.trim(), trackAutomaticEvents);
+  // An undefined server URL keeps the SDK's own default.
+  await instance.init(false, {}, MIXPANEL_SERVER_URL);
+  mixpanelInstance = instance;
 };
 
 /**
@@ -87,16 +116,31 @@ const initializeMixpanel = (): Promise<void> => {
 };
 
 /**
+ * The gate every call passes through: the instance to use, or null when nothing
+ * may be sent. This is the only path to `initializeMixpanel`, which is what keeps
+ * Mixpanel unconstructed without consent. The second check is for a withdrawal
+ * that landed while an initialization was in flight.
+ */
+const getConsentedInstance = async (): Promise<MixpanelInstance | null> => {
+  await loadConsent();
+  if (!isAllowed('analytics')) return null;
+
+  await initializeMixpanel();
+  return isAllowed('analytics') ? mixpanelInstance : null;
+};
+
+const applyInstallId = (instance: MixpanelInstance): void => {
+  if (installId) instance.registerSuperProperties({ [INSTALL_ID_PROPERTY]: installId });
+};
+
+/**
  * The one place an event reaches Mixpanel. Both public doors funnel through it
  * so the lazy-init and silent-failure contract is written once.
  */
 const sendToMixpanel = async (event: string, properties?: AnalyticsProperties): Promise<void> => {
   try {
-    await initializeMixpanel();
-
-    if (mixpanelInstance?.track) {
-      await mixpanelInstance.track(event, properties);
-    }
+    const instance = await getConsentedInstance();
+    await instance?.track(event, properties);
     // Silent success - no logging needed for normal operation
   } catch {
     // Analytics failed silently - this is expected behavior when MIXPANEL_TOKEN is not configured
@@ -107,13 +151,16 @@ const sendToMixpanel = async (event: string, properties?: AnalyticsProperties): 
 export const analytics = {
   // Identify user with properties
   identify: async (userId: string, properties?: AnalyticsProperties): Promise<void> => {
-    try {
-      await initializeMixpanel();
+    // Remembered, not sent: `startTracking` picks it up if consent comes later.
+    identifiedUserId = userId;
 
-      if (mixpanelInstance?.identify) {
-        await mixpanelInstance.identify(userId);
+    try {
+      const instance = await getConsentedInstance();
+
+      if (instance) {
+        await instance.identify(userId);
         if (properties) {
-          const people = await mixpanelInstance.getPeople();
+          const people = await instance.getPeople();
           if (people) {
             people.set(properties);
           }
@@ -150,15 +197,77 @@ export const analytics = {
 
   // Reset user (for logout)
   reset: async (): Promise<void> => {
-    try {
-      await initializeMixpanel();
+    identifiedUserId = null;
 
-      if (mixpanelInstance?.reset) {
-        await mixpanelInstance.reset();
+    try {
+      const instance = await getConsentedInstance();
+
+      if (instance) {
+        await instance.reset();
+        // reset() clears the super properties, and install_id outlives a sign-out.
+        applyInstallId(instance);
       }
       // Silent success - no logging needed for normal operation
     } catch {
       // Analytics failed silently - this is expected behavior when MIXPANEL_TOKEN is not configured
+    }
+  },
+
+  /**
+   * Analytics is allowed, now or from an earlier launch: bring Mixpanel up.
+   *
+   * The opt-out is checked rather than remembered, because Mixpanel persists it
+   * natively and it survives both a relaunch and `init`: someone who withdrew on an
+   * earlier launch would otherwise be initialised and still silently opted out.
+   * Opting back in comes first, since an opted-out SDK ignores the calls after it.
+   */
+  startTracking: async (): Promise<void> => {
+    try {
+      const instance = await getConsentedInstance();
+      if (!instance) return;
+
+      if (await instance.hasOptedOutTracking()) {
+        instance.optInTracking();
+      }
+      applyInstallId(instance);
+      if (identifiedUserId) {
+        await instance.identify(identifiedUserId);
+      }
+    } catch {
+      // Analytics failed silently
+    }
+  },
+
+  /**
+   * Analytics is not allowed. Opts an existing instance out, which also deletes
+   * whatever it has not sent yet. Never constructs one: with no instance this
+   * launch, refusing has nothing to do and Mixpanel stays untouched.
+   */
+  stopTracking: async (): Promise<void> => {
+    try {
+      // An initialization in flight has to land first, or there is nothing to opt
+      // out, and the choice may have changed again by the time it has.
+      await initialization;
+      if (!isAllowed('analytics')) {
+        mixpanelInstance?.optOutTracking();
+      }
+    } catch {
+      // Analytics failed silently
+    }
+  },
+
+  /**
+   * Put the install's random ID on every event from now on, as a super property.
+   * Only Mixpanel ever receives it: it must never be sent to Meta.
+   */
+  registerInstallId: async (id: string): Promise<void> => {
+    installId = id;
+
+    try {
+      const instance = await getConsentedInstance();
+      if (instance) applyInstallId(instance);
+    } catch {
+      // Analytics failed silently
     }
   },
 

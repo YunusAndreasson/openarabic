@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { analytics } from '@/services/analytics';
+import { trackActivated } from '@/services/installAttribution';
 import { metaEvents } from '@/services/metaEvents';
 import type { SessionMetrics } from '@/types/review.types';
 import { recordSessionCompleted } from '@/utils/notificationPromptStorage';
@@ -67,8 +68,10 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
       // out of here on the first completion of every launch ("The SDK has not
       // been initialized"), and from the middle of this callback that skipped
       // the two calls above it. Nothing the learner depends on may sit behind
-      // an ad SDK.
+      // an ad SDK. `Activated` goes first: it is Mixpanel-only and cannot throw, so
+      // the ad SDK cannot take it down either.
       try {
+        void trackActivated();
         metaEvents.logPracticeSessionComplete(sessionMetrics.wordsReviewed);
       } catch {
         // Attribution is non-critical — never let it affect the session.

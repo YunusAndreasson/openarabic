@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
 
 import { analytics } from '@/services/analytics';
+import { metaEvents } from '@/services/metaEvents';
 import { supabase } from '@/services/supabase';
-import { getErrorCode, isCancellationError } from '@/utils/authUtils';
+import { getErrorCode, isCancellationError, isNewAccount } from '@/utils/authUtils';
 import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 import { toError } from '@/utils/toError';
@@ -233,11 +234,18 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
           });
       }
 
-      // Track analytics
+      // Track analytics. A first sign-in with Apple or Google is also the sign-up:
+      // `Sign In` stays as it is, and the funnel gets its `Sign Up` as well.
+      const isSignUp = isNewAccount(data.user.created_at);
       await analytics.identify(data.user.id, {
         last_sign_in: new Date().toISOString(),
+        ...(isSignUp && { created_at: data.user.created_at }),
       });
       await analytics.trackSignIn(config.provider);
+      if (isSignUp) {
+        await analytics.trackSignUp(config.provider);
+        metaEvents.logSignUp(config.provider);
+      }
 
       // Success handling - haptic feedback only
       // Navigation is handled by root layout when session state updates

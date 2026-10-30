@@ -325,14 +325,14 @@
       [
         "react-native-fbsdk-next",
         {
-          "_comment": "Meta app events for ad attribution. AEM-only: no ATT prompt is ever shown, so on iOS the IDFA stays zeroed and Meta attributes via Aggregated Event Measurement + SKAdNetwork. advertiserIDCollectionEnabled is a no-op on iOS without ATT, but IS what lets Android report the Google Advertising ID — that is where user-level attribution actually comes from.",
+          "_comment": "Meta app events for ad attribution. These three are false so that nothing runs before consent: services/metaEvents.ts switches auto-logging and advertising ID collection on at runtime once the person allows Ad measurement, and off again if they withdraw. Being native config, a change here needs a new build, not an OTA, and JS gating cannot stand in for it on a binary built with them true. isAutoInitEnabled only does anything on Android; on iOS the SDK removed that flag, so the patch in .yarn/patches stops this package's AppDelegate subscriber starting the SDK at launch. AEM-only: no ATT prompt is ever shown, so on iOS the IDFA stays zeroed and Meta attributes via Aggregated Event Measurement + SKAdNetwork. advertiserIDCollectionEnabled is a no-op on iOS without ATT, but once on IS what lets Android report the Google Advertising ID — that is where user-level attribution actually comes from.",
           "appID": "1579869453486353",
           "clientToken": "c39b97bf7d2917ab6725e95be8506aab",
           "displayName": "Open Arabic",
           "scheme": "fb1579869453486353",
-          "isAutoInitEnabled": true,
-          "autoLogAppEventsEnabled": true,
-          "advertiserIDCollectionEnabled": true
+          "isAutoInitEnabled": false,
+          "autoLogAppEventsEnabled": false,
+          "advertiserIDCollectionEnabled": false
         }
       ],
       [

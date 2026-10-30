@@ -14,6 +14,7 @@ import type { AuthResponse } from '@supabase/supabase-js';
 // Mock dependencies BEFORE imports
 jest.mock('@/services/supabase');
 jest.mock('@/services/analytics');
+jest.mock('@/services/metaEvents');
 jest.mock('@/utils/haptics');
 jest.mock('@/utils/errorHandling');
 jest.mock('@sentry/react-native', () => ({
@@ -29,6 +30,7 @@ import {
 
 import { supabase } from '@/services/supabase';
 import { analytics } from '@/services/analytics';
+import { metaEvents } from '@/services/metaEvents';
 import { successFeedback } from '@/utils/haptics';
 import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 import { captureException } from '@sentry/react-native';
@@ -40,6 +42,7 @@ import {
 
 const mockSupabase = jest.mocked(supabase);
 const mockAnalytics = jest.mocked(analytics);
+const mockMetaEvents = jest.mocked(metaEvents);
 const mockSuccessFeedback = jest.mocked(successFeedback);
 const mockHandleError = jest.mocked(handleError);
 const mockAuthBreadcrumb = jest.mocked(authBreadcrumb);
@@ -545,5 +548,60 @@ describe('useOAuthProvider', () => {
       );
       expect(mockAnalytics.trackSignIn).toHaveBeenCalledWith('apple');
     });
+  });
+
+  describe('sign-up funnel', () => {
+    const signInAs = async (provider: 'apple' | 'google', createdAt: string) => {
+      const user = createUserMock({ id: 'user-123', created_at: createdAt });
+      mockSupabase.auth.signInWithIdToken = jest.fn(async () => ({
+        data: { user, session: { ...mockSession, user } },
+        error: null,
+      })) as unknown as typeof mockSupabase.auth.signInWithIdToken;
+
+      const config: OAuthProviderConfig<unknown> = {
+        provider,
+        loadModule: jest.fn(async (..._args: unknown[]) => ({})),
+        executeSignIn: jest.fn(async (..._args: unknown[]): Promise<OAuthSignInResult> => ({
+          idToken: 'test-id-token',
+        })),
+      };
+
+      const { result } = renderHook(() => useOAuthProvider(config));
+      await result.current.signIn();
+    };
+
+    const secondsAgo = (seconds: number) => new Date(Date.now() - seconds * 1000).toISOString();
+
+    it.each(['apple', 'google'] as const)(
+      'a new %s account fires Sign Up as well as Sign In, on both sides',
+      async provider => {
+        const createdAt = secondsAgo(5);
+
+        await signInAs(provider, createdAt);
+
+        expect(mockAnalytics.trackSignIn).toHaveBeenCalledWith(provider);
+        expect(mockAnalytics.trackSignUp).toHaveBeenCalledWith(provider);
+        expect(mockMetaEvents.logSignUp).toHaveBeenCalledWith(provider);
+        expect(mockAnalytics.identify).toHaveBeenCalledWith(
+          'user-123',
+          expect.objectContaining({ created_at: createdAt, last_sign_in: expect.any(String) }),
+        );
+      },
+    );
+
+    it.each(['apple', 'google'] as const)(
+      'a returning %s account fires Sign In and nothing more',
+      async provider => {
+        await signInAs(provider, secondsAgo(61));
+
+        expect(mockAnalytics.trackSignIn).toHaveBeenCalledWith(provider);
+        expect(mockAnalytics.trackSignUp).not.toHaveBeenCalled();
+        expect(mockMetaEvents.logSignUp).not.toHaveBeenCalled();
+        expect(mockAnalytics.identify).toHaveBeenCalledWith(
+          'user-123',
+          expect.not.objectContaining({ created_at: expect.anything() }),
+        );
+      },
+    );
   });
 });
