@@ -2,18 +2,19 @@
  * buildNotificationPlan — pure forward planner for smart SRS reminders
  *
  * All scenarios pass an explicit `now`, so no fake timers are needed.
- * Slip timing is derived from timeUntilRetrievability (round-trip verified in
+ * Slip timing is derived from wordDaysUntilRetrievability (round-trip verified in
  * fsrsRetrievabilityInversion.test.ts) so fixtures stay correct across
  * ts-fsrs default-parameter changes.
  */
 
 import { describe, expect, test } from '@jest/globals';
+import { State } from 'ts-fsrs';
 
 import { CRITICAL_RETRIEVABILITY_THRESHOLD } from '../../constants/fsrs';
 import { SMART_NOTIFICATIONS } from '../../constants/notifications';
 import type { RootId } from '../../types/branded.types';
 import type { StudyWord } from '../../types/vocabulary.types';
-import { timeUntilRetrievability } from '../../utils/fsrsUtils';
+import { wordDaysUntilRetrievability } from '../../utils/fsrsScheduler';
 import { buildNotificationPlan } from '../../utils/notificationPlanner';
 import { createTestWord } from '../helpers/fsrsTestHelpers';
 
@@ -21,7 +22,10 @@ const NOW = new Date('2026-07-20T10:00:00');
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Days after last review at which a stability-1 word crosses R = 0.7 */
-const SLIP_DAYS_S1 = timeUntilRetrievability(1, CRITICAL_RETRIEVABILITY_THRESHOLD) as number;
+const SLIP_DAYS_S1 = wordDaysUntilRetrievability(
+  createTestWord({ fsrs_stability: 1, fsrs_state: State.Review }),
+  CRITICAL_RETRIEVABILITY_THRESHOLD,
+) as number;
 
 const defaultInput = {
   now: NOW,

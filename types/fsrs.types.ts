@@ -23,11 +23,25 @@ export type FSRSColumn = Extract<keyof Tables<'study_words'>, `fsrs_${string}`>;
  * Reads tolerate NULL (pre-migration rows); a write never produces one, because
  * every value comes from a ts-fsrs `Card`. Saying so in the type is what lets
  * `createResetFSRSUpdate` and the grade mutation be checked for completeness
- * instead of each hoping the other filled the same nine fields.
+ * instead of each hoping the other filled the same fields. `fsrs_stability_fast` and
+ * `fsrs_fast_reviewed_at` stay nullable on a write: only a graded FSRS-7 memory has them.
  */
 export type FSRSWordUpdate = {
-  [K in FSRSColumn]: K extends 'fsrs_state' ? State : NonNullable<Tables<'study_words'>[K]>;
+  [K in FSRSColumn]: K extends 'fsrs_state'
+    ? State
+    : K extends 'fsrs_model'
+      ? FSRSModelName
+      : K extends 'fsrs_stability_fast' | 'fsrs_fast_reviewed_at'
+        ? Tables<'study_words'>[K]
+        : NonNullable<Tables<'study_words'>[K]>;
 };
+
+/**
+ * The model a word's stored memory belongs to. A word learned under FSRS-6 stays
+ * there, because there is no review log to rebuild its FSRS-7 state from; see
+ * `utils/fsrsScheduler.ts`.
+ */
+export type FSRSModelName = 'FSRS-6' | 'FSRS-7';
 
 /**
  * Options for fetching FSRS words from the database
@@ -56,7 +70,7 @@ export interface UseFSRSOptions {
 }
 
 export type FSRSUpdateResult =
-  | { status: 'committed'; stability: number }
+  | { status: 'committed'; horizonDays: number }
   | {
       status: 'rejected';
       reason: 'unavailable' | 'busy' | 'mismatched-root' | 'scheduler-error';

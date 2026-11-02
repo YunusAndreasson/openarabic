@@ -52,7 +52,7 @@ const loadSharedFontManager = (): Promise<void> => {
           throw new Error(`Couldn't resolve the font asset for ${familyName}`);
         }
         const data = await Skia.Data.fromURI(asset.uri);
-        const typeface = Skia.Typeface.MakeFreeTypeFaceFromData(data);
+        const typeface = Skia.Typeface.MakeFromData(data);
         if (!typeface) {
           throw new Error(`Couldn't create typeface for ${familyName}`);
         }

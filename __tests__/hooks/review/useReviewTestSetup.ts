@@ -157,7 +157,7 @@ export function setupUseReviewMocks(): UseReviewMockRefs {
   // Mock FSRS hook
   const mockUpdateWord = jest.fn(async (..._args: unknown[]) => ({
     status: 'committed' as const,
-    stability: 7.5,
+    horizonDays: 7.5,
   }));
   const mockInvalidateQueries = jest.fn();
   useFSRS.mockReturnValue(

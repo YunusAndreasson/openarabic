@@ -1,7 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Card } from 'ts-fsrs';
-import { show_diff_message } from 'ts-fsrs';
 
 import {
   CONFIDENCE_TO_RATING,
@@ -14,11 +12,16 @@ import { fsrsQueries, gated } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
-import type { FSRSUpdateResult, UseFSRSOptions, UseFSRSResult } from '@/types/fsrs.types';
+import type {
+  FSRSUpdateResult,
+  FSRSWordUpdate,
+  UseFSRSOptions,
+  UseFSRSResult,
+} from '@/types/fsrs.types';
 import type { IntervalLabels, WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
-import { convertToFSRSCard, toFSRSWordUpdate } from '@/utils/fsrsCard';
+import { gradeWord, previewWordDueDates, wordHoldDays } from '@/utils/fsrsScheduler';
 import {
   calculateWordPriority,
   createSpacingState,
@@ -27,7 +30,6 @@ import {
   updateSpacingCounters as updateSpacingState,
   type SpacingState,
 } from '@/utils/fsrsSpacing';
-import { FSRS_INSTANCE } from '@/utils/fsrsUtils';
 import { fsrsGradeMutation } from '@/utils/mutationDefaults';
 import { PriorityQueue } from '@/utils/priorityQueue';
 import { decideDrill, type DrillProgress } from '@/utils/review/drillPolicy';
@@ -55,8 +57,19 @@ interface FSRSStateTracking {
   queueInitialized: boolean;
 }
 
-// Compact units for ts-fsrs show_diff_message so interval labels stay terse ("10m"/"4d").
-const PREVIEW_UNITS = ['s', 'm', 'h', 'd', 'mo', 'y'];
+// Terse interval labels ("10m"/"4d"): each unit, and how many of it make the next.
+const PREVIEW_UNITS = ['s', 'm', 'h', 'd', 'mo', 'y'] as const;
+const PREVIEW_UNIT_SIZES = [60, 60, 24, 31, 12];
+
+function formatPreviewInterval(due: Date, now: Date): string {
+  let amount = (due.getTime() - now.getTime()) / 1000;
+  let unit = 0;
+  while (unit < PREVIEW_UNIT_SIZES.length && amount >= (PREVIEW_UNIT_SIZES[unit] ?? Infinity)) {
+    amount /= PREVIEW_UNIT_SIZES[unit] ?? 1;
+    unit += 1;
+  }
+  return `${Math.floor(amount)}${PREVIEW_UNITS[unit] ?? ''}`;
+}
 
 export function useFSRS({
   userId,
@@ -326,12 +339,9 @@ export function useFSRS({
         // Calculate the scheduler result before touching counters or queues. If
         // the stored card is invalid, rejecting here leaves the session exactly
         // where it was and lets the learner retry or close safely.
-        let newCard: Card;
+        let wordUpdateData: FSRSWordUpdate;
         try {
-          const card = convertToFSRSCard(currentWord);
-          const now = new Date();
-          const rating = CONFIDENCE_TO_RATING[confidence];
-          newCard = FSRS_INSTANCE.next(card, now, rating).card;
+          wordUpdateData = gradeWord(currentWord, CONFIDENCE_TO_RATING[confidence], new Date());
         } catch (error) {
           void handleError(error, {
             toastMessage: STRINGS.REVIEW_GRADE_FAILED,
@@ -347,8 +357,6 @@ export function useFSRS({
 
         // Phase 1.2: Use FSRS-calculated due date (trust learning_steps: ['1m', '10m'])
         // No need to override - FSRS handles this correctly
-        const wordUpdateData = toFSRSWordUpdate(newCard);
-
         // Track session counters immediately
         countersRef.current.processedWords += 1;
         countersRef.current.uniqueWords.add(rootId);
@@ -525,7 +533,10 @@ export function useFSRS({
           });
         pendingWritesRef.current.add(write);
 
-        return { status: 'committed', stability: newCard.stability };
+        return {
+          status: 'committed',
+          horizonDays: wordHoldDays({ ...currentWord, ...wordUpdateData }),
+        };
       } catch (error) {
         void handleError(error, {
           toastMessage: STRINGS.REVIEW_GRADE_FAILED,
@@ -551,26 +562,17 @@ export function useFSRS({
   );
 
   /**
-   * Per-grade interval preview for a card. Reuses the SAME ts-fsrs scheduler as
-   * updateWord (so the label IS the schedule the grade would produce) and
-   * ts-fsrs's own `show_diff_message` humanizer for terse labels ("10m"/"4d").
+   * Per-grade interval preview for a card. Reuses the SAME scheduler as updateWord,
+   * so the label IS the schedule the grade would produce: fuzz is seeded from the
+   * card and its rep count, not drawn per call.
    * Keyed by WordConfidence so the grade bar can render a sub-label per button.
-   * NB: enable_fuzz is on, so the previewed due is "what grading now would give";
-   * the committed due is a separate fuzz draw and may differ slightly — fine for
-   * a terse label.
    */
   const previewIntervals = useCallback((word: StudyWord): IntervalLabels | null => {
     try {
       const now = new Date();
-      const card = convertToFSRSCard(word);
-      const preview = FSRS_INSTANCE.repeat(card, now);
+      const dues = previewWordDueDates(word, now);
       const labelFor = (confidence: WordConfidence): string =>
-        show_diff_message(
-          preview[CONFIDENCE_TO_RATING[confidence]].card.due,
-          now,
-          true,
-          PREVIEW_UNITS,
-        );
+        formatPreviewInterval(dues[CONFIDENCE_TO_RATING[confidence]], now);
 
       // Written out rather than reduced into an accumulator so the compiler
       // checks the mapping is TOTAL: a fourth grade added to WordConfidence

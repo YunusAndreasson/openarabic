@@ -3,6 +3,7 @@ import { State } from 'ts-fsrs';
 import { MASTERY_MIN_STABILITY } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { timestampMs } from '@/utils/dateTimeUtils';
+import { wordHoldDays } from '@/utils/fsrsScheduler';
 
 /**
  * Simple classification for "hard" words based on FSRS lapses.
@@ -133,5 +134,5 @@ export function hasBeenPractised(word: StudyWord): boolean {
  * `Strength: Strong` at stability >= 7 drifted away from it once already).
  */
 export function isMasteredWord(word: StudyWord): boolean {
-  return word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) >= MASTERY_MIN_STABILITY;
+  return word.fsrs_state === State.Review && wordHoldDays(word) >= MASTERY_MIN_STABILITY;
 }

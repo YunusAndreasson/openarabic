@@ -122,7 +122,7 @@ describe('getHorizonFraction', () => {
   });
 
   test('fills exactly at the scheduler maximum interval and clamps beyond it', () => {
-    expect(getHorizonFraction(OPTIMIZED_FSRS_CONFIG.maximum_interval)).toBeCloseTo(1, 6);
+    expect(getHorizonFraction(OPTIMIZED_FSRS_CONFIG.maximumInterval)).toBeCloseTo(1, 6);
     expect(getHorizonFraction(10_000)).toBe(1);
   });
 

@@ -1,11 +1,12 @@
 /**
  * How far a single word's memory currently reaches, and how far along it is.
  *
- * FSRS `stability` is not an abstract score: it is the number of days until
- * predicted recall of that word falls to `request_retention` (0.90). So "holds
- * for 23 days" is the definition, not a metaphor — and unlike a Weak/Medium/
+ * The horizon is not an abstract score: it is the number of days until predicted
+ * recall of that word falls to `desiredRetention` (0.90), read from the word's own
+ * model (`wordHoldDays`). So "holds for 23 days" is the definition, not a metaphor —
+ * and unlike a Weak/Medium/
  * Strong bucket it keeps growing with every successful review, all the way to
- * `maximum_interval`. That is what makes it a development metric rather than a
+ * `maximumInterval`. That is what makes it a development metric rather than a
  * label.
  *
  * Single source of truth for the dictionary row's meter and the word detail
@@ -20,6 +21,7 @@ import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { clamp01 } from '@/utils/dateTimeUtils';
 import { fillTemplate } from '@/utils/fillTemplate';
+import { wordHoldDays } from '@/utils/fsrsScheduler';
 import type { Band } from '@/utils/list';
 import { hasBeenPractised, isMasteredWord } from '@/utils/wordClassification';
 
@@ -80,15 +82,15 @@ export const MEMORY_STAGE_COLORS = {
  */
 export function getMemoryHorizonDays(word: StudyWord): number | null {
   if (!hasBeenPractised(word)) return null;
-  const stability = word.fsrs_stability;
-  if (stability == null || !Number.isFinite(stability) || stability <= 0) return null;
-  return stability;
+  const days = wordHoldDays(word);
+  if (!Number.isFinite(days) || days <= 0) return null;
+  return days;
 }
 
 /**
- * 0..1 for a meter, log-scaled against `maximum_interval`.
+ * 0..1 for a meter, log-scaled against `maximumInterval`.
  *
- * Linear would be useless: stability spans 0–365 days, so on a linear scale
+ * Linear would be useless: horizons span 0–365 days, so on a linear scale
  * every word a learner is actually working on sits in the leftmost few percent
  * and the whole column reads as empty. Log spreads the early days — where
  * progress is fastest and most motivating — and still keeps climbing at the top
@@ -96,7 +98,7 @@ export function getMemoryHorizonDays(word: StudyWord): number | null {
  */
 export function getHorizonFraction(days: number | null): number {
   if (days == null || !Number.isFinite(days) || days <= 0) return 0;
-  return clamp01(Math.log1p(days) / Math.log1p(OPTIMIZED_FSRS_CONFIG.maximum_interval));
+  return clamp01(Math.log1p(days) / Math.log1p(OPTIMIZED_FSRS_CONFIG.maximumInterval));
 }
 
 /**

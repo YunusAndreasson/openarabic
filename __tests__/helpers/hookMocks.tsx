@@ -105,7 +105,7 @@ const createFSRSMockDefaults = () => ({
   isLoading: false,
   isComplete: false,
   progress: 0,
-  updateWord: jest.fn(async (..._args: unknown[]) => ({ status: 'committed', stability: 7.5 })),
+  updateWord: jest.fn(async (..._args: unknown[]) => ({ status: 'committed', horizonDays: 7.5 })),
   previewIntervals: jest.fn((..._args: unknown[]) => ({
     unknown: '1m',
     vague: '10m',

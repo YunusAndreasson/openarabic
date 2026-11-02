@@ -72,7 +72,7 @@ export const useDailyWordLimit = () => {
     return computeAdaptiveNewLimit({
       ceiling,
       recall,
-      desiredRetention: OPTIMIZED_FSRS_CONFIG.request_retention,
+      desiredRetention: OPTIMIZED_FSRS_CONFIG.desiredRetention,
     });
   }, [dailyWordLimit, adaptivePacingEnabled]);
 

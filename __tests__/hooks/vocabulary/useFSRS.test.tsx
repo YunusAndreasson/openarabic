@@ -28,13 +28,37 @@ import {
 } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
-import { FSRS_INSTANCE } from '@/utils/fsrsUtils';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { RootId, UserId } from '@/types/branded.types';
 import { LEGACY_NULL_TIMESTAMP } from '@/__tests__/helpers/fsrsTestHelpers';
 import { rootId, userId } from '@/__tests__/helpers/ids';
 
 // Mock only the service layer (network boundary)
+// The real schedulers, wrapped by hand so one call can be made to fail: a jest.fn
+// wrapper would lose its implementation to the configured mock reset.
+const mockSchedulerFailures = { grade: 0, preview: 0 };
+jest.mock('@/utils/fsrsScheduler', () => {
+  const actual =
+    jest.requireActual<typeof import('@/utils/fsrsScheduler')>('@/utils/fsrsScheduler');
+  return {
+    ...actual,
+    gradeWord: (...args: Parameters<typeof actual.gradeWord>) => {
+      if (mockSchedulerFailures.grade > 0) {
+        mockSchedulerFailures.grade -= 1;
+        throw new Error('Invalid scheduler card');
+      }
+      return actual.gradeWord(...args);
+    },
+    previewWordDueDates: (...args: Parameters<typeof actual.previewWordDueDates>) => {
+      if (mockSchedulerFailures.preview > 0) {
+        mockSchedulerFailures.preview -= 1;
+        throw new Error('Invalid scheduler card');
+      }
+      return actual.previewWordDueDates(...args);
+    },
+  };
+});
+
 jest.mock('@/services/studyWordsFSRS');
 jest.mock('@/utils/errorHandling');
 
@@ -504,9 +528,6 @@ describe('useFSRS Hook', () => {
       {
         confidence: 'known' as const,
         rating: 'Good',
-        // Deterministic ts-fsrs output for a fresh (State.New) card graded Good
-        // under this app's OPTIMIZED_FSRS_CONFIG — see the probe used to derive
-        // it in the "updates FSRS card properties on review" test above.
         expectedStability: 2.3065,
         expectedProgress: 100,
         expectComplete: true,
@@ -549,7 +570,8 @@ describe('useFSRS Hook', () => {
         // The point of this table is "confidence X maps to FSRS rating Y" — a
         // bare toHaveBeenCalled() would pass even if every confidence graded
         // the same rating. Good/Hard/Again each produce a distinct resulting
-        // stability from a fresh card, so pinning it catches a broken mapping.
+        // stability from a fresh FSRS-6 card, so pinning it catches a broken mapping.
+        // These are ts-fsrs 5's values: the switch being off must not move them.
         expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalledWith(
           'test-user',
           1,
@@ -627,7 +649,7 @@ describe('useFSRS Hook', () => {
       const update = await result.current.updateWord(1, 'known');
 
       expect(update.status).toBe('committed');
-      if (update.status === 'committed') expect(update.stability).toBeGreaterThan(0);
+      if (update.status === 'committed') expect(update.horizonDays).toBeGreaterThan(0);
     });
   });
 
@@ -791,9 +813,7 @@ describe('useFSRS Hook', () => {
 
     test('returns null instead of crashing for invalid scheduler data', () => {
       const word = createMockStudyWord({ root_id: rootId(1) });
-      jest.spyOn(FSRS_INSTANCE, 'repeat').mockImplementationOnce(() => {
-        throw new Error('Invalid scheduler card');
-      });
+      mockSchedulerFailures.preview = 1;
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -822,9 +842,7 @@ describe('useFSRS Hook', () => {
     test('rejects scheduler errors atomically and releases the update lock', async () => {
       const word = createMockStudyWord({ root_id: rootId(1) });
       studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
-      jest.spyOn(FSRS_INSTANCE, 'next').mockImplementationOnce(() => {
-        throw new Error('Invalid scheduler card');
-      });
+      mockSchedulerFailures.grade = 1;
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -1186,7 +1204,7 @@ describe('useFSRS Hook', () => {
       const update = await result.current.updateWord(1, 'known');
 
       expect(update.status).toBe('committed');
-      if (update.status === 'committed') expect(update.stability).toBeGreaterThan(0);
+      if (update.status === 'committed') expect(update.horizonDays).toBeGreaterThan(0);
     });
   });
 

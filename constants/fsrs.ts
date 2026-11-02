@@ -1,12 +1,21 @@
 import { Rating, State } from 'ts-fsrs';
-import type { Grade, StepUnit } from 'ts-fsrs';
+import type { Grade } from 'ts-fsrs';
 
 import { WORD_CONFIDENCES } from '@/types/review.types';
+import type { FSRSModelName } from '@/types/fsrs.types';
 import type { WordConfidence } from '@/types/review.types';
 import { MILLISECONDS_PER_HOUR } from '@/utils/dateTimeUtils';
 
-const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
-const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
+/**
+ * The switch: which model a word starting from nothing is scheduled with.
+ *
+ * FSRS-6, deliberately. An older installed app reading an FSRS-7 word does not crash,
+ * but it reads the wrong recall and schedules different intervals, and a learner can
+ * have both installed against the same `study_words` rows. Move this to 'FSRS-7' only
+ * once installed versions can all read FSRS-7. Words already learned stay on the model
+ * they were learned with in either position; see `utils/fsrsScheduler.ts`.
+ */
+export const NEW_WORD_FSRS_MODEL: FSRSModelName = 'FSRS-6';
 
 // Base keys for consistent cache management
 export const FSRS_BASE_KEY = 'fsrs-words';
@@ -62,7 +71,7 @@ export const LEECH_LIST_LIMIT = 20; // top-N struggling words to surface
 
 // Adaptive new-word pacing (ported from edenmind computeAdaptiveNewLimit).
 // The daily new-word limit becomes a ceiling that eases down when recent recall
-// dips below request_retention, recovering as it improves. Gaps are kept in
+// dips below desiredRetention, recovering as it improves. Gaps are kept in
 // lockstep with the retention bands the rest of the SRS uses.
 export const NEW_WORD_PACING = {
   /** Recent graded attempts needed before recall is a fair judgement. */
@@ -209,18 +218,18 @@ export const SPACING_ITERATION_LIMIT = 20;
 export const URGENT_RETRIEVABILITY_THRESHOLD = 0.5;
 
 // Optimized FSRS configuration.
-// request_retention 0.90 is the FSRS default target — roughly 40% fewer reviews
+// desiredRetention 0.90 is the FSRS default target — roughly 40% fewer reviews
 // than 0.95 for a small recall trade-off. Cards scheduled under an older target
 // self-correct: each picks up 0.90-based intervals at its next review (no rebase).
 export const OPTIMIZED_FSRS_CONFIG = {
-  learning_steps: DEFAULT_LEARNING_STEPS,
-  relearning_steps: DEFAULT_RELEARNING_STEPS,
-  request_retention: 0.9,
-  maximum_interval: 365,
-  enable_fuzz: true,
-  // enable_short_term=true keeps short-term memory steps (learning/relearning)
-  // active in ts-fsrs v5. Disabling would skip directly to long-term scheduling.
-  // Current setting works correctly with our session-based learning flow.
-  enable_short_term: true,
-  // Use library defaults for weights and derived options to avoid version drift
+  learningSteps: ['1m', '10m'],
+  relearningSteps: ['5m', '10m'],
+  desiredRetention: 0.9,
+  maximumInterval: 365,
+  enableFuzz: true,
+  // enableShortTerm keeps the explicit learning/relearning steps active, which our
+  // session-based learning flow relies on. FSRS-7's fast trace is part of the model
+  // and is unaffected by it.
+  enableShortTerm: true,
+  // Weights come from each model in utils/fsrsScheduler.ts; they are not interchangeable.
 } as const;

@@ -30,6 +30,7 @@ import { useAudioPreloader } from './useAudioPreloader';
 import { watchPromptFinish } from './promptFinishWatcher';
 import { useSessionMetrics } from './useSessionMetrics';
 import { useTimerCleanup } from '@/hooks/utils';
+import { wordHoldDays } from '@/utils/fsrsScheduler';
 import { runWhenIdle } from '@/utils/runWhenIdle';
 import { useFSRS } from '@/hooks/vocabulary';
 import { audioCache } from '@/services/audioCache';
@@ -590,7 +591,7 @@ export function useReview({
       }
 
       // Store old stability + reps before update for metrics / telemetry
-      const oldStability = currentWord.fsrs_stability ?? undefined;
+      const oldStability = wordHoldDays(currentWord);
       const reps = currentWord.fsrs_reps ?? 0;
       const rootId = currentWord.root_id;
 
@@ -618,7 +619,7 @@ export function useReview({
           recoverRejectedGrade(updateResult.reason);
           return;
         }
-        const newStability = updateResult.stability;
+        const newStability = updateResult.horizonDays;
 
         // Onboarding is a success signal, so a rejected scheduler transition
         // must not mark the practice step complete.
@@ -679,9 +680,7 @@ export function useReview({
       }
     },
     [
-      currentWord?.root_id,
-      currentWord?.fsrs_stability,
-      currentWord?.fsrs_reps,
+      currentWord,
       updateWord,
       updateMetrics,
       recoverRejectedGrade,

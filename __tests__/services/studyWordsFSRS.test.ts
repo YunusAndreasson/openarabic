@@ -1,3 +1,4 @@
+import { State } from 'ts-fsrs';
 /**
  * Service Tests
  *
@@ -143,12 +144,15 @@ describe('updateWordAndReview', () => {
   const update = {
     fsrs_due: '2024-01-01T00:00:00.000Z',
     fsrs_stability: 1,
+    fsrs_stability_fast: 3,
+    fsrs_fast_reviewed_at: '2024-01-01T00:00:00.000Z',
+    fsrs_model: 'FSRS-7' as const,
     fsrs_difficulty: 2,
     fsrs_scheduled_days: 1,
     fsrs_learning_steps: 0,
     fsrs_reps: 0,
     fsrs_lapses: 0,
-    fsrs_state: 0,
+    fsrs_state: State.New,
     fsrs_last_review: '2024-01-01T00:00:00.000Z',
   };
 
@@ -170,6 +174,10 @@ describe('updateWordAndReview', () => {
       expect.objectContaining({
         fsrs_due: update.fsrs_due,
         fsrs_stability: update.fsrs_stability,
+        // The model and its fast trace are written with the state, or a grade loses them.
+        fsrs_stability_fast: update.fsrs_stability_fast,
+        fsrs_fast_reviewed_at: update.fsrs_fast_reviewed_at,
+        fsrs_model: update.fsrs_model,
         fsrs_last_review: update.fsrs_last_review,
       }),
     );
@@ -212,6 +220,9 @@ describe('getFSRSWords', () => {
     const expected = `
         fsrs_due,
         fsrs_stability,
+        fsrs_stability_fast,
+        fsrs_fast_reviewed_at,
+        fsrs_model,
         fsrs_difficulty,
         fsrs_scheduled_days,
         fsrs_reps,

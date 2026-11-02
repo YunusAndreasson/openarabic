@@ -14,7 +14,7 @@ import {
   normalizeTimestamp,
   toLocalDateString,
 } from '@/utils/dateTimeUtils';
-import { timeUntilRetrievability } from '@/utils/fsrsUtils';
+import { wordDaysUntilRetrievability } from '@/utils/fsrsScheduler';
 
 export interface PlannedNotification {
   /** Stable identifier, e.g. `srs-due-2026-07-21` — makes rescheduling idempotent */
@@ -68,7 +68,7 @@ function computeTimelines(words: StudyWord[], nowMs: number): WordTimeline[] {
     const lastStr = normalizeTimestamp(word.fsrs_last_review);
     if (word.fsrs_state !== State.New && (word.fsrs_reps ?? 0) > 0 && stability > 0 && lastStr) {
       const lastMs = Date.parse(lastStr);
-      const slipDays = timeUntilRetrievability(stability, CRITICAL_RETRIEVABILITY_THRESHOLD);
+      const slipDays = wordDaysUntilRetrievability(word, CRITICAL_RETRIEVABILITY_THRESHOLD);
       if (!Number.isNaN(lastMs) && slipDays !== null) {
         slipMs = lastMs + slipDays * MILLISECONDS_PER_DAY;
       }

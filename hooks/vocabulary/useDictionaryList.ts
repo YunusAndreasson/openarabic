@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { normalizeForSearch } from '@/utils/searchNormalization';
 import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
+import { wordHoldDays } from '@/utils/fsrsScheduler';
 import { isLeechWord } from '@/utils/leechUtils';
 import { isOneOf } from '@/utils/list';
 import {
@@ -221,7 +222,7 @@ function sortValue(word: StudyWord, field: DictionarySortField): number {
     case 'difficulty':
       return word.fsrs_difficulty ?? 0;
     case 'strength':
-      return word.fsrs_stability ?? 0;
+      return wordHoldDays(word);
     case 'recent':
       return parseSupabaseTimestamp(word.created_at)?.getTime() ?? 0;
   }

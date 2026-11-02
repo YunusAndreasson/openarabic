@@ -1,3 +1,4 @@
+import { State } from 'ts-fsrs';
 import * as fc from 'fast-check';
 import type { RootId, UserId } from '../../types/branded.types';
 import type { StudyWord } from '../../types/vocabulary.types';
@@ -70,7 +71,7 @@ export const fsrsArbitraries = {
   }),
 
   // Generate FSRS states (0-3)
-  state: fc.integer({ min: 0, max: 3 }),
+  state: fc.constantFrom(State.New, State.Learning, State.Review, State.Relearning),
 
   // Generate reasonable rep counts (0-100)
   reps: fc.integer({ min: 0, max: 100 }),
@@ -116,7 +117,7 @@ export const studyWordArbitrary = fc.record({
   difficulty: fc.float({ min: 0, max: 1, noDefaultInfinity: true, noNaN: true }),
 
   root: fc.constant(undefined),
-}) as fc.Arbitrary<StudyWord>;
+}) as unknown as fc.Arbitrary<StudyWord>;
 
 // Generate word sets with specific properties
 export const wordSetArbitrary = (size: number = 10) =>
@@ -147,7 +148,7 @@ export const strugglingWordArbitrary = fc.record({
   fsrs_learning_steps: fc.integer({ min: 0, max: 10 }),
   fsrs_reps: fsrsArbitraries.reps,
   fsrs_lapses: fc.integer({ min: 2, max: 20 }), // At least 2 lapses (matches isHardWord)
-  fsrs_state: fc.integer({ min: 1, max: 3 }), // Learning, Review, or Relearning
+  fsrs_state: fc.constantFrom(State.Learning, State.Review, State.Relearning), // Learning, Review, or Relearning
   fsrs_last_review: fc
     .date()
     .filter(d => !isNaN(d.getTime()))
@@ -160,7 +161,7 @@ export const strugglingWordArbitrary = fc.record({
   }), // High difficulty
 
   root: fc.constant(undefined),
-}) as fc.Arbitrary<StudyWord>;
+}) as unknown as fc.Arbitrary<StudyWord>;
 
 // Generate due words (overdue)
 
@@ -262,7 +263,7 @@ export const advancedTestScenarios = {
         const words = transitions.map(([fromState], index) =>
           createTestWord({
             root_id: (index + 1) as RootId,
-            fsrs_state: fromState,
+            fsrs_state: fromState as State,
             fsrs_reps: index,
             fsrs_last_review: new Date(Date.now() - index * 86400000).toISOString(),
           }),
@@ -289,14 +290,14 @@ export const advancedTestScenarios = {
                 ...baseWord,
                 fsrs_stability: Math.random() * 10 + 1,
                 fsrs_difficulty: Math.random() * 5 + 5,
-                fsrs_state: Math.floor(Math.random() * 4),
+                fsrs_state: Math.floor(Math.random() * 4) as State,
               };
             case 'high':
               return {
                 ...baseWord,
                 fsrs_stability: Math.random() * 100 + 1,
                 fsrs_difficulty: Math.random() * 10 + 1,
-                fsrs_state: Math.floor(Math.random() * 4),
+                fsrs_state: Math.floor(Math.random() * 4) as State,
                 fsrs_reps: Math.floor(Math.random() * 50),
                 fsrs_lapses: Math.floor(Math.random() * 10),
               };
@@ -317,7 +318,7 @@ export const createLargeWordSet = (count: number) => {
       fsrs_due: new Date(Date.now() - Math.random() * 86400000).toISOString(), // Random overdue
       fsrs_stability: Math.random() * 10 + 1,
       fsrs_difficulty: Math.random() * 5 + 5,
-      fsrs_state: Math.floor(Math.random() * 4), // Random state 0-3
+      fsrs_state: Math.floor(Math.random() * 4) as State, // Random state 0-3
       fsrs_reps: Math.floor(Math.random() * 10),
       fsrs_lapses: Math.floor(Math.random() * 3),
     }),

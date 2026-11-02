@@ -82,8 +82,8 @@ const pinned = {
 
 // Ranges another package dictates, derived rather than typed in so they cannot
 // go stale (each was once restored by hand after this script). Expo pins react
-// but neither of its companions, which step 4 re-aligns; executorch is held by
-// its patch, so its blob-util peer range is the only valid one.
+// but neither of its companions, which step 4 re-aligns; executorch's blob-util
+// peer range is the only valid one.
 const react = pkg.dependencies.react;
 pinned['react-test-renderer'] = react;
 pinned['@types/react'] = `~${react.split('.').slice(0, 2).join('.')}.0`;

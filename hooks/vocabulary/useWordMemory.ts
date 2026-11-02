@@ -6,8 +6,8 @@ import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { MILLISECONDS_PER_DAY, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { fillTemplate } from '@/utils/fillTemplate';
-import { convertToFSRSCard } from '@/utils/fsrsCard';
-import { FSRS_INSTANCE, calculateRetrievability } from '@/utils/fsrsUtils';
+import { gradeWord, wordHoldDays, wordRetrievability } from '@/utils/fsrsScheduler';
+import { calculateRetrievability } from '@/utils/fsrsUtils';
 import {
   MEMORY_STAGE_LABELS,
   formatHorizon,
@@ -88,7 +88,7 @@ export interface WordMemory {
  * this returns instead is the *forward* view the scheduler is actually working
  * from: the decay curve the word is on, where today sits on it, where the next
  * review lands, and what passing that review would buy. All of it comes out of
- * the same ts-fsrs instance the review screen grades through, so the preview and
+ * the same scheduler the review screen grades this word with, so the preview and
  * the real schedule cannot disagree.
  */
 export function useWordMemory(word: StudyWord | undefined): WordMemory | null {
@@ -138,11 +138,11 @@ export function useWordMemory(word: StudyWord | undefined): WordMemory | null {
       const days = (spanDays * index) / (CURVE_SAMPLES - 1);
       return {
         days,
-        retrievability: FSRS_INSTANCE.forgetting_curve(days, horizonDays),
+        retrievability: wordRetrievability(word, days),
       };
     });
 
-    const target = OPTIMIZED_FSRS_CONFIG.request_retention;
+    const target = OPTIMIZED_FSRS_CONFIG.desiredRetention;
     // Fit the axis to this word's own decay instead of to a fixed floor. Across
     // the plotted span recall may only fall from 100% to 85%, and against a
     // 0–100 axis that is a flat line that explains nothing. The `min` keeps the
@@ -175,9 +175,9 @@ export function useWordMemory(word: StudyWord | undefined): WordMemory | null {
  */
 function nextHorizonLabelFor(word: StudyWord, now: Date): string | null {
   try {
-    const { stability } = FSRS_INSTANCE.next(convertToFSRSCard(word), now, Rating.Good).card;
-    if (!Number.isFinite(stability) || stability <= 0) return null;
-    return formatHorizon(stability);
+    const days = wordHoldDays({ ...word, ...gradeWord(word, Rating.Good, now) });
+    if (!Number.isFinite(days) || days <= 0) return null;
+    return formatHorizon(days);
   } catch {
     return null;
   }

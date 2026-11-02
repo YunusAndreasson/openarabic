@@ -61,7 +61,7 @@ export const BIN_WIDTH = BIN_COLUMNS.barWidth;
 /**
  * Which column a horizon of `days` falls in.
  *
- * `min` guards the top of the range: a word at exactly maximum_interval scores
+ * `min` guards the top of the range: a word at exactly maximumInterval scores
  * a fraction of 1 and would otherwise index one past the last column. The one
  * place this is decided, so the distribution that counts a column and the
  * travel plan that moves a dot between columns can never disagree about where

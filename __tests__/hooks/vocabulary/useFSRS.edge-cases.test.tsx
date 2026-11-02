@@ -417,8 +417,8 @@ describe('useFSRS Hook - Edge Cases', () => {
 
       expect(update.status).toBe('committed');
       if (update.status === 'committed') {
-        expect(update.stability).toBeGreaterThan(0);
-        expect(Number.isFinite(update.stability)).toBeTruthy();
+        expect(update.horizonDays).toBeGreaterThan(0);
+        expect(Number.isFinite(update.horizonDays)).toBeTruthy();
       }
     });
 
@@ -444,7 +444,7 @@ describe('useFSRS Hook - Edge Cases', () => {
       const update = await result.current.updateWord(rootId(1), 'known');
 
       expect(update.status).toBe('committed');
-      if (update.status === 'committed') expect(update.stability).toBeGreaterThan(0);
+      if (update.status === 'committed') expect(update.horizonDays).toBeGreaterThan(0);
     });
   });
 

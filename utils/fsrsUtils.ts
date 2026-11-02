@@ -1,20 +1,13 @@
-import { fsrs, generatorParameters } from 'ts-fsrs';
-
 import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
-  OPTIMIZED_FSRS_CONFIG,
   URGENT_RETRIEVABILITY_THRESHOLD,
 } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { clamp01, MILLISECONDS_PER_DAY, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { fillTemplate } from '@/utils/fillTemplate';
+import { wordRetrievability } from '@/utils/fsrsScheduler';
 import { dueTimestampMs, hasBeenPractised } from '@/utils/wordClassification';
-
-// The app's one FSRS instance. The review engine (useFSRS) grades through it and
-// every read-only derivation here reads through it, so a config or library change
-// can never move one side without the other.
-export const FSRS_INSTANCE = fsrs(generatorParameters(OPTIMIZED_FSRS_CONFIG));
 
 export interface RetrievabilityForecast {
   date: Date;
@@ -43,9 +36,8 @@ export interface DueWordsForecast {
 }
 
 /**
- * Calculate retrievability using the official FSRS forgetting curve
- * R(t,S) = (1 + FACTOR × t/(9×S))^DECAY
- * Uses ts-fsrs library for algorithm consistency with the review engine
+ * Calculate retrievability on the word's own model's forgetting curve, so it
+ * agrees with the scheduler that grades that word.
  */
 export function calculateRetrievability(
   word: StudyWord,
@@ -73,22 +65,7 @@ export function calculateRetrievability(
     (targetDate.getTime() - lastReview.getTime()) / MILLISECONDS_PER_DAY,
   );
 
-  return clamp01(FSRS_INSTANCE.forgetting_curve(daysSinceReview, stability));
-}
-
-/**
- * Days after the last review until retrievability decays to `threshold`.
- * Closed-form inversion of the ts-fsrs forgetting curve R(t,S) = (1 + factor·t/S)^decay,
- * computed by the review engine's own instance so a library upgrade
- * (e.g. FSRS-6 per-deck decay w[20]) changes both sides together.
- * Returns null when stability or threshold make the question meaningless.
- */
-export function timeUntilRetrievability(stabilityDays: number, threshold: number): number | null {
-  if (stabilityDays <= 0 || threshold <= 0 || threshold >= 1) return null;
-
-  // The library's own I(r) = (r^(1/decay) - 1) / factor, the interval
-  // multiplier it schedules with (rounded to 8 decimals there).
-  return stabilityDays * FSRS_INSTANCE.calculate_interval_modifier(threshold);
+  return clamp01(wordRetrievability(word, daysSinceReview));
 }
 
 /**

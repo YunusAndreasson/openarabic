@@ -55,6 +55,8 @@ jest.mock('@/utils/articleUtils', () => ({
 
 // Mock fsrs constants
 jest.mock('@/constants/fsrs', () => ({
+  // The schedulers are built from the real config at module load.
+  ...jest.requireActual<Record<string, unknown>>('@/constants/fsrs'),
   DEFAULT_SESSION_COOLDOWN_HOURS: 4,
 }));
 

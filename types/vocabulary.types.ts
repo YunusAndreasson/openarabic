@@ -45,7 +45,12 @@ export interface SentenceWord extends Omit<Tables<'sentence_words'>, 'root_id'> 
  */
 export interface StudyWord extends Omit<
   Tables<'study_words'>,
-  'root_id' | 'user_id' | 'fsrs_state'
+  | 'root_id'
+  | 'user_id'
+  | 'fsrs_state'
+  | 'fsrs_model'
+  | 'fsrs_stability_fast'
+  | 'fsrs_fast_reviewed_at'
 > {
   /** Root ID (branded for type safety) */
   root_id: RootId;
@@ -66,6 +71,15 @@ export interface StudyWord extends Omit<
    * Still nullable: rows written before the FSRS migration can hold NULL.
    */
   fsrs_state: State | null;
+  /**
+   * The model this word's memory belongs to, FSRS-7's fast trace, and the review that
+   * trace belongs to. Optional as
+   * well as nullable: a word persisted to the query cache by an older app version
+   * has neither, and reads as the FSRS-6 word it is.
+   */
+  fsrs_model?: string | null;
+  fsrs_stability_fast?: number | null;
+  fsrs_fast_reviewed_at?: string | null;
   /** Optional root relation loaded from database */
   root?: Tables<'roots'> | null;
 }

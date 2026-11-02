@@ -1,3 +1,5 @@
+import type { State } from 'ts-fsrs';
+
 import type {
   Article,
   ArticleRow,
@@ -91,5 +93,7 @@ export function mapToStudyWord(row: StudyWordQueryRow, fallbackUserId: string): 
     // Use fallback for stats queries that don't include user_id
     user_id: (row.user_id ?? fallbackUserId) as UserId,
     root: row.root ?? undefined,
+    // The column is a bare smallint; check_fsrs_state_valid is what limits it to these.
+    fsrs_state: row.fsrs_state as State | null,
   };
 }

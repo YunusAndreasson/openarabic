@@ -669,7 +669,7 @@ export const STRINGS = {
   MEMORY_HORIZON_SUBTITLE: 'How long each practised word holds before it needs you again',
   /**
    * The definition, stated once, in the one place with room for it. `stability`
-   * IS the days until predicted recall falls to `request_retention` (0.90) — so
+   * IS the days until predicted recall falls to `desiredRetention` (0.90) — so
    * this sentence is the maths, not a metaphor for it.
    */
   MEMORY_HORIZON_EXPLAINER:

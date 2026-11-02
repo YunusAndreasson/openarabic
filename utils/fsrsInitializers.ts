@@ -1,6 +1,6 @@
 import { State } from 'ts-fsrs';
 
-import { PLACEHOLDER_FSRS } from '@/constants/fsrs';
+import { NEW_WORD_FSRS_MODEL, PLACEHOLDER_FSRS } from '@/constants/fsrs';
 import type { TablesInsert } from '@/types/database.types';
 import type { FSRSWordUpdate } from '@/types/fsrs.types';
 
@@ -25,6 +25,10 @@ export function createResetFSRSUpdate(now: Date = new Date()): FSRSWordUpdate {
   return {
     fsrs_due: iso, // Due immediately, like a new word
     fsrs_stability: PLACEHOLDER_FSRS.stability,
+    fsrs_stability_fast: null,
+    fsrs_fast_reviewed_at: null,
+    // Starting from nothing is the one way a word can change model.
+    fsrs_model: NEW_WORD_FSRS_MODEL,
     fsrs_difficulty: PLACEHOLDER_FSRS.difficulty,
     fsrs_scheduled_days: INITIAL_FSRS_SCHEDULED_DAYS,
     fsrs_learning_steps: INITIAL_FSRS_LEARNING_STEPS,

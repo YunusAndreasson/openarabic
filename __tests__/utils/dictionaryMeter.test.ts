@@ -1,3 +1,4 @@
+import { State } from 'ts-fsrs';
 import { FSRS_DIFFICULTY_MAX, FSRS_DIFFICULTY_MIN } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
@@ -122,7 +123,7 @@ describe('getSortMeterFraction', () => {
     it('never paints a memory red — a young memory is a stage, not a fault', () => {
       // Every word passes through learning. Colouring it like an error would
       // paint an active learner's whole list as failure.
-      for (const state of [0, 1, 2, 3]) {
+      for (const state of [State.New, State.Learning, State.Review, State.Relearning]) {
         for (const stability of [0.4, 1, 5, 50, 300]) {
           const colorName = getSortMeterColorName(
             makeWord({ fsrs_state: state, fsrs_stability: stability }),

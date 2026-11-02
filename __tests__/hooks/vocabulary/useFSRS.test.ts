@@ -67,54 +67,26 @@ jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));
 
-jest.mock('ts-fsrs', () => ({
-  fsrs: jest.fn((..._args: unknown[]) => ({
-    // Session ordering reads retrievability off the same instance it grades with.
-    forgetting_curve: () => 0.9,
-    next: jest.fn((..._args: unknown[]) => ({
-      card: {
-        stability: 3.0,
-        difficulty: 0.3,
-        due: new Date(),
-        last_review: new Date(),
-        reps: 1,
-        lapses: 0,
-        state: 1,
-        elapsed_days: 0,
-        scheduled_days: 1,
-      },
-      log: {},
-    })),
+// The scheduler boundary, not the library: this suite is about the session queue.
+jest.mock('@/utils/fsrsScheduler', () => ({
+  gradeWord: jest.fn((..._args: unknown[]) => ({
+    fsrs_due: new Date().toISOString(),
+    fsrs_stability: 3.0,
+    fsrs_stability_fast: 1.0,
+    fsrs_fast_reviewed_at: new Date().toISOString(),
+    fsrs_difficulty: 3,
+    fsrs_scheduled_days: 1,
+    fsrs_reps: 1,
+    fsrs_learning_steps: 0,
+    fsrs_lapses: 0,
+    fsrs_state: 1,
+    fsrs_model: 'FSRS-7',
+    fsrs_last_review: new Date().toISOString(),
   })),
-  generatorParameters: jest.fn((..._args: unknown[]) => ({})),
-  // Applies the optional afterHandler, as the real one does: convertToFSRSCard
-  // builds a stored card by overriding the empty one through it.
-  createEmptyCard: jest.fn((_now?: unknown, afterHandler?: (card: object) => unknown) => {
-    const card = {
-      stability: 0,
-      difficulty: 0,
-      due: new Date(),
-      last_review: null,
-      reps: 0,
-      lapses: 0,
-      state: 0,
-      elapsed_days: 0,
-      scheduled_days: 0,
-    };
-    return afterHandler ? afterHandler(card) : card;
-  }),
-  Rating: {
-    Again: 1,
-    Hard: 2,
-    Good: 3,
-    Easy: 4,
-  },
-  State: {
-    New: 0,
-    Learning: 1,
-    Review: 2,
-    Relearning: 3,
-  },
+  previewWordDueDates: jest.fn(() => ({})),
+  wordHoldDays: jest.fn(() => 3),
+  wordRetrievability: jest.fn(() => 0.9),
+  wordDaysUntilRetrievability: jest.fn(() => 1),
 }));
 
 import { useMutation, useQuery } from '@tanstack/react-query';

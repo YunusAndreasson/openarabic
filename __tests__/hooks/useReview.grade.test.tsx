@@ -203,7 +203,7 @@ describe('useReview Hook - Grading', () => {
       const word = createMockWord();
       mocks.mockUpdateWord
         .mockResolvedValueOnce({ status: 'rejected', reason: 'scheduler-error' })
-        .mockResolvedValueOnce({ status: 'committed', stability: 7.5 });
+        .mockResolvedValueOnce({ status: 'committed', horizonDays: 7.5 });
       useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();

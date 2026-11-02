@@ -61,7 +61,7 @@ export interface AdaptiveNewLimitInput {
   ceiling: number;
   /** Recent-window recall (realised rate + sample size). */
   recall: RecentRecall;
-  /** The recall the schedule aims for (request_retention). */
+  /** The recall the schedule aims for (desiredRetention). */
   desiredRetention: number;
   /** Override the minimum-evidence gate (defaults to NEW_WORD_PACING.MIN_TRIALS). */
   minTrials?: number;
