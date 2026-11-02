@@ -33,7 +33,10 @@ const path = require('path');
 // Config
 // ---------------------------------------------------------------------------
 const SUPABASE_URL = 'https://kkmnzbeugdoajtzfjkxg.supabase.co';
+// Reads work with the anon key. --apply, --apply-llm and --rollback need the
+// service-role key: content tables refuse anon writes.
 const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrbW56YmV1Z2RvYWp0emZqa3hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU3ODk1NDQsImV4cCI6MjA0MTM2NTU0NH0.AjF-MzqjnUuERhgtYMwJKpDtNKBFKXjEmSMqUPeM1Os';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);

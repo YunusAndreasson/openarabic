@@ -13,6 +13,7 @@ Usage:
 """
 
 import csv
+import os
 import time
 from datetime import datetime
 from pathlib import Path
@@ -30,11 +31,6 @@ DEFAULT_FIRST_COMMENT = ""  # Leave empty or add default comment
 HASHTAGS = "#learnarabic #arabiclanguage #arabicwords #arabicvocabulary #studyarabic #arabicgrammar #ClassicalArabic #fusha #quranicarabic #arabicphrases #arabicquotes #islamic #muslim #arabiconline #learnarabicdaily #bahasaarab"
 
 
-def get_supabase_anon_key():
-    """Get the anonymous key for Supabase"""
-    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrbW56YmV1Z2RvYWp0emZqa3hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU3ODk1NDQsImV4cCI6MjA0MTM2NTU0NH0.AjF-MzqjnUuERhgtYMwJKpDtNKBFKXjEmSMqUPeM1Os"
-
-
 def validate_local_images():
     """Check which images exist locally in the output directory"""
     output_dir = Path("output")
@@ -48,7 +44,7 @@ def validate_local_images():
     return sorted(image_files)
 
 
-def upload_image_to_supabase(image_path, supabase_anon_key):
+def upload_image_to_supabase(image_path, service_role_key):
     """Upload a single image to Supabase storage or return URL if exists"""
     try:
         # Generate the storage path
@@ -59,7 +55,7 @@ def upload_image_to_supabase(image_path, supabase_anon_key):
         check_url = (
             f"{SUPABASE_URL}/storage/v1/object/info/{BUCKET_NAME}/{storage_path}"
         )
-        headers = {"Authorization": f"Bearer {supabase_anon_key}"}
+        headers = {"Authorization": f"Bearer {service_role_key}"}
 
         check_response = requests.get(check_url, headers=headers)
 
@@ -77,7 +73,7 @@ def upload_image_to_supabase(image_path, supabase_anon_key):
 
         # Upload to Supabase storage
         upload_headers = {
-            "Authorization": f"Bearer {supabase_anon_key}",
+            "Authorization": f"Bearer {service_role_key}",
             "Content-Type": "image/png",
         }
 
@@ -206,7 +202,11 @@ def main():
 
     # Step 3: Upload images to Supabase
     print("\\n☁️  Step 3: Uploading images to Supabase...")
-    supabase_anon_key = get_supabase_anon_key()
+    # Public buckets refuse uploads with the anon key.
+    service_role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    if not service_role_key:
+        print("❌ SUPABASE_SERVICE_ROLE_KEY is not set (needed for Storage upload)")
+        return
 
     # Supabase key is already configured
 
@@ -223,7 +223,7 @@ def main():
             continue
 
         print(f"📤 Uploading {image_file.name}...")
-        public_url = upload_image_to_supabase(image_file, supabase_anon_key)
+        public_url = upload_image_to_supabase(image_file, service_role_key)
 
         if public_url:
             uploaded_urls[word_id] = public_url

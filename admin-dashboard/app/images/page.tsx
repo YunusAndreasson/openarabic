@@ -76,9 +76,11 @@ export default function ImagesPage() {
 
     setDeletingImages(prev => new Set(prev).add(imageName));
     try {
-      const { error } = await supabase.storage.from('images').remove([imageName]);
+      const { data, error } = await supabase.storage.from('images').remove([imageName]);
 
       if (error) throw error;
+      // Storage answers a refused delete with success and an empty list.
+      if (!data?.length) throw new Error('Image was not deleted (no permission)');
 
       // Remove from local state
       setImages(prev => prev.filter(img => img !== imageName));
