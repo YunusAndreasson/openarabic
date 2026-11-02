@@ -9,10 +9,7 @@
   },
   "changes": [
     {
-      "files": [
-        "components/account/SettingsCard.tsx",
-        "constants/layout.ts"
-      ],
+      "files": ["components/account/SettingsCard.tsx", "constants/layout.ts"],
       "problem": "At 320 logical width and font scale 1.5, selected font consumes label space; Arabic text wraps into fragments.",
       "fix": "Shared settings rows stack picker values below labels when width divided by font scale is below 320; constrain inline value shrink and share navigation indicator rendering."
     },
@@ -41,10 +38,7 @@
       "fix": "Section owns rounded surface/elevation; rows have zero radius and no shadow."
     },
     {
-      "files": [
-        "components/explore/SearchResultList.tsx",
-        "constants/strings.ts"
-      ],
+      "files": ["components/explore/SearchResultList.tsx", "constants/strings.ts"],
       "problem": "When no catalogue matches existed, a pending or failed sentence corpus still showed No texts found. Failure offered no retry.",
       "fix": "Shared search empty-result composition now distinguishes idle, loading, failed/incomplete with Retry, and successful no-results. Existing partial-match notices remain."
     },
@@ -71,18 +65,12 @@
       "fix": "Use minimum card height with natural content sizing and wrapping time/queue groups. Share measured player height through a transient layout subscription so scrolling screens reserve matching clearance without subscribing to audio ticks."
     },
     {
-      "files": [
-        "components/account/SettingsCard.tsx",
-        "app/(tabs)/account/advanced.tsx"
-      ],
+      "files": ["components/account/SettingsCard.tsx", "app/(tabs)/account/advanced.tsx"],
       "problem": "At 320 logical width and 200% text, inline custom model status squeezes Speech-to-text (Parakeet) into broken fragments; single-line status truncates longer messages.",
       "fix": "Extend shared responsive settings value stacking to custom content. Allow model status text to wrap with constrained shrink."
     },
     {
-      "files": [
-        "app/(tabs)/account/help.tsx",
-        "constants/strings.ts"
-      ],
+      "files": ["app/(tabs)/account/help.tsx", "constants/strings.ts"],
       "problem": "At compact width and 200% text, the fixed-height Help search field clips the placeholder vertically. FAQ button names include icon glyphs and do not explicitly carry expanded state.",
       "fix": "Use minimum height so search grows with text; shorten shared placeholder to Search help and use it as the stable accessible label. Label FAQ cards with their question, button role, and expanded state; mark chevron decorative."
     },
@@ -116,10 +104,7 @@
       "fix": "Add opt-in allowTitleWrap to the shared button; shrink label within the icon row and allow natural height. Enable for the full-width screenshot button."
     },
     {
-      "files": [
-        "components/explore/FilterSection.tsx",
-        "constants/layout.ts"
-      ],
+      "files": ["components/explore/FilterSection.tsx", "constants/layout.ts"],
       "problem": "At 320 logical width and 200% text, two-column topic cards truncate almost all topic names and descriptions.",
       "fix": "Choose one or two columns from usable width and system font scale using a shared 144-point minimum column width token. Let titles/subtitles wrap inside their column. Standard layout remains two columns, including half-width odd final row."
     },
@@ -185,10 +170,7 @@
       "fix": "Both memory and review breakdowns share stacked label/hint and meter/count/chevron rows at the same breakpoint. Scale count width with font scale and allow full hint wrapping."
     },
     {
-      "files": [
-        "components/practice/ChartSheetContent.tsx",
-        "constants/layout.ts"
-      ],
+      "files": ["components/practice/ChartSheetContent.tsx", "constants/layout.ts"],
       "problem": "Large text makes the fitted chart sheet taller than the screen, without a scroll path to the final band or explanation.",
       "fix": "At compact effective width use a fixed 85% detent and direct native-screen child ScrollView; standard text retains fitted SheetScreen. Named practice detent and stable sheet/dashboard IDs support shared navigation checks."
     },
@@ -256,10 +238,7 @@
       "fix": "The one shared example renderer prefixes explanation text with Unicode left-to-right mark. All four English/Arabic formulas preserve their logical sequence while Arabic headwords keep their existing rendering."
     },
     {
-      "files": [
-        "hooks/ui/useTabBarAutoHide.ts",
-        "app/(tabs)/playlist/index.tsx"
-      ],
+      "files": ["hooks/ui/useTabBarAutoHide.ts", "app/(tabs)/playlist/index.tsx"],
       "problem": "At normal density420/fontScale1, playlist edit-mode last11th item The Secret Migration clipped behind tab bar. Bare scroll offsets misread hide-bar viewport clamping as upward travel. After fixing this, Done remounted normal list at top without a scroll event and left tabs hidden.",
       "fix": "Shared viewport reanchoring now works for full scroll events and bare offsets. DraggableFlatList reports onContainerLayout height into hook; next resized offset is treated as a position. Playlist edit-mode transitions report resting offset0, restoring tabs when new list mounts at top."
     },
@@ -279,10 +258,7 @@
       "fix": "Suppress the strength hint while the field validation error is active; typing still shows the existing meter."
     },
     {
-      "files": [
-        "store/rootReducer.ts",
-        "store/editModeSlice.ts"
-      ],
+      "files": ["store/rootReducer.ts", "store/editModeSlice.ts"],
       "problem": "Playlist edit mode survived cold restart because temporary editor UI was persisted with user preferences.",
       "fix": "Exclude editMode from persisted slices and reset legacy edit flags on rehydration with a fresh reducer state so reconciliation cannot restore them."
     }
@@ -319,10 +295,7 @@
       "exceptions": "No raw taps or scrolls remain after polish."
     },
     "lightGroupsVisual": {
-      "artifacts": [
-        "account-light-groups-before.png",
-        "account-light-groups-after.png"
-      ],
+      "artifacts": ["account-light-groups-before.png", "account-light-groups-after.png"],
       "observation": "Rows now form continuous grouped surfaces; outside rounded card and shadow remain. Text/control frames preserved.",
       "argentDiff": "0% mismatch under tool tolerance. This did not detect subtle shadow removal.",
       "rawPixelComparison": {
@@ -365,10 +338,7 @@
     },
     "readerResume": {
       "coverage": "Ordinary close/reopen on final code resumes at saved 58% reading position. First complete resumed sentence starts at normalized y=0.110; toolbar ends at y=0.101. Gap approximately 8 logical points.",
-      "evidence": [
-        "reader-resume-after.png",
-        "reader-resume-accessibility.txt"
-      ],
+      "evidence": ["reader-resume-after.png", "reader-resume-accessibility.txt"],
       "limits": "Saved QA reading progress advanced naturally during inspection; before/after positions differ, so no pixel-comparison improvement claim. A header-only frame preceded body readiness; awaited a real body-word button before final inspection.",
       "sideEffects": "Reading progress advanced on reusable QA article through normal viewport tracking. No practice-add/remove or playlist changes."
     },
@@ -397,10 +367,7 @@
       "flow": ".argent/flows/polish-account-advanced-20261013.yaml",
       "compactResult": "8 passed, 0 failed, 0 errored, no warnings at density 540/font scale 2.0.",
       "standardResult": "8 passed, 0 failed, 0 errored, no warnings at original density 420/font scale 1.0.",
-      "visualEvidence": [
-        "advanced-large-text-before.png",
-        "advanced-large-text-after.png"
-      ],
+      "visualEvidence": ["advanced-large-text-before.png", "advanced-large-text-after.png"],
       "observation": "Model label width grows from .411 to .700 screen width, from three fragmented lines to two complete lines, status below label. Ready remains visible.",
       "limits": "Downloaded model ready state inspected; loading/error/off status variants and model deletion not exercised. Recording captured duplicate tab IDs; final flow uses semantic Account/Voice grading selectors and scroll-to. Native toolbar/tab labels still truncate at 200%; retained for app-wide navigation review."
     },
@@ -419,10 +386,7 @@
       "interactionFlow": ".argent/flows/polish-help-search-20261013.yaml",
       "interactionResults": "11 passed, 0 failed, 0 errored, no warnings at compact 200% and standard display.",
       "coverage": "Open Help, expand first What is OpenArabic answer, collapse hides answer, impossible search shows No results found, Clear search restores FAQ list, Back dismisses keyboard.",
-      "visualEvidence": [
-        "help-large-text-before.png",
-        "help-large-text-after.png"
-      ],
+      "visualEvidence": ["help-large-text-before.png", "help-large-text-after.png"],
       "observation": "Search field increases native normalized height from .060 to .075; Search help fits visibly and vertically. FAQ button accessible names contain question alone.",
       "limits": "Android description does not render expanded state flags; source prop is present but spoken TalkBack state not tested. Legal documents, feedback and Help Arabic-coloring examples remain.",
       "exceptions": "Initial recorded waits for failed navigation archived/replaced. Strings edit reset development navigation; restored actual Help state before final checks. Entry fragment requires Account main settings, since native tabs preserve nested Help routes. Scroll-to later tutorial row only brings Help center higher into viewport; does not press/reset tutorials."
@@ -473,11 +437,7 @@
       "flow": ".argent/flows/polish-account-legal-20261013.yaml",
       "result": "13 passed, 0 failed, 0 errored, no warnings on polished final replay.",
       "coverage": "Terms -> first section -> Navigate up; Privacy -> first section -> Navigate up; Attributions -> Audio generation -> Navigate up. Standard dark layout and initial document viewport visually inspected.",
-      "evidence": [
-        "terms-standard.png",
-        "privacy-standard.png",
-        "attributions-standard.png"
-      ],
+      "evidence": ["terms-standard.png", "privacy-standard.png", "attributions-standard.png"],
       "limits": "Not a legal-content review. Full document scroll/end, compact typography, light/sepia and external link handoff remain unverified. During initial walk, returning restored tab bar and obscured part of Privacy row; final semantic flow scrolls each target into view before tapping."
     },
     "latestSupportSourceChecks": "Source and test TypeScript passed. Targeted ESLint no errors: one pre-existing unnecessary data conditional in screenshot-upload branch; shared button/type/route/strings zero warnings. Targeted Prettier and git diff --check passed. No Jest under project workflow until commit.",
@@ -504,10 +464,7 @@
       "flow": ".argent/flows/polish-word-detail-20261013.yaml",
       "results": "Final flow 11 passed, 0 failed, 0 errored, no warnings at compact 200% and standard display.",
       "coverage": "Explore Everything word -> Memory sheet -> expand native sheet -> scoped scroll to Next review and full 10 · 6 forgotten -> Back hides sheet and restores Explore. Native tree and visual inspection show complete review count within gutters at 200%.",
-      "evidence": [
-        "word-stats-large-text-before.png",
-        "word-stats-large-text-after.png"
-      ],
+      "evidence": ["word-stats-large-text-before.png", "word-stats-large-text-after.png"],
       "fixture": "QA Everything word has 10 reviews and 6 forgotten; flow prerequisite names it. Read-only inspection, no practice grading/add/remove/reset or playback.",
       "exceptions": "Initial Next review wait failed because it was below the half-height sheet viewport at 200%. Scoped scroll alone did not expand the native sheet; final flow explicitly swipes within the described body to expand it before scoped scrolling. Explore and word body have stable testIDs to avoid scrolling a horizontal rail or the background view. Raw swipe tests native detent expansion and is constrained to portrait fixtures.",
       "limits": "Dictionary handoff, family navigation, word audio, reader grammar notes and other word data remain. Saved flow verifies content/navigation; full text geometry independently inspected."
@@ -516,10 +473,7 @@
       "flow": ".argent/flows/polish-word-invalid-link-20261013.yaml",
       "result": "16 passed, 0 failed, 0 errored, no warnings at compact 200%.",
       "coverage": "Real app deep links rootId=0, rootId=-1, rootId=1.5 and missing rootId each show This link isn’t valid; Back dismisses each. Ordinary valid saved word route passes separately.",
-      "evidence": [
-        "word-invalid-link-before.png",
-        "word-invalid-link-after.png"
-      ],
+      "evidence": ["word-invalid-link-before.png", "word-invalid-link-after.png"],
       "before": "rootId=0 displayed This word is no longer in your practice list; after positive-safe-integer guard, same URL shows invalid-link message.",
       "limits": "Empty-state placement in native half-height sheet remains vertically low; message semantics corrected, no claim of full empty-state layout audit."
     },
@@ -559,9 +513,7 @@
       "flow": ".argent/flows/polish-reader-sentence-note-20261013.yaml",
       "results": "8 passed, 0 failed, 0 errored at standard and compact 200% display.",
       "coverage": "Tap Everything in sentence 1853, scoped scroll to In this sentence and complete Object here note, Back dismisses. Reader word body gains a stable testID; stale comment about collapsed family corrected.",
-      "evidence": [
-        "reader-sentence-note-large-text.png"
-      ],
+      "evidence": ["reader-sentence-note-large-text.png"],
       "observations": "Root family and grammar prose wrap at 200%; complete note ends .943 above navigation area. Family in reader is plain text, with no navigation callback. Sheet retains scroll position when reopened.",
       "exceptions": "Initial reopen wait for In practice failed twice because its header was above remembered scroll position. Final flow waits for the sheet ID and uses scoped scroll-to; no repeated taps to force an offscreen header.",
       "limits": "One saved word/grammar note fixture. Missing-note/enrichment states, other forms and word audio remain unverified."
@@ -599,19 +551,14 @@
       "causeEvidence": "tab-scroll-resize-trace.json",
       "flow": ".argent/flows/polish-practice-return-scroll-verified-20261013.yaml",
       "results": "11 passed, 0 failed, 0 errored: review sheet entry/Back, downward swipe exposes full last count, reverse swipe brings Explore tab control back.",
-      "evidence": [
-        "practice-return-scroll-follow-up.png",
-        "practice-return-scroll-after.png"
-      ],
+      "evidence": ["practice-return-scroll-follow-up.png", "practice-return-scroll-after.png"],
       "geometry": "After fix final Reviews done card frame y .787-.944 and full 7,594 value .869-.921; hidden bar leaves OS strip from .966. Previously card clipped at .836 with its value absent.",
       "limitations": "Captured at 200% before user asked to retire that fixture. No further extreme-scale work. Bare-offset DraggableFlatList callback lacks viewport dimensions; no claim for edit mode. No practice or audio mutations."
     },
     "sharedMetricNormalChecks": {
       "dashboard": "Final code standard-display replay of polish-practice-large-text-20261013 (historical filename): 14 passed, 0 failed, 0 errored.",
       "streak": "Standard sheet manually inspected: Current 3, Longest 45, Total 180 all readable; 40-day chart and explanatory footer fit; Back returns Practice.",
-      "evidence": [
-        "streak-metrics-standard-after.png"
-      ],
+      "evidence": ["streak-metrics-standard-after.png"],
       "extremeFixture": "Review metrics were inspected before user steering: full Per study day/Per word labels and values readable. In-progress large-text detail recording closed and removed; not claimed as a completed regression or continued work."
     },
     "latestTabGridSourceChecks": "Source and test TypeScript passed. Targeted ESLint zero errors, only two existing unnecessary-conditional/optional-chain warnings in study-streak. Prior axis-array react-perf warning cleared by StyleSheet.flatten. Targeted Prettier and git diff --check passed. No Jest under project workflow until commit.",
@@ -664,9 +611,7 @@
       "flow": ".argent/flows/polish-dictionary-scope-20261013.yaml",
       "result": "10 passed, 0 failed, 0 errored on final code.",
       "coverage": "Clear Reviewed once filter -> 1993 all words -> open Show picker -> inspect four options and checked All words -> Mastered626 -> reopen picker -> All words1993. Picker counts and resulting list counts match.",
-      "evidence": [
-        "dictionary-scope-picker.png"
-      ],
+      "evidence": ["dictionary-scope-picker.png"],
       "limits": "Due now and Struggling subsequently selected and verified in midscroll-search flow; empty scope state not reached with this QA data.",
       "exceptions": "Recorder selected underlying Extraction text for final All words tap; polished selector targets All words RadioButton. Fresh app navigation was used because an earlier scope selection persisted during route reuse; re-entry/deep-link scope handling remains a follow-up, not classified as fixed. Ordinary route re-entry now verified by the 24-step band re-entry flow; retained direct-link fixture caveat only."
     },
@@ -676,10 +621,7 @@
       "result": "24 passed, 0 failed, 0 errored on final code.",
       "coverage": "Clear once335 -> all1993 -> close -> Practice Your words all1993 -> close -> Reviews done Once335 -> close -> Reviews done 2–4 times194 -> clear -> all1993 -> close. Ordinary navigation correctly applies scopes; no route synchronization change justified.",
       "layout": "At normal density420/fontScale1, Reviewed 2–4 times crowded sort controls and clipped clear icon. Shared sort bar now wraps the filter to its own row when needed, permits label shrink and preserves icon width. Clear icon native width restored from .019 to .030.",
-      "evidence": [
-        "dictionary-long-filter-before.png",
-        "dictionary-long-filter-after.png"
-      ],
+      "evidence": ["dictionary-long-filter-before.png", "dictionary-long-filter-after.png"],
       "limits": "Android dark normal size. No learner-data writes. Arbitrary incoming deep-link changes while the same route is active are separate from these ordinary paths."
     },
     "dictionarySearchMidscrollArabicNormal": {
@@ -814,10 +756,7 @@
       "flow": ".argent/flows/polish-auth-normal-20261013.yaml",
       "result": "44 passed, 0 failed, 0 errored, 0 skipped; one small-changing-region idle warning before sign-in action, followed by explicit successful validation checks.",
       "coverage": "Sign out confirmation; auth landing, sign-in empty-field feedback, create-account short-password feedback, Close/back navigation, Terms/Privacy from auth, restore original QA sign-in through email/password and return to Explore.",
-      "visualEvidence": [
-        "auth-password-error-before.png",
-        "auth-password-error-after.png"
-      ],
+      "visualEvidence": ["auth-password-error-before.png", "auth-password-error-after.png"],
       "absenceLimitation": "Live hidden-label selector At least8characters also matched the inline Use at least8characters error because matching is by substring. That diagnostic flow is not a passing regression. Screenshot and source condition verify removal of duplicate hint.",
       "sideEffects": "Same existing QA account restored. No account created, no reset email sent.",
       "recovery": "First full replay passed42 checks but stopped at sign-in; Metro no longer running, terminal process confirmed. Started fresh Metro61387, reopened development bundle, and final uninterrupted44-step replay passed with recorded credential-entry timing.",
@@ -879,10 +818,7 @@
   "reminderFinalCheck": {
     "status": "live behavior verified; automated replay unverified",
     "observed": "Android dark picker now uses app color scheme and semantic tint through native Expo UI Compose Host. Direct live save20:30, change21/cancel preserves20:30, final restore19:00/off confirmed.",
-    "change": [
-      "components/ui/TimePicker.android.tsx",
-      "components/ui/TimePicker.tsx"
-    ],
+    "change": ["components/ui/TimePicker.android.tsx", "components/ui/TimePicker.tsx"],
     "validation": "310 changed files: source TypeScript7.3s, tests TypeScript13.0s, tests ESLint1.4s, source ESLint7.0s all passed. Formatting and git diff--check passed; no Jest per repo instruction.",
     "limitation": "Flow repair stopped after two correction cycles: collapsed Select hour label/role and native OK role differ in runner tree. Live restoration included a misleading substring0minutes/30minutes target and failed minute text wait; final19:00 button did pass after precise0minutes tick. Saved flows diagnostic/unverified.",
     "restored": "19:00/off, native19:00 visible before switch-off and hidden afterward.",
@@ -916,10 +852,7 @@
   ],
   "sleepTimerFinalCheck": {
     "status": "live five-minute expiry verified; selection/cancel replay passed",
-    "changes": [
-      "app/sleep-timer.tsx",
-      "components/primitives/ThemedButton.tsx"
-    ],
+    "changes": ["app/sleep-timer.tsx", "components/primitives/ThemedButton.tsx"],
     "selection": "Native default 15 min checked; selecting 5 min exposes 5 min checked and 15 min unchecked. Shared button merges caller accessibility state while preserving authoritative busy/disabled state.",
     "expiry": "Actual UI five-minute timer: 298 seconds remaining after start. At deadline +1.2 seconds timer inactive, playback active; next observation at +38.4 seconds playback stopped and currentArticle absent. Exact stop time not measured. Source has a 30-second track-finish grace period.",
     "replay": "polish-sleep-timer-selection-20261013: 16 passed, 0 failed, 0 errored, 0 skipped. Cancellation and Stop listening restore no player/timer.",
