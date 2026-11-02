@@ -17,7 +17,7 @@ import type { Database } from '../../types/database.types';
  */
 export const supabaseClient = createClient<Database>(
   SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? SUPABASE_ANON_KEY,
+  process.env['SUPABASE_SERVICE_ROLE_KEY'] ?? SUPABASE_ANON_KEY,
   {
     auth: {
       persistSession: false, // No session persistence in scripts
