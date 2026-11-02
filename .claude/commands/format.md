@@ -22,7 +22,4 @@ yarn prettier:fix
 
 ## Notes
 
-- **ALWAYS** use this command when prettier check fails
-- **NEVER** manually fix formatting issues
-- Prettier handles all formatting automatically
-- This prevents wasting time on formatting rules
+- Use this when the prettier check fails. Prettier owns formatting, so don't fix formatting by hand.

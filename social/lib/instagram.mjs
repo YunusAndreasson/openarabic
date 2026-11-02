@@ -7,7 +7,7 @@
 
 import { env } from './env.mjs'
 
-const GRAPH = 'https://graph.facebook.com/v21.0'
+export const GRAPH = 'https://graph.facebook.com/v21.0'
 const MAX_CAPTION = 2000 // IG hard limit 2200; leave headroom.
 
 export const igCreds = () => ({ userId: env.IG_USER_ID, token: env.IG_ACCESS_TOKEN })
