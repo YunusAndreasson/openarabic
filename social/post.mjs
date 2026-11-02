@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// OpenArabic "word of the day" — render + post one word to X + Instagram
+// OpenArabic "word of the day" — render + post one word to X, Facebook + Instagram
 // (feed + first-comment link + story). Pops the next word from queue.json,
-// renders the square (X + IG feed) and story (IG) cards, uploads them to
-// Supabase Storage for a public URL, posts to both channels (each non-fatal),
+// renders the square (X + FB + IG feed) and story (IG) cards, uploads them to
+// Supabase Storage for a public URL, posts to every channel (each non-fatal),
 // records the result in posted-log.json, and removes the word from the queue.
 //
 // Usage:
@@ -20,9 +20,10 @@ import { env } from './lib/env.mjs'
 import { readQueue, writeQueue, readPosted, writePosted } from './lib/queue.mjs'
 import { renderCardJpeg, SQUARE, STORY } from './lib/card.mjs'
 import { uploadImage } from './lib/storage.mjs'
-import { buildXText, buildIgCaption, buildIgFirstComment, wordUrl } from './lib/caption.mjs'
+import { buildXText, buildFbCaption, buildIgCaption, buildIgFirstComment, wordUrl } from './lib/caption.mjs'
 import { postToX } from './lib/x.mjs'
 import { postToInstagram } from './lib/instagram.mjs'
+import { postToFacebook } from './lib/facebook.mjs'
 
 const hasFlag = (n) => process.argv.includes(`--${n}`)
 const argAt = (n) => {
@@ -51,6 +52,7 @@ async function main() {
 
   const date = ymd()
   const xText = buildXText(entry)
+  const fbCaption = buildFbCaption(entry)
   const caption = buildIgCaption(entry)
   const firstComment = buildIgFirstComment(entry)
   console.log(`post: ${entry.arabic} · ${entry.translit} · ${entry.english}  (${wordUrl(entry)})`)
@@ -65,6 +67,7 @@ async function main() {
     writeFileSync(`${outDir}${entry.slug}-story.jpg`, storyJpeg)
     console.log(`[dry-run] cards → ${outDir}${entry.slug}-{square,story}.jpg`)
     await postToX({ imageBuffer: squareJpeg, text: xText, dryRun: true })
+    await postToFacebook({ imageBuffer: squareJpeg, caption: fbCaption, dryRun: true })
     await postToInstagram({
       feedUrl: `(would upload) ${entry.slug}-square.jpg`,
       storyUrl: `(would upload) ${entry.slug}-story.jpg`,
@@ -94,6 +97,14 @@ async function main() {
     xRes = { ok: false, error: e.message }
   }
 
+  let fbRes = { ok: false }
+  try {
+    fbRes = await postToFacebook({ imageBuffer: squareJpeg, caption: fbCaption })
+  } catch (e) {
+    console.error(`post: Facebook failed (non-fatal) — ${e.message}`)
+    fbRes = { ok: false, error: e.message }
+  }
+
   let igRes = { ok: false }
   try {
     igRes = await postToInstagram({ feedUrl, storyUrl, caption, firstComment })
@@ -102,7 +113,7 @@ async function main() {
     igRes = { ok: false, error: e.message }
   }
 
-  if (!xRes.ok && !igRes.ok) {
+  if (!xRes.ok && !fbRes.ok && !igRes.ok) {
     console.error('post: nothing posted (creds missing or all channels failed) — leaving word in queue.')
     return
   }
@@ -121,6 +132,7 @@ async function main() {
     feedUrl,
     storyUrl,
     x: xRes,
+    fb: fbRes,
     ig: igRes,
   })
   writePosted(posted)

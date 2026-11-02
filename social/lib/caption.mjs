@@ -8,6 +8,7 @@
 //   Instagram — URLs in captions AND comments are NOT tappable (only the bio
 //   link is), so we don't paste a dead URL there; the caption uses a "link in
 //   bio" CTA and the first comment holds the hashtags (keeps the caption clean).
+//   Facebook — links in captions are tappable, so the caption carries the word page.
 
 import { env } from './env.mjs'
 
@@ -25,6 +26,13 @@ export const buildIgCaption = (entry) =>
   `Word of the day from OpenArabic. Read classical Islamic texts in Arabic with ` +
   `English translations, tap-to-translate, native audio, and spaced repetition — ` +
   `free on iPhone & Android. Link in bio.`
+
+/** Facebook photo caption: same copy as Instagram, with a working link to the word page. */
+export const buildFbCaption = (entry) =>
+  `${entry.arabic} — ${entry.translit}\n“${entry.english}”\n\n` +
+  `Word of the day from OpenArabic. Read classical Islamic texts in Arabic with ` +
+  `English translations, tap-to-translate, native audio, and spaced repetition — ` +
+  `free on iPhone & Android.\n\n${wordUrl(entry)}`
 
 /** Instagram first comment — the hashtag block, kept out of the caption. */
 export const buildIgFirstComment = (_entry) => HASHTAGS_IG
