@@ -76,7 +76,11 @@ eas config
 
 ## OTA Pre-flight Checklist
 
-Native dependency updates require a new binary. Runtime `1448.5.9` carries the
+Native dependency updates require a new binary. Runtime `1448.5.10` carries the
+2026-11-02 upgrade (`react-native-skia` 3.9.0, `react-native-executorch` 0.11,
+React Native 0.88.1 and the Expo 58.0.22 native modules); JS built from it must
+never be aimed at `1448.5.9` (build 282), whose binary links the older versions.
+Runtime `1448.5.9` carries the
 2026-10-23 `yarn fullupgrade` (`react-native-skia` 3.7.4, `mixpanel-react-native`
 4 and the Expo 58.0.17 native modules, `expo-modules-core` among them); JS built
 from it must never be aimed at `1448.5.7` (build 281), whose binary links the

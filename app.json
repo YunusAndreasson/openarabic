@@ -372,7 +372,7 @@
       }
     },
     "owner": "edenmind",
-    "runtimeVersion": "1448.5.9",
+    "runtimeVersion": "1448.5.10",
     "updates": {
       "url": "https://u.expo.dev/644480e0-3ac0-4ce6-b6ca-b950f62ca438",
       "enableBsdiffPatchSupport": true,
