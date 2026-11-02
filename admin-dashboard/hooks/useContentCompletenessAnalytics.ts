@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface ContentCompleteness {
   totalSentences: number;
@@ -45,7 +45,7 @@ export function useContentCompletenessAnalytics(): UseContentCompletenessAnalyti
         data: sentences,
         error: sentencesError,
         count: sentencesCount,
-      } = await supabaseAdmin
+      } = await supabase
         .from('article_sentences')
         .select('id, audio_url_english, audio_url', { count: 'exact' });
 
@@ -56,7 +56,7 @@ export function useContentCompletenessAnalytics(): UseContentCompletenessAnalyti
         data: words,
         error: wordsError,
         count: wordsCount,
-      } = await supabaseAdmin
+      } = await supabase
         .from('sentence_words')
         .select('id, grammar_note, difficulty_level', { count: 'exact' });
 

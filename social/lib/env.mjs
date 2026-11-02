@@ -2,11 +2,10 @@
 // without overriding values already present in the environment, then applies
 // safe public defaults so read-only DB access works out of the box.
 //
-// The Supabase URL + anon key are public (the anon key is already committed in
-// publish/generate_socialpilot_csv.py) and only grant the read access the
-// public website already uses, plus Storage upload to the batch_scheduled
-// bucket. All write-capable secrets (IG/X tokens) have NO default and must be
-// provided via social/.env.
+// The Supabase URL + anon key are public (the anon key ships in the app bundle)
+// and only grant the read access the
+// public website already uses. All write-capable secrets (service-role key,
+// IG/X tokens) have NO default and must be provided via social/.env.
 
 import { readFileSync, existsSync } from 'fs'
 import { fileURLToPath } from 'url'

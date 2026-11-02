@@ -1,7 +1,7 @@
 'use client';
 
 import type { Database } from '@/lib/database.types';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 
 type Root = Database['public']['Tables']['roots']['Row'];
@@ -34,7 +34,7 @@ export function useHardWordsAnalytics(): UseHardWordsAnalyticsReturn {
     try {
       // Fetch all roots
       console.log('Fetching roots...');
-      const { data: roots, error: rootsError } = await supabaseAdmin
+      const { data: roots, error: rootsError } = await supabase
         .from('roots')
         .select('id, letters, meaning');
 
@@ -46,7 +46,7 @@ export function useHardWordsAnalytics(): UseHardWordsAnalyticsReturn {
 
       // Fetch all study_words with their FSRS data (by root_id)
       console.log('Fetching study_words...');
-      const { data: studyWords, error: studyError } = await supabaseAdmin
+      const { data: studyWords, error: studyError } = await supabase
         .from('study_words')
         .select('root_id, fsrs_difficulty, fsrs_lapses, user_id');
 

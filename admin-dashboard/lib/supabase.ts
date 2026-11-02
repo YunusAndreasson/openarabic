@@ -11,13 +11,22 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // For server-side/admin operations (has full access, bypasses RLS)
 // ⚠️ NEVER expose this client to the browser - only use in server components or API routes
-export const supabaseAdmin = createClient<Database>(
-  supabaseUrl,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey,
-  {
+//
+// Throws instead of falling back to the anon key: content tables refuse anon
+// writes, so a fallback would only turn a missing key into confusing failures.
+// A function rather than a constant because this module is also imported by the
+// browser bundle, where the key is never defined; a throw at import would take
+// down every page. Anything calling this must check the caller's role first:
+// the admin gate in middleware.ts lets through any signed-in user.
+export function getSupabaseAdmin() {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set (server-side only)');
+  }
+  return createClient<Database>(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
-  },
-);
+  });
+}

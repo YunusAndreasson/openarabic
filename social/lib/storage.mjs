@@ -2,8 +2,8 @@
 // Instagram's Graph API requires a publicly reachable JPEG URL, so every card
 // is uploaded to a public bucket before posting. Mirrors the upload pattern in
 // publish/generate_socialpilot_csv.py (POST to the object endpoint, then read
-// from the public endpoint). Prefers the service-role key if present, else the
-// anon key (proven sufficient for the batch_scheduled bucket).
+// from the public endpoint). Needs the service-role key: public buckets refuse
+// uploads with the anon key.
 
 import { env } from './env.mjs'
 
@@ -16,8 +16,8 @@ const FOLDER = 'word-of-the-day'
  * @returns {Promise<string>} public URL
  */
 export async function uploadImage(buffer, filename, contentType = 'image/jpeg') {
-  const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY
-  if (!key) throw new Error('no SUPABASE key (set SUPABASE_ANON_KEY or SUPABASE_SERVICE_ROLE_KEY)')
+  const key = env.SUPABASE_SERVICE_ROLE_KEY
+  if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set (needed for Storage upload)')
   const bucket = env.SOCIAL_BUCKET
   const path = `${FOLDER}/${filename}`
 

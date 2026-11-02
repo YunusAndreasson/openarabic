@@ -10,14 +10,22 @@ import type { Database } from '../../types/database.types';
 /**
  * Create a standalone Supabase client for scripts
  * Uses same credentials as the app but without React Native storage
+ *
+ * Read-only scripts work with the anon key. Scripts that write need
+ * SUPABASE_SERVICE_ROLE_KEY in the environment: content tables refuse anon writes,
+ * and without it the write fails with a permission error.
  */
-export const supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    persistSession: false, // No session persistence in scripts
-    autoRefreshToken: false, // No auto-refresh needed
-    detectSessionInUrl: false,
+export const supabaseClient = createClient<Database>(
+  SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? SUPABASE_ANON_KEY,
+  {
+    auth: {
+      persistSession: false, // No session persistence in scripts
+      autoRefreshToken: false, // No auto-refresh needed
+      detectSessionInUrl: false,
+    },
   },
-});
+);
 
 /**
  * Helper to execute a query with error handling

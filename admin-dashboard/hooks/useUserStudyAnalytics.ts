@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
 
 type UserStudyStats = Database['public']['Views']['user_study_stats']['Row'];
@@ -52,7 +52,7 @@ export function useUserStudyAnalytics(): UseUserStudyAnalyticsReturn {
 
     try {
       // Use the pre-built user_study_stats view
-      const { data: userStats, error: statsError } = await supabaseAdmin
+      const { data: userStats, error: statsError } = await supabase
         .from('user_study_stats')
         .select('*')
         .order('total_words', { ascending: false });

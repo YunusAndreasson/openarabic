@@ -1,8 +1,11 @@
 """Common configuration utilities to eliminate code duplication."""
 
+import base64
 import contextlib
 import io
+import json
 import os
+import sys
 from typing import Any
 
 from supabase import create_client
@@ -72,6 +75,25 @@ def get_audio_config() -> dict[str, Any]:
 _supabase_client = None
 
 
+def _warn_if_public_key(key: str) -> None:
+    """Warn when SUPABASE_KEY is the public key, which can read but not write content."""
+    if key.startswith("sb_publishable_"):
+        role = "anon"
+    else:
+        try:
+            payload = key.split(".")[1]
+            payload += "=" * (-len(payload) % 4)
+            role = json.loads(base64.urlsafe_b64decode(payload)).get("role")
+        except (IndexError, ValueError):
+            return
+    if role == "anon":
+        print(
+            "WARNING: SUPABASE_KEY is the public anon key. Reads work, but content and "
+            "storage writes will be refused. Use the service-role key to write.",
+            file=sys.stderr,
+        )
+
+
 def get_supabase_client() -> Any:
     """Get the Supabase client instance."""
     global _supabase_client
@@ -87,6 +109,8 @@ def get_supabase_client() -> Any:
         # At this point, we know both are not None due to the check above
         assert supabase_url is not None
         assert supabase_key is not None
+
+        _warn_if_public_key(supabase_key)
 
         # Supabase storage requires trailing slash
         if not supabase_url.endswith("/"):

@@ -43,8 +43,8 @@ bash run-post.sh               # post the next queued word for real
 
 ## Credentials (`.env`)
 
-- **Supabase** — `SUPABASE_URL` + `SUPABASE_ANON_KEY` (public; reads + Storage
-  upload). Optional `SUPABASE_SERVICE_ROLE_KEY` only if anon can't upload.
+- **Supabase** — `SUPABASE_URL` + `SUPABASE_ANON_KEY` (public; reads only) and
+  `SUPABASE_SERVICE_ROLE_KEY` (required for Storage upload).
 - **Instagram** — `IG_USER_ID` (IG business account id) + `IG_ACCESS_TOKEN`
   (long-lived / system-user, scopes `instagram_basic` + `instagram_content_publish`).
 - **Facebook** — `FB_PAGE_ID` + `FB_ACCESS_TOKEN` (non-expiring Page token, scope

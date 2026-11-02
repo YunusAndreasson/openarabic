@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 /**
  * GET /api/test-translation-improvements
@@ -8,6 +8,8 @@ import { supabaseAdmin } from '@/lib/supabase';
  */
 export async function GET() {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+
     // Test 1: Simple count query
     const { count, error: countError } = await supabaseAdmin
       .from('translation_improvements')
