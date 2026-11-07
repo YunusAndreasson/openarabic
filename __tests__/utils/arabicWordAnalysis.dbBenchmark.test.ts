@@ -60,17 +60,24 @@ import { runBenchmark } from '@/utils/benchmarkUtils';
 // so the article can pair. Restricted to a following ال — allowing any prefix cost
 // precision (وَأَمَّا "as for" read أما as a prefix meaning "as"). Train R .871→.874,
 // F1 .925→.926, hasC .974→.976 at unchanged precision; 22 more production words paint.
+//
+// 2026-11-07 re-baseline: emphatic لَ ("surely"/"indeed"/"certainly", PARTICLE) — the
+// answer of an oath or of لو (لَأُغْوِيَنَّهُمْ, لَقَالَ, وَلَقَدْ) had no trigger, so its ل
+// never painted. Guarded by VALIDATION 0d (fatha only: لِأَنَّهَا is the preposition) and
+// 0e (the ل of لَكِنَّ). Train P .9852→.9853, R .874→.879, F1 .926→.929; test R .874→.887,
+// F1 .933→.940. On the 22,090-pair production snapshot exactly 28 pairs change, all of
+// them the emphatic لَ.
 const THRESHOLDS = {
   train: {
     precision: 0.98,
-    recall: 0.869,
-    f1Score: 0.921,
+    recall: 0.874,
+    f1Score: 0.924,
     hasComponentsAccuracy: 0.971,
   },
   test: {
     precision: 0.99,
-    recall: 0.869,
-    f1Score: 0.928,
+    recall: 0.881,
+    f1Score: 0.935,
     hasComponentsAccuracy: 0.948,
   },
   byBucket: {
