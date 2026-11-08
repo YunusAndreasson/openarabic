@@ -135,3 +135,9 @@ google-service-account.json
 .claude/skills/dotenv
 .claude/skills/dotenvx
 # @generated expo skills end
+
+# Licensed stock photos and a book PDF: kept locally, never published.
+# Article images are served from Supabase Storage.
+assets/images/articles/
+translate/data/images/
+admin-dashboard/public/books/

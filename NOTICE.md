@@ -6,7 +6,7 @@ content and media below, which you may not copy or redistribute on its terms.
 ## All rights reserved
 
 - The OpenArabic name and mark, and the images made from them:
-  `assets/images/` (except `assets/images/articles/`), `brand/`,
+  `assets/images/`, `brand/`,
   `store-listing/`, `social/assets/oaLogo.png`, and
   `admin-dashboard/public/oaLogo.png` and `og.png`.
 - The interface sound in `assets/sounds/`.
@@ -14,7 +14,7 @@ content and media below, which you may not copy or redistribute on its terms.
   `admin-dashboard/public/screenshots/` and `docs/qa/`.
 - Translations and generated texts: the English texts in
   `translate/0_inbox_en/`, the al-Fawāʾid translation in
-  `translate/data/fawaid/output/` and `admin-dashboard/public/books/al-fawaid.pdf`,
+  `translate/data/fawaid/output/`,
   the dictionary entries in `admin-dashboard/lib/word-enrichment.ts`, and the
   words and glosses in `social/*.json`. The app's articles, translations and
   audio live in its database, not here, under the terms shown in the app.
@@ -27,10 +27,6 @@ content and media below, which you may not copy or redistribute on its terms.
   the Arabic sentences in `__tests__/fixtures/` come from the app's texts.
 - The English Qurʾān verses quoted in the al-Fawāʾid translation are the
   Saheeh International translation.
-- The article photographs in `assets/images/articles/` and
-  `translate/data/images/` are licensed from stock libraries, among them
-  Shutterstock, Pexels, Unsplash and Pixabay. Those licences don't extend to
-  you.
 - The App Store and Google Play badges in `admin-dashboard/public/badges/` are
   Apple's and Google's.
 - Fonts under the [SIL Open Font License 1.1](https://openfontlicense.org):
