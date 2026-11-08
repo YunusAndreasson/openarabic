@@ -33,4 +33,5 @@ content and media below, which you may not copy or redistribute on its terms.
   Amiri, Inter, DigitalKhatt New Madina, Noto Nastaliq Urdu, Noto Sans Arabic
   and Scheherazade New in `assets/fonts/`, `social/assets/fonts/` and
   `admin-dashboard/public/fonts/`, and Amiri and EB Garamond in
-  `translate/data/fawaid/fonts/`.
+  `translate/data/fawaid/fonts/`. Their copyright notices and the license text
+  are in `assets/fonts/OFL.txt`.
