@@ -1,5 +1,8 @@
 name: Release
 
+# Repository secrets it reads: EXPO_TOKEN, EXPO_APPLE_ID, EXPO_APPLE_APP_SPECIFIC_PASSWORD and
+# GOOGLE_SERVICE_ACCOUNT_KEY.
+# Without them it skips, so forks and pull requests stay green.
 on:
   workflow_dispatch:
     inputs:
