@@ -139,4 +139,5 @@ The website at openarabic.io is its own repository,
 ## License
 
 The code is [MIT](LICENSE). The texts, translations, photographs and the
-OpenArabic name and mark aren't; the end of LICENSE lists them and their terms.
+OpenArabic name and mark aren't; [NOTICE.md](NOTICE.md) lists them and their
+terms.
