@@ -6,10 +6,10 @@ A generic client utility for sending prompts to OpenRouter and receiving text re
 
 ### 1. Environment Variable
 
-The API key is already configured in `.env.local`:
+Put the key in `.env.local`, which git ignores:
 
 ```bash
-OPENROUTER_API_KEY=REDACTED_LEAKED_KEY
+OPENROUTER_API_KEY=sk-or-v1-...
 ```
 
 ⚠️ **Important**: This is a server-side key. Never expose it to the client by prefixing with `NEXT_PUBLIC_`.

@@ -3,7 +3,6 @@
 ✅ **WORKING**: This Next.js app is successfully deployed to Cloudflare Workers using OpenNext!
 
 **Live URL**: https://openarabic.io
-**Workers URL**: https://openarabic-web.jonas-268.workers.dev
 
 ## Quick Start
 
