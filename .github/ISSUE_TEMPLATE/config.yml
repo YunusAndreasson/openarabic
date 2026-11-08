@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/YunusAndreasson/openarabic/security/advisories/new
+    about: Privately, please, never in a public issue (SECURITY.md).
+  - name: Problem with your account or a text
+    url: https://openarabic.io/contact
+    about: Account deletion, sign-in trouble, or a mistake in a translation.
