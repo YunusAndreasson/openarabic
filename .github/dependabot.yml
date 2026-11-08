@@ -11,6 +11,11 @@ updates:
     schedule:
       interval: weekly
     ignore:
+      # typescript-eslint (also inside eslint-config-expo) doesn't support
+      # TypeScript 7 (the native compiler) yet: typescript-eslint/typescript-eslint#10940.
+      # Lift this once it does.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
       - dependency-name: expo
       - dependency-name: expo-*
       - dependency-name: '@expo/*'
