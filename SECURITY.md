@@ -36,7 +36,7 @@ In scope:
 - this repository's workflows
 
 Out of scope: the website at openarabic.io, which has its own repository
-([openarabic-web](https://github.com/YunusAndreasson/openarabic-web)), and
+([openarabic.io](https://github.com/YunusAndreasson/openarabic.io)), and
 vulnerabilities in Supabase, Expo, Apple or Google sign-in themselves. Report
 those to their projects. The Supabase key in `constants/supabase.ts` is the
 public one and is meant to ship in the app; a way to do more with it than

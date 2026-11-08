@@ -104,8 +104,8 @@ social/ publish/                    word-of-the-day cards and the poster
 brand/ store-listing/               the app mark and the store images
 ```
 
-The website at openarabic.io is its own repository,
-[openarabic-web](https://github.com/YunusAndreasson/openarabic-web).
+The website is its own repository,
+[openarabic.io](https://github.com/YunusAndreasson/openarabic.io).
 
 ## Docs
 
