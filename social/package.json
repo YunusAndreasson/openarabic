@@ -1,6 +1,7 @@
 {
   "name": "openarabic-social",
   "version": "1.0.0",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "description": "OpenArabic daily 'word of the day' image generator + poster (X, Instagram feed & story).",
