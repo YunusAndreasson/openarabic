@@ -2,6 +2,7 @@ name: Promote
 
 # Repository secrets it reads: GOOGLE_SERVICE_ACCOUNT_KEY.
 # Without them it skips, so forks and pull requests stay green.
+
 # Promote-only: moves a build that is ALREADY uploaded to Google Play from one
 # track to another (normally internal -> production). Release/Submit stop at the
 # internal track, so this is the step that puts a build in front of real users.

@@ -3,6 +3,7 @@ name: Submit
 # Repository secrets it reads: EXPO_TOKEN, EXPO_APPLE_ID, EXPO_APPLE_APP_SPECIFIC_PASSWORD and
 # GOOGLE_SERVICE_ACCOUNT_KEY.
 # Without them it skips, so forks and pull requests stay green.
+
 # Submit-only: pushes the LATEST finished EAS build for a platform to the store,
 # without rebuilding. Use when a build already exists on EAS and only the store
 # submission needs to (re)run (e.g. after fixing a Play Console declaration).
