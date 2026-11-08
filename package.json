@@ -2,6 +2,10 @@
   "name": "OpenArabic",
   "main": "expo-router/entry",
   "version": "1448.5.10+283",
+  "description": "Read the classics in Arabic: the OpenArabic app for iPhone and Android.",
+  "license": "MIT",
+  "repository": "github:YunusAndreasson/openarabic",
+  "homepage": "https://openarabic.io",
   "scripts": {
     "eas-build-pre-install": "corepack enable",
     "lint:fix": "eslint . --fix --cache",
