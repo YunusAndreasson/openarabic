@@ -97,7 +97,7 @@ that share its Supabase database:
 
 ```
 app/ components/ hooks/ services/   the Expo app
-admin-dashboard/                    Next.js admin panel on Cloudflare Workers
+admin-dashboard/                    Next.js admin panel, not deployed
 translate/                          Python pipeline: translation, vowel marks, audio
 supabase/migrations/                schema changes to the shared database
 social/ publish/                    word-of-the-day cards and the poster
