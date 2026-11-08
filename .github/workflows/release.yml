@@ -16,21 +16,55 @@ on:
     branches: [root]
     paths: ['package.json']
 
+permissions:
+  contents: read
+
+# One release at a time, and never cancelled halfway through a store upload.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
-  release:
+  # A fork has none of the secrets below, so there is nothing to build or
+  # submit. This job says so and the release job is skipped, not failed.
+  secrets:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - id: check
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -n "$EXPO_TOKEN" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::EXPO_TOKEN isn't set, so the release is skipped."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  release:
+    needs: secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    # Pushes the version bump and its tag, and creates the GitHub release.
+    permissions:
+      contents: write
     if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && contains(github.event.head_commit.message, 'chore: bump version'))
+      needs.secrets.outputs.ready == 'true' && (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'push' && contains(github.event.head_commit.message, 'chore: bump version'))
+      )
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
 
@@ -42,7 +76,7 @@ jobs:
         run: corepack enable
 
       - name: Cache Yarn global cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.local/share/yarn/berry/cache
           key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
@@ -68,7 +102,7 @@ jobs:
       # never from this runner, so the steps below pass only what the local
       # eas CLI itself reads.
       - name: Setup Expo and EAS CLI
-        uses: expo/expo-github-action@v9
+        uses: expo/expo-github-action@5273c2136bd09c2a341fe3340d3e767ce5a13015 # 9.0.2
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}

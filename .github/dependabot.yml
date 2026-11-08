@@ -1,0 +1,80 @@
+# Weekly, grouped so a week's updates arrive as a few pull requests. Each one
+# runs the verify workflow; merge it when it's green.
+version: 2
+updates:
+  # The app. Expo pins its own packages, React and React Native to the SDK, so
+  # those move together by hand (`yarn deps:update`, then
+  # `npx expo install --fix`), never one at a time here. The rest are held for
+  # the reasons in scripts/update-deps.sh.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: expo
+      - dependency-name: expo-*
+      - dependency-name: '@expo/*'
+      - dependency-name: jest-expo
+      - dependency-name: eslint-config-expo
+      - dependency-name: react
+      - dependency-name: react-dom
+      - dependency-name: react-native
+      - dependency-name: react-test-renderer
+      - dependency-name: '@types/react'
+      - dependency-name: '@react-native/*'
+      - dependency-name: react-native-reanimated
+      - dependency-name: react-native-worklets
+      - dependency-name: react-native-gesture-handler
+      - dependency-name: react-native-screens
+      - dependency-name: react-native-safe-area-context
+      - dependency-name: '@react-native-community/*'
+      - dependency-name: '@react-native-async-storage/*'
+      - dependency-name: '@shopify/flash-list'
+      # Native modules outside the SDK, pinned exactly: a new version needs a
+      # new runtime and a store build, not just a merge.
+      - dependency-name: react-native-audio-api
+      - dependency-name: react-native-skia
+      - dependency-name: react-native-executorch
+      # Patched in .yarn/patches; an update drops the patch.
+      - dependency-name: react-native-draggable-flatlist
+      - dependency-name: react-native-sherpa-onnx
+      # Pinned by hand, or held at a major that works.
+      - dependency-name: jest
+      - dependency-name: '@jest/globals'
+      - dependency-name: '@types/jest'
+      - dependency-name: eslint
+      - dependency-name: '@babel/runtime'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@testing-library/react-native'
+        update-types: ['version-update:semver-major']
+    groups:
+      app:
+        patterns: ['*']
+  - package-ecosystem: npm
+    directory: /admin-dashboard
+    schedule:
+      interval: weekly
+    groups:
+      admin-dashboard:
+        patterns: ['*']
+  - package-ecosystem: npm
+    directory: /social
+    schedule:
+      interval: weekly
+    groups:
+      social:
+        patterns: ['*']
+  - package-ecosystem: uv
+    directory: /translate
+    schedule:
+      interval: weekly
+    groups:
+      translate:
+        patterns: ['*']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']

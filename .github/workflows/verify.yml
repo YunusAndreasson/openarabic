@@ -1,0 +1,62 @@
+# The gate a developer runs, on every push to root and every pull request:
+# `yarn verify`, i.e. typecheck (source and tests), lint, the deprecated-API
+# check, knip and the whole Jest suite. release.yml runs the same command
+# before a build; this runs it without being asked.
+#
+# No secrets: nothing in `yarn verify` reads an EXPO_PUBLIC_* value, Supabase
+# or EAS (Jest mocks the services). Keep it that way, so a pull request from a
+# fork gets the same answer as a push.
+name: verify
+
+on:
+  push:
+    branches: [root]
+  pull_request:
+
+permissions:
+  contents: read
+
+# A new push to the same branch makes the previous run's answer irrelevant.
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The same Node as release.yml, the oldest line `engines` allows.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      # Yarn 4 comes from the `packageManager` field via Corepack. Without this
+      # the runner's bundled Yarn 1 would try to read a Berry lockfile.
+      # setup-node has no Corepack input, so its `cache: 'yarn'` would probe the
+      # wrong Yarn and cache the wrong folder, hence the explicit cache below.
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Cache Yarn global cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/yarn/berry/cache
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: ${{ runner.os }}-yarn-
+
+      # --immutable: a lockfile that disagrees with package.json fails here
+      # instead of being rewritten.
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # The typed-routes declarations (app.json `typedRoutes`) live in
+      # .expo/types, which the dev server writes and git ignores. Without them
+      # every Href typechecks as a plain string and no route is checked.
+      - name: Generate typed routes
+        run: npx expo customize tsconfig.json
+
+      - name: Verify
+        run: yarn verify
