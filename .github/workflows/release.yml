@@ -143,6 +143,7 @@ jobs:
         run: eas build --platform android --profile production --non-interactive --clear-cache
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+          EXPO_APPLE_ID: ${{ secrets.EXPO_APPLE_ID }}
 
       # === Submit Android to Google Play Store (Internal Testing) ===
       - name: Submit Android to Google Play (Internal)
@@ -155,6 +156,7 @@ jobs:
         env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+          EXPO_APPLE_ID: ${{ secrets.EXPO_APPLE_ID }}
 
       - name: Build for iOS
         if: |
@@ -165,6 +167,7 @@ jobs:
         run: eas build --platform ios --profile production --non-interactive --clear-cache
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+          EXPO_APPLE_ID: ${{ secrets.EXPO_APPLE_ID }}
           EXPO_NO_CAPABILITY_SYNC: '1'
 
       # === Submit iOS to TestFlight ===
@@ -179,6 +182,7 @@ jobs:
           eas submit --platform ios --profile production --non-interactive --latest
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+          EXPO_APPLE_ID: ${{ secrets.EXPO_APPLE_ID }}
 
       # === GitHub Release Creation (after successful build) ===
       - name: Create GitHub Release

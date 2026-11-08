@@ -108,6 +108,7 @@ jobs:
         run: eas submit --platform ios --profile production --non-interactive --latest
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+          EXPO_APPLE_ID: ${{ secrets.EXPO_APPLE_ID }}
 
       - name: Notify on failure
         if: failure()
