@@ -56,7 +56,7 @@ jobs:
           # react-native-executorch's postinstall downloads native libraries
           # from GitHub releases. Nothing here builds native code, so skip it:
           # a 504 on one of those assets otherwise fails the whole run.
-          RNET_SKIP_DOWNLOAD: "1"
+          RNET_SKIP_DOWNLOAD: '1'
 
       # The typed-routes declarations (app.json `typedRoutes`) live in
       # .expo/types, which the dev server writes and git ignores. Without them
