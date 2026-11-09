@@ -2,8 +2,10 @@
 
 ## Web (admin-dashboard → Cloudflare Worker)
 
-The Next.js web app deploys as the `openarabic-web` Cloudflare Worker via
-OpenNext — it is NOT part of the EAS/GitHub Actions mobile release flow below:
+The admin panel isn't deployed: its `openarabic-web` Worker was deleted on
+2026-11-08, and the website is its own repository (openarabic.io). If the owner
+asks for it again, it goes out as a Cloudflare Worker via OpenNext, outside the
+EAS/GitHub Actions mobile release flow below:
 
 ```bash
 cd admin-dashboard

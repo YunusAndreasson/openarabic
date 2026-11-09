@@ -10,7 +10,7 @@ separate projects with their own languages, package managers and docs:
 
 | Directory                  | What it is                                                              |
 | -------------------------- | ----------------------------------------------------------------------- |
-| `admin-dashboard/`         | Website (openarabic.io) and admin panel: Next.js, pnpm, own `CLAUDE.md` |
+| `admin-dashboard/`         | Admin panel, not deployed: Next.js, pnpm, own `CLAUDE.md`               |
 | `translate/`               | Python pipeline that translates and analyses articles into the database |
 | `social/`, `publish/`      | Social media card rendering and posting                                 |
 | `brand/`, `store-listing/` | Generators for the app mark and the App Store / Play listing assets     |
@@ -140,6 +140,27 @@ Read the one that matches the task; they are not loaded by default.
 - [bottom-sheets.md](.claude/docs/bottom-sheets.md): sizing and FlashList inside a sheet
 - [deployment.md](.claude/docs/deployment.md): EAS builds, GitHub Actions releases, OTA
 - [testing.md](.claude/docs/testing.md): validation and test commands in detail
+
+## Open source
+
+The repository is public. MIT covers the code; [NOTICE.md](NOTICE.md) lists the
+content, brand and third-party material it doesn't.
+
+- Anything brought in from elsewhere (a font, image, sound, word list or copied
+  code) needs a licence that lets it be redistributed here, and a line in
+  NOTICE.md. A font's licence travels with it ([OFL.txt](assets/fonts/OFL.txt)).
+  Nothing under the GPL.
+- No key, token or service-role JWT in a commit, a doc or a fixture. They live in
+  local `.env` files, EAS secrets and the Actions secrets the store workflows read.
+  Push protection catches common formats, not all of them.
+- Dependabot opens grouped pull requests weekly. `.github/dependabot.yml` says what
+  it holds back and why (TypeScript, until typescript-eslint supports the native
+  compiler; the Expo SDK, which moves with `npx expo install --fix`). A native
+  module bump ships in a store build, never in an OTA update. Merging releases
+  nothing: `release.yml` only runs on a "chore: bump version" commit.
+- CI checks the app only. `translate/`, `social/` and `admin-dashboard/` have their
+  own checks; run them before merging their dependency updates, and build
+  `admin-dashboard/` before deploying it.
 
 <!-- prettier-ignore-start -->
 <!-- BEGIN EXPO AGENT CLI MANAGED BLOCK -->

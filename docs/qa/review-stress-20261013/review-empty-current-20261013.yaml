@@ -1,7 +1,0 @@
-executionPrerequisite: Android reusable QA account on Practice with due-query variants seeded empty in memory. Restore normal queries after test.
-steps:
-  - echo: Open the review deep link with no due words; expect Practice without a successful-session summary.
-  - tool: open-url
-    args: { url: 'open-arabic://review' }
-  - await: { visible: { text: 'Reviews this week.' } }
-  - await: { idle: true }
