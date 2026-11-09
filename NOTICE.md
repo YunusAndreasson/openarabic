@@ -11,10 +11,10 @@ content and media below, which you may not copy or redistribute on its terms.
   `admin-dashboard/public/oaLogo.png` and `og.png`.
 - The interface sound in `assets/sounds/`.
 - The social card and screenshots in `.github/readme/`, and the screenshots in
-  `admin-dashboard/public/screenshots/` and `docs/qa/`.
+  `admin-dashboard/public/screenshots/`.
 - Translations and generated texts: the English texts in
   `translate/0_inbox_en/`, the al-Fawāʾid translation in
-  `translate/data/fawaid/output/`,
+  `translate/data/fawaid/output/translation_opus.jsonl`,
   the dictionary entries in `admin-dashboard/lib/word-enrichment.ts`, and the
   words and glosses in `social/*.json`. The app's articles, translations and
   audio live in its database, not here, under the terms shown in the app.
