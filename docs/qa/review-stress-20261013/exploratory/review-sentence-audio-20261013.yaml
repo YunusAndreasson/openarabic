@@ -1,6 +1,0 @@
-steps:
-  - tap:
-      text: Show answer
-  - tap:
-      text: Play sentence
-executionPrerequisite: Android unrevealed review card with an example sentence; light theme.

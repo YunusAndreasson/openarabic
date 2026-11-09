@@ -1,7 +1,0 @@
-steps:
-  - run: review-forgot-cycle-20261013.yaml
-  - run: review-forgot-cycle-20261013.yaml
-  - run: review-forgot-cycle-20261013.yaml
-  - run: review-forgot-cycle-20261013.yaml
-  - run: review-forgot-cycle-20261013.yaml
-executionPrerequisite: Android QA account in unrevealed review with at least five words remaining.

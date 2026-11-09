@@ -4,9 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working in `adm
 
 ## Overview
 
-Next.js admin panel + public web pages for OpenArabic (openarabic.io), deployed
-as the **`openarabic-web` Cloudflare Worker** via OpenNext
-(`@opennextjs/cloudflare`). Config in `wrangler.jsonc`.
+Next.js admin panel for OpenArabic. It still carries the public pages of the old
+website; openarabic.io is now its own repository (YunusAndreasson/openarabic.io).
+**Not deployed:** its Worker, `openarabic-web`, was deleted on 2026-11-08, so a
+deploy creates a new one. Deploy only when the owner asks. Config in
+`wrangler.jsonc`; OpenNext (`@opennextjs/cloudflare`) builds it.
 
 ## Commands
 
@@ -24,6 +26,7 @@ pnpm deploy       # opennextjs-cloudflare build + deploy (see Deploy)
 
 `pnpm deploy` (alias `pnpm cf:deploy`) runs `opennextjs-cloudflare build`
 (Next.js build + OpenNext transform into `.open-next/`) followed by
-`opennextjs-cloudflare deploy`, which pushes the `openarabic-web` Worker.
+`opennextjs-cloudflare deploy`, which pushes the `openarabic-web` Worker (deleted on 2026-11-08; a deploy
+recreates it).
 Requires wrangler auth (`wrangler login`). Mobile app releases are separate —
 see `../.claude/docs/deployment.md` (EAS/GitHub Actions).

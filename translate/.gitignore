@@ -200,3 +200,8 @@ word_enrichment/*.json
 # Pre-gate snapshot used by eval_gate.py as ground truth (data, not source).
 # The globs above are single-level and do not reach into this subdirectory.
 word_enrichment/groundtruth/
+
+# The al-Fawaid book renders from data/fawaid/output/translation_opus.jsonl
+# (generate_pdf.py); the PDFs and Typst files are build output.
+data/fawaid/output/*.pdf
+data/fawaid/output/*.typ
