@@ -61,7 +61,7 @@ async function main() {
 
   const source = process.argv[2] ?? 'translate/word_enrichment/seed_root_enrichment.json';
   const rows = JSON.parse(readFileSync(resolve(projectRoot, source), 'utf8'));
-  console.log(`${rows.length} row(s) from ${source} -> ${url}`);
+  console.log(`${rows.length} row(s) from ${source} -> ${new URL(url).host}`);
 
   const supabase = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
