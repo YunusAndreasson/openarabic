@@ -10,7 +10,7 @@ separate projects with their own languages, package managers and docs:
 
 | Directory                  | What it is                                                              |
 | -------------------------- | ----------------------------------------------------------------------- |
-| `admin-dashboard/`         | Website (openarabic.io) and admin panel: Next.js, pnpm, own `CLAUDE.md` |
+| `admin-dashboard/`         | Admin panel, not deployed: Next.js, pnpm, own `CLAUDE.md`               |
 | `translate/`               | Python pipeline that translates and analyses articles into the database |
 | `social/`, `publish/`      | Social media card rendering and posting                                 |
 | `brand/`, `store-listing/` | Generators for the app mark and the App Store / Play listing assets     |
