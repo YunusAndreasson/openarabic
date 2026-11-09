@@ -37,7 +37,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.19.10",
+    "@opennextjs/cloudflare": "^1.20.16",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-select": "^2.2.6",
@@ -53,9 +53,9 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.546.0",
-    "next": "^16.2.6",
+    "next": "^16.4.5",
     "next-themes": "^0.4.6",
-    "postcss": "^8.5.14",
+    "postcss": "^8.5.32",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "tailwind-merge": "^3.6.0",
@@ -65,7 +65,7 @@
   "devDependencies": {
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.6",
-    "vitest": "^4.1.6",
-    "wrangler": "^4.92.0"
+    "vitest": "^4.1.12",
+    "wrangler": "^4.158.0"
   }
 }
