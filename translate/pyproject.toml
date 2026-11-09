@@ -12,31 +12,31 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "openai>=1.97.0",
-    "pydantic>=2.11.7",
-    "supabase>=2.17.0",
-    "python-dotenv>=1.1.1",
-    "elevenlabs>=2.7.1",
-    "setuptools>=80.9.0",
-    "mutagen>=1.47.0",
-    "google-cloud-translate>=3.21.1",
-    "google-cloud-texttospeech>=2.18.0",
-    "google-auth>=2.40.3",
-    "camel-tools>=1.5.6",
+    "openai>=3.46.0",
+    "pydantic>=2.14.3",
+    "supabase>=2.34.1",
+    "python-dotenv>=1.2.4",
+    "elevenlabs>=2.77.0",
+    "setuptools>=84.2.1",
+    "mutagen>=1.48.1",
+    "google-cloud-translate>=3.28.0",
+    "google-cloud-texttospeech>=2.38.0",
+    "google-auth>=2.62.1",
+    "camel-tools>=1.6.0",
     "pydub>=0.25.1",
-    "rich>=14.0.0",
+    "rich>=15.0.0",
     "pyfiglet>=1.0.2",
-    "beautifulsoup4>=4.14.3",
+    "beautifulsoup4>=4.15.0",
 ]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.12.4",
+    "ruff>=0.17.4",
     "pytest>=8.4.1",
-    "pytest-cov>=6.2.1",
-    "mypy>=1.13.0",
-    "vulture>=2.0.0",
-    "types-requests>=2.32.4.20250809",
+    "pytest-cov>=7.1.0",
+    "mypy>=2.4.1",
+    "vulture>=2.16",
+    "types-requests>=2.33.0.20261030",
 ]
 
 [tool.hatch.build.targets.wheel]
