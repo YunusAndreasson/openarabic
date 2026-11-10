@@ -232,10 +232,10 @@ export function ContactContent() {
           Email Us Directly
         </h3>
         <a
-          href="mailto:yunus+openarabic@edenmind.com"
+          href="mailto:contact@openarabic.io"
           className="text-sm text-primary hover:underline break-all"
         >
-          yunus+openarabic@edenmind.com
+          contact@openarabic.io
         </a>
       </div>
 

@@ -64,10 +64,10 @@ export function AccountDeletionContent() {
               <p className="mb-4">Send an email to:</p>
               <div className="bg-background border border-border rounded-lg p-4">
                 <a
-                  href="mailto:support@openarabic.io?subject=Account Deletion Request"
+                  href="mailto:contact@openarabic.io?subject=Account Deletion Request"
                   className="text-primary font-medium hover:underline text-lg"
                 >
-                  support@openarabic.io
+                  contact@openarabic.io
                 </a>
               </div>
             </div>

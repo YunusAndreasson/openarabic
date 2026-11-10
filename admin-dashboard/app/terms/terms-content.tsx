@@ -137,10 +137,10 @@ export function TermsContent() {
             <p className="text-muted-foreground">
               Questions about these terms? Contact us at{' '}
               <a
-                href="mailto:yunus+openarabic@edenmind.com"
+                href="mailto:contact@openarabic.io"
                 className="text-primary hover:underline"
               >
-                yunus+openarabic@edenmind.com
+                contact@openarabic.io
               </a>
               .
             </p>

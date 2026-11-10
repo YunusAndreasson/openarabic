@@ -131,10 +131,10 @@ export function PrivacyContent() {
               You can access, update, or delete your account data at any time. To delete your
               account and all associated data, contact us at{' '}
               <a
-                href="mailto:yunus+openarabic@edenmind.com"
+                href="mailto:contact@openarabic.io"
                 className="text-primary hover:underline"
               >
-                yunus+openarabic@edenmind.com
+                contact@openarabic.io
               </a>
               .
             </p>
@@ -164,10 +164,10 @@ export function PrivacyContent() {
             <p className="text-muted-foreground">
               Questions about privacy? Contact us at{' '}
               <a
-                href="mailto:yunus+openarabic@edenmind.com"
+                href="mailto:contact@openarabic.io"
                 className="text-primary hover:underline"
               >
-                yunus+openarabic@edenmind.com
+                contact@openarabic.io
               </a>
               . We will respond to your inquiry as soon as possible.
             </p>

@@ -239,7 +239,7 @@ export const STRINGS = {
   // Review tutorial navigation
   TUTORIAL_NEXT: 'Next',
   // Contact email - single source of truth
-  CONTACT_EMAIL: 'yunus+openarabic@edenmind.com',
+  CONTACT_EMAIL: 'contact@openarabic.io',
   // Feedback form
   FEEDBACK_PLACEHOLDER: 'What happened? How can we help?',
   FEEDBACK_MESSAGE_LABEL: 'Message',

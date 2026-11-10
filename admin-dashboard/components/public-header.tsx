@@ -268,7 +268,7 @@ export function PublicHeader({
             <div className="space-y-1">
               {/* Email */}
               <a
-                href="mailto:yunus+openarabic@edenmind.com"
+                href="mailto:contact@openarabic.io"
                 className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-muted/50 active:bg-muted transition-colors duration-150"
               >
                 <Mail className="h-4 w-4 text-muted-foreground" />
@@ -358,7 +358,7 @@ export function PublicHeader({
                   Yunus Andréasson
                 </a>
                 <br />
-                Contact: <a href="mailto:yunus+openarabic@edenmind.com" className="text-primary hover:underline">yunus+openarabic@edenmind.com</a>
+                Contact: <a href="mailto:contact@openarabic.io" className="text-primary hover:underline">contact@openarabic.io</a>
               </p>
             </div>
           </div>

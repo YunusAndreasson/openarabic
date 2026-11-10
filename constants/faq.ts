@@ -20,7 +20,7 @@ export const FAQ_DATA: FAQCategoryData[] = [
       {
         id: 'what-is-app',
         question: 'What is OpenArabic?',
-        answer: `OpenArabic is a free Arabic learning app built around classical Islamic texts. You read bilingual sentence pairs, tap words you don't know, and add them to spaced repetition to learn over time.\n\nDeveloped by Yunus Andréasson. Questions or feedback? yunus+openarabic@edenmind.com`,
+        answer: `OpenArabic is a free Arabic learning app built around classical Islamic texts. You read bilingual sentence pairs, tap words you don't know, and add them to spaced repetition to learn over time.\n\nDeveloped by Yunus Andréasson. Questions or feedback? contact@openarabic.io`,
         category: FAQCategoryEnum.GETTING_STARTED,
       },
       {

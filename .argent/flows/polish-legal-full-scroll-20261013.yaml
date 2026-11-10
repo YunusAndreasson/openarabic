@@ -42,7 +42,7 @@ steps:
     args:
       condition: visible
       selector:
-        text: yunus+openarabic@edenmind.com
+        text: contact@openarabic.io
         role: Button
       timeoutMs: 10000
   - tap:
