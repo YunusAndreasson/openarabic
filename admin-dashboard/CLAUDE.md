@@ -19,14 +19,11 @@ pnpm test         # vitest run
 pnpm lint         # eslint
 pnpm verify       # lint + test + build (full check — run before finishing)
 pnpm preview      # opennextjs-cloudflare build + local preview
-pnpm deploy       # opennextjs-cloudflare build + deploy (see Deploy)
 ```
 
 ## Deploy
 
-`pnpm deploy` (alias `pnpm cf:deploy`) runs `opennextjs-cloudflare build`
-(Next.js build + OpenNext transform into `.open-next/`) followed by
-`opennextjs-cloudflare deploy`, which pushes the `openarabic-web` Worker (deleted on 2026-11-08; a deploy
-recreates it).
-Requires wrangler auth (`wrangler login`). Mobile app releases are separate —
-see `../.claude/docs/deployment.md` (EAS/GitHub Actions).
+**Retired. Never deploy.** The `openarabic-web` Worker this dashboard deployed to was deleted on
+2026-11-08 and `pnpm deploy` would recreate it (it did, by accident, on 2026-11-15). openarabic.io
+is served by the separate `~/Work/openarabic-web` repo. Mobile app releases: see
+`../.claude/docs/deployment.md`.
