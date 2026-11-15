@@ -234,9 +234,6 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
       }
 
       // Track analytics
-      await analytics.identify(data.user.id, {
-        last_sign_in: new Date().toISOString(),
-      });
       await analytics.trackSignIn(config.provider);
 
       // Success handling - haptic feedback only

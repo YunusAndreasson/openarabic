@@ -600,7 +600,7 @@ export const STRINGS = {
   TERMS_CONTACT_TITLE: '10. Contact',
   TERMS_CONTACT: 'Questions about these terms? Contact us at ',
   // Privacy Policy - Full text
-  PRIVACY_EFFECTIVE_DATE: 'Effective Date: January 1, 2025',
+  PRIVACY_EFFECTIVE_DATE: 'Effective Date: November 15, 2026',
   PRIVACY_INTRO:
     'Your privacy is important to us. This policy explains what information we collect, how we use it, and your rights.',
   PRIVACY_COLLECTION_TITLE: '1. Information We Collect',
@@ -612,7 +612,7 @@ export const STRINGS = {
     'We store your reading progress, vocabulary lists, practice session history, review performance, and app preferences (theme, audio settings, notifications).',
   PRIVACY_COLLECTION_ANALYTICS: 'Usage Analytics',
   PRIVACY_COLLECTION_ANALYTICS_DESC:
-    'We use Mixpanel to track basic events like sign in, sign up, and practice sessions. This helps us understand how the app is used and improve it.',
+    'We use Mixpanel to record how the app is used: which screens are opened, actions such as reading articles, studying words and practice sessions, and errors. These events are linked to a random identifier created on your device, not to your account, and do not include your name, email address or account ID. A new identifier is created when you sign out or delete your account.',
   PRIVACY_USE_TITLE: '2. How We Use Your Information',
   PRIVACY_USE:
     'We use your data to: provide the learning service, sync your progress across devices, personalize your learning experience, send practice reminders (if enabled), and improve the app.',
@@ -622,10 +622,10 @@ export const STRINGS = {
     'We use Supabase for authentication, database, and file storage. Your data is stored securely on their servers.',
   PRIVACY_THIRD_PARTY_MIXPANEL: 'Mixpanel',
   PRIVACY_THIRD_PARTY_MIXPANEL_DESC:
-    'We use Mixpanel for analytics to understand app usage patterns and improve the learning experience.',
+    'Mixpanel receives the usage events described in section 1, along with device and app details (device model, operating system, app version) and an approximate location (city, region, country) derived from your IP address. Mixpanel stores this data in the United States.',
   PRIVACY_THIRD_PARTY_SENTRY: 'Sentry',
   PRIVACY_THIRD_PARTY_SENTRY_DESC:
-    'We use Sentry for error tracking and crash reporting to identify and fix issues that affect app stability and performance.',
+    'We use Sentry for error tracking and crash reporting to identify and fix issues that affect app stability and performance. Sentry stores this data in the United States.',
   PRIVACY_THIRD_PARTY_META: 'Meta (Facebook)',
   PRIVACY_THIRD_PARTY_META_DESC:
     'If you installed Open Arabic from a Facebook or Instagram ad, we share a small number of app events with Meta — that the app was opened, an account was created, the intro was finished, or a practice session was completed — so we can tell whether an ad was worth running. We do not send Meta your name, email, or what you study. On iOS we never ask to track you across other apps, so Meta only receives this in aggregate. On Android your device advertising ID is included; you can reset or limit it in Settings → Privacy → Ads.',

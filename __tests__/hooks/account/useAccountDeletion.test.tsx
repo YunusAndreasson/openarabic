@@ -5,6 +5,7 @@ import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers
 import { STRINGS } from '@/constants/strings';
 import { useAccountDeletion } from '@/hooks/account/useAccountDeletion';
 import { AccountDeletionService } from '@/services/accountDeletion';
+import { analytics } from '@/services/analytics';
 import { handleError, showSuccessToast } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 
@@ -22,7 +23,10 @@ jest.mock('@/services/accountDeletion', () => ({
 }));
 
 jest.mock('@/services/analytics', () => ({
-  analytics: { track: jest.fn().mockResolvedValue(undefined) },
+  analytics: {
+    track: jest.fn().mockResolvedValue(undefined),
+    reset: jest.fn().mockResolvedValue(undefined),
+  },
 }));
 
 jest.mock('expo-router', () => ({
@@ -110,6 +114,8 @@ describe('useAccountDeletion deleteAccount', () => {
     expect(successFeedback).toHaveBeenCalledTimes(1);
     expect(showSuccessToast).toHaveBeenCalledWith(STRINGS.DELETE_ACCOUNT_SUCCESS);
     expect(router.replace).toHaveBeenCalledWith('/auth');
+    // The deleted account's anonymous analytics id is not carried into the next session.
+    expect(analytics.reset).toHaveBeenCalledTimes(1);
   });
 
   it('confirms the deletion even when the screen is already gone', async () => {

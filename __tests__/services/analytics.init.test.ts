@@ -22,12 +22,8 @@ jest.mock('mixpanel-react-native', () => ({
         throw new Error('init failed');
       }
     }
-    async identify() {}
-    async track() {}
-    async reset() {}
-    async getPeople() {
-      return { set: () => undefined };
-    }
+    track() {}
+    reset() {}
   },
 }));
 
@@ -35,6 +31,8 @@ jest.mock('@/constants/analytics', () => ({
   ...jest.requireActual<Record<string, unknown>>('@/constants/analytics'),
   MIXPANEL_TOKEN: 'test-token-123',
 }));
+
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 
 type AnalyticsModule = typeof import('@/services/analytics');
 
@@ -58,7 +56,7 @@ describe('analytics initialisation', () => {
     const analytics = loadAnalytics();
 
     await Promise.all([
-      analytics.identify('user-1'),
+      analytics.track(ANALYTICS_EVENTS.APP_OPENED),
       analytics.trackError('Some_Error'),
       analytics.trackSignIn(),
     ]);

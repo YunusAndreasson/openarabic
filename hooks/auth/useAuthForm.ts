@@ -129,7 +129,7 @@ export function useAuthForm(): UseAuthFormReturn {
 
     await runAuthRequest(
       async () => {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -145,9 +145,6 @@ export function useAuthForm(): UseAuthFormReturn {
           return;
         }
 
-        await analytics.identify(data.user.id, {
-          last_sign_in: new Date().toISOString(),
-        });
         await analytics.trackSignIn('email');
         successFeedback();
         router.replace(ROUTE_PATHS.EXPLORE_TAB);
@@ -206,16 +203,6 @@ export function useAuthForm(): UseAuthFormReturn {
         }
 
         // Analytics can happen asynchronously without blocking UX
-        if (data.user) {
-          analytics
-            .identify(data.user.id, {
-              email: data.user.email,
-              created_at: new Date().toISOString(),
-            })
-            .catch(() => {
-              // Silent failure for analytics
-            });
-        }
         analytics.trackSignUp('email').catch(() => {
           // Silent failure for analytics
         });

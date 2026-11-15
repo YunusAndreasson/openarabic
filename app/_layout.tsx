@@ -349,7 +349,7 @@ function AppContent() {
   // Configure Android navigation bar button style (background is transparent in
   // edge-to-edge mode). Own effect with isDark in deps so bar contrast follows
   // theme changes — kept separate from the session effect below, whose
-  // analytics.identify / audio-session work must not re-run on a theme switch.
+  // audio-session work must not re-run on a theme switch.
   useEffect(() => {
     if (!appReady || isAuthLoading) return;
 
@@ -370,22 +370,7 @@ function AppContent() {
     simpleAudioService.preconfigureAudioSession().catch(() => {
       // Pre-warm only — the playback path retries and owns real error reporting.
     });
-
-    const identifyUser = async () => {
-      if (userId) {
-        try {
-          await analytics.identify(userId, {
-            last_active: new Date().toISOString(),
-          });
-        } catch (err) {
-          // Silently ignore analytics errors
-          void handleError(err, { showToast: false });
-        }
-      }
-    };
-
-    void identifyUser();
-  }, [userId, appReady, isAuthLoading]);
+  }, [appReady, isAuthLoading]);
 
   const colors = useColors();
 

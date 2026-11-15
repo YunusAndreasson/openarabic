@@ -5,7 +5,7 @@
  * - Lazy initialization (only initializes on first use)
  * - Silent operation (graceful fallback when Mixpanel unavailable)
  * - Event tracking
- * - User identification
+ * - No user identification: events stay on the anonymous device id
  * - Convenience methods for common events
  *
  * Modern Jest 29 Patterns:
@@ -14,23 +14,30 @@
  * - ✅ @jest/globals explicit imports
  */
 
+import type { Mixpanel, People } from 'mixpanel-react-native';
+
 import { describe, test, expect, jest } from '@jest/globals';
 
 // Mock Mixpanel before importing service
-const mockInit = jest.fn(async (..._args: unknown[]) => undefined);
-const mockIdentify = jest.fn(async (..._args: unknown[]) => undefined);
-const mockTrack = jest.fn(async (..._args: unknown[]) => undefined);
-const mockReset = jest.fn(async (..._args: unknown[]) => undefined);
-const mockSetPeople = jest.fn();
-const mockGetPeople = jest.fn(async (..._args: unknown[]) => ({ set: mockSetPeople }));
-
-const MockMixpanel = jest.fn((..._args: unknown[]) => ({
-  init: mockInit,
-  identify: mockIdentify,
-  track: mockTrack,
-  reset: mockReset,
-  getPeople: mockGetPeople,
+const mockInit = jest.fn<Mixpanel['init']>(async () => undefined);
+const mockIdentify = jest.fn<Mixpanel['identify']>(async () => undefined);
+const mockTrack = jest.fn<Mixpanel['track']>();
+const mockReset = jest.fn<Mixpanel['reset']>();
+const mockSetPeople = jest.fn((..._args: unknown[]): ReturnType<People['set']> => undefined);
+const mockGetPeople = jest.fn((): Pick<ReturnType<Mixpanel['getPeople']>, 'set'> => ({
+  set: mockSetPeople,
 }));
+
+// A plain class, not jest.fn: resetMocks empties a jest.fn implementation
+// before each test, which would leave the constructed instance without methods.
+// The methods are the spies above, so each test can still assert on them.
+class MockMixpanel {
+  init = mockInit;
+  identify = mockIdentify;
+  track = mockTrack;
+  reset = mockReset;
+  getPeople = mockGetPeople;
+}
 
 jest.mock('mixpanel-react-native', () => ({
   Mixpanel: MockMixpanel,
@@ -66,15 +73,45 @@ describe('analytics service', () => {
       ).resolves.not.toThrow();
     });
 
-    test('should call identify without throwing', async () => {
-      await expect(analytics.identify('user-123')).resolves.not.toThrow();
-      await expect(
-        analytics.identify('user-123', { email: 'test@example.com' }),
-      ).resolves.not.toThrow();
-    });
-
     test('should call reset without throwing', async () => {
       await expect(analytics.reset()).resolves.not.toThrow();
+    });
+  });
+
+  describe('Anonymity', () => {
+    test('exposes no identify or people-profile method', () => {
+      expect(analytics).not.toHaveProperty('identify');
+      expect(analytics).not.toHaveProperty('getPeople');
+    });
+
+    test('never identifies the user or writes a people profile', async () => {
+      await analytics.track(ANALYTICS_EVENTS.APP_OPENED);
+      await analytics.trackError('Some_Error');
+      await analytics.trackSignUp('email');
+      await analytics.trackSignIn('google');
+      await analytics.trackSignOut();
+      await analytics.reset();
+
+      expect(mockTrack).toHaveBeenCalled();
+      expect(mockIdentify).not.toHaveBeenCalled();
+      expect(mockGetPeople).not.toHaveBeenCalled();
+      expect(mockSetPeople).not.toHaveBeenCalled();
+    });
+
+    test('auth events carry the method and nothing else', async () => {
+      await analytics.trackSignIn('apple');
+      await analytics.trackSignUp('email');
+      await analytics.trackSignOut();
+
+      expect(mockTrack).toHaveBeenCalledWith(ANALYTICS_EVENTS.SIGN_IN, { method: 'apple' });
+      expect(mockTrack).toHaveBeenCalledWith(ANALYTICS_EVENTS.SIGN_UP, { method: 'email' });
+      expect(mockTrack).toHaveBeenCalledWith(ANALYTICS_EVENTS.SIGN_OUT, undefined);
+    });
+
+    test('reset starts a fresh anonymous id', async () => {
+      await analytics.reset();
+
+      expect(mockReset).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -111,12 +148,14 @@ describe('analytics service', () => {
   describe('Error Resilience', () => {
     test('should handle errors from mocked functions', async () => {
       mockInit.mockRejectedValueOnce(new Error('Init failed'));
-      mockTrack.mockRejectedValueOnce(new Error('Track failed'));
-      mockIdentify.mockRejectedValueOnce(new Error('Identify failed'));
-      mockReset.mockRejectedValueOnce(new Error('Reset failed'));
+      mockTrack.mockImplementationOnce(() => {
+        throw new Error('Track failed');
+      });
+      mockReset.mockImplementationOnce(() => {
+        throw new Error('Reset failed');
+      });
 
       await expect(analytics.track(ANALYTICS_EVENTS.APP_OPENED)).resolves.not.toThrow();
-      await expect(analytics.identify('user')).resolves.not.toThrow();
       await expect(analytics.reset()).resolves.not.toThrow();
     });
   });
