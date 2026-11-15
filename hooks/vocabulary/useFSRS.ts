@@ -522,7 +522,7 @@ export function useFSRS({
         // can order a post-session refetch behind it.
         const write = gradeMutation
           .mutateAsync({ userId, rootId, update: wordUpdateData })
-          .catch(error => {
+          .catch((error: unknown) => {
             // handleError normalises via toError — never JSON.stringify a thrown
             // value into the message, that is how a whole payload ends up as a
             // Sentry issue title.

@@ -238,9 +238,13 @@ export const useAppPreloader = (): AppPreloaderResult => {
               .catch(() => null); // Silently handle prefetch failures
 
             // Fire-and-forget; do not block loader
-            Promise.allSettled([...imagePrefetches, bulkPrefetchPromise]).catch(error => {
-              Sentry.captureException(error, { tags: { location: 'preloader:featured-prefetch' } });
-            });
+            Promise.allSettled([...imagePrefetches, bulkPrefetchPromise]).catch(
+              (error: unknown) => {
+                Sentry.captureException(error, {
+                  tags: { location: 'preloader:featured-prefetch' },
+                });
+              },
+            );
           } catch {
             // ignore prefetch errors
           }
@@ -267,7 +271,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
                   );
 
                 // Fire-and-forget; do not block loader
-                Promise.allSettled(imagePrefetches).catch(error => {
+                Promise.allSettled(imagePrefetches).catch((error: unknown) => {
                   Sentry.captureException(error, {
                     tags: { location: 'preloader:bookmark-prefetch' },
                   });
@@ -309,7 +313,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
           ];
 
           // Don't await - let these load in background
-          Promise.allSettled(backgroundPromises).catch(error => {
+          Promise.allSettled(backgroundPromises).catch((error: unknown) => {
             Sentry.captureException(error, { tags: { location: 'preloader:background' } });
           });
         }, 500); // Delay background loading by 500ms to prioritize initial UI responsiveness

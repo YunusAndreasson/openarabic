@@ -356,7 +356,7 @@ export const useAudioPreloader = (
     // preloadSessionAudio increments the run id synchronously before its first
     // await, so this identifies exactly the detached pass we just launched.
     const runId = runIdRef.current;
-    void preloadPromise.catch(error => {
+    void preloadPromise.catch((error: unknown) => {
       diagMark('preload.error', { message: toError(error).message });
       if (runId === runIdRef.current) {
         setIsPreloading(false);
@@ -378,7 +378,7 @@ export const useAudioPreloader = (
     if (fresh.length === 0) return;
 
     fresh.forEach(word => preloadedIdsRef.current.add(word.root_id));
-    void topUpSessionAudio(fresh).catch(error => {
+    void topUpSessionAudio(fresh).catch((error: unknown) => {
       diagMark('preload.topup-error', { message: toError(error).message });
     });
   }, [wordQueue, isReady, isSessionComplete, topUpSessionAudio]);

@@ -822,7 +822,7 @@ export function useReview({
         const endMeaningPlay = diagSpan('meaning.play');
         playAfterHandoff(englishAudioUrl)
           .then(started => endMeaningPlay({ started: started ?? false }))
-          .catch(err => {
+          .catch((err: unknown) => {
             endMeaningPlay({ started: false, error: true });
             void handleError(err);
           });
@@ -1242,7 +1242,7 @@ export function useReview({
           ),
         };
       })
-      .catch(err => {
+      .catch((err: unknown) => {
         endPromptPlay({ started: false, error: true });
         recordPromptPlay(keyForRun, {
           started: false,

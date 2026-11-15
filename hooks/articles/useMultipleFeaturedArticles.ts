@@ -100,9 +100,12 @@ export function useMultipleFeaturedArticles(
   const hasArticles = articlesData.length > 0;
 
   // Convert Sets to stable array representations for dependencies
-  const stableDueWordRootIds = useMemo(() => Array.from(dueWordRootIds).sort(), [dueWordRootIds]);
+  const stableDueWordRootIds = useMemo(
+    () => Array.from(dueWordRootIds).sort((a, b) => a - b),
+    [dueWordRootIds],
+  );
   const stableDifficultWordRootIds = useMemo(
-    () => Array.from(difficultWordRootIds).sort(),
+    () => Array.from(difficultWordRootIds).sort((a, b) => a - b),
     [difficultWordRootIds],
   );
 

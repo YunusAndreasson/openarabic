@@ -112,7 +112,18 @@ export default defineConfig([
       '@typescript-eslint/no-array-delete': 'error',
       '@typescript-eslint/no-misused-spread': 'error',
       '@typescript-eslint/no-unsafe-argument': 'error',
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
       '@typescript-eslint/no-unsafe-return': 'error',
+      // From islam.se (2026-11-06; the 12 hits were fixed, none suppressed).
+      // `+` on a number and a string concatenates where arithmetic was meant.
+      '@typescript-eslint/restrict-plus-operands': 'error',
+      // `.sort()` with no comparator sorts numbers as strings: [2, 10] → [10, 2].
+      '@typescript-eslint/require-array-sort-compare': 'error',
+      // A `.catch(e => …)` parameter is `any`, which re-opens the hole
+      // `useUnknownInCatchVariables` closes for try/catch.
+      '@typescript-eslint/use-unknown-in-catch-callback-variable': 'error',
 
       // A union switch that gains a member should fail loudly rather than fall
       // through silently. `considerDefaultExhaustiveForUnions` keeps switches that

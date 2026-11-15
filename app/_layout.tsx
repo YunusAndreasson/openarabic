@@ -494,7 +494,7 @@ function AppContent() {
       // (FSRS grade, saved word) otherwise only survives that if the cache
       // persister's 1s throttle had already fired on its own; this forces an
       // immediate, unthrottled write of whatever is pending right now.
-      void flushPersistedQueryCache(queryClient).catch(error => {
+      void flushPersistedQueryCache(queryClient).catch((error: unknown) => {
         void handleError(error, {
           showToast: false,
           analyticsEventName: 'Persist_Query_Cache_On_Background_Error',

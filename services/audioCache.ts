@@ -102,8 +102,8 @@ class AudioCacheManager {
    */
   private ensureLegacySweep(): Promise<void> {
     if (!this.legacySweepPromise) {
-      this.legacySweepPromise = this.sweepLegacyCacheFiles().catch(async error => {
-        await handleError(error as Error, { showToast: false });
+      this.legacySweepPromise = this.sweepLegacyCacheFiles().catch(async (error: unknown) => {
+        await handleError(error, { showToast: false });
       });
     }
     return this.legacySweepPromise;

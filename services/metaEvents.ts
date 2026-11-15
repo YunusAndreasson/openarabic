@@ -35,6 +35,8 @@
  * observe. The same trap applies to Mixpanel. `NSPrivacyTracking` is false for the
  * matching reason: with no ATT there is no IDFA, so nothing tracks across apps.
  */
+import type { AppEventsLogger, Settings } from 'react-native-fbsdk-next';
+
 import { LogBox, NativeModules, Platform } from 'react-native';
 
 import { META_EVENTS } from '@/constants/analytics';
@@ -52,17 +54,7 @@ LogBox.ignoreLogs(["Exception in HostObject::get for prop 'FBAppEventsLogger'"])
 // Meta app event parameters are limited to primitives on the wire.
 type MetaEventParams = Record<string, string | number>;
 
-// Minimal surface of react-native-fbsdk-next that this module touches.
-interface MetaAppEventsLogger {
-  logEvent(eventName: string, parameters?: MetaEventParams): void;
-}
-
-interface MetaSettings {
-  initializeSDK(): void;
-  setAdvertiserTrackingEnabled(enabled: boolean): Promise<boolean>;
-}
-
-let appEventsLogger: MetaAppEventsLogger | null = null;
+let appEventsLogger: typeof AppEventsLogger | null = null;
 let isSdkInitialized = false;
 let loggerResolveAttempts = 0;
 
@@ -98,22 +90,27 @@ const configureMeta = (): void => {
     // `react-native-fbsdk-next` eagerly evaluates every barrel export, including
     // AccessTokenTracker. Loading only the two modules used here prevents an
     // unrelated login tracker from crashing first-run analytics on Android.
-    NativeModules['FBSettings']?.initializeSDK?.();
+    const nativeSettings = NativeModules['FBSettings'] as
+      Partial<Pick<typeof Settings, 'initializeSDK'>> | null | undefined;
+    nativeSettings?.initializeSDK?.();
 
-    const Settings = require('react-native-fbsdk-next/lib/commonjs/FBSettings')
-      .default as MetaSettings;
+    const settings = (
+      require('react-native-fbsdk-next/lib/commonjs/FBSettings') as {
+        default: typeof Settings;
+      }
+    ).default;
 
     // A checked-in native project can lag behind app.json plugin settings. Make
     // initialization explicit before the first event so Android never reaches
     // AppEventsLogger with an uninitialized FacebookSdk.
-    Settings.initializeSDK();
+    settings.initializeSDK();
 
     // Explicit on iOS even though the SDK already derives `false` from an
     // undetermined ATT status. Stating it makes AEM-only mode deliberate rather
     // than incidental, so a future ATT change has to be a conscious edit.
     // iOS-only API — the Android native module does not implement it.
     if (Platform.OS === 'ios') {
-      Settings.setAdvertiserTrackingEnabled(false).catch(() => {
+      settings.setAdvertiserTrackingEnabled(false).catch(() => {
         // Already the effective default without ATT — nothing to recover.
       });
     }
@@ -128,7 +125,7 @@ const configureMeta = (): void => {
  * init that has not settled yet costs one skipped event rather than latching
  * attribution off for the whole process.
  */
-const resolveAppEventsLogger = (): MetaAppEventsLogger | null => {
+const resolveAppEventsLogger = (): typeof AppEventsLogger | null => {
   if (appEventsLogger || loggerResolveAttempts >= MAX_LOGGER_RESOLVE_ATTEMPTS) {
     return appEventsLogger;
   }
@@ -136,8 +133,11 @@ const resolveAppEventsLogger = (): MetaAppEventsLogger | null => {
   loggerResolveAttempts += 1;
 
   try {
-    appEventsLogger = require('react-native-fbsdk-next/lib/commonjs/FBAppEventsLogger')
-      .default as MetaAppEventsLogger;
+    appEventsLogger = (
+      require('react-native-fbsdk-next/lib/commonjs/FBAppEventsLogger') as {
+        default: typeof AppEventsLogger;
+      }
+    ).default;
   } catch {
     // Not ready (or not linked) — a later event tries again, up to the cap.
     appEventsLogger = null;
@@ -155,7 +155,12 @@ export const metaEvents = {
   log: (eventName: string, params?: MetaEventParams): void => {
     try {
       configureMeta();
-      resolveAppEventsLogger()?.logEvent(eventName, params);
+      const logger = resolveAppEventsLogger();
+      if (params) {
+        logger?.logEvent(eventName, params);
+      } else {
+        logger?.logEvent(eventName);
+      }
     } catch {
       // Ad attribution is non-critical — never surface this.
     }

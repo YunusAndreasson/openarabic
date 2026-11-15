@@ -60,7 +60,7 @@ import type { SmartReminderMirror } from '@/utils/smartReminderPrefs';
 // Use a guarded require so the module-level throw doesn't crash the app.
 let Notifications: typeof NotificationsModule | null = null;
 try {
-  Notifications = require('expo-notifications');
+  Notifications = require('expo-notifications') as typeof NotificationsModule;
 } catch {
   // Running in Expo Go on Android – notifications unavailable
 }
