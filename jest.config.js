@@ -2,6 +2,8 @@ const { transformIgnorePatterns: expoTransformIgnorePatterns } = require('jest-e
 
 module.exports = {
   preset: 'jest-expo',
+  // Every run in Europe/Stockholm, whatever the machine's zone (see the file).
+  globalSetup: './jest.global-setup.js',
   setupFilesAfterEnv: ['./jest.setup.js'],
 
   // No `transform` here: jest-expo's applies. Its babel-jest runs
