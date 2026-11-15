@@ -625,7 +625,7 @@ export const STRINGS = {
     'Mixpanel receives the usage events described in section 1, along with device and app details (device model, operating system, app version) and an approximate location (city, region, country) derived from your IP address. Mixpanel stores this data in the United States.',
   PRIVACY_THIRD_PARTY_SENTRY: 'Sentry',
   PRIVACY_THIRD_PARTY_SENTRY_DESC:
-    'We use Sentry for error tracking and crash reporting to identify and fix issues that affect app stability and performance. Sentry stores this data in the United States.',
+    'We use Sentry for error tracking and crash reporting to identify and fix issues that affect app stability and performance. A report contains the error, the device and app version. It does not include your account, email address or screenshots. Sentry stores this data in the United States.',
   PRIVACY_THIRD_PARTY_META: 'Meta (Facebook)',
   PRIVACY_THIRD_PARTY_META_DESC:
     'If you installed Open Arabic from a Facebook or Instagram ad, we share a small number of app events with Meta — that the app was opened, an account was created, the intro was finished, or a practice session was completed — so we can tell whether an ad was worth running. We do not send Meta your name, email, or what you study. On iOS we never ask to track you across other apps, so Meta only receives this in aggregate. On Android your device advertising ID is included; you can reset or limit it in Settings → Privacy → Ads.',

@@ -110,7 +110,9 @@ export function PrivacyContent() {
             <h3 className="text-lg font-semibold mb-2">Sentry</h3>
             <p className="text-muted-foreground mb-4">
               We use Sentry for error tracking and crash reporting to identify and fix issues that
-              affect app stability and performance. Sentry stores this data in the United States.
+              affect app stability and performance. A report contains the error, the device and app
+              version. It does not include your account, email address or screenshots. Sentry stores
+              this data in the United States.
             </p>
 
             <h3 className="text-lg font-semibold mb-2">Apple and Google</h3>

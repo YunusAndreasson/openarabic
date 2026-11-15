@@ -251,7 +251,9 @@ Sentry.init({
   // emulator, not a user). Local failures are already visible in Metro.
   enabled: !!sentryDsn && !__DEV__,
   tracesSampleRate: __DEV__ ? 1.0 : 0.1, // Sample everything in dev; 10% in production (Sentry guidance: don't ship 1.0)
-  attachScreenshot: true, // Helps debug UI crashes
+  // No screenshots: a crash screen can show the reader's email or what they study,
+  // and the privacy policy says reports carry no screen content.
+  attachScreenshot: false,
   debug: false, // Disable Sentry debug logging for performance
   enableNative: true, // CRITICAL: Enable native crash reporting
   enableNativeCrashHandling: true, // Catch native crashes

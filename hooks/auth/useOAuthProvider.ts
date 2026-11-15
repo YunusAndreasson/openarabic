@@ -204,7 +204,6 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
       }
 
       authBreadcrumb('Supabase authentication successful', {
-        userId: data.user.id,
         hasSession: !!data.session,
       });
 
