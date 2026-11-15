@@ -7,7 +7,7 @@ const systemListeners = new Map();
 const mockAudioManager = {
   checkRecordingPermissions: mockStable(() => Promise.resolve('Granted')),
   requestRecordingPermissions: mockStable(() => Promise.resolve('Granted')),
-  setAudioSessionOptions: jest.fn(),
+  setSystemOptions: jest.fn(),
   setAudioSessionActivity: mockStable(() => Promise.resolve(undefined)),
   observeAudioInterruptions: jest.fn(),
   addSystemEventListener: mockStable((name, callback) => {
@@ -42,11 +42,13 @@ class MockAudioRecorder {
     this.state = 'recording';
     return { status: 'ok' };
   }
-  pause() {
+  // 1.0: pause/resume return promises. The state flips synchronously (before
+  // the async body's first await) so a test can assert it without flushing.
+  async pause() {
     this.pauseCalls += 1;
     if (this.state === 'recording') this.state = 'paused';
   }
-  resume() {
+  async resume() {
     this.resumeCalls += 1;
     if (this.state === 'paused') this.state = 'recording';
   }

@@ -1089,9 +1089,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       // carried in the same record and deliberately not rendered.
       mockEnrichment.mockReturnValue({
         ...enrichment(),
-        wordFamily: [
-          { letters: 'كِتَاب', transliteration: 'kitāb', meaning: 'book', plural: 'كُتُب' },
-        ],
+        wordFamily: [{ letters: 'كِتَاب', transliteration: 'kitāb', meaning: 'book', plural: 'كُتُب' }],
       } as RootEnrichment);
 
       const { getByText } = renderSheet();

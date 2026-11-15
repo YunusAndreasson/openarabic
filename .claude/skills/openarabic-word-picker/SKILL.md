@@ -72,14 +72,14 @@ the vowels). Learner-friendly ALA-LC-ish scheme:
 
 | Arabic          | Latin                  |     | Arabic | Latin |
 | --------------- | ---------------------- | --- | ------ | ----- |
-| ا / ـَا         | ā                      |     | ث      | th    |
-| ـِي / ي (long)  | ī                      |     | ذ      | dh    |
-| ـُو / و (long)  | ū                      |     | ش      | sh    |
-| ـَ fatḥa        | a                      |     | خ      | kh    |
-| ـِ kasra        | i                      |     | غ      | gh    |
-| ـُ ḍamma        | u                      |     | ح      | ḥ     |
+| ا / ـَا          | ā                      |     | ث      | th    |
+| ـِي / ي (long)   | ī                      |     | ذ      | dh    |
+| ـُو / و (long)   | ū                      |     | ش      | sh    |
+| ـَ fatḥa         | a                      |     | خ      | kh    |
+| ـِ kasra         | i                      |     | غ      | gh    |
+| ـُ ḍamma         | u                      |     | ح      | ḥ     |
 | ة (tā' marbūṭa) | a (‑ah pausal)         |     | ص      | ṣ     |
-| ّ shadda        | double the consonant   |     | ض      | ḍ     |
+| ّ shadda         | double the consonant   |     | ض      | ḍ     |
 | ع               | ʿ                      |     | ط      | ṭ     |
 | ء / أ / ئ hamza | ʾ (drop at word start) |     | ظ      | ẓ     |
 

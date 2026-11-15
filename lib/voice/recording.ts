@@ -716,21 +716,23 @@ export function __resetMicPermissionForTests(): void {
  * for prompts, capture for answers, from one category so neither has to take it
  * from the other mid-card.
  *
- * `iosAllowHaptics` is load-bearing rather than cosmetic. iOS silences haptics
+ * `allowHaptics` is load-bearing rather than cosmetic. iOS silences haptics
  * while a session is record-capable, and that window is now the entire review
  * instead of one card's recording — so without it the swipe detent tick, the
  * grade feedback and the reveal tap all go dead on iOS for the whole session.
  */
 function configureVoiceSessionOptions(config: RecordingConfig): void {
   if (Platform.OS !== 'ios') return;
-  AudioManager.setAudioSessionOptions({
-    iosCategory: 'playAndRecord',
-    iosMode: config.iosRawMode ? 'measurement' : IOS_SESSION_MODE,
-    // No Bluetooth HFP: a connected headset would route the mic to an
-    // ~8 kHz narrowband channel and strip the consonant cues Parakeet
-    // needs. Force the full-band built-in mic.
-    iosOptions: ['defaultToSpeaker'],
-    iosAllowHaptics: true,
+  AudioManager.setSystemOptions({
+    ios: {
+      category: 'playAndRecord',
+      mode: config.iosRawMode ? 'measurement' : IOS_SESSION_MODE,
+      // No Bluetooth HFP: a connected headset would route the mic to an
+      // ~8 kHz narrowband channel and strip the consonant cues Parakeet
+      // needs. Force the full-band built-in mic.
+      options: ['defaultToSpeaker'],
+      allowHaptics: true,
+    },
   });
 }
 
@@ -988,7 +990,7 @@ export class VoiceCaptureSession {
 
     // Idle until a card asks for it. Buffers are discarded either way (see
     // handleBuffer), so this is a power optimisation rather than the guarantee.
-    recorder.pause();
+    await recorder.pause();
   }
 
   /**
@@ -1058,8 +1060,12 @@ export class VoiceCaptureSession {
     this.windowOpen = true;
 
     const endResume = diagSpan('mic.window.resume');
-    this.recorder?.resume();
-    endResume();
+    // Not awaited: beginWindow stays synchronous, and a resume that fails is
+    // caught by the watchdog below like any other window that gets no buffers.
+    void this.recorder?.resume().then(
+      () => endResume(),
+      (err: unknown) => endResume({ failed: true, message: toError(err).message }),
+    );
 
     // Safety net: if no buffers arrive (the audio engine stopped, an
     // interruption we didn't see, a route change) the maxDuration check inside
@@ -1294,8 +1300,10 @@ export class VoiceCaptureSession {
       const recorder = this.recorder;
       void Promise.resolve().then(() => {
         const endPause = diagSpan('mic.window.pause');
-        recorder?.pause();
-        endPause();
+        return recorder?.pause().then(
+          () => endPause(),
+          (err: unknown) => endPause({ failed: true, message: toError(err).message }),
+        );
       });
     }
 
