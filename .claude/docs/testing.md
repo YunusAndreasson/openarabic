@@ -25,6 +25,10 @@
 | `yarn prettier:fix`  | Auto-format all files                       | When prettier check fails  |
 | `yarn lint:fix`      | Linting with auto-fix                       | Only at end                |
 
+CI (`.github/workflows/verify.yml`) runs `yarn verify` on every push to `root`
+and every pull request, after generating the typed routes. It has no secrets, so
+a test that needs a real Supabase, Sentry or EAS value fails there.
+
 ## Test Commands
 
 | Command              | Purpose                    | Time  |
