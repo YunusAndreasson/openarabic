@@ -1,7 +1,7 @@
 # The gate a developer runs, on every push to root and every pull request:
-# `yarn verify`, i.e. typecheck (source and tests), lint, the deprecated-API
-# check, knip and the whole Jest suite. release.yml runs the same command
-# before a build; this runs it without being asked.
+# `yarn verify`, i.e. the runtime gate, typecheck (source and tests), lint,
+# the deprecated-API check, knip and the whole Jest suite. release.yml runs the
+# same command before a build; this runs it without being asked.
 #
 # No secrets: nothing in `yarn verify` reads an EXPO_PUBLIC_* value, Supabase
 # or EAS (Jest mocks the services). Keep it that way, so a pull request from a
@@ -64,5 +64,7 @@ jobs:
       - name: Generate typed routes
         run: npx expo customize tsconfig.json
 
+      # Starts with `runtime:check`: a native change committed without a new
+      # runtimeVersion and `yarn runtime:record` fails here, before any build.
       - name: Verify
         run: yarn verify

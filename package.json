@@ -8,6 +8,7 @@
   "homepage": "https://openarabic.io",
   "scripts": {
     "eas-build-pre-install": "corepack enable",
+    "eas-build-post-install": "node scripts/check-runtime.js",
     "lint:fix": "eslint . --fix --cache",
     "lint": "eslint . --cache --max-warnings 0",
     "prettier:check": "prettier --check . --cache",
@@ -37,15 +38,15 @@
     "lint:tests": "eslint -c eslint.tests.config.mjs --no-inline-config --cache --cache-location .eslintcache-tests __tests__",
     "validate": "node scripts/validate-changed.js",
     "validate:full": "yarn typecheck && yarn typecheck:tests && yarn lint && yarn lint:tests && yarn api:check && yarn check-unused",
-    "verify": "yarn validate:full && yarn test:all",
+    "verify": "yarn runtime:check && yarn validate:full && yarn test:all",
+    "runtime:check": "node scripts/check-runtime.js",
+    "runtime:record": "node scripts/check-runtime.js --record",
     "bump": "node scripts/bumpVersion.js",
     "release": "gh workflow run release.yml",
     "release:all": "gh workflow run release.yml -f platform=all",
     "release:ios": "gh workflow run release.yml -f platform=ios",
     "release:android": "gh workflow run release.yml -f platform=android",
-    "ota": "eas update --branch production --environment production --platform ios --message",
-    "ota:android": "eas update --branch production --environment production --platform android --message",
-    "ota:all": "eas update --branch production --environment production --platform all --message"
+    "ota": "bash scripts/eas-update.sh"
   },
   "dependencies": {
     "@babel/runtime": "^7.29.7",

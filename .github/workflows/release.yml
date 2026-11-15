@@ -98,7 +98,7 @@ jobs:
         run: yarn verify
 
       # === EAS setup (before version bumping) ===
-      # OTA updates are not published here: they go out through `yarn ota*` only.
+      # OTA updates are not published here: they go out through `yarn ota` only.
       #
       # `eas build` runs on EAS's workers, which take their environment from the
       # profile's `environment` (EAS environment variables) and eas.json `env`,
