@@ -117,6 +117,34 @@ const fireHaptic = (haptic: Promise<void>): void => {
 };
 
 /**
+ * An Android constant, the API level that introduced it, and the constant used
+ * below that level.
+ *
+ * expo-haptics resolves the constant by reflection and rejects when the OS
+ * predates it, and `fireHaptic` swallows that rejection. So without a floor a
+ * pattern on `Confirm`/`Reject` (API 30) or `Segment_Tick` (API 34) is silent on
+ * every device below it: Android 8–10 or 8–13 with minSdk 26. A fallback must
+ * come from the set every API level has (Clock_Tick, Context_Click,
+ * Keyboard_Tap, Long_Press, Virtual_Key), or it fails the same way.
+ */
+interface AndroidHaptic {
+  type: Haptics.AndroidHaptics;
+  since: number;
+  fallback: Haptics.AndroidHaptics;
+}
+
+/** A constant every API level has. */
+const always = (type: Haptics.AndroidHaptics): AndroidHaptic => ({
+  type,
+  since: 0,
+  fallback: type,
+});
+
+/** `Platform.Version` is the SDK_INT integer on Android. Read per call, like `Platform.OS`. */
+const androidConstant = ({ type, since, fallback }: AndroidHaptic): Haptics.AndroidHaptics =>
+  Number(Platform.Version) >= since ? type : fallback;
+
+/**
  * The platform pair behind every haptic.
  *
  * Each used to be written out as the same nine-line body — debounce gate,
@@ -129,39 +157,53 @@ const fireHaptic = (haptic: Promise<void>): void => {
  * body; that function is gone, every kind now lives here, and a subset alias
  * would only be a third place to remember when adding one.
  */
-const HAPTIC_PATTERNS: Record<
-  HapticKind,
-  { android: Haptics.AndroidHaptics; ios: () => Promise<void> }
-> = {
+const HAPTIC_PATTERNS: Record<HapticKind, { android: AndroidHaptic; ios: () => Promise<void> }> = {
   selection: {
-    android: Haptics.AndroidHaptics.Segment_Tick,
+    android: {
+      type: Haptics.AndroidHaptics.Segment_Tick,
+      since: 34,
+      fallback: Haptics.AndroidHaptics.Clock_Tick,
+    },
     ios: () => Haptics.selectionAsync(),
   },
   light: {
-    android: Haptics.AndroidHaptics.Virtual_Key,
+    android: always(Haptics.AndroidHaptics.Virtual_Key),
     ios: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light),
   },
   medium: {
-    android: Haptics.AndroidHaptics.Context_Click,
+    android: always(Haptics.AndroidHaptics.Context_Click),
     ios: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
   },
   commit: {
-    android: Haptics.AndroidHaptics.Clock_Tick,
+    android: always(Haptics.AndroidHaptics.Clock_Tick),
     ios: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid),
   },
   success: {
-    android: Haptics.AndroidHaptics.Confirm,
+    android: {
+      type: Haptics.AndroidHaptics.Confirm,
+      since: 30,
+      fallback: Haptics.AndroidHaptics.Virtual_Key,
+    },
     ios: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success),
   },
   // Android has no Warning analogue — `Reject` is its closest semantic
   // constant, the same one `error` uses, so the two collapse into one texture
   // there. That is a limitation of the platform's palette, not an oversight.
+  // Below API 30 both take the heavier `Long_Press` click.
   warning: {
-    android: Haptics.AndroidHaptics.Reject,
+    android: {
+      type: Haptics.AndroidHaptics.Reject,
+      since: 30,
+      fallback: Haptics.AndroidHaptics.Long_Press,
+    },
     ios: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning),
   },
   error: {
-    android: Haptics.AndroidHaptics.Reject,
+    android: {
+      type: Haptics.AndroidHaptics.Reject,
+      since: 30,
+      fallback: Haptics.AndroidHaptics.Long_Press,
+    },
     ios: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error),
   },
 };
@@ -172,7 +214,9 @@ const fire = (kind: HapticKind): void => {
   }
   const pattern = HAPTIC_PATTERNS[kind];
   fireHaptic(
-    Platform.OS === 'android' ? Haptics.performAndroidHapticsAsync(pattern.android) : pattern.ios(),
+    Platform.OS === 'android'
+      ? Haptics.performAndroidHapticsAsync(androidConstant(pattern.android))
+      : pattern.ios(),
   );
 };
 

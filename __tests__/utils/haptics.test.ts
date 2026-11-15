@@ -12,7 +12,15 @@
 import { beforeEach, afterEach, describe, expect, test, jest } from '@jest/globals';
 import { Platform } from 'react-native';
 
-import { commitFeedback, lightFeedback, selectionFeedback, warningFeedback } from '@/utils/haptics';
+import {
+  commitFeedback,
+  errorFeedback,
+  lightFeedback,
+  mediumFeedback,
+  selectionFeedback,
+  successFeedback,
+  warningFeedback,
+} from '@/utils/haptics';
 
 // expo-haptics is the global mock (__mocks__/expo-haptics.js): every function
 // returns Promise<void> in every test, so utils/haptics can attach the .catch()
@@ -25,6 +33,29 @@ const mockSettings: { hapticsEnabled?: boolean } = {};
 jest.mock('@/store/store', () => ({
   store: { getState: () => ({ settings: mockSettings }) },
 }));
+
+// Android at a given API level: on a device `Platform.Version` is the SDK_INT
+// integer. Both properties are restored after each test (restoreMocks).
+const onAndroid = (apiLevel: number): void => {
+  jest.replaceProperty(Platform, 'OS', 'android');
+  jest.replaceProperty(Platform, 'Version', apiLevel);
+};
+
+// The API level each constant arrived in: `addedInSdk` in expo-haptics'
+// android/.../arguments/HapticsTypes.kt. The native module rejects a constant
+// the OS predates, and the helpers swallow the rejection, so a constant passed
+// below its level is a haptic silently lost.
+const ADDED_IN_SDK: Record<string, number> = {
+  Clock_Tick: 1,
+  Context_Click: 1,
+  Keyboard_Tap: 1,
+  Long_Press: 1,
+  Virtual_Key: 1,
+  Confirm: 30,
+  Reject: 30,
+  Segment_Tick: 34,
+  Segment_Frequent_Tick: 34,
+};
 
 describe('haptics', () => {
   beforeEach(() => {
@@ -97,9 +128,9 @@ describe('haptics', () => {
     expect(notificationAsync).toHaveBeenCalledWith(NotificationFeedbackType.Warning);
   });
 
-  test('warningFeedback falls back to Reject on Android', () => {
+  test('warningFeedback uses Reject on Android 11 and later', () => {
     const { performAndroidHapticsAsync, AndroidHaptics } = require('expo-haptics');
-    jest.replaceProperty(Platform, 'OS', 'android');
+    onAndroid(30);
 
     warningFeedback();
 
@@ -132,13 +163,62 @@ describe('haptics', () => {
 
   test('routes through performAndroidHapticsAsync on Android (haptics engine, not Vibrator)', () => {
     const { selectionAsync, performAndroidHapticsAsync, AndroidHaptics } = require('expo-haptics');
-    jest.replaceProperty(Platform, 'OS', 'android');
+    onAndroid(34);
 
     selectionFeedback();
 
     expect(performAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Segment_Tick);
     expect(selectionAsync).not.toHaveBeenCalled();
   });
+
+  // Regression: Segment_Tick, Confirm and Reject arrived in API 34 and 30, and
+  // the app's minSdk is 26. Passed to an older OS they were rejected and the
+  // rejection swallowed, so selection, success, warning and error were silent on
+  // Android 8–13 with nothing in any log.
+  test('falls back to a constant the OS has below each API floor', () => {
+    const { performAndroidHapticsAsync, AndroidHaptics } = require('expo-haptics');
+
+    onAndroid(33);
+    selectionFeedback();
+    expect(performAndroidHapticsAsync).toHaveBeenLastCalledWith(AndroidHaptics.Clock_Tick);
+
+    onAndroid(29);
+    successFeedback();
+    expect(performAndroidHapticsAsync).toHaveBeenLastCalledWith(AndroidHaptics.Virtual_Key);
+    warningFeedback();
+    expect(performAndroidHapticsAsync).toHaveBeenLastCalledWith(AndroidHaptics.Long_Press);
+    errorFeedback();
+    expect(performAndroidHapticsAsync).toHaveBeenLastCalledWith(AndroidHaptics.Long_Press);
+  });
+
+  test.each([26, 27, 29, 30, 33, 34, 36])(
+    'every pattern on API %i asks for a constant that API level has',
+    apiLevel => {
+      const { performAndroidHapticsAsync } = require('expo-haptics');
+      onAndroid(apiLevel);
+
+      const patterns = [
+        selectionFeedback,
+        lightFeedback,
+        mediumFeedback,
+        commitFeedback,
+        successFeedback,
+        warningFeedback,
+        errorFeedback,
+      ];
+      for (const pattern of patterns) {
+        pattern();
+      }
+
+      expect(performAndroidHapticsAsync).toHaveBeenCalledTimes(patterns.length);
+      // A constant missing from ADDED_IN_SDK counts as unavailable: add its
+      // level from HapticsTypes.kt rather than loosening this.
+      const unavailable = performAndroidHapticsAsync.mock.calls
+        .map((call: unknown[]) => String(call[0]))
+        .filter((constant: string) => (ADDED_IN_SDK[constant] ?? Infinity) > apiLevel);
+      expect(unavailable).toEqual([]);
+    },
+  );
 
   // Regression: devices without a haptics engine reject the native call. These
   // helpers are fire-and-forget, so an unhandled rejection was reaching Sentry on
