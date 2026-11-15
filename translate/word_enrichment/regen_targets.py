@@ -19,7 +19,6 @@ BASE = Path(__file__).resolve().parent
 from word_enrichment.arramooz import ADJUDICATED  # noqa: E402
 
 
-
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ids", type=int, nargs="*", help="only these root_ids")
@@ -32,11 +31,15 @@ def main() -> None:
         op = rec.get("_second_opinion") or {}
         if args.ids and rec["root_id"] not in args.ids:
             continue
-        if not args.ids and (op.get("verdict") != "disagree" or len(op.get("candidates", [])) != 1):
+        if not args.ids and (
+            op.get("verdict") != "disagree" or len(op.get("candidates", [])) != 1
+        ):
             continue
         candidates = op.get("candidates") or []
         adjudicated = ADJUDICATED.get(rec["root_id"])
-        hint = adjudicated[0] if adjudicated else (candidates[0] if candidates else None)
+        hint = (
+            adjudicated[0] if adjudicated else (candidates[0] if candidates else None)
+        )
         if not hint:
             print(f"  skip {rec['root_id']} {rec['letters']}: no candidate root")
             continue
@@ -51,7 +54,9 @@ def main() -> None:
             }
         )
         flag = "  [adjudicated]" if adjudicated else ""
-        print(f"  {rec['root_id']:6} {rec['letters']:14} {rec['triliteral_root']} -> {hint}{flag}")
+        print(
+            f"  {rec['root_id']:6} {rec['letters']:14} {rec['triliteral_root']} -> {hint}{flag}"
+        )
 
     Path(args.out).write_text(
         json.dumps(targets, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"

@@ -462,10 +462,14 @@ def validate_with_retry(
         except ValueError as e:
             if retry_count < VALIDATION_MAX_RETRIES - 1:
                 if verbose:
-                    logger.warning(f"Parse error on attempt {retry_count + 1}, retrying: {e}")
+                    logger.warning(
+                        f"Parse error on attempt {retry_count + 1}, retrying: {e}"
+                    )
             else:
                 if verbose:
-                    logger.error(f"Parse error after {VALIDATION_MAX_RETRIES} attempts: {e}")
+                    logger.error(
+                        f"Parse error after {VALIDATION_MAX_RETRIES} attempts: {e}"
+                    )
                 return None
         except Exception as e:
             if verbose:

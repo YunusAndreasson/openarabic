@@ -76,9 +76,7 @@ def batch_translate_full_sentences(
             try:
                 indexed_results.append(future.result())
             except Exception as e:
-                raise RuntimeError(
-                    f"Failed to translate sentence {idx}: {e}"
-                ) from e
+                raise RuntimeError(f"Failed to translate sentence {idx}: {e}") from e
 
     # Sort by index to maintain original order
     indexed_results.sort(key=lambda x: x[0])

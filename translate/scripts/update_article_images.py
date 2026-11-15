@@ -24,6 +24,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 set_keys_path = Path(__file__).parent.parent / "utils" / "set_keys.py"
 if set_keys_path.exists():
     spec = importlib.util.spec_from_file_location("set_keys", set_keys_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {set_keys_path}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
@@ -35,7 +37,9 @@ def run(dry_run: bool = False, article_id: int | None = None) -> None:
     db = get_supabase_client()
     catalog = _load_catalog()
 
-    query = db.table("articles").select("id, title, summary, image_url, categories(name)")
+    query = db.table("articles").select(
+        "id, title, summary, image_url, categories(name)"
+    )
     if article_id is not None:
         query = query.eq("id", article_id)
 
@@ -61,11 +65,15 @@ def run(dry_run: bool = False, article_id: int | None = None) -> None:
         changed = proposed != current
 
         status = "→" if changed else "="
-        print(f"  [{status}] {a['id']:<6} [{cat:<7}] {proposed:<35} [{risk}/{mood}] {desc}")
+        print(
+            f"  [{status}] {a['id']:<6} [{cat:<7}] {proposed:<35} [{risk}/{mood}] {desc}"
+        )
 
         if changed and not dry_run:
             try:
-                db.table("articles").update({"image_url": proposed}).eq("id", a["id"]).execute()
+                db.table("articles").update({"image_url": proposed}).eq(
+                    "id", a["id"]
+                ).execute()
                 updated += 1
             except Exception as e:
                 print(f"       ERROR updating {a['id']}: {e}")
@@ -75,14 +83,20 @@ def run(dry_run: bool = False, article_id: int | None = None) -> None:
 
     print(f"\n{'─' * 60}")
     if dry_run:
-        print(f"Dry run complete — {sum(1 for a in articles if (a['image_url'] or '').split('/')[-1] != match_image(a['categories']['name'], a['title'], a['summary']))} would change")
+        print(
+            f"Dry run complete — {sum(1 for a in articles if (a['image_url'] or '').split('/')[-1] != match_image(a['categories']['name'], a['title'], a['summary']))} would change"
+        )
     else:
         print(f"Done: {updated} updated, {skipped} unchanged, {errors} errors")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Update article image URLs using smart matcher")
-    parser.add_argument("--dry-run", action="store_true", help="Preview changes without writing to DB")
+    parser = argparse.ArgumentParser(
+        description="Update article image URLs using smart matcher"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Preview changes without writing to DB"
+    )
     parser.add_argument("--id", type=int, help="Update a single article by ID")
     args = parser.parse_args()
     run(dry_run=args.dry_run, article_id=args.id)

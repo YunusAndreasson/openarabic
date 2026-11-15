@@ -40,8 +40,8 @@ class RootExplanation(BaseModel):
     # are attached in code by root_translit, where they cannot be wrong.
     root_meaning: str = Field(
         description="The sense the ROOT carries across the whole family, at most six "
-                    "words, lower-case, no final full stop, e.g. 'to turn, invert, "
-                    "change'. What every word below has in common."
+        "words, lower-case, no final full stop, e.g. 'to turn, invert, "
+        "change'. What every word below has in common."
     )
     usage_note: str = Field(
         description=(
@@ -56,7 +56,7 @@ class RootExplanation(BaseModel):
     word_family: list[RootFamilyMember] = Field(
         max_length=5,
         description="2-5 words from this root, chosen for how likely a learner is to "
-                    "meet them rather than for rarity.",
+        "meet them rather than for rarity.",
     )
 
 
@@ -100,8 +100,8 @@ class RootExplanationFromPool(BaseModel):
 
     root_meaning: str = Field(
         description="The sense the ROOT carries across the whole family, at most six "
-                    "words, lower-case, no final full stop, e.g. 'to turn, invert, "
-                    "change'. What every word below has in common."
+        "words, lower-case, no final full stop, e.g. 'to turn, invert, "
+        "change'. What every word below has in common."
     )
     usage_note: str = Field(
         description=(
@@ -115,6 +115,6 @@ class RootExplanationFromPool(BaseModel):
     word_family: list[RootFamilyPick] = Field(
         max_length=5,
         description="Exactly 5 where the pool allows it, chosen for how likely a "
-                    "learner is to meet them rather than for rarity. Prefer the "
-                    "lines marked [in our dictionary].",
+        "learner is to meet them rather than for rarity. Prefer the "
+        "lines marked [in our dictionary].",
     )

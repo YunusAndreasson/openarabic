@@ -27,21 +27,29 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from typing import cast
 
 import requests
+from openai.types.chat import (
+    ChatCompletionContentPartParam,
+    ChatCompletionUserMessageParam,
+)
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 set_keys_path = Path(__file__).parent.parent / "utils" / "set_keys.py"
 if set_keys_path.exists():
     spec = importlib.util.spec_from_file_location("set_keys", set_keys_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {set_keys_path}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
 import os  # noqa: E402
 
-from data.config import MODEL_OTHER  # noqa: E402
 from openai import OpenAI  # noqa: E402
+
+from data.config import MODEL_OTHER  # noqa: E402
 from utils.config_common import get_supabase_client  # noqa: E402
 
 IMAGE_DIR = Path(__file__).parent.parent / "data" / "images"
@@ -80,14 +88,20 @@ Reply with ONLY a JSON object:
 
 
 def fetch_pexels(query: str, count: int, api_key: str) -> list[dict]:
+    params: dict[str, str | int] = {
+        "query": query,
+        "per_page": count,
+        "size": "large",
+        "orientation": "landscape",
+    }
     resp = requests.get(
         PEXELS_API,
         headers={"Authorization": api_key},
-        params={"query": query, "per_page": count, "size": "large", "orientation": "landscape"},
+        params=params,
         timeout=15,
     )
     resp.raise_for_status()
-    return resp.json().get("photos", [])
+    return cast("list[dict]", resp.json().get("photos", []))
 
 
 def download_bytes(url: str) -> bytes | None:
@@ -105,22 +119,25 @@ def pick_best(client: OpenAI, query: str, photos: list[dict]) -> int:
     n = len(photos)
     prompt = SELECTION_PROMPT.format(query=query, n=n, max_idx=n - 1)
 
-    content: list[dict] = [{"type": "text", "text": prompt}]
+    content: list[ChatCompletionContentPartParam] = [{"type": "text", "text": prompt}]
     for i, photo in enumerate(photos):
         url = photo["src"]["medium"]  # medium size is enough for selection
         content.append({"type": "text", "text": f"Image {i}:"})
-        content.append({
-            "type": "image_url",
-            "image_url": {"url": url, "detail": "low"},
-        })
+        content.append(
+            {
+                "type": "image_url",
+                "image_url": {"url": url, "detail": "low"},
+            }
+        )
 
     response = client.chat.completions.create(
         model=MODEL_OTHER,
-        messages=[{"role": "user", "content": content}],
+        messages=[ChatCompletionUserMessageParam(role="user", content=content)],
         max_completion_tokens=2000,
     )
 
     import json
+
     raw = (response.choices[0].message.content or "").strip()
     if raw.startswith("```"):
         raw = raw.split("```")[1]
@@ -177,15 +194,31 @@ def upload_to_supabase(dest: Path) -> bool:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Fetch + GPT-curate images from Pexels")
-    parser.add_argument("--queries", nargs="+", help="Search queries (overrides defaults)")
-    parser.add_argument("--candidates", type=int, default=5, help="Candidates per query for GPT to choose from (default: 5)")
-    parser.add_argument("--catalog", action="store_true", help="Run catalog_images.py on new images after fetching")
+    parser = argparse.ArgumentParser(
+        description="Fetch + GPT-curate images from Pexels"
+    )
+    parser.add_argument(
+        "--queries", nargs="+", help="Search queries (overrides defaults)"
+    )
+    parser.add_argument(
+        "--candidates",
+        type=int,
+        default=5,
+        help="Candidates per query for GPT to choose from (default: 5)",
+    )
+    parser.add_argument(
+        "--catalog",
+        action="store_true",
+        help="Run catalog_images.py on new images after fetching",
+    )
     args = parser.parse_args()
 
     pexels_key = os.getenv("PEXELS_API_KEY", "")
     if not pexels_key:
-        print("Error: PEXELS_API_KEY not set. Add it to utils/set_keys.py.", file=sys.stderr)
+        print(
+            "Error: PEXELS_API_KEY not set. Add it to utils/set_keys.py.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     IMAGE_DIR.mkdir(parents=True, exist_ok=True)
@@ -214,7 +247,9 @@ def main() -> None:
             winner_idx = pick_best(client, query, photos)
             winner_idx = max(0, min(winner_idx, len(photos) - 1))
         except Exception as e:
-            print(f"  GPT selection failed: {e} — using first candidate", file=sys.stderr)
+            print(
+                f"  GPT selection failed: {e} — using first candidate", file=sys.stderr
+            )
             winner_idx = 0
 
         winner = photos[winner_idx]
@@ -226,7 +261,9 @@ def main() -> None:
             continue
 
         # Download winner at ~1280px width (Pexels "large" size)
-        print(f"  Downloading winner #{winner_idx} (pexels-{winner_id}) by {winner.get('photographer','?')}...")
+        print(
+            f"  Downloading winner #{winner_idx} (pexels-{winner_id}) by {winner.get('photographer', '?')}..."
+        )
         img_bytes = download_bytes(winner["src"]["large"])
         if not img_bytes:
             print("  Download failed")
@@ -248,7 +285,12 @@ def main() -> None:
     if args.catalog and total_saved > 0:
         print("\nRunning cataloger on new images...")
         subprocess.run(
-            [sys.executable, "scripts/catalog_images.py", "--image-dir", str(IMAGE_DIR)],
+            [
+                sys.executable,
+                "scripts/catalog_images.py",
+                "--image-dir",
+                str(IMAGE_DIR),
+            ],
             check=False,
         )
 

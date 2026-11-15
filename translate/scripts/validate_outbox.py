@@ -33,9 +33,15 @@ def main() -> int:
         print("FAIL: outbox cursor_to is null/missing (author step did not run?)")
         return 1
     if outbox["cursor_to"] != inbox["cursor_to"]:
-        errs.append(f"cursor mismatch: outbox {outbox['cursor_to']} != inbox {inbox['cursor_to']}")
+        errs.append(
+            f"cursor mismatch: outbox {outbox['cursor_to']} != inbox {inbox['cursor_to']}"
+        )
 
-    inbox_words = [(w["word_id"], w.get("word_form", "")) for s in inbox["sentences"] for w in s["words"]]
+    inbox_words = [
+        (w["word_id"], w.get("word_form", ""))
+        for s in inbox["sentences"]
+        for w in s["words"]
+    ]
     real_ids = {wid for wid, wf in inbox_words if wf and wf.strip()}
     all_ids = {wid for wid, _ in inbox_words}
 
@@ -57,11 +63,17 @@ def main() -> int:
     if badfield:
         errs.append(f"non-grammar_note fields: {badfield[:10]}")
 
-    arabic = [c.get("word_id") for c in changes if c.get("new") and contains_arabic(c["new"])]
+    arabic = [
+        c.get("word_id") for c in changes if c.get("new") and contains_arabic(c["new"])
+    ]
     if arabic:
         errs.append(f"notes with Arabic letters: {arabic[:10]}")
 
-    empty = [c.get("word_id") for c in changes if not c.get("new") or not str(c["new"]).strip()]
+    empty = [
+        c.get("word_id")
+        for c in changes
+        if not c.get("new") or not str(c["new"]).strip()
+    ]
     if empty:
         errs.append(f"empty notes: {empty[:10]}")
 
@@ -70,7 +82,9 @@ def main() -> int:
             print("FAIL:", e)
         return 1
 
-    print(f"OK: {len(changes)} changes, coverage {len(real_ids)}/{len(real_ids)} real words, cursor -> {outbox['cursor_to']}")
+    print(
+        f"OK: {len(changes)} changes, coverage {len(real_ids)}/{len(real_ids)} real words, cursor -> {outbox['cursor_to']}"
+    )
     return 0
 
 

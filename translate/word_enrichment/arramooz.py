@@ -33,7 +33,6 @@ absent     no entry at all. NOT a pass: for a dictionary of this size, absence
 
 from __future__ import annotations
 
-import re
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
@@ -100,7 +99,24 @@ _PROCLITICS = ("وال", "فال", "بال", "كال", "لل", "ال", "و", "ف
 # a surface يَنْظُر / تَجْرِي is absent unless the subject marker comes off.
 _IMPERFECT = ("ي", "ت", "ن", "أ", "ا")
 # Enclitic pronouns + the feminine/plural verb endings that ride on a surface form.
-_ENCLITICS = ("هما", "هنّ", "كما", "كنّ", "نا", "ها", "هم", "هن", "كم", "كن", "ني", "ه", "ك", "ي", "ت", "وا")
+_ENCLITICS = (
+    "هما",
+    "هنّ",
+    "كما",
+    "كنّ",
+    "نا",
+    "ها",
+    "هم",
+    "هن",
+    "كم",
+    "كن",
+    "ني",
+    "ه",
+    "ك",
+    "ي",
+    "ت",
+    "وا",
+)
 
 # Weak radicals are written interchangeably across lexicographical conventions
 # (Lane's ح م و vs Arramooz حمي; ب د ي vs بدا). Folding them lets a root pair
@@ -126,7 +142,12 @@ def _stems(word: str) -> list[str]:
             if stem.endswith(enc) and len(stem) - len(enc) >= 3:
                 out.append(stem[: -len(enc)])
     seen: set[str] = set()
-    return [s for s in out if s and not (s in seen or seen.add(s))]
+    unique: list[str] = []
+    for s in out:
+        if s and s not in seen:
+            seen.add(s)
+            unique.append(s)
+    return unique
 
 
 @dataclass
@@ -193,7 +214,10 @@ def roots_for(
         for stem in _stems(word):
             counts: dict[str, int] = {}
             for table in ("verbs", "nouns"):
-                for column, value in (("unvocalized", stem), ("normalized", stem.translate(_FOLD))):
+                for column, value in (
+                    ("unvocalized", stem),
+                    ("normalized", stem.translate(_FOLD)),
+                ):
                     rows = conn.execute(
                         f"SELECT root, COUNT(*) FROM {table} "  # noqa: S608 - fixed table/column names
                         f"WHERE {column}=? AND root!='' GROUP BY root",
@@ -211,7 +235,9 @@ def roots_for(
             conn.close()
 
 
-def check(word: str, claimed_root: str, conn: sqlite3.Connection | None = None) -> Opinion:
+def check(
+    word: str, claimed_root: str, conn: sqlite3.Connection | None = None
+) -> Opinion:
     """Second opinion on a root claim. See module docstring for verdicts."""
     candidates, stem = roots_for(word, conn)
     names = [root for root, _ in candidates]

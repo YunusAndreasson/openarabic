@@ -109,9 +109,7 @@ def _process_one_file() -> None:
 
         # Take only the most recent split file (the one we just created)
         # Each item is a tuple: (file_path, author_number, author_name)
-        split_file_list.sort(
-            key=lambda x: Path(x[0]).stat().st_mtime, reverse=True
-        )
+        split_file_list.sort(key=lambda x: Path(x[0]).stat().st_mtime, reverse=True)
         single_split_tuple = split_file_list[0]
         single_split_path = single_split_tuple[0]
 

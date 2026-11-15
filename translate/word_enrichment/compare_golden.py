@@ -39,14 +39,19 @@ def load(stem: str) -> tuple[dict, dict]:
     verdicts = {}
     vpath = BASE / f"{stem}_verdicts.json"
     if vpath.exists():
-        verdicts = {v["root_key"]: v for v in json.loads(vpath.read_text(encoding="utf-8"))}
+        verdicts = {
+            v["root_key"]: v for v in json.loads(vpath.read_text(encoding="utf-8"))
+        }
     return records, verdicts
 
 
 def unfaithful(verdicts: dict) -> set[tuple[str, str]]:
-    return {(root, m.get("letters", ""))
-            for root, v in verdicts.items()
-            for m in v.get("members", []) if not m.get("faithful", True)}
+    return {
+        (root, m.get("letters", ""))
+        for root, v in verdicts.items()
+        for m in v.get("members", [])
+        if not m.get("faithful", True)
+    }
 
 
 def main() -> int:
@@ -63,7 +68,8 @@ def main() -> int:
     # --- verdicts ------------------------------------------------------------
     if a_ver and b_ver:
         rank = {"publish": 2, "revise": 1, "skip": 0}
-        moved_up, moved_down = [], []
+        moved_up: list[tuple[str, str, str]] = []
+        moved_down: list[tuple[str, str, str]] = []
         for root in roots:
             va = a_ver.get(root, {}).get("verdict")
             vb = b_ver.get(root, {}).get("verdict")
@@ -71,8 +77,12 @@ def main() -> int:
                 continue
             (moved_up if rank[vb] > rank[va] else moved_down).append((root, va, vb))
         print("JUDGE VERDICTS")
-        print(f"  {args.a}: {dict(Counter(a_ver[r].get('verdict') for r in roots if r in a_ver))}")
-        print(f"  {args.b}: {dict(Counter(b_ver[r].get('verdict') for r in roots if r in b_ver))}")
+        print(
+            f"  {args.a}: {dict(Counter(a_ver[r].get('verdict') for r in roots if r in a_ver))}"
+        )
+        print(
+            f"  {args.b}: {dict(Counter(b_ver[r].get('verdict') for r in roots if r in b_ver))}"
+        )
         print(f"  improved: {len(moved_up)}   regressed: {len(moved_down)}")
         for root, va, vb in moved_up:
             print(f"     + {root:8s} {va} -> {vb}")
@@ -88,12 +98,16 @@ def main() -> int:
 
     # --- coverage ------------------------------------------------------------
     def cover(recs: dict, field: str) -> int:
-        return sum(1 for r in roots for m in recs[r].get("word_family", []) if m.get(field))
+        return sum(
+            1 for r in roots for m in recs[r].get("word_family", []) if m.get(field)
+        )
 
     total_b = sum(len(b_rec[r].get("word_family", [])) for r in roots)
     print("\nFIELD COVERAGE (family rows)")
     for field in ("wazn", "verb_form", "plural", "root_id"):
-        print(f"  {field:10s} {cover(a_rec, field):4d} -> {cover(b_rec, field):4d}  of {total_b}")
+        print(
+            f"  {field:10s} {cover(a_rec, field):4d} -> {cover(b_rec, field):4d}  of {total_b}"
+        )
 
     # --- content -------------------------------------------------------------
     swapped = changed = 0
@@ -107,13 +121,17 @@ def main() -> int:
                 changed += 1
                 pairs.append((root, letters, fa[letters], fb[letters]))
 
-    print(f"\nCONTENT")
+    print("\nCONTENT")
     print(f"  words swapped in/out : {swapped}")
     print(f"  glosses rewritten    : {changed}")
-    print(f"  root_meaning changed : "
-          f"{sum(1 for r in roots if a_rec[r].get('root_meaning') != b_rec[r].get('root_meaning'))}")
-    print(f"  usage_note changed   : "
-          f"{sum(1 for r in roots if a_rec[r].get('usage_note') != b_rec[r].get('usage_note'))}")
+    print(
+        f"  root_meaning changed : "
+        f"{sum(1 for r in roots if a_rec[r].get('root_meaning') != b_rec[r].get('root_meaning'))}"
+    )
+    print(
+        f"  usage_note changed   : "
+        f"{sum(1 for r in roots if a_rec[r].get('usage_note') != b_rec[r].get('usage_note'))}"
+    )
     print("\n  rewritten glosses (judge the pair, do not count the change):")
     for root, letters, before, after in pairs[:20]:
         print(f"     {root:7s} {letters}")

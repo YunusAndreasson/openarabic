@@ -67,8 +67,16 @@ def _norm_root(s: str) -> str:
 def check(record: dict) -> list[str]:
     """Return a list of problems; empty means the record passes."""
     problems: list[str] = []
-    for field in ("triliteral_root", "root_transliteration", "headword_transliteration",
-                  "part_of_speech", "senses", "word_family", "faq", "source"):
+    for field in (
+        "triliteral_root",
+        "root_transliteration",
+        "headword_transliteration",
+        "part_of_speech",
+        "senses",
+        "word_family",
+        "faq",
+        "source",
+    ):
         if not record.get(field):
             problems.append(f"missing/empty: {field}")
     if problems:
@@ -128,8 +136,12 @@ def main() -> None:
                 target, out = FLAGGED, {**record, "_problems": problems}
                 print(f"  ✗ {record['root_id']} {record['letters']}: {problems}")
             else:
-                opinion = arramooz.check(record["letters"], record["triliteral_root"], conn)
-                adjudged = arramooz.adjudication(record["root_id"], record["triliteral_root"])
+                opinion = arramooz.check(
+                    record["letters"], record["triliteral_root"], conn
+                )
+                adjudged = arramooz.adjudication(
+                    record["root_id"], record["triliteral_root"]
+                )
                 out = {
                     **record,
                     "_second_opinion": {
@@ -148,13 +160,16 @@ def main() -> None:
                 # blanket drop: مُحَمَّد really is a passive participle of ح م د,
                 # and يَهُود ← ه و د is the standard derivation. Costs ~1% of the
                 # batch in extra adjudication.
-                is_proper = camel_roots.dominant_pos(
-                    arramooz.bareword(record["letters"])
-                ) == "noun_prop"
+                is_proper = (
+                    camel_roots.dominant_pos(arramooz.bareword(record["letters"]))
+                    == "noun_prop"
+                )
                 if (opinion.is_trustworthy or adjudged) and not is_proper:
                     ok += 1
                     target = VERIFIED
-                    print(f"  ✓ {record['root_id']} {record['letters']} ({record['meaning']})")
+                    print(
+                        f"  ✓ {record['root_id']} {record['letters']} ({record['meaning']})"
+                    )
                 else:
                     review += 1
                     target = REVIEW

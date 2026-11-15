@@ -32,10 +32,14 @@ def create_bilingual_audio(
         arabic_segment = AudioSegment.from_mp3(io.BytesIO(arabic_audio)).fade_out(60)
 
         # Create pause matching the audio properties to avoid sample rate mismatch
-        pause_segment = AudioSegment.silent(
-            duration=pause_duration_ms,
-            frame_rate=english_segment.frame_rate,
-        ).set_channels(english_segment.channels).set_sample_width(english_segment.sample_width)
+        pause_segment = (
+            AudioSegment.silent(
+                duration=pause_duration_ms,
+                frame_rate=english_segment.frame_rate,
+            )
+            .set_channels(english_segment.channels)
+            .set_sample_width(english_segment.sample_width)
+        )
 
         # Combine: English + Pause + Arabic
         bilingual_audio = english_segment + pause_segment + arabic_segment
@@ -101,10 +105,14 @@ def create_multi_audio_with_delays(
 
         # Create delay matching the audio properties to avoid sample rate mismatch
         ref = segments[0]
-        delay_segment = AudioSegment.silent(
-            duration=delay_ms,
-            frame_rate=ref.frame_rate,
-        ).set_channels(ref.channels).set_sample_width(ref.sample_width)
+        delay_segment = (
+            AudioSegment.silent(
+                duration=delay_ms,
+                frame_rate=ref.frame_rate,
+            )
+            .set_channels(ref.channels)
+            .set_sample_width(ref.sample_width)
+        )
 
         # Combine all segments with delays between them
         combined = segments[0]

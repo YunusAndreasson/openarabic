@@ -13,9 +13,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import utils.set_keys  # noqa: F401
-
 from improve_common import BACKUP_DIR, append_jsonl, ensure_dirs, now_iso
+
+import utils.set_keys  # noqa: F401
 from utils.storage import get_supabase_client
 
 PAGE = 1000

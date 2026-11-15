@@ -24,6 +24,7 @@ import random
 import sqlite3
 import urllib.request
 from pathlib import Path
+from typing import cast
 
 from word_enrichment import arramooz, camel_roots, lexicon
 from word_enrichment.build_ts import ANON, SUPABASE
@@ -33,12 +34,12 @@ MAX_SENTENCES = 3
 
 
 def _get(path: str) -> list[dict]:
-    req = urllib.request.Request(
+    req = urllib.request.Request(  # noqa: S310
         f"{SUPABASE}/rest/v1/{path}",
         headers={"apikey": ANON, "Authorization": f"Bearer {ANON}"},
     )
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return json.loads(resp.read())
+    with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
+        return cast("list[dict]", json.loads(resp.read()))
 
 
 def usage_for(root_id: int) -> list[dict]:
@@ -73,7 +74,9 @@ def usage_for(root_id: int) -> list[dict]:
     return out
 
 
-def evidence_for(record: dict, ar_conn, lane_conn) -> dict:
+def evidence_for(
+    record: dict, ar_conn: sqlite3.Connection, lane_conn: sqlite3.Connection
+) -> dict:
     letters = record["letters"]
     bare = arramooz.bareword(letters)
 
@@ -81,9 +84,7 @@ def evidence_for(record: dict, ar_conn, lane_conn) -> dict:
     camel_view = (
         {"foreign": True}
         if camel and camel[0].foreign
-        else [
-            {"root": c.root, "confidence": round(c.confidence, 2)} for c in camel[:3]
-        ]
+        else [{"root": c.root, "confidence": round(c.confidence, 2)} for c in camel[:3]]
     )
 
     ar_candidates, stem = arramooz.roots_for(bare, ar_conn)
@@ -92,7 +93,9 @@ def evidence_for(record: dict, ar_conn, lane_conn) -> dict:
     # What Lane's actually files under the CLAIMED root — the check that settled
     # شيطان by hand (شَيْطَنَ/تَشَيْطَنَ sit under ش ط ن, nothing under ش ي ط).
     claimed_headwords: list[str] = []
-    grounding = lexicon.lookup(letters, root_hint=record["triliteral_root"], text_budget=1)
+    grounding = lexicon.lookup(
+        letters, root_hint=record["triliteral_root"], text_budget=1
+    )
     if grounding:
         claimed_headwords = [d["word"] for d in grounding.derived_forms[:10]]
 
@@ -131,42 +134,47 @@ def main() -> None:
         default="review",
         choices=("review", "verified"),
         help="which routed file to build evidence from. `verified` exists to "
-             "AUDIT the set that publishes unadjudicated: the judge only ever "
-             "sees gate failures, so the error rate among gate PASSES has never "
-             "been measured, only assumed.",
+        "AUDIT the set that publishes unadjudicated: the judge only ever "
+        "sees gate failures, so the error rate among gate PASSES has never "
+        "been measured, only assumed.",
     )
     ap.add_argument(
         "--sample",
         type=int,
         default=0,
         help="adjudicate a random sample of that size instead of everything. "
-             "Deterministic seed so a re-run audits the same records.",
+        "Deterministic seed so a re-run audits the same records.",
     )
     ap.add_argument("--out", default=str(BASE / "evidence.json"))
     ap.add_argument(
         "--ids-from",
         help="a targets file; restrict to records from that batch. A blind-spot "
-             "audit sampled across every batch measures the corpus, not the run "
-             "that just changed — and it is the run that has to be judged.",
+        "audit sampled across every batch measures the corpus, not the run "
+        "that just changed — and it is the run that has to be judged.",
     )
     ap.add_argument(
         "--only-new",
         action="store_true",
         help="skip records that already have a verdict. The judge is not "
-             "deterministic — one run skipped two items another run published — "
-             "so re-adjudicating a settled word can silently un-publish it and "
-             "makes a batch-over-batch comparison meaningless. Use this for every "
-             "routine batch; omit it only to deliberately re-judge from scratch.",
+        "deterministic — one run skipped two items another run published — "
+        "so re-adjudicating a settled word can silently un-publish it and "
+        "makes a batch-over-batch comparison meaningless. Use this for every "
+        "routine batch; omit it only to deliberately re-judge from scratch.",
     )
     args = ap.parse_args()
 
     records = [
         json.loads(line)
-        for line in (BASE / f"{args.source}.jsonl").read_text(encoding="utf-8").splitlines()
+        for line in (BASE / f"{args.source}.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
         if line.strip()
     ]
     if args.ids_from:
-        wanted = {t["root_id"] for t in json.loads(Path(args.ids_from).read_text(encoding="utf-8"))}
+        wanted = {
+            t["root_id"]
+            for t in json.loads(Path(args.ids_from).read_text(encoding="utf-8"))
+        }
         before = len(records)
         records = [r for r in records if r["root_id"] in wanted]
         print(f"  --ids-from: {len(records)} of {before} records are in that batch")
@@ -177,10 +185,12 @@ def main() -> None:
             settled = {v["root_id"] for v in json.loads(vp.read_text(encoding="utf-8"))}
         before = len(records)
         records = [r for r in records if r["root_id"] not in settled]
-        print(f"  --only-new: {before - len(records)} already adjudicated, {len(records)} to judge")
+        print(
+            f"  --only-new: {before - len(records)} already adjudicated, {len(records)} to judge"
+        )
     if args.sample and args.sample < len(records):
         # Seeded, not arbitrary: an audit you cannot repeat is an anecdote.
-        rng = random.Random(20260821)
+        rng = random.Random(20260821)  # noqa: S311
         records = rng.sample(records, args.sample)
     ar_conn = arramooz._connect()
     lane_conn = sqlite3.connect(f"file:{lexicon.DB_PATH}?mode=ro", uri=True)
@@ -194,7 +204,9 @@ def main() -> None:
     out.write_text(json.dumps(bundles, ensure_ascii=False, indent=2), encoding="utf-8")
     with_usage = sum(1 for b in bundles if b["evidence"]["corpus_usage"])
     print(f"{len(bundles)} bundles -> {out}")
-    print(f"  {with_usage} have corpus usage context, {len(bundles) - with_usage} have none")
+    print(
+        f"  {with_usage} have corpus usage context, {len(bundles) - with_usage} have none"
+    )
 
 
 if __name__ == "__main__":

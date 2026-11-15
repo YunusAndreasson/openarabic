@@ -33,7 +33,6 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import utils.set_keys  # noqa: F401
-
 from utils.claude_cli import review_all_improvements
 from utils.storage import get_supabase_client
 
@@ -61,9 +60,7 @@ def fetch_pending_improvements(
     )
 
     if article_ids:
-        query = query.in_(
-            "sentence_word.sentence.article_id", article_ids
-        )
+        query = query.in_("sentence_word.sentence.article_id", article_ids)
 
     resp = query.execute()
     return resp.data or []
@@ -86,9 +83,7 @@ def fetch_approved_improvements(
     )
 
     if article_ids:
-        query = query.in_(
-            "sentence_word.sentence.article_id", article_ids
-        )
+        query = query.in_("sentence_word.sentence.article_id", article_ids)
 
     resp = query.execute()
     return resp.data or []
@@ -106,12 +101,14 @@ def review_improvements(
     # Build review input — just the English pairs + arabic word
     review_input = []
     for imp in improvements:
-        review_input.append({
-            "id": imp["id"],
-            "arabic_word": imp["sentence_word"]["word_form"],
-            "original_english": imp["sentence_word"]["english"],
-            "suggested_english": imp["suggested_english"],
-        })
+        review_input.append(
+            {
+                "id": imp["id"],
+                "arabic_word": imp["sentence_word"]["word_form"],
+                "original_english": imp["sentence_word"]["english"],
+                "suggested_english": imp["suggested_english"],
+            }
+        )
 
     print(f"Reviewing {len(review_input)} improvements with {model}...", flush=True)
     reviews = review_all_improvements(review_input, model=model)
@@ -136,7 +133,7 @@ def review_improvements(
         symbol = "✓" if verdict["approve"] else "✗"
 
         logger.info(
-            f"  {symbol} {word_form:20s}  \"{old}\" → \"{new}\"  — {verdict['reason']}"
+            f'  {symbol} {word_form:20s}  "{old}" → "{new}"  — {verdict["reason"]}'
         )
 
         if not dry_run:
@@ -169,12 +166,12 @@ def apply_approved(
         if old_english == new_english:
             continue
 
-        logger.info(f"  {word_form:20s}  \"{old_english}\" → \"{new_english}\"")
+        logger.info(f'  {word_form:20s}  "{old_english}" → "{new_english}"')
 
         if not dry_run:
-            client.table("sentence_words").update(
-                {"english": new_english}
-            ).eq("id", word_id).execute()
+            client.table("sentence_words").update({"english": new_english}).eq(
+                "id", word_id
+            ).execute()
 
         applied += 1
 
@@ -186,23 +183,29 @@ def main() -> int:
         description="Review and apply translation improvements",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Show changes without writing anything",
     )
     parser.add_argument(
-        "--review-only", action="store_true",
+        "--review-only",
+        action="store_true",
         help="Review pending improvements but don't apply",
     )
     parser.add_argument(
-        "--skip-review", action="store_true",
+        "--skip-review",
+        action="store_true",
         help="Skip review, apply already-approved improvements",
     )
     parser.add_argument(
-        "--review-model", default="opus",
+        "--review-model",
+        default="opus",
         help="Model for review step (default: opus)",
     )
     parser.add_argument(
-        "--article-ids", type=int, nargs="+",
+        "--article-ids",
+        type=int,
+        nargs="+",
         help="Only process improvements for these article IDs",
     )
     args = parser.parse_args()
@@ -228,7 +231,9 @@ def main() -> int:
 
     print(f"Found {len(pending)} pending improvements")
     approved, rejected = review_improvements(
-        pending, model=args.review_model, dry_run=args.dry_run,
+        pending,
+        model=args.review_model,
+        dry_run=args.dry_run,
     )
     print(f"\nReview: {approved} approved, {rejected} rejected")
 

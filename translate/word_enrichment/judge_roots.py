@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+from collections.abc import Callable
 from pathlib import Path
 from typing import Literal
 
@@ -42,12 +43,12 @@ class MemberVerdict(BaseModel):
     letters: str
     faithful: bool = Field(
         description="True when the English gloss is a fair modern rendering of at "
-                    "least one source gloss supplied for that exact word."
+        "least one source gloss supplied for that exact word."
     )
     issue: str = Field(
         description="Empty string when faithful. Otherwise one short clause naming "
-                    "the problem: 'archaic', 'sub-sense not core meaning', 'wrong "
-                    "word's meaning', 'too vague to teach'."
+        "the problem: 'archaic', 'sub-sense not core meaning', 'wrong "
+        "word's meaning', 'too vague to teach'."
     )
 
 
@@ -55,7 +56,7 @@ class RootVerdict(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
     verdict: Literal["publish", "revise", "skip"] = Field(
         description="publish = a learner is well served. revise = one fixable "
-                    "problem. skip = do not ship this root."
+        "problem. skip = do not ship this root."
     )
     members: list[MemberVerdict]
     root_meaning_ok: bool = Field(
@@ -63,9 +64,11 @@ class RootVerdict(BaseModel):
     )
     usage_note_ok: bool = Field(
         description="Is the note about the ROOT (true of every word built on it), "
-                    "accurate, and free of invented etymology?"
+        "accurate, and free of invented etymology?"
     )
-    reason: str = Field(description="One sentence. Name the specific failing word if any.")
+    reason: str = Field(
+        description="One sentence. Name the specific failing word if any."
+    )
 
 
 SYSTEM = """\
@@ -106,7 +109,12 @@ Grade it.
 """
 
 
-def judge_one(record: dict, get_conn, dict_index: dict, model: str | None) -> dict:
+def judge_one(
+    record: dict,
+    get_conn: Callable[[], sqlite3.Connection],
+    dict_index: dict,
+    model: str | None,
+) -> dict:
     from utils.openrouter_structured import call_openrouter
 
     root = record["root_key"]
@@ -125,11 +133,17 @@ def judge_one(record: dict, get_conn, dict_index: dict, model: str | None) -> di
     )
     result = call_openrouter(
         [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}],
-        response_model=RootVerdict, model=model, reasoning_effort="none",
+        response_model=RootVerdict,
+        model=model,
+        reasoning_effort="none",
     )
     if not result.get("success"):
-        return {"root_key": root, "verdict": "error", "reason": result.get("error", ""),
-                "_usage": result.get("usage")}
+        return {
+            "root_key": root,
+            "verdict": "error",
+            "reason": result.get("error", ""),
+            "_usage": result.get("usage"),
+        }
     return {"root_key": root, **result["data"], "_usage": result.get("usage")}
 
 
@@ -141,21 +155,29 @@ def main() -> int:
     ap.add_argument("--workers", type=int, default=8)
     args = ap.parse_args()
 
-    records = [json.loads(line) for line in Path(args.input).open(encoding="utf-8") if line.strip()]
-    ledger = [json.loads(line) for line in (BASE / "ledger.jsonl").open(encoding="utf-8")]
+    records = [
+        json.loads(line)
+        for line in Path(args.input).read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    ledger = [
+        json.loads(line) for line in (BASE / "ledger.jsonl").open(encoding="utf-8")
+    ]
     print(f"building the dictionary index over {len(ledger)} entries…", flush=True)
     dict_index = pool.dictionary_index(ledger)
 
     import threading
+
     conns: dict[int, sqlite3.Connection] = {}
     lock = threading.Lock()
 
-    def _conn():
+    def _conn() -> sqlite3.Connection:
         ident = threading.get_ident()
         with lock:
             if ident not in conns:
                 conns[ident] = sqlite3.connect(
-                    f"file:{lexicon.DB_PATH}?mode=ro", uri=True, check_same_thread=False)
+                    f"file:{lexicon.DB_PATH}?mode=ro", uri=True, check_same_thread=False
+                )
             return conns[ident]
 
     from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -167,23 +189,34 @@ def main() -> int:
         # sqlite connection -- which is not safe for concurrent use and surfaced
         # as an intermittent "InterfaceError: bad parameter or other API misuse"
         # three runs later, having silently worked until then.
-        futures = [ex.submit(judge_one, r, _conn, dict_index, args.model) for r in records]
+        futures = [
+            ex.submit(judge_one, r, _conn, dict_index, args.model) for r in records
+        ]
         for i, fut in enumerate(as_completed(futures), 1):
             v = fut.result()
             usage = v.pop("_usage", None) or {}
             spend += float(usage.get("cost_usd") or 0.0)
             verdicts.append(v)
-            print(f"  [{i}/{len(records)}] {v['root_key']:8s} {v.get('verdict', '?'):8s} "
-                  f"{v.get('reason', '')[:70]}", flush=True)
+            print(
+                f"  [{i}/{len(records)}] {v['root_key']:8s} {v.get('verdict', '?'):8s} "
+                f"{v.get('reason', '')[:70]}",
+                flush=True,
+            )
 
-    Path(args.out).write_text(json.dumps(verdicts, ensure_ascii=False, indent=1),
-                              encoding="utf-8")
+    Path(args.out).write_text(
+        json.dumps(verdicts, ensure_ascii=False, indent=1), encoding="utf-8"
+    )
     from collections import Counter
+
     tally = Counter(v.get("verdict") for v in verdicts)
     print(f"\n{dict(tally)}   ${spend:.4f}   -> {args.out}")
 
-    unfaithful = [(v["root_key"], m["letters"], m["issue"])
-                  for v in verdicts for m in v.get("members", []) if not m.get("faithful")]
+    unfaithful = [
+        (v["root_key"], m["letters"], m["issue"])
+        for v in verdicts
+        for m in v.get("members", [])
+        if not m.get("faithful")
+    ]
     print(f"\nunfaithful glosses: {len(unfaithful)}")
     for root, letters, issue in unfaithful:
         print(f"  {root:8s} {letters:14s} {issue}")

@@ -15,6 +15,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import cast
 
 from data.config import AUTHOR_FOLDER_MAPPING, INBOX_DIR
 from utils.cli_style import print_error, print_status, print_success, print_warning
@@ -139,7 +140,9 @@ def _extract_with_claude_cli(
     The Arabic text is piped via stdin to avoid shell arg limits.
     """
     if not shutil.which("claude"):
-        raise FileNotFoundError("Claude CLI not found. Install it or use --use-deepseek.")
+        raise FileNotFoundError(
+            "Claude CLI not found. Install it or use --use-deepseek."
+        )
 
     system_prompt = build_extraction_prompt(max_passages)
 
@@ -240,7 +243,7 @@ def _parse_json_from_text(text: str) -> dict:
         end = text.find("```", start)
         text = text[start:end].strip()
 
-    return json.loads(text)
+    return cast("dict", json.loads(text))
 
 
 def extract_passages(
@@ -525,7 +528,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract passages from Arabic texts")
     source_group = parser.add_mutually_exclusive_group(required=True)
     source_group.add_argument("--url", help="URL to scrape")
-    source_group.add_argument("--file", dest="file_path", help="Local file path to read")
+    source_group.add_argument(
+        "--file", dest="file_path", help="Local file path to read"
+    )
     parser.add_argument("author", help="Author number or folder name")
     parser.add_argument(
         "--skip-pages",

@@ -257,13 +257,13 @@ def fetch_roots_for_validation(
 
         # Chunk large root_ids lists to avoid Supabase query limits
         # Supabase has URL length limits for .in_() queries
-        CHUNK_SIZE = 500  # Safe chunk size for .in_() queries
+        chunk_size = 500  # Safe chunk size for .in_() queries
 
         all_roots = []
 
-        if root_ids and len(root_ids) > CHUNK_SIZE:
+        if root_ids and len(root_ids) > chunk_size:
             # Process in chunks using itertools.batched (Python 3.12+)
-            for chunk_tuple in batched(root_ids, CHUNK_SIZE):
+            for chunk_tuple in batched(root_ids, chunk_size):
                 chunk = list(chunk_tuple)
                 chunk_response = (
                     client.table("roots")

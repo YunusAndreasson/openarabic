@@ -36,11 +36,17 @@ N_TOP = 16
 
 
 def main() -> int:
-    records = [json.loads(line) for line in (BASE / "ledger.jsonl").open(encoding="utf-8")]
+    records = [
+        json.loads(line) for line in (BASE / "ledger.jsonl").open(encoding="utf-8")
+    ]
     freq = Counter(r["root_hint"] for r in records if r.get("root_hint"))
 
     skip_path = BASE / "pool_skip.json"
-    skip = set(json.loads(skip_path.read_text(encoding="utf-8"))) if skip_path.exists() else set()
+    skip = (
+        set(json.loads(skip_path.read_text(encoding="utf-8")))
+        if skip_path.exists()
+        else set()
+    )
     ranked = [(root, n) for root, n in freq.most_common() if root not in skip]
 
     top = ranked[:N_TOP]
@@ -48,15 +54,23 @@ def main() -> int:
     stride = max(len(rest) // (N_TOTAL - N_TOP), 1)
     tail = rest[::stride][: N_TOTAL - N_TOP]
 
-    picked = [{"root_key": root, "root": root, "headword_count": n}
-              for root, n in [*top, *tail]]
-    OUT.write_text(json.dumps(picked, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    picked = [
+        {"root_key": root, "root": root, "headword_count": n}
+        for root, n in [*top, *tail]
+    ]
+    OUT.write_text(
+        json.dumps(picked, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
 
     covered = sum(p["headword_count"] for p in picked)
     print(f"{len(picked)} golden roots -> {OUT.name}")
-    print(f"  headwords covered: {covered} of {sum(freq.values())} "
-          f"({covered / sum(freq.values()) * 100:.1f}%)")
-    print(f"  headword counts: {picked[0]['headword_count']} … {picked[-1]['headword_count']}")
+    print(
+        f"  headwords covered: {covered} of {sum(freq.values())} "
+        f"({covered / sum(freq.values()) * 100:.1f}%)"
+    )
+    print(
+        f"  headword counts: {picked[0]['headword_count']} … {picked[-1]['headword_count']}"
+    )
     return 0
 
 

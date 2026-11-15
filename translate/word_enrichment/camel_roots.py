@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import Any, cast
 
 # Roots CAMeL emits that carry no derivational information.
 # Parts of speech that have no derivational root. A primitive particle is not a
@@ -79,7 +80,7 @@ class CamelRoot:
 
 
 @lru_cache(maxsize=1)
-def _analyzer():
+def _analyzer() -> Any:
     from camel_tools.morphology.analyzer import Analyzer
     from camel_tools.morphology.database import MorphologyDB
 
@@ -107,8 +108,8 @@ def _analyses(word: str) -> list[dict]:
     """
     analyzer = _analyzer()
     try:
-        return analyzer.analyze(word)
-    except Exception:  # noqa: BLE001 — an unanalysable surface form has no analyses
+        return cast("list[dict]", analyzer.analyze(word))
+    except Exception:
         return []
 
 
@@ -187,6 +188,7 @@ def is_function_word(word: str) -> bool:
 # their glosses and patterns. That is a different traversal of the same database
 # — `stem_hash` holds every stem CAMeL can produce, each tagged with its root.
 # ---------------------------------------------------------------------------
+
 
 # Values in `stem_hash` are list[tuple[str, dict]] — (category, features). An
 # earlier attempt treated them as dicts and raised AttributeError on the first row.

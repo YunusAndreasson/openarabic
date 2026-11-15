@@ -503,8 +503,7 @@ BILINGUAL_AUDIO_PAUSE_MS = 500  # 500ms pause between languages
 ```python
 # Generate English-only audio
 english_result = generate_english_sentence_audio(
-    english_text="The Prophet said...",
-    filename="sentence_001.mp3"
+    english_text="The Prophet said...", filename="sentence_001.mp3"
 )
 
 # Generate bilingual audio
@@ -512,7 +511,7 @@ bilingual_result = generate_bilingual_sentence_audio(
     english_text="The Prophet said...",
     arabic_text="قال النبي...",
     filename="sentence_001_bilingual.mp3",
-    tashkeel_text="قَالَ النَّبِيُّ..."
+    tashkeel_text="قَالَ النَّبِيُّ...",
 )
 ```
 

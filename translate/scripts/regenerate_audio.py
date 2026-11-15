@@ -15,25 +15,25 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import cast
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import utils.set_keys  # noqa: F401, E402
-
-from audio.combiner import create_multi_audio_with_delays  # noqa: E402
-from audio.elevenlabs import generate_speech  # noqa: E402
-from audio.storage import generate_audio_filename  # noqa: E402
-from data.config import (  # noqa: E402
+import utils.set_keys  # noqa: F401
+from audio.combiner import create_multi_audio_with_delays
+from audio.elevenlabs import generate_speech
+from audio.storage import generate_audio_filename
+from data.config import (
     ARABIC_VOICE_ID,
     ARABIC_VOICE_SETTINGS,
     BILINGUAL_AUDIO_PAUSE_MS,
     ENGLISH_VOICE_ID,
     ENGLISH_VOICE_SETTINGS,
 )
-from utils.config_common import get_storage_url  # noqa: E402
-from utils.responses_api import load_api_keys  # noqa: E402
-from utils.storage import get_supabase_client  # noqa: E402
+from utils.config_common import get_storage_url
+from utils.responses_api import load_api_keys
+from utils.storage import get_supabase_client
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ def _download_audio_from_storage(filename: str) -> bytes | None:
     """Download an audio file from Supabase storage by filename."""
     try:
         data = get_supabase_client().storage.from_("audio").download(filename)
-        return data
+        return cast("bytes", data)
     except Exception as e:
         logger.warning(f"Failed to download {filename}: {e}")
         return None
@@ -74,7 +74,9 @@ def regenerate_sentence_audio(
     if arabic_response and arabic_response.get("audio"):
         filename = generate_audio_filename()
         get_supabase_client().storage.from_("audio").upload(
-            filename, arabic_response["audio"], file_options={"content-type": "audio/mpeg"}
+            filename,
+            arabic_response["audio"],
+            file_options={"content-type": "audio/mpeg"},
         )
         result["audio_url"] = get_storage_url(filename)
         logger.info(f"  [pos {position}] Arabic audio uploaded")
@@ -90,7 +92,9 @@ def regenerate_sentence_audio(
     if english_response and english_response.get("audio"):
         filename = generate_audio_filename()
         get_supabase_client().storage.from_("audio").upload(
-            filename, english_response["audio"], file_options={"content-type": "audio/mpeg"}
+            filename,
+            english_response["audio"],
+            file_options={"content-type": "audio/mpeg"},
         )
         result["audio_url_english"] = get_storage_url(filename)
         logger.info(f"  [pos {position}] English audio uploaded")
@@ -136,7 +140,9 @@ def regenerate_article_audio(article_id: int) -> None:
     supabase = get_supabase_client()
 
     # Get article title for bilingual intro
-    article_data = supabase.table("articles").select("title").eq("id", article_id).execute()
+    article_data = (
+        supabase.table("articles").select("title").eq("id", article_id).execute()
+    )
     title = article_data.data[0].get("title") if article_data.data else None
 
     # Fetch all sentences with their audio URLs
@@ -242,8 +248,12 @@ def regenerate_article_audio(article_id: int) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Regenerate ElevenLabs audio for an article")
-    parser.add_argument("article_id", type=int, help="Article ID to regenerate audio for")
+    parser = argparse.ArgumentParser(
+        description="Regenerate ElevenLabs audio for an article"
+    )
+    parser.add_argument(
+        "article_id", type=int, help="Article ID to regenerate audio for"
+    )
     parser.add_argument(
         "--sentence",
         type=int,

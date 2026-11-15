@@ -46,7 +46,7 @@ SKIPLIST = BASE / "pool_skip.json"
 MIN_POOL = 5
 
 
-def roots_from_ledger() -> tuple[list[str], dict[str, tuple[int, int]], Counter]:
+def roots_from_ledger() -> tuple[list[str], dict[str, dict], Counter]:
     records = [json.loads(line) for line in LEDGER.open(encoding="utf-8")]
     index = pool.dictionary_index(records)
     freq = Counter(r["root_hint"] for r in records if r.get("root_hint"))
@@ -60,7 +60,7 @@ def audit() -> dict:
     per_root: dict[str, dict] = {}
     for root in roots:
         candidates = pool.build(conn, root, index, limit=24)
-        sources = Counter()
+        sources: Counter[str] = Counter()
         for candidate in candidates:
             sources["both" if len(candidate.sources) > 1 else candidate.sources[0]] += 1
         per_root[root] = {
@@ -84,21 +84,31 @@ def report(per_root: dict) -> list[str]:
 
     print(f"{len(per_root)} roots, {total_headwords} headwords\n")
     print("POOL SIZE")
-    for lo, hi, label in ((0, 0, "empty"), (1, 4, "1-4  (unusable)"),
-                          (5, 9, "5-9"), (10, 19, "10-19"), (20, 99, "20+")):
+    for lo, hi, label in (
+        (0, 0, "empty"),
+        (1, 4, "1-4  (unusable)"),
+        (5, 9, "5-9"),
+        (10, 19, "10-19"),
+        (20, 99, "20+"),
+    ):
         print(f"  {label:16s} {pct(sum(1 for s in sizes if lo <= s <= hi))}")
     mid = sizes[len(sizes) // 2] if sizes else 0
     print(f"  median {mid}   mean {sum(sizes) / max(len(sizes), 1):.1f}\n")
 
     print("PER-ROOT COVERAGE (share of roots where every candidate has one)")
-    for key, label in (("with_modern_gloss", "modern gloss"), ("with_wazn", "wazn"),
-                       ("linkable", "links to a dictionary entry")):
+    for key, label in (
+        ("with_modern_gloss", "modern gloss"),
+        ("with_wazn", "wazn"),
+        ("linkable", "links to a dictionary entry"),
+    ):
         got = sum(r[key] for r in per_root.values())
         pool_total = sum(r["size"] for r in per_root.values())
-        print(f"  {label:28s} {got:6d} / {pool_total}  ({got / max(pool_total, 1) * 100:.1f}% of candidates)")
+        print(
+            f"  {label:28s} {got:6d} / {pool_total}  ({got / max(pool_total, 1) * 100:.1f}% of candidates)"
+        )
     print()
 
-    mix = Counter()
+    mix: Counter[str] = Counter()
     for r in per_root.values():
         for source, n in r["sources"].items():
             mix[source] += n
@@ -107,10 +117,19 @@ def report(per_root: dict) -> list[str]:
         print(f"  {source:12s} {n:6d}")
     print()
 
-    thin = sorted(((r["size"], r["headwords"], root) for root, r in per_root.items()
-                   if r["size"] < MIN_POOL), reverse=True, key=lambda t: t[1])
-    dead = sorted(((r["headwords"], root) for root, r in per_root.items()
-                   if r["linkable"] == 0), reverse=True)
+    thin = sorted(
+        (
+            (r["size"], r["headwords"], root)
+            for root, r in per_root.items()
+            if r["size"] < MIN_POOL
+        ),
+        reverse=True,
+        key=lambda t: t[1],
+    )
+    dead = sorted(
+        ((r["headwords"], root) for root, r in per_root.items() if r["linkable"] == 0),
+        reverse=True,
+    )
 
     # Named, never summarised: a truncated list reads as full coverage, which is
     # a failure mode this project has already had.
@@ -126,8 +145,11 @@ def report(per_root: dict) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--save", action="store_true",
-                        help="write the current sizes as the regression baseline")
+    parser.add_argument(
+        "--save",
+        action="store_true",
+        help="write the current sizes as the regression baseline",
+    )
     args = parser.parse_args()
 
     per_root = audit()
@@ -136,14 +158,19 @@ def main() -> int:
     # A root with too small a pool is EXCLUDED from generation, not a build
     # failure -- it never costs a model call. Writing the list is what keeps that
     # exclusion visible; a silently shortened target list reads as full coverage.
-    SKIPLIST.write_text(json.dumps(sorted(thin), ensure_ascii=False, indent=1),
-                        encoding="utf-8")
-    print(f"\nskip list written: {len(thin)} roots excluded from generation "
-          f"({sum(per_root[r]['headwords'] for r in thin)} headwords)")
+    SKIPLIST.write_text(
+        json.dumps(sorted(thin), ensure_ascii=False, indent=1), encoding="utf-8"
+    )
+    print(
+        f"\nskip list written: {len(thin)} roots excluded from generation "
+        f"({sum(per_root[r]['headwords'] for r in thin)} headwords)"
+    )
 
     current = {root: r["size"] for root, r in per_root.items()}
     if args.save:
-        BASELINE.write_text(json.dumps(current, ensure_ascii=False, indent=1), encoding="utf-8")
+        BASELINE.write_text(
+            json.dumps(current, ensure_ascii=False, indent=1), encoding="utf-8"
+        )
         print(f"\nbaseline written: {len(current)} roots")
         return 0
 
@@ -151,10 +178,15 @@ def main() -> int:
         previous = json.loads(BASELINE.read_text(encoding="utf-8"))
         # Only a drop THROUGH the threshold is a regression. Churn above it is
         # the analyser being updated, not a defect.
-        lost = [root for root, size in previous.items()
-                if size >= MIN_POOL and current.get(root, 0) < MIN_POOL]
+        lost = [
+            root
+            for root, size in previous.items()
+            if size >= MIN_POOL and current.get(root, 0) < MIN_POOL
+        ]
         if lost:
-            print(f"\nREGRESSION: {len(lost)} roots fell below {MIN_POOL}: {' '.join(lost[:20])}")
+            print(
+                f"\nREGRESSION: {len(lost)} roots fell below {MIN_POOL}: {' '.join(lost[:20])}"
+            )
             return 1
         print(f"\nno regression against baseline ({len(previous)} roots)")
     else:

@@ -5,7 +5,7 @@ Enums for the translation system to provide type safety and consolidate constant
 from enum import Enum
 
 
-class PartOfSpeech(str, Enum):
+class PartOfSpeech(str, Enum):  # noqa: UP042
     """Part of speech for Arabic words"""
 
     NOUN = "noun"
@@ -33,7 +33,7 @@ class DifficultyLevel(int, Enum):
     EXPERT = 5
 
 
-class UncertaintyType(str, Enum):
+class UncertaintyType(str, Enum):  # noqa: UP042
     """Type of uncertainty in translation"""
 
     GRAMMAR = "grammar"
@@ -46,7 +46,7 @@ class UncertaintyType(str, Enum):
     AMBIGUITY = "ambiguity"
 
 
-class VerificationStatus(str, Enum):
+class VerificationStatus(str, Enum):  # noqa: UP042
     """Status of translation verification"""
 
     PENDING = "pending"

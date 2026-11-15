@@ -707,10 +707,14 @@ def validate_article_data(data: dict) -> None:
             tashkeel_stripped = clean_arabic_text(translation["tashkeel"])
             tashkeel_words = set(tashkeel_stripped.split()[:3])
             # If first few words don't overlap at all, tashkeel is likely from wrong sentence
-            if orig_words and tashkeel_words and not any(
-                tw.startswith(ow[:3]) or ow.startswith(tw[:3])
-                for ow in orig_words
-                for tw in tashkeel_words
+            if (
+                orig_words
+                and tashkeel_words
+                and not any(
+                    tw.startswith(ow[:3]) or ow.startswith(tw[:3])
+                    for ow in orig_words
+                    for tw in tashkeel_words
+                )
             ):
                 raise ValueError(
                     f"Tashkeel at position {idx} does not match original text "

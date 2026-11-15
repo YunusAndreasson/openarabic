@@ -35,9 +35,7 @@ def run_full_translation(
     """Translate a batch of sentences and validate the results."""
     from pipeline.engine import batch_translate_full_sentences
 
-    translations = batch_translate_full_sentences(
-        batch_sentences, batch_contexts
-    )
+    translations = batch_translate_full_sentences(batch_sentences, batch_contexts)
     validate_translation_results(batch_sentences, translations, "Full Translation")
     return translations
 
@@ -170,20 +168,14 @@ def create_sentence_translation(
         original_words = word_options_result.word_translations
         original_by_bare = {}
         for w in original_words:
-            bare = "".join(
-                c for c in w.arabic if not ("\u064B" <= c <= "\u0652")
-            )
+            bare = "".join(c for c in w.arabic if not ("\u064b" <= c <= "\u0652"))
             original_by_bare[bare] = w.arabic
 
         for refined_word in refined_words_data:
-            has_tashkeel = any(
-                "\u064B" <= c <= "\u0652" for c in refined_word.arabic
-            )
+            has_tashkeel = any("\u064b" <= c <= "\u0652" for c in refined_word.arabic)
             if not has_tashkeel:
                 bare = "".join(
-                    c
-                    for c in refined_word.arabic
-                    if not ("\u064B" <= c <= "\u0652")
+                    c for c in refined_word.arabic if not ("\u064b" <= c <= "\u0652")
                 )
                 if bare in original_by_bare:
                     refined_word.arabic = original_by_bare[bare]

@@ -49,7 +49,9 @@ def flags_for(record: dict, candidates: list) -> dict:
     by_key = {c.key: c for c in candidates}
     members = record.get("word_family") or []
 
-    link_counts = Counter(m.get("root_id") for m in members if m.get("root_id") is not None)
+    link_counts = Counter(
+        m.get("root_id") for m in members if m.get("root_id") is not None
+    )
     gloss_counts = Counter(_norm(m.get("meaning", "")) for m in members)
 
     per_member = []
@@ -58,18 +60,21 @@ def flags_for(record: dict, candidates: list) -> dict:
         lane = (source.lane_gloss if source else "") or ""
         camel = (source.camel_gloss if source else "") or ""
         shipped = m.get("meaning", "")
-        per_member.append({
-            **m,
-            "lane_gloss": lane,
-            "camel_gloss": camel,
-            "in_pool": source is not None,
-            "verbatim_lane": bool(lane) and _norm(shipped) == _norm(lane),
-            "duplicate_link": (m.get("root_id") is not None
-                               and link_counts[m["root_id"]] > 1),
-            "unlinked": m.get("root_id") is None,
-            "no_wazn": not m.get("wazn"),
-            "repeated_gloss": gloss_counts[_norm(shipped)] > 1,
-        })
+        per_member.append(
+            {
+                **m,
+                "lane_gloss": lane,
+                "camel_gloss": camel,
+                "in_pool": source is not None,
+                "verbatim_lane": bool(lane) and _norm(shipped) == _norm(lane),
+                "duplicate_link": (
+                    m.get("root_id") is not None and link_counts[m["root_id"]] > 1
+                ),
+                "unlinked": m.get("root_id") is None,
+                "no_wazn": not m.get("wazn"),
+                "repeated_gloss": gloss_counts[_norm(shipped)] > 1,
+            }
+        )
 
     return {
         "members": per_member,
@@ -88,13 +93,21 @@ def main() -> int:
     ap.add_argument("--out", default=str(BASE / "golden_eval.json"))
     args = ap.parse_args()
 
-    records = [json.loads(line) for line in Path(args.records).open(encoding="utf-8") if line.strip()]
+    records = [
+        json.loads(line)
+        for line in Path(args.records).read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     verdicts = {}
     vpath = Path(args.verdicts)
     if vpath.exists():
-        verdicts = {v["root_key"]: v for v in json.loads(vpath.read_text(encoding="utf-8"))}
+        verdicts = {
+            v["root_key"]: v for v in json.loads(vpath.read_text(encoding="utf-8"))
+        }
 
-    ledger = [json.loads(line) for line in (BASE / "ledger.jsonl").open(encoding="utf-8")]
+    ledger = [
+        json.loads(line) for line in (BASE / "ledger.jsonl").open(encoding="utf-8")
+    ]
     print(f"building the dictionary index over {len(ledger)} entries…", flush=True)
     dict_index = pool.dictionary_index(ledger)
     freq = Counter(r["root_hint"] for r in ledger if r.get("root_hint"))
@@ -104,27 +117,44 @@ def main() -> int:
     for record in records:
         root = record["root_key"]
         candidates = pool.build(conn, root, dict_index, limit=20)
-        out.append({
-            **record,
-            "headword_count": freq[root],
-            "verdict": verdicts.get(root, {}),
-            "pool": [{"letters": c.letters, "transliteration": c.transliteration,
-                      "lane_gloss": c.lane_gloss, "camel_gloss": c.camel_gloss,
-                      "wazn": c.wazn, "linked": c.root_id is not None}
-                     for c in candidates],
-            **flags_for(record, candidates),
-        })
+        out.append(
+            {
+                **record,
+                "headword_count": freq[root],
+                "verdict": verdicts.get(root, {}),
+                "pool": [
+                    {
+                        "letters": c.letters,
+                        "transliteration": c.transliteration,
+                        "lane_gloss": c.lane_gloss,
+                        "camel_gloss": c.camel_gloss,
+                        "wazn": c.wazn,
+                        "linked": c.root_id is not None,
+                    }
+                    for c in candidates
+                ],
+                **flags_for(record, candidates),
+            }
+        )
 
     Path(args.out).write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
 
     print(f"\n{len(out)} records -> {args.out}\n")
-    print(f"  panels with a duplicate link : {sum(1 for r in out if r['any_duplicate_link'])}")
+    print(
+        f"  panels with a duplicate link : {sum(1 for r in out if r['any_duplicate_link'])}"
+    )
     print(f"  panels with NO linkable row  : {sum(1 for r in out if r['dead_panel'])}")
-    print(f"  panels with a verbatim Lane gloss: {sum(1 for r in out if r['any_verbatim_lane'])}")
-    print(f"  mean linked rows per panel   : "
-          f"{sum(r['linked'] for r in out) / max(len(out), 1):.1f} of 5")
-    print(f"  mean usage_note length       : "
-          f"{sum(r['note_chars'] for r in out) / max(len(out), 1):.0f} chars")
+    print(
+        f"  panels with a verbatim Lane gloss: {sum(1 for r in out if r['any_verbatim_lane'])}"
+    )
+    print(
+        f"  mean linked rows per panel   : "
+        f"{sum(r['linked'] for r in out) / max(len(out), 1):.1f} of 5"
+    )
+    print(
+        f"  mean usage_note length       : "
+        f"{sum(r['note_chars'] for r in out) / max(len(out), 1):.0f} chars"
+    )
     if verdicts:
         print(f"  judge: {dict(Counter(r['verdict'].get('verdict') for r in out))}")
     return 0

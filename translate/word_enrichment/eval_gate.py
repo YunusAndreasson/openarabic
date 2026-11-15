@@ -37,7 +37,9 @@ def _ids(name: str) -> set[int]:
 
 
 def main() -> None:
-    records = [json.loads(line) for line in (BASE / "enriched.jsonl").open(encoding="utf-8")]
+    records = [
+        json.loads(line) for line in (BASE / "enriched.jsonl").open(encoding="utf-8")
+    ]
     verified, flagged = _ids("verified.jsonl"), _ids("flagged.jsonl")
     excluded = set(MANUAL_EXCLUDE)
 
@@ -65,7 +67,9 @@ def main() -> None:
         conn.close()
 
     width = max(len(v) for v in VERDICTS) + 3
-    print(f"{'bucket':10}" + "".join(f"{v:>{width}}" for v in VERDICTS) + f"{'total':>8}")
+    print(
+        f"{'bucket':10}" + "".join(f"{v:>{width}}" for v in VERDICTS) + f"{'total':>8}"
+    )
     for b in ("SHIPPED", "EXCLUDED", "FLAGGED", "OTHER"):
         row = [tally[(b, v)] for v in VERDICTS]
         if not sum(row):

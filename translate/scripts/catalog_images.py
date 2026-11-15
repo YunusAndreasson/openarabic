@@ -22,16 +22,18 @@ import json
 import random
 import sys
 from pathlib import Path
+from typing import cast
 
 # Allow imports from the translate/ project root
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from data.config import MODEL_OTHER
 from openai import OpenAI
+
+from data.config import MODEL_OTHER
 
 # ── Config ──────────────────────────────────────────────────────────────────
 
-IMAGE_DIR = Path("/tmp/supabase-images")
+IMAGE_DIR = Path("/tmp/supabase-images")  # noqa: S108
 OUTPUT_FILE = Path(__file__).parent.parent / "data" / "image_catalog.json"
 SUPPORTED_EXTENSIONS = {".webp", ".jpg", ".jpeg", ".png"}
 
@@ -76,12 +78,16 @@ Fields:
 
 # ── Core logic ───────────────────────────────────────────────────────────────
 
+
 def load_catalog(output_file: Path) -> dict:
     if output_file.exists():
         try:
-            return json.loads(output_file.read_text())
+            return cast("dict", json.loads(output_file.read_text()))
         except json.JSONDecodeError:
-            print(f"Warning: could not parse existing catalog, starting fresh.", file=sys.stderr)
+            print(
+                "Warning: could not parse existing catalog, starting fresh.",
+                file=sys.stderr,
+            )
     return {}
 
 
@@ -130,7 +136,9 @@ def analyze_image(image_path: Path) -> dict | None:
                     "content": [
                         {
                             "type": "image_url",
-                            "image_url": {"url": f"data:{media_type};base64,{image_data}"},
+                            "image_url": {
+                                "url": f"data:{media_type};base64,{image_data}"
+                            },
                         },
                         {"type": "text", "text": PROMPT},
                     ],
@@ -148,7 +156,7 @@ def analyze_image(image_path: Path) -> dict | None:
                 raw = raw[4:]
             raw = raw.strip()
 
-        return json.loads(raw)
+        return cast("dict | None", json.loads(raw))
 
     except json.JSONDecodeError as e:
         print(f"  Bad JSON for {image_path.name}: {e}", file=sys.stderr)
@@ -159,6 +167,7 @@ def analyze_image(image_path: Path) -> dict | None:
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Catalog images using Claude vision")
@@ -199,7 +208,8 @@ def main() -> None:
         sys.exit(1)
 
     all_images = [
-        p for p in sorted(image_dir.iterdir())
+        p
+        for p in sorted(image_dir.iterdir())
         if p.suffix.lower() in SUPPORTED_EXTENSIONS
     ]
 
@@ -217,7 +227,9 @@ def main() -> None:
         pending = all_images
 
     if not pending:
-        print(f"All {len(all_images)} images already in catalog. Use --overwrite to re-analyze.")
+        print(
+            f"All {len(all_images)} images already in catalog. Use --overwrite to re-analyze."
+        )
         sys.exit(0)
 
     # In test mode, pick 5 random images
@@ -226,7 +238,9 @@ def main() -> None:
         print(f"TEST MODE — analyzing {len(pending)} random images")
         print(f"Images: {[p.name for p in pending]}\n")
     else:
-        print(f"Analyzing {len(pending)} images ({len(all_images) - len(pending)} already done)...")
+        print(
+            f"Analyzing {len(pending)} images ({len(all_images) - len(pending)} already done)..."
+        )
 
     # Process images sequentially (claude CLI handles its own rate limiting)
     success = 0
@@ -243,7 +257,9 @@ def main() -> None:
             continue
 
         catalog[image_path.name] = data
-        save_catalog(catalog, args.output)  # Save after each image so progress isn't lost
+        save_catalog(
+            catalog, args.output
+        )  # Save after each image so progress isn't lost
         success += 1
 
         mood = data.get("mood", "?")
@@ -254,7 +270,9 @@ def main() -> None:
             print(f"  description: {data.get('description', '')}")
             print(f"  tags: {data.get('tags', [])}")
             print(f"  topics: {data.get('suitable_topics', [])}")
-            print(f"  human figures: {data.get('contains_human_figures')}  aqeedah_risk: {data.get('aqeedah_risk', '?')}")
+            print(
+                f"  human figures: {data.get('contains_human_figures')}  aqeedah_risk: {data.get('aqeedah_risk', '?')}"
+            )
             print()
 
     # Summary

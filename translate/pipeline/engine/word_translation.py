@@ -14,7 +14,6 @@ from data.pipeline_types import (
 from data.schemas import GENERAL_SYSTEM_PROMPT, WORD_BY_WORD_USER_PROMPT
 from utils.batch_context import get_batch_prefix, pipeline_stats
 from utils.responses_api import call_response_api
-from utils.text import filter_arabic_words
 
 from .helpers import (
     _extract_response_data,
@@ -109,8 +108,6 @@ def _build_word_translation_message(
     """Build the prompt message for word-by-word translation."""
     tashkeel, tashkeel_uncertainties = _get_tashkeel_data(tashkeel_result)
     translation, translation_uncertainties = _get_translation_data(translation_result)
-
-    arabic_words = filter_arabic_words(tashkeel)
 
     semantic_context = ""
     if all_sentences and indices and i < len(indices):

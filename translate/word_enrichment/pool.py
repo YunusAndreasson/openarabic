@@ -53,6 +53,7 @@ import sqlite3
 import unicodedata
 from dataclasses import dataclass, field
 from functools import lru_cache
+from typing import Any
 
 from word_enrichment import camel_roots, lane_extract, lexicon
 from word_enrichment.arabic_translit import transliterate
@@ -73,8 +74,13 @@ _CONSONANT_RUN = re.compile(r"[^aiuāīū\s]{3,}")
 # Third person, masculine, singular, perfect, active, indicative — the form
 # every Arabic dictionary files a verb under.
 _CITATION = {
-    "pos": "verb", "asp": "p", "per": "3", "gen": "m", "num": "s",
-    "vox": "a", "mod": "i",
+    "pos": "verb",
+    "asp": "p",
+    "per": "3",
+    "gen": "m",
+    "num": "s",
+    "vox": "a",
+    "mod": "i",
 }
 
 
@@ -137,18 +143,18 @@ def _is_english_gloss(gloss: str) -> bool:
 
 
 @lru_cache(maxsize=1)
-def _analyzer():
+def _analyzer() -> Any:
     try:
         from camel_tools.morphology.analyzer import Analyzer
         from camel_tools.morphology.database import MorphologyDB
 
         return Analyzer(MorphologyDB.builtin_db())
-    except Exception:  # noqa: BLE001 — a degraded pool, not a crash
+    except Exception:
         return None
 
 
 @lru_cache(maxsize=1)
-def _reinflector():
+def _reinflector() -> Any:
     """CAMeL's Reinflector, already a dependency via utils/camel_tools_service.
 
     Built with flags='r' — the plain builtin_db cannot reinflect.
@@ -158,7 +164,7 @@ def _reinflector():
         from camel_tools.morphology.reinflector import Reinflector
 
         return Reinflector(MorphologyDB.builtin_db(flags="r"))
-    except Exception:  # noqa: BLE001
+    except Exception:
         return None
 
 
@@ -179,7 +185,7 @@ def analyse_exact(form: str) -> dict:
         return {}
     try:
         analyses = engine.analyze(form)
-    except Exception:  # noqa: BLE001
+    except Exception:
         return {}
 
     target = match_key(form)
@@ -207,7 +213,7 @@ def citation_form(lemma: str) -> str:
         return ""
     try:
         analyses = engine.reinflect(lemma, _CITATION)
-    except Exception:  # noqa: BLE001
+    except Exception:
         return ""
     forms = sorted({a.get("diac", "") for a in analyses if a.get("diac")}, key=len)
     return forms[0] if forms else ""
@@ -223,7 +229,7 @@ class Candidate:
     camel_gloss: str = ""
     wazn: str = ""
     pos: str = ""
-    plural: str = ""     # Lane's stated plural — unguessable, so worth carrying
+    plural: str = ""  # Lane's stated plural — unguessable, so worth carrying
     verb_form: str = ""  # Lane's roman numeral (II, X): the wazn's other half
     root_id: int | None = None  # our dictionary entry, when this form is one
     exact_link: bool = False  # True when root_id came from a vocalised match
@@ -243,7 +249,9 @@ class Candidate:
         """One line of the closed list handed to the model."""
         bits = [f"{self.letters} ({self.transliteration})"]
         if self.camel_gloss:
-            bits.append(f"modern: {self.camel_gloss.replace('_', ' ').replace(';', ', ')}")
+            bits.append(
+                f"modern: {self.camel_gloss.replace('_', ' ').replace(';', ', ')}"
+            )
         if self.lane_gloss:
             bits.append(f"Lane: {self.lane_gloss}")
         if self.wazn:
@@ -257,7 +265,6 @@ class Candidate:
         if self.plural:
             bits.append(f"pl. {self.plural}")
         return "- " + " | ".join(bits)
-
 
 
 def resolve(letters: str, candidates: list[Candidate]) -> Candidate | None:

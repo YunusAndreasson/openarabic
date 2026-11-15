@@ -8,7 +8,7 @@ that OpenAI sometimes misses.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from data.config import DEEPSEEK_CORRECTION_BATCH_SIZE
 from data.deepseek_correction_models import (
@@ -151,7 +151,7 @@ def _correct_batch_claude_cli(
         ]
         response = call_claude_cli(messages)
         if response.get("success") and response.get("data"):
-            return response["data"]
+            return cast("dict[str, Any]", response["data"])
         if retry_count == VALIDATION_MAX_RETRIES - 1:
             error = response.get("error", "Unknown error")
             logger.warning(f"Claude CLI correction failed after retries: {error}")
@@ -163,7 +163,7 @@ def _correct_batch_claude_cli(
 
 def _correct_batch(
     batch: list[SentenceTranslation],
-    client: "OpenRouterClient | None",
+    client: OpenRouterClient | None,
     translations_by_index: dict[int, SentenceTranslation],
     article_context: ArticleContext | None = None,
 ) -> None:
@@ -179,7 +179,9 @@ def _correct_batch(
     else:
         assert client is not None
         # Prepare sentence data with surrounding context using O(1) lookup
-        sentences_data = [_prepare_sentence_input(t, translations_by_index) for t in batch]
+        sentences_data = [
+            _prepare_sentence_input(t, translations_by_index) for t in batch
+        ]
 
         # Call DeepSeek with retry logic
         response = None
@@ -193,7 +195,9 @@ def _correct_batch(
             except ValueError as e:
                 if retry_count == VALIDATION_MAX_RETRIES - 1:
                     logger.warning(f"DeepSeek correction failed after retries: {e}")
-                    _mark_batch_needs_review(batch, "DeepSeek correction parsing failed")
+                    _mark_batch_needs_review(
+                        batch, "DeepSeek correction parsing failed"
+                    )
                     return
                 logger.warning(f"Retry {retry_count + 1}: {e}")
         else:

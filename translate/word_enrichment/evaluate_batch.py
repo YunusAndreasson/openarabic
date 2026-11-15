@@ -41,7 +41,11 @@ def load(name: str) -> list[dict]:
     p = BASE / name
     if not p.exists():
         return []
-    return [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+    return [
+        json.loads(line)
+        for line in p.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 def pct(n: int, d: int) -> str:
@@ -62,7 +66,11 @@ def metrics(targets_path: Path) -> dict:
     ids = {t["root_id"] for t in targets}
     sel = lambda name, key="root_id": [r for r in load(name) if r.get(key) in ids]  # noqa: E731
     enriched, skipped = sel("enriched.jsonl"), sel("skipped.jsonl")
-    verified, review, flagged = sel("verified.jsonl"), sel("review.jsonl"), sel("flagged.jsonl")
+    verified, review, flagged = (
+        sel("verified.jsonl"),
+        sel("review.jsonl"),
+        sel("flagged.jsonl"),
+    )
     routed = len(verified) + len(review) + len(flagged)
 
     verdicts = {}
@@ -79,8 +87,14 @@ def metrics(targets_path: Path) -> dict:
     sizes = sorted(len(r.get("word_family") or []) for r in enriched)
     glosses = [m["meaning"] for r in enriched for m in (r.get("word_family") or [])]
     gw = sorted(len(g.split()) for g in glosses)
-    meta = [g for g in glosses if re.match(r"^(Form [IVX]+|verbal noun|active participle)", g, re.I)]
-    notes = sorted(len(r["usage_note"].split()) for r in enriched if r.get("usage_note"))
+    meta = [
+        g
+        for g in glosses
+        if re.match(r"^(Form [IVX]+|verbal noun|active participle)", g, re.I)
+    ]
+    notes = sorted(
+        len(r["usage_note"].split()) for r in enriched if r.get("usage_note")
+    )
     med = lambda xs: xs[len(xs) // 2] if xs else 0  # noqa: E731
 
     return {
@@ -100,12 +114,15 @@ def metrics(targets_path: Path) -> dict:
         "flagged": len(flagged),
         "flagged_pct": _p(len(flagged), routed),
         "judge_publish_pct": _p(
-            sum(1 for v in verdicts.values() if v["verdict"] == "publish"), len(verdicts)
+            sum(1 for v in verdicts.values() if v["verdict"] == "publish"),
+            len(verdicts),
         ),
         "root_meaning_present_pct": _p(len(have), len(enriched)),
         "root_meaning_median_words": med(rm_words),
         "root_meaning_max_words": rm_words[-1] if rm_words else 0,
-        "root_meaning_over_cap_pct": _p(sum(1 for w in rm_words if w > 6), len(rm_words)),
+        "root_meaning_over_cap_pct": _p(
+            sum(1 for w in rm_words if w > 6), len(rm_words)
+        ),
         "family_median_members": med(sizes),
         "family_max_members": sizes[-1] if sizes else 0,
         "family_gloss_median_words": med(gw),
@@ -123,14 +140,18 @@ def render(m: dict) -> None:
     section("YIELD — where the budget went")
     print(f"  targets picked        {t:5}")
     print(f"  generated             {m['generated']:5}  {pct(m['generated'], t)}")
-    print(f"  no Lane's grounding   {m['no_grounding']:5}  {pct(m['no_grounding'], t)}"
-          "   <- cheap, but pure waste of a target slot")
+    print(
+        f"  no Lane's grounding   {m['no_grounding']:5}  {pct(m['no_grounding'], t)}"
+        "   <- cheap, but pure waste of a target slot"
+    )
     if m["unaccounted"]:
-        print(f"  unaccounted           {m['unaccounted']:5}   (errors, or run incomplete)")
+        print(
+            f"  unaccounted           {m['unaccounted']:5}   (errors, or run incomplete)"
+        )
 
     section("BASIS — how each target's root was decided")
     for k, v in Counter(x.get("_basis") for x in m["_targets"]).most_common():
-        print(f"  {str(k):16} {v:5}  {pct(v, t)}")
+        print(f"  {k!s:16} {v:5}  {pct(v, t)}")
 
     section("GATE — verify.py routing")
     print(f"  verified (passed)     {m['verified']:5}  {m['verified_pct']:5.1f}%")
@@ -141,25 +162,37 @@ def render(m: dict) -> None:
 
     if m["_verdicts"]:
         section("JUDGE — verdicts on the review queue")
-        for k, v in Counter(x["verdict"] for x in m["_verdicts"].values()).most_common():
+        for k, v in Counter(
+            x["verdict"] for x in m["_verdicts"].values()
+        ).most_common():
             print(f"  {k:12} {v:5}  {pct(v, len(m['_verdicts']))}")
 
     section("root_meaning — the one-line summary the app leads with")
     print(f"  present               {m['root_meaning_present_pct']:5.1f}%")
-    print(f"  words: median {m['root_meaning_median_words']}  max {m['root_meaning_max_words']}")
+    print(
+        f"  words: median {m['root_meaning_median_words']}  max {m['root_meaning_max_words']}"
+    )
     print(f"  over the 6-word cap   {m['root_meaning_over_cap_pct']:5.1f}%")
 
     section("word_family — the section that teaches the root")
-    print(f"  members per record: median {m['family_median_members']}  max {m['family_max_members']}"
-          "   (schema caps at 5)")
-    print(f"  gloss words: median {m['family_gloss_median_words']}  max {m['family_gloss_max_words']}")
-    print(f"  glosses over 8 words  {m['family_gloss_over_8_pct']:5.1f}%"
-          "   <- each is 2-3 lines on a phone")
+    print(
+        f"  members per record: median {m['family_median_members']}  max {m['family_max_members']}"
+        "   (schema caps at 5)"
+    )
+    print(
+        f"  gloss words: median {m['family_gloss_median_words']}  max {m['family_gloss_max_words']}"
+    )
+    print(
+        f"  glosses over 8 words  {m['family_gloss_over_8_pct']:5.1f}%"
+        "   <- each is 2-3 lines on a phone"
+    )
     print(f"  starting with grammar metadata {m['family_gloss_metadata_pct']:5.1f}%")
 
     section("USAGE NOTE — the expanded body in the reader sheet")
     print(f"  present               {m['usage_note_present_pct']:5.1f}%")
-    print(f"  words: median {m['usage_note_median_words']}  max {m['usage_note_max_words']}")
+    print(
+        f"  words: median {m['usage_note_median_words']}  max {m['usage_note_max_words']}"
+    )
 
 
 def compare(now: dict, before: dict, label: str) -> None:

@@ -18,9 +18,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import utils.set_keys  # noqa: F401
-
 from improve_common import ORIGINALS
+
+import utils.set_keys  # noqa: F401
 from utils.storage import get_supabase_client
 
 
@@ -43,10 +43,15 @@ def load_originals() -> dict[int, dict]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Revert words to original values")
-    parser.add_argument("--all", action="store_true", help="Revert every backed-up word")
-    parser.add_argument("--word-ids", type=int, nargs="+", help="Revert only these word IDs")
     parser.add_argument(
-        "--field", choices=["grammar_note", "english"],
+        "--all", action="store_true", help="Revert every backed-up word"
+    )
+    parser.add_argument(
+        "--word-ids", type=int, nargs="+", help="Revert only these word IDs"
+    )
+    parser.add_argument(
+        "--field",
+        choices=["grammar_note", "english"],
         help="Only revert this field (default: both)",
     )
     parser.add_argument("--dry-run", action="store_true", help="Show what would revert")
@@ -61,7 +66,11 @@ def main() -> int:
         print(f"No backup found at {ORIGINALS} — nothing to revert.")
         return 0
 
-    targets = originals if args.all else {w: originals[w] for w in args.word_ids if w in originals}
+    targets = (
+        originals
+        if args.all
+        else {w: originals[w] for w in args.word_ids if w in originals}
+    )
     fields = [args.field] if args.field else ["english", "grammar_note"]
 
     client = None if args.dry_run else get_supabase_client()
@@ -69,7 +78,7 @@ def main() -> int:
     for wid, row in targets.items():
         update = {f: row.get(f) for f in fields}
         print(f"  word {wid}: restore {update}")
-        if not args.dry_run:
+        if client is not None:
             client.table("sentence_words").update(update).eq("id", wid).execute()
         reverted += 1
 

@@ -48,7 +48,9 @@ def main() -> None:
     parser.add_argument("--input", help="Input JSONL file (default: latest in output/)")
     parser.add_argument("--output", help="Output PDF path")
     parser.add_argument("--pages", help="Page range (e.g. '1-10')")
-    parser.add_argument("--typ-only", action="store_true", help="Export JSON only, skip PDF compilation")
+    parser.add_argument(
+        "--typ-only", action="store_true", help="Export JSON only, skip PDF compilation"
+    )
     args = parser.parse_args()
 
     # Find input file
@@ -109,8 +111,10 @@ def main() -> None:
         # Fall back to CLI
         try:
             cmd = [
-                "typst", "compile",
-                "--input", f"data={json_path.relative_to(SCRIPT_DIR)}",
+                "typst",
+                "compile",
+                "--input",
+                f"data={json_path.relative_to(SCRIPT_DIR)}",
             ]
             if FONTS_DIR.exists():
                 cmd += ["--font-path", str(FONTS_DIR)]

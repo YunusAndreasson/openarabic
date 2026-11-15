@@ -35,10 +35,12 @@ class Verdict(BaseModel):
     root_id: int
     verdict: Literal["publish", "fix_root", "fix_senses", "skip"]
     correct_root: str | None = Field(
-        None, description="Arabic radicals separated by spaces, when verdict is fix_root"
+        None,
+        description="Arabic radicals separated by spaces, when verdict is fix_root",
     )
     bad_senses: list[str] = Field(
-        default_factory=list, description="Claimed senses that belong to a different word"
+        default_factory=list,
+        description="Claimed senses that belong to a different word",
     )
     confidence: float = Field(description="0.0-1.0")
     reason: str = Field(description="One sentence citing which evidence decided it")
@@ -106,13 +108,13 @@ def main() -> None:
         "--out",
         default=str(BASE / "verdicts.json"),
         help="write elsewhere when auditing, so an audit never overwrites the "
-             "verdicts build_ts publishes from",
+        "verdicts build_ts publishes from",
     )
     ap.add_argument(
         "--replace",
         action="store_true",
         help="overwrite the verdicts file instead of merging into it. Only for a "
-             "deliberate re-adjudication of everything.",
+        "deliberate re-adjudication of everything.",
     )
     args = ap.parse_args()
 
@@ -122,7 +124,10 @@ def main() -> None:
         + json.dumps(bundles, ensure_ascii=False, indent=1)
     )
     result = call_claude_cli(
-        [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}],
+        [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user},
+        ],
         response_model=Verdicts,
         model=os.environ.get("JUDGE_MODEL", "opus"),
     )
@@ -154,8 +159,8 @@ def main() -> None:
             model=os.environ.get("JUDGE_MODEL", "opus"),
         )
         if retry.get("success"):
-            extra = Verdicts.model_validate(retry["data"]).verdicts
-            verdicts.extend(v for v in extra if v.root_id in asked)
+            retried = Verdicts.model_validate(retry["data"]).verdicts
+            verdicts.extend(v for v in retried if v.root_id in asked)
 
     still = asked - {v.root_id for v in verdicts}
     if still:
@@ -173,15 +178,23 @@ def main() -> None:
     for v in verdicts:
         merged[v.root_id] = v.model_dump()
     out.write_text(
-        json.dumps(sorted(merged.values(), key=lambda v: v["root_id"]), ensure_ascii=False, indent=2),
+        json.dumps(
+            sorted(merged.values(), key=lambda v: v["root_id"]),
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
-    print(f"{len(verdicts)} new verdict(s); {len(merged)} total "
-          f"({kept} carried forward) -> {out}\n")
+    print(
+        f"{len(verdicts)} new verdict(s); {len(merged)} total "
+        f"({kept} carried forward) -> {out}\n"
+    )
     for v in sorted(verdicts, key=lambda v: v.verdict):
         extra = f" -> {v.correct_root}" if v.correct_root else ""
         extra += f" bad_senses={v.bad_senses}" if v.bad_senses else ""
-        print(f"  {v.root_id:6} {v.verdict:11}{extra}  ({v.confidence:.2f}) {v.reason[:90]}")
+        print(
+            f"  {v.root_id:6} {v.verdict:11}{extra}  ({v.confidence:.2f}) {v.reason[:90]}"
+        )
 
 
 if __name__ == "__main__":

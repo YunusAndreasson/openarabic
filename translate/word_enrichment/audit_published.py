@@ -55,16 +55,16 @@ def live_ids() -> set[int] | None:
     try:
         while True:
             url = f"{SUPABASE}/rest/v1/root_enrichment?select=root_id&order=root_id&limit=1000&offset={offset}"
-            req = urllib.request.Request(
+            req = urllib.request.Request(  # noqa: S310
                 url, headers={"apikey": ANON, "Authorization": f"Bearer {ANON}"}
             )
-            with urllib.request.urlopen(req, timeout=60) as resp:
+            with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
                 page = json.loads(resp.read())
             ids.update(r["root_id"] for r in page)
             if len(page) < 1000:
                 return ids
             offset += 1000
-    except Exception as exc:  # noqa: BLE001 — an unreadable table is reported, not fatal
+    except Exception as exc:
         print(f"  (could not read the live table: {exc})")
         return None
 
@@ -75,7 +75,7 @@ def main() -> int:
     failures = 0
 
     print("\nPART OF SPEECH (CAMeL, over the published set)")
-    pos = Counter()
+    pos: Counter[str] = Counter()
     function_words: list[dict] = []
     proper: list[dict] = []
     for rec in records:
@@ -87,11 +87,13 @@ def main() -> int:
         elif tag == "noun_prop":
             proper.append(rec)
     for tag, n in pos.most_common(8):
-        print(f"  {str(tag):16} {n:5}")
+        print(f"  {tag!s:16} {n:5}")
 
     print(f"\n  function words live   {len(function_words):5}   (must be 0)")
     for rec in function_words:
-        print(f"    ! {rec['root_id']} {rec['letters']} ({rec['meaning']}) → {rec['triliteral_root']}")
+        print(
+            f"    ! {rec['root_id']} {rec['letters']} ({rec['meaning']}) → {rec['triliteral_root']}"
+        )
     failures += len(function_words)
 
     # A name has no learner-useful etymology and any root a resolver finds for one
@@ -106,12 +108,16 @@ def main() -> int:
             for v in json.loads(verdicts_path.read_text(encoding="utf-8"))
         }
     unjudged = [r for r in proper if r["root_id"] not in verdicts]
-    print(f"  proper nouns live     {len(proper):5}   ({len(unjudged)} never adjudicated)")
+    print(
+        f"  proper nouns live     {len(proper):5}   ({len(unjudged)} never adjudicated)"
+    )
     for rec in proper:
         seen = verdicts.get(rec["root_id"], "NO VERDICT")
-        print(f"    {'!' if rec['root_id'] in {r['root_id'] for r in unjudged} else '·'} "
-              f"{rec['root_id']} {rec['letters']} ({rec['meaning']}) → "
-              f"{rec['triliteral_root']}  [{seen}]")
+        print(
+            f"    {'!' if rec['root_id'] in {r['root_id'] for r in unjudged} else '·'} "
+            f"{rec['root_id']} {rec['letters']} ({rec['meaning']}) → "
+            f"{rec['triliteral_root']}  [{seen}]"
+        )
     failures += len(unjudged)
 
     print("\nSTALE ROWS — live but no longer publishable")
@@ -121,11 +127,15 @@ def main() -> int:
         stale = live - should
         missing = should - live
         print(f"  live rows             {len(live):5}")
-        print(f"  stale (must delete)   {len(stale):5}   {sorted(stale) if stale else ''}")
+        print(
+            f"  stale (must delete)   {len(stale):5}   {sorted(stale) if stale else ''}"
+        )
         print(f"  not yet seeded        {len(missing):5}")
         failures += len(stale)
 
-    print("\nRESULT: " + ("OK" if failures == 0 else f"{failures} invariant failure(s)"))
+    print(
+        "\nRESULT: " + ("OK" if failures == 0 else f"{failures} invariant failure(s)")
+    )
     return 1 if failures else 0
 
 

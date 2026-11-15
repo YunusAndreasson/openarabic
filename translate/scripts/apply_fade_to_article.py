@@ -13,17 +13,17 @@ import io
 import logging
 import sys
 from pathlib import Path
+from typing import cast
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import utils.set_keys  # noqa: F401, E402
-
-from audio.combiner import create_multi_audio_with_delays  # noqa: E402
-from audio.storage import generate_audio_filename  # noqa: E402
-from data.config import BILINGUAL_AUDIO_PAUSE_MS  # noqa: E402
-from utils.config_common import get_storage_url  # noqa: E402
-from utils.responses_api import load_api_keys  # noqa: E402
-from utils.storage import get_supabase_client  # noqa: E402
+import utils.set_keys  # noqa: F401
+from audio.combiner import create_multi_audio_with_delays
+from audio.storage import generate_audio_filename
+from data.config import BILINGUAL_AUDIO_PAUSE_MS
+from utils.config_common import get_storage_url
+from utils.responses_api import load_api_keys
+from utils.storage import get_supabase_client
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -33,7 +33,9 @@ FADE_MS = 60
 
 def _download(filename: str) -> bytes | None:
     try:
-        return get_supabase_client().storage.from_("audio").download(filename)
+        return cast(
+            "bytes", get_supabase_client().storage.from_("audio").download(filename)
+        )
     except Exception as e:
         logger.warning(f"Failed to download {filename}: {e}")
         return None
@@ -133,8 +135,12 @@ def process_article(article_id: int) -> None:
         return
 
     logger.info("Rebuilding article-level audio...")
-    arabic_combined = create_multi_audio_with_delays(arabic_segments, delay_ms=BILINGUAL_AUDIO_PAUSE_MS)
-    bilingual_combined = create_multi_audio_with_delays(bilingual_segments, delay_ms=BILINGUAL_AUDIO_PAUSE_MS)
+    arabic_combined = create_multi_audio_with_delays(
+        arabic_segments, delay_ms=BILINGUAL_AUDIO_PAUSE_MS
+    )
+    bilingual_combined = create_multi_audio_with_delays(
+        bilingual_segments, delay_ms=BILINGUAL_AUDIO_PAUSE_MS
+    )
 
     ar_filename = _upload(arabic_combined)
     bi_filename = _upload(bilingual_combined)
@@ -146,7 +152,9 @@ def process_article(article_id: int) -> None:
         }
     ).eq("id", article_id).execute()
 
-    logger.info(f"Article {article_id} audio updated. Arabic: {len(arabic_combined)} bytes, Bilingual: {len(bilingual_combined)} bytes")
+    logger.info(
+        f"Article {article_id} audio updated. Arabic: {len(arabic_combined)} bytes, Bilingual: {len(bilingual_combined)} bytes"
+    )
 
 
 if __name__ == "__main__":

@@ -20,8 +20,6 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import utils.set_keys  # noqa: F401  (loads SUPABASE_URL / SUPABASE_KEY etc.)
-
 from improve_common import (
     INBOX,
     OUTBOX,
@@ -29,6 +27,8 @@ from improve_common import (
     save_checkpoint,
     write_json,
 )
+
+import utils.set_keys  # noqa: F401  (loads SUPABASE_URL / SUPABASE_KEY etc.)
 from utils.storage import get_supabase_client
 
 
@@ -87,9 +87,13 @@ def fetch_batch(cursor: int, count: int) -> tuple[list[dict], int]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Fetch next batch to improve")
-    parser.add_argument("--count", type=int, help="Sentences per batch (overrides checkpoint)")
     parser.add_argument(
-        "--fields", nargs="+", choices=["grammar_note", "english"],
+        "--count", type=int, help="Sentences per batch (overrides checkpoint)"
+    )
+    parser.add_argument(
+        "--fields",
+        nargs="+",
+        choices=["grammar_note", "english"],
         help="Fields to improve (overrides checkpoint; default grammar_note)",
     )
     parser.add_argument("--reset", action="store_true", help="Reset cursor to the top")
@@ -135,10 +139,16 @@ def main() -> int:
         f"Fetched {len(sentences)} sentences (id {sentences[0]['sentence_id']}..{max_id}), "
         f"{word_count} words. Fields: {', '.join(fields)}."
     )
-    print(f"Progress so far: {cp['sentences_done']} sentences, {cp['words_changed']} words changed.")
+    print(
+        f"Progress so far: {cp['sentences_done']} sentences, {cp['words_changed']} words changed."
+    )
     print(f"\nInbox: {INBOX}")
-    print("Spec:  scripts/improve_prompt.md  ← follow it (plain language, NO Arabic letters)")
-    print("Next: Claude reads inbox.json + the spec, writes outbox.json, then run improve_apply.py")
+    print(
+        "Spec:  scripts/improve_prompt.md  ← follow it (plain language, NO Arabic letters)"
+    )
+    print(
+        "Next: Claude reads inbox.json + the spec, writes outbox.json, then run improve_apply.py"
+    )
     return 0
 
 

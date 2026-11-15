@@ -6,7 +6,6 @@ Processes files in parallel for speed.
 """
 
 import os
-import re
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -37,7 +36,11 @@ def translate_file(arabic_path: Path) -> tuple[Path, bool, str]:
     arabic_text = arabic_path.read_text(encoding="utf-8")
     prompt = PROMPT_TEMPLATE.format(text=arabic_text)
 
-    env = {k: v for k, v in os.environ.items() if k not in ("CLAUDE_CODE_ENTRYPOINT", "CLAUDECODE")}
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if k not in ("CLAUDE_CODE_ENTRYPOINT", "CLAUDECODE")
+    }
 
     try:
         result = subprocess.run(
@@ -64,7 +67,7 @@ def translate_file(arabic_path: Path) -> tuple[Path, bool, str]:
         return out_path, False, str(e)
 
 
-def main():
+def main() -> None:
     files = sorted(INBOX_DIR.glob("*/*.txt"))
     print(f"Found {len(files)} files to translate")
     print(f"Output: {OUTPUT_DIR}/\n")
@@ -79,7 +82,7 @@ def main():
         for future in as_completed(futures):
             src = futures[future]
             rel = src.relative_to(INBOX_DIR)
-            out_path, success, msg = future.result()
+            _out_path, success, msg = future.result()
             done += 1
             if success:
                 status = "✓" if msg == "ok" else "⊘"

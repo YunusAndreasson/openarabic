@@ -24,9 +24,9 @@ import signal
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from tqdm import tqdm
 
@@ -64,7 +64,7 @@ signal.signal(signal.SIGINT, _handle_sigint)
 def load_source() -> list[dict]:
     """Load the source Arabic JSON."""
     with open(INPUT_FILE, encoding="utf-8") as f:
-        return json.load(f)
+        return cast("list[dict]", json.load(f))
 
 
 def output_file_for(model: str) -> Path:
@@ -116,7 +116,7 @@ def save_progress(model: str, last_page: int) -> None:
 
     progress[model] = {
         "last_completed_page": last_page,
-        "updated": datetime.now(timezone.utc).isoformat(),
+        "updated": datetime.now(UTC).isoformat(),
     }
 
     tmp = PROGRESS_FILE.with_suffix(".tmp")
@@ -243,8 +243,8 @@ def build_prompt(page_data: dict) -> str:
 
     return f"""Translate this page from Al-Fawaid by Ibn al-Qayyim al-Jawziyya.
 
-<arabic_text page="{page_data['page']}" vol_page="{page_data['vol_page']}">
-{page_data['text']}
+<arabic_text page="{page_data["page"]}" vol_page="{page_data["vol_page"]}">
+{page_data["text"]}
 </arabic_text>
 
 <headings>
@@ -288,14 +288,14 @@ OUTPUT_SCHEMA = {
 def _extract_json(text: str) -> dict | None:
     """Extract JSON from text that may contain markdown fencing."""
     try:
-        return json.loads(text)
+        return cast("dict | None", json.loads(text))
     except (json.JSONDecodeError, ValueError):
         pass
 
     fenced = re.search(r"```(?:json)?\s*\n(.*?)\n```", text, re.DOTALL)
     if fenced:
         try:
-            return json.loads(fenced.group(1))
+            return cast("dict | None", json.loads(fenced.group(1)))
         except (json.JSONDecodeError, ValueError):
             pass
 
@@ -311,7 +311,7 @@ def _extract_json(text: str) -> dict | None:
             depth -= 1
             if depth == 0:
                 try:
-                    return json.loads(text[start : i + 1])
+                    return cast("dict | None", json.loads(text[start : i + 1]))
                 except (json.JSONDecodeError, ValueError):
                     return None
     return None
@@ -325,12 +325,17 @@ def call_claude(prompt: str, model: str) -> dict | None:
     cmd = [
         "claude",
         "--print",
-        "--output-format", "json",
-        "--model", model,
-        "--fallback-model", "sonnet",
+        "--output-format",
+        "json",
+        "--model",
+        model,
+        "--fallback-model",
+        "sonnet",
         "--no-session-persistence",
-        "--system-prompt", _SYSTEM_PROMPT,
-        "--json-schema", json.dumps(OUTPUT_SCHEMA),
+        "--system-prompt",
+        _SYSTEM_PROMPT,
+        "--json-schema",
+        json.dumps(OUTPUT_SCHEMA),
     ]
 
     env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
@@ -438,7 +443,9 @@ def validate_coverage(source_text: str, result: dict) -> list[str]:
 
     # Count Arabic characters in source vs translation segments
     source_arabic_chars = len(_ARABIC_LETTER_RE.findall(source_text))
-    translated_arabic = " ".join(s.get("arabic", "") for s in result.get("segments", []))
+    translated_arabic = " ".join(
+        s.get("arabic", "") for s in result.get("segments", [])
+    )
     translated_arabic_chars = len(_ARABIC_LETTER_RE.findall(translated_arabic))
 
     if source_arabic_chars == 0:
@@ -458,14 +465,20 @@ def validate_coverage(source_text: str, result: dict) -> list[str]:
         warnings.append("Source has headings but translation has none")
 
     # Check no empty segments
-    empty = [i for i, s in enumerate(result.get("segments", [])) if not s.get("english", "").strip()]
+    empty = [
+        i
+        for i, s in enumerate(result.get("segments", []))
+        if not s.get("english", "").strip()
+    ]
     if empty:
         warnings.append(f"Empty English in segments: {empty}")
 
     return warnings
 
 
-def translate_page(page_data: dict, model: str, *, dry_run: bool = False) -> dict | None:
+def translate_page(
+    page_data: dict, model: str, *, dry_run: bool = False
+) -> dict | None:
     """Translate a single page and return the enriched result."""
     prompt = build_prompt(page_data)
 
@@ -484,7 +497,7 @@ def translate_page(page_data: dict, model: str, *, dry_run: bool = False) -> dic
     result["page"] = page_data["page"]
     result["vol_page"] = page_data["vol_page"]
     result["model"] = model
-    result["timestamp"] = datetime.now(timezone.utc).isoformat()
+    result["timestamp"] = datetime.now(UTC).isoformat()
 
     # Validate content coverage before saving
     warnings = validate_coverage(page_data["text"], result)
@@ -511,13 +524,23 @@ def parse_page_range(pages_str: str, max_page: int) -> list[int]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Translate Al-Fawaid page by page")
     parser.add_argument(
-        "--model", default="sonnet", choices=["sonnet", "opus", "haiku"],
+        "--model",
+        default="sonnet",
+        choices=["sonnet", "opus", "haiku"],
         help="Claude model to use (default: sonnet)",
     )
-    parser.add_argument("--pages", help="Pages to translate (e.g. '1-10', '5', '66,91,104')")
-    parser.add_argument("--force", action="store_true", help="Re-translate pages even if already done")
-    parser.add_argument("--reset", action="store_true", help="Clear progress and start over")
-    parser.add_argument("--dry-run", action="store_true", help="Show prompt without calling Claude")
+    parser.add_argument(
+        "--pages", help="Pages to translate (e.g. '1-10', '5', '66,91,104')"
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Re-translate pages even if already done"
+    )
+    parser.add_argument(
+        "--reset", action="store_true", help="Clear progress and start over"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show prompt without calling Claude"
+    )
     args = parser.parse_args()
 
     source = load_source()
@@ -539,7 +562,11 @@ def main() -> None:
         log.info("Reset progress for model=%s", args.model)
         return
 
-    target_pages = parse_page_range(args.pages, max_page) if args.pages else list(range(1, max_page + 1))
+    target_pages = (
+        parse_page_range(args.pages, max_page)
+        if args.pages
+        else list(range(1, max_page + 1))
+    )
 
     if args.force and args.pages and not args.dry_run:
         # Remove old entries for forced pages so they get re-translated
@@ -565,7 +592,9 @@ def main() -> None:
         remaining = target_pages
 
     if not remaining:
-        log.info("All requested pages already translated. Use --reset or --force to redo.")
+        log.info(
+            "All requested pages already translated. Use --reset or --force to redo."
+        )
         return
 
     log.info("Translating %d pages with model=%s", len(remaining), args.model)
@@ -607,7 +636,9 @@ def main() -> None:
             continue
 
         n_segments = len(result.get("segments", []))
-        n_verses = sum(1 for s in result.get("segments", []) if s.get("type") == "quran_verse")
+        n_verses = sum(
+            1 for s in result.get("segments", []) if s.get("type") == "quran_verse"
+        )
 
         append_result(result, args.model)
         save_progress(args.model, page_num)

@@ -117,9 +117,7 @@ def _split_long_unit(unit: str, max_words: int) -> list[str]:
     for i in range(1, len(words)):
         word = words[i]
         # Match standalone conjunctions or words starting with wa-/fa- prefix
-        if re.match(r"^(ثم|ثُمَّ)$", word) or (
-            len(word) > 2 and re.match(r"^[وف]", word)
-        ):
+        if re.match(r"^(ثم|ثُمَّ)$", word) or (len(word) > 2 and re.match(r"^[وف]", word)):
             dist = abs(i - mid_idx)
             if dist < best_dist:
                 best_dist = dist

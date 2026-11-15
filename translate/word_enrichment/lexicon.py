@@ -39,8 +39,16 @@ _WS = re.compile(r"\s+")
 
 # Arabic verb form numbers → conventional roman labels (from itype).
 _FORM = {
-    "1": "I", "2": "II", "3": "III", "4": "IV", "5": "V",
-    "6": "VI", "7": "VII", "8": "VIII", "9": "IX", "10": "X",
+    "1": "I",
+    "2": "II",
+    "3": "III",
+    "4": "IV",
+    "5": "V",
+    "6": "VI",
+    "7": "VII",
+    "8": "VIII",
+    "9": "IX",
+    "10": "X",
 }
 
 
@@ -81,7 +89,7 @@ def _resolve_root(conn: sqlite3.Connection, word: str) -> tuple[str, str] | None
     # 1) exact vocalised or bare headword/word match in `entry`.
     for col in ("headword", "word", "bareword"):
         row = cur.execute(
-            f"SELECT root, broot FROM entry WHERE {col}=? AND root!='' LIMIT 1",
+            f"SELECT root, broot FROM entry WHERE {col}=? AND root!='' LIMIT 1",  # noqa: S608
             (word if col != "bareword" else bw,),
         ).fetchone()
         if row and row[0]:
@@ -105,7 +113,17 @@ def _resolve_root(conn: sqlite3.Connection, word: str) -> tuple[str, str] | None
 # rather than imported from arramooz so this module stays the lower layer; the
 # rules are the same (hamza carriers -> alef, maqsura -> yaa, marbuta -> haa).
 _ROOT_FOLD = str.maketrans(
-    {"أ": "ا", "إ": "ا", "آ": "ا", "ء": "ا", "ؤ": "ا", "ئ": "ا", "ٱ": "ا", "ى": "ي", "ة": "ه"}
+    {
+        "أ": "ا",
+        "إ": "ا",
+        "آ": "ا",
+        "ء": "ا",
+        "ؤ": "ا",
+        "ئ": "ا",
+        "ٱ": "ا",
+        "ى": "ي",
+        "ة": "ه",
+    }
 )
 
 
@@ -114,7 +132,9 @@ def _fold(text: str) -> str:
     return bw[:-1] if len(bw) >= 2 and bw[-1] == bw[-2] else bw
 
 
-def resolve_root_letters(conn: sqlite3.Connection, arabic_root: str) -> tuple[str, str] | None:
+def resolve_root_letters(
+    conn: sqlite3.Connection, arabic_root: str
+) -> tuple[str, str] | None:
     """(root, broot) for a root given by its Arabic letters, e.g. 'ش ط ن'.
 
     Lets a caller bypass `_resolve_root`, which infers the root from the surface
@@ -135,7 +155,9 @@ def resolve_root_letters(conn: sqlite3.Connection, arabic_root: str) -> tuple[st
         return row[0], row[1]
     # Orthography differs between sources (ن ش أ vs نشا), so fall back to a
     # folded scan over Lane's ~5k distinct roots — cheap and exact enough.
-    for root, broot in cur.execute("SELECT DISTINCT root, broot FROM entry WHERE root!=''"):
+    for root, broot in cur.execute(
+        "SELECT DISTINCT root, broot FROM entry WHERE root!=''"
+    ):
         if _fold(root) == target:
             return root, broot
     return None
@@ -158,7 +180,9 @@ def lookup(
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     try:
         resolved = (
-            resolve_root_letters(conn, root_hint) if root_hint else _resolve_root(conn, word)
+            resolve_root_letters(conn, root_hint)
+            if root_hint
+            else _resolve_root(conn, word)
         )
         if not resolved:
             return None
@@ -178,7 +202,9 @@ def lookup(
         for headword, itype, xml in rows:
             if headword and headword not in seen:
                 seen.add(headword)
-                derived.append({"word": headword, "form": _FORM.get(str(itype or ""), "")})
+                derived.append(
+                    {"word": headword, "form": _FORM.get(str(itype or ""), "")}
+                )
             piece = _xml_to_text(xml)
             if piece:
                 chunks.append(piece)
@@ -190,7 +216,9 @@ def lookup(
         pos = [{"headword": h, "pos": p} for h, p in pos_rows if h]
 
         text = _WS.sub(" ", " ".join(chunks)).strip()[:text_budget]
-        return Grounding(root=root, broot=broot, derived_forms=derived, pos=pos, text=text)
+        return Grounding(
+            root=root, broot=broot, derived_forms=derived, pos=pos, text=text
+        )
     finally:
         conn.close()
 

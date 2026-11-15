@@ -64,9 +64,7 @@ def _pool_key(letters: str) -> str:
     return match_key(letters)
 
 
-def normalize(
-    rec: dict, root_key: str = "", pool_keys: set[str] | None = None
-) -> tuple[dict, list[str]]:
+def normalize(rec: dict, pool_keys: set[str] | None = None) -> tuple[dict, list[str]]:
     """(record with mechanical fixes applied, reasons it is still unusable).
 
     `pool_keys` is the closure gate, and it is the reason the rest of this file
@@ -120,21 +118,22 @@ def normalize(
     note = _clean(out.get("usage_note", ""))
     sentences = [part for part in re.split(r"(?<=[.!?])\s+", note) if part]
     if len(sentences) > MAX_NOTE_SENTENCES or len(note) > MAX_NOTE_CHARS:
-        kept: list[str] = []
+        kept_sentences: list[str] = []
         for sentence in sentences[:MAX_NOTE_SENTENCES]:
-            candidate = " ".join([*kept, sentence])
-            if kept and len(candidate) > MAX_NOTE_CHARS:
+            candidate = " ".join([*kept_sentences, sentence])
+            if kept_sentences and len(candidate) > MAX_NOTE_CHARS:
                 break
-            kept.append(sentence)
-        note = " ".join(kept)
+            kept_sentences.append(sentence)
+        note = " ".join(kept_sentences)
 
     if len(note.split()) < 10:
         problems.append("usage_note is too short to explain anything")
     if len(note) > MAX_NOTE_CHARS:
         # A single sentence longer than the entire budget. Nothing to trim back
         # to, so this one really is a misread of the task.
-        problems.append(f"usage_note is {len(note)} chars in one sentence, "
-                        f"cap is {MAX_NOTE_CHARS}")
+        problems.append(
+            f"usage_note is {len(note)} chars in one sentence, cap is {MAX_NOTE_CHARS}"
+        )
     if _WORD_SCOPED.search(note):
         problems.append("usage_note is written about one headword, not the root")
     out["usage_note"] = note
@@ -190,15 +189,15 @@ def normalize(
             dropped.append(f"{letters!r} gloss is {len(gloss.split())} words")
             continue
         seen.add(key)
-        kept = {"letters": letters, "transliteration": translit, "meaning": gloss}
+        entry = {"letters": letters, "transliteration": translit, "meaning": gloss}
         # Carried through, not re-derived: `wazn` and `root_id` are attached from
         # the pool row before normalisation and are what the panel renders and
         # links with. Rebuilding the member from three fields silently discarded
         # both.
         for extra in ("wazn", "root_id", "verb_form", "plural"):
             if extra in member:
-                kept[extra] = member[extra]
-        family.append(kept)
+                entry[extra] = member[extra]
+        family.append(entry)
 
     if len(family) < MIN_FAMILY:
         problems.append(

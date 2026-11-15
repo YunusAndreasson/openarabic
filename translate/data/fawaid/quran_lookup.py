@@ -17,6 +17,7 @@ import urllib.request
 from difflib import SequenceMatcher
 from functools import lru_cache
 from pathlib import Path
+from typing import cast
 
 CACHE_FILE = Path(__file__).parent / "sahih_international.json"
 API_URL = "https://api.alquran.cloud/v1/quran/en.sahih"
@@ -27,9 +28,9 @@ ARABIC_API_URL = "https://api.alquran.cloud/v1/quran/quran-uthmani"
 
 def _download_json(url: str) -> dict:
     """Download JSON from a URL."""
-    req = urllib.request.Request(url, headers={"User-Agent": "OpenArabic/1.0"})
-    resp = urllib.request.urlopen(req, timeout=30)
-    return json.loads(resp.read())
+    req = urllib.request.Request(url, headers={"User-Agent": "OpenArabic/1.0"})  # noqa: S310
+    resp = urllib.request.urlopen(req, timeout=30)  # noqa: S310
+    return cast("dict", json.loads(resp.read()))
 
 
 def _extract_verses(data: dict) -> dict[str, str]:
@@ -45,7 +46,7 @@ def _load_or_download(cache_path: Path, api_url: str, label: str) -> dict[str, s
     """Load from cache or download from API."""
     if cache_path.exists():
         with open(cache_path, encoding="utf-8") as f:
-            return json.load(f)
+            return cast("dict[str, str]", json.load(f))
 
     print(f"Downloading {label} from {api_url}...")
     data = _download_json(api_url)
@@ -54,7 +55,8 @@ def _load_or_download(cache_path: Path, api_url: str, label: str) -> dict[str, s
 
     verses = _extract_verses(data)
     cache_path.write_text(
-        json.dumps(verses, ensure_ascii=False, indent=0), encoding="utf-8",
+        json.dumps(verses, ensure_ascii=False, indent=0),
+        encoding="utf-8",
     )
     print(f"Downloaded {len(verses)} verses, cached to {cache_path}")
     return verses

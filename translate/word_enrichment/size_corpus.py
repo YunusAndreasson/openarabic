@@ -41,10 +41,10 @@ def all_roots() -> list[dict]:
             f"{SUPABASE}/rest/v1/roots?select=id,letters,meaning"
             f"&order=id&limit={page}&offset={offset}"
         )
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # noqa: S310
             url, headers={"apikey": ANON, "Authorization": f"Bearer {ANON}"}
         )
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
             batch = json.loads(resp.read())
         if not batch:
             break
@@ -111,7 +111,14 @@ def main() -> None:
 
     total = len(words)
     print()
-    for k in ("corroborated", "arramooz-alone", "camel-strong", "weak", "foreign", "no-root"):
+    for k in (
+        "corroborated",
+        "arramooz-alone",
+        "camel-strong",
+        "weak",
+        "foreign",
+        "no-root",
+    ):
         n = tally[k]
         print(f"  {k:14} {n:6}  {100 * n / total:5.1f}%")
 

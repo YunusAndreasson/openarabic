@@ -9,11 +9,12 @@ Run from translate/:  uv run python -m word_enrichment.pick_targets --count 20
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
+import urllib.request
 from pathlib import Path
 
 from word_enrichment.build_ts import ANON, SUPABASE
-import urllib.request
 
 BASE = Path(__file__).resolve().parent
 
@@ -26,17 +27,17 @@ def _processed() -> set[int]:
             continue
         for line in path.read_text(encoding="utf-8").splitlines():
             if line.strip():
-                try:
+                with contextlib.suppress(json.JSONDecodeError, KeyError):
                     done.add(json.loads(line)["root_id"])
-                except (json.JSONDecodeError, KeyError):
-                    pass
     return done
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--count", type=int, default=20)
-    ap.add_argument("--offset", type=int, default=0, help="skip this many eligible rows first")
+    ap.add_argument(
+        "--offset", type=int, default=0, help="skip this many eligible rows first"
+    )
     ap.add_argument("--out", default=str(BASE / "targets_bench.json"))
     args = ap.parse_args()
 
@@ -48,10 +49,10 @@ def main() -> None:
             f"{SUPABASE}/rest/v1/roots?select=id,letters,meaning"
             f"&order=id&limit={page}&offset={offset}"
         )
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # noqa: S310
             url, headers={"apikey": ANON, "Authorization": f"Bearer {ANON}"}
         )
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
             rows = json.loads(resp.read())
         if not rows:
             break

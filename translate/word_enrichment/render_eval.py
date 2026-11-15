@@ -188,36 +188,36 @@ apply('all');
 """
 
 
-def esc(text) -> str:
+def esc(text: object) -> str:
     return html.escape(str(text or ""))
 
 
 def member_html(m: dict) -> str:
     flags = []
     if m.get("_new_word"):
-        flags.append(('new', 'word swapped in'))
+        flags.append(("new", "word swapped in"))
     elif m.get("_gloss_changed"):
-        flags.append(('new', 'gloss rewritten'))
+        flags.append(("new", "gloss rewritten"))
     if m.get("verbatim_lane"):
-        flags.append(('bad', "Lane's wording unchanged"))
+        flags.append(("bad", "Lane's wording unchanged"))
     if m.get("duplicate_link"):
-        flags.append(('bad', 'same link as another row'))
+        flags.append(("bad", "same link as another row"))
     if m.get("repeated_gloss"):
-        flags.append(('', 'gloss repeats'))
+        flags.append(("", "gloss repeats"))
     if m.get("no_wazn"):
-        flags.append(('mute', 'no pattern'))
+        flags.append(("mute", "no pattern"))
     if m.get("unlinked"):
-        flags.append(('mute', 'not in dictionary'))
+        flags.append(("mute", "not in dictionary"))
 
     sources = []
     if m.get("camel_gloss"):
-        sources.append(f'<span class="lbl">modern</span> {esc(m["camel_gloss"].replace("_", " ").replace(";", ", "))}')
+        sources.append(
+            f'<span class="lbl">modern</span> {esc(m["camel_gloss"].replace("_", " ").replace(";", ", "))}'
+        )
     if m.get("lane_gloss"):
         sources.append(f'<span class="lbl">Lane</span> {esc(m["lane_gloss"])}')
 
-    flag_html = "".join(
-        f'<span class="flag {k}">{esc(v)}</span>' for k, v in flags
-    )
+    flag_html = "".join(f'<span class="flag {k}">{esc(v)}</span>' for k, v in flags)
     source_html = " &nbsp;&middot;&nbsp; ".join(sources)
     morph = []
     if m.get("wazn"):
@@ -230,14 +230,14 @@ def member_html(m: dict) -> str:
 
     return f"""<div class="member">
   <div class="mtop">
-    <span class="arabic">{esc(m.get('letters'))}</span>
-    <span class="mtranslit">{esc(m.get('transliteration'))}</span>
-    <span class="gloss">{esc(m.get('meaning'))}</span>
+    <span class="arabic">{esc(m.get("letters"))}</span>
+    <span class="mtranslit">{esc(m.get("transliteration"))}</span>
+    <span class="gloss">{esc(m.get("meaning"))}</span>
     {wazn_html}
   </div>
-  {f'<div class="was"><b>was</b> {esc(m["_was"])}</div>' if m.get("_was") else ''}
-  {f'<div class="sources">{source_html}</div>' if sources else ''}
-  {f'<div class="flags">{flag_html}</div>' if flags else ''}
+  {f'<div class="was"><b>was</b> {esc(m["_was"])}</div>' if m.get("_was") else ""}
+  {f'<div class="sources">{source_html}</div>' if sources else ""}
+  {f'<div class="flags">{flag_html}</div>' if flags else ""}
 </div>"""
 
 
@@ -259,17 +259,17 @@ def card_html(r: dict) -> str:
         flags.append("judge-revise")
 
     reason = v.get("reason", "")
-    return f"""<article class="root" data-flags="{esc(' '.join(sorted(set(flags))))}">
+    return f"""<article class="root" data-flags="{esc(" ".join(sorted(set(flags))))}">
   <div class="rhead">
-    <span class="radicals">{esc(r.get('triliteral_root'))}</span>
-    <span class="rtranslit">{esc(r.get('root_transliteration'))}</span>
-    <span class="rmeaning">{esc(r.get('root_meaning'))}</span>
-    <span class="rmeta">{r.get('headword_count', 0)} headwords · {r.get('linked', 0)}/5 linked · pool {r.get('pool_size', 0)}</span>
+    <span class="radicals">{esc(r.get("triliteral_root"))}</span>
+    <span class="rtranslit">{esc(r.get("root_transliteration"))}</span>
+    <span class="rmeaning">{esc(r.get("root_meaning"))}</span>
+    <span class="rmeta">{r.get("headword_count", 0)} headwords · {r.get("linked", 0)}/5 linked · pool {r.get("pool_size", 0)}</span>
     <span class="verdict {esc(verdict)}">{esc(verdict)}</span>
   </div>
-  <p class="note">{esc(r.get('usage_note'))}</p>
-  {f'<div class="reason"><b>Judge</b> — {esc(reason)}</div>' if reason else ''}
-  {''.join(member_html(m) for m in r.get('members', []))}
+  <p class="note">{esc(r.get("usage_note"))}</p>
+  {f'<div class="reason"><b>Judge</b> — {esc(reason)}</div>' if reason else ""}
+  {"".join(member_html(m) for m in r.get("members", []))}
 </article>"""
 
 
@@ -277,19 +277,23 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default=str(BASE / "golden_eval.json"))
     ap.add_argument("--out", required=True)
-    ap.add_argument("--baseline", default=None,
-                    help="a previous batch's .jsonl; changed rows get marked")
+    ap.add_argument(
+        "--baseline",
+        default=None,
+        help="a previous batch's .jsonl; changed rows get marked",
+    )
     args = ap.parse_args()
 
     records = json.loads(Path(args.data).read_text(encoding="utf-8"))
 
     if args.baseline:
         prior = {}
-        for line in Path(args.baseline).open(encoding="utf-8"):
+        for line in Path(args.baseline).read_text(encoding="utf-8").splitlines():
             if line.strip():
                 rec = json.loads(line)
-                prior[rec["root_key"]] = {m["letters"]: m["meaning"]
-                                          for m in rec.get("word_family", [])}
+                prior[rec["root_key"]] = {
+                    m["letters"]: m["meaning"] for m in rec.get("word_family", [])
+                }
         for r in records:
             before = prior.get(r["root_key"], {})
             for m in r.get("members", []):
@@ -299,9 +303,15 @@ def main() -> int:
                 elif was != m.get("meaning"):
                     m["_gloss_changed"] = True
                     m["_was"] = was
-    tally = Counter((r.get("verdict") or {}).get("verdict", "ungraded") for r in records)
-    unfaithful = sum(1 for r in records for m in (r.get("verdict") or {}).get("members", [])
-                     if not m.get("faithful", True))
+    tally = Counter(
+        (r.get("verdict") or {}).get("verdict", "ungraded") for r in records
+    )
+    unfaithful = sum(
+        1
+        for r in records
+        for m in (r.get("verdict") or {}).get("members", [])
+        if not m.get("faithful", True)
+    )
     dup = sum(1 for r in records if r.get("any_duplicate_link"))
     verbatim = sum(1 for r in records if r.get("any_verbatim_lane"))
     dead = sum(1 for r in records if r.get("dead_panel"))
@@ -316,14 +326,19 @@ def main() -> int:
         ("duplicate", f"Duplicate link ({dup})"),
         ("dead", f"No linkable row ({dead})"),
     ]
-    changed_panels = sum(1 for r in records
-                         if any(m.get("_gloss_changed") or m.get("_new_word")
-                                for m in r.get("members", [])))
+    changed_panels = sum(
+        1
+        for r in records
+        if any(
+            m.get("_gloss_changed") or m.get("_new_word") for m in r.get("members", [])
+        )
+    )
     if changed_panels:
         filters.insert(1, ("changed", f"Changed since v1 ({changed_panels})"))
     chips = "".join(
         f'<button class="chip" data-filter="{esc(k)}" aria-pressed="{"true" if k == "all" else "false"}">{esc(lab)}</button>'
-        for k, lab in filters)
+        for k, lab in filters
+    )
 
     page = f"""<title>Golden 40 Root Review</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -340,9 +355,9 @@ def main() -> int:
 </header>
 
 <div class="summary">
-  <div class="stat ok"><span class="n">{tally.get('publish', 0)}</span><span class="k">publish</span></div>
-  <div class="stat warn"><span class="n">{tally.get('revise', 0)}</span><span class="k">revise</span></div>
-  <div class="stat bad"><span class="n">{tally.get('skip', 0)}</span><span class="k">skip</span></div>
+  <div class="stat ok"><span class="n">{tally.get("publish", 0)}</span><span class="k">publish</span></div>
+  <div class="stat warn"><span class="n">{tally.get("revise", 0)}</span><span class="k">revise</span></div>
+  <div class="stat bad"><span class="n">{tally.get("skip", 0)}</span><span class="k">skip</span></div>
   <div class="stat"><span class="n">{unfaithful}</span><span class="k">unfaithful glosses</span></div>
   <div class="stat"><span class="n">{linked}<span style="font-size:14px;color:var(--ink-faint)">/{total_members}</span></span><span class="k">rows that link</span></div>
   <div class="stat"><span class="n">{verbatim}</span><span class="k">kept Lane's wording</span></div>
@@ -351,7 +366,7 @@ def main() -> int:
 <div class="filters">{chips}</div>
 <p class="rmeta" style="margin:0 0 18px"><span id="shown">{len(records)}</span> shown</p>
 
-{''.join(card_html(r) for r in records)}
+{"".join(card_html(r) for r in records)}
 
 <footer>Generated by DeepSeek via OpenRouter at reasoning=off, $0.08 for all forty.
 Arabic forms are selected from Lane's Lexicon and the CAMeL morphological database, never written by the model.

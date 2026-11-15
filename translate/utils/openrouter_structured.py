@@ -16,7 +16,6 @@ pipeline depends on it and it has no structured-output path.
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 from typing import Any
@@ -95,8 +94,11 @@ def call_openrouter(
         # a distinct setting, because omitting this block entirely leaves the
         # PROVIDER's default in force, which for a reasoning model means on. The
         # cost probe needs to compare against genuinely-off, not against default.
-        payload["reasoning"] = ({"enabled": False} if reasoning_effort == "none"
-                                else {"effort": reasoning_effort})
+        payload["reasoning"] = (
+            {"enabled": False}
+            if reasoning_effort == "none"
+            else {"effort": reasoning_effort}
+        )
 
     try:
         resp = requests.post(
@@ -112,19 +114,29 @@ def call_openrouter(
         )
         resp.raise_for_status()
         body = resp.json()
-    except Exception as exc:  # noqa: BLE001 — the caller records and moves on
+    except Exception as exc:
         logger.error(f"OpenRouter call failed: {exc}")
         return {"data": {}, "success": False, "error": str(exc)}
 
     usage = _usage_of(body)
     if body.get("error"):
-        return {"data": {}, "success": False, "error": str(body["error"]), "usage": usage}
+        return {
+            "data": {},
+            "success": False,
+            "error": str(body["error"]),
+            "usage": usage,
+        }
 
     try:
         choice = body["choices"][0]
         content = choice["message"].get("content")
     except (KeyError, IndexError) as exc:
-        return {"data": {}, "success": False, "error": f"bad response shape: {exc}", "usage": usage}
+        return {
+            "data": {},
+            "success": False,
+            "error": f"bad response shape: {exc}",
+            "usage": usage,
+        }
 
     # A reasoning model spends `max_tokens` on its reasoning trace FIRST, so a
     # ceiling that comfortably fits the record still truncates before any content
@@ -133,12 +145,18 @@ def call_openrouter(
     # ~500-token record. Report it as what it is rather than letting a null reach
     # the JSON parser as "expected str, got NoneType".
     if not content:
-        why = choice.get("native_finish_reason") or choice.get("finish_reason") or "unknown"
+        why = (
+            choice.get("native_finish_reason")
+            or choice.get("finish_reason")
+            or "unknown"
+        )
         reasoned = len(choice["message"].get("reasoning") or "")
         return {
-            "data": {}, "success": False, "usage": usage,
+            "data": {},
+            "success": False,
+            "usage": usage,
             "error": f"empty content (finish_reason={why}, reasoning={reasoned} chars) "
-                     f"— raise max_tokens or lower reasoning effort",
+            f"— raise max_tokens or lower reasoning effort",
         }
 
     if response_model is None:
@@ -151,7 +169,7 @@ def call_openrouter(
     try:
         parsed = _extract_json(content)
         validated = response_model.model_validate(parsed)
-    except Exception as exc:  # noqa: BLE001 — a malformed record is a failed call
+    except Exception as exc:
         logger.error(f"OpenRouter structured output did not validate: {exc}")
         return {"data": {}, "success": False, "error": f"schema: {exc}", "usage": usage}
 

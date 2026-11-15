@@ -21,8 +21,8 @@ from __future__ import annotations
 import json
 import os
 import re
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
+from typing import Any, cast
 
 # Arabic script blocks: Arabic, Supplement, Extended-A, Presentation Forms A/B.
 _ARABIC_RE = re.compile(r"[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]")
@@ -35,6 +35,7 @@ def contains_arabic(text: Any) -> bool:
     letters), so apply uses this as a hard guard before writing.
     """
     return bool(text) and isinstance(text, str) and bool(_ARABIC_RE.search(text))
+
 
 # grammar_improve/ lives next to translate/scripts/ -> translate/grammar_improve/
 _TRANSLATE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -67,7 +68,7 @@ DEFAULT_CHECKPOINT: dict[str, Any] = {
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def ensure_dirs() -> None:
@@ -103,7 +104,7 @@ def load_checkpoint() -> dict[str, Any]:
         cp["created_at"] = now_iso()
         cp["updated_at"] = now_iso()
         write_json(CHECKPOINT, cp)
-    return cp
+    return cast("dict[str, Any]", cp)
 
 
 def save_checkpoint(cp: dict[str, Any]) -> None:

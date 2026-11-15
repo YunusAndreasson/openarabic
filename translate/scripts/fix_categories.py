@@ -1,7 +1,7 @@
 """One-time script to fix article categories that defaulted to aqeedah."""
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -9,7 +9,7 @@ from utils.responses_api import load_api_keys
 
 load_api_keys()
 
-from utils.storage import get_supabase_client, get_category_id
+from utils.storage import get_category_id, get_supabase_client  # noqa: E402
 
 client = get_supabase_client()
 

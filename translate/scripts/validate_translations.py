@@ -25,10 +25,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import utils.set_keys  # noqa: F401  (sets environment variables)
-
 from tqdm import tqdm
 
+import utils.set_keys  # noqa: F401  (sets environment variables)
 from data.validation_models import ValidationBatchResponse
 from utils.claude_cli import validate_words_batch
 from utils.validation import validate_with_retry
@@ -131,11 +130,7 @@ def validate_last_n_articles(n: int, verbose: bool = False) -> int:
 
     client = get_supabase_client()
     response = (
-        client.table("articles")
-        .select("id")
-        .order("id", desc=True)
-        .limit(n)
-        .execute()
+        client.table("articles").select("id").order("id", desc=True).limit(n).execute()
     )
 
     if not response.data:
@@ -144,7 +139,9 @@ def validate_last_n_articles(n: int, verbose: bool = False) -> int:
 
     # Reverse to process oldest first
     article_ids = [a["id"] for a in reversed(response.data)]
-    print(f"Validating last {len(article_ids)} articles (IDs {article_ids[0]}–{article_ids[-1]})")
+    print(
+        f"Validating last {len(article_ids)} articles (IDs {article_ids[0]}–{article_ids[-1]})"
+    )
 
     success_count = 0
     failed_count = 0

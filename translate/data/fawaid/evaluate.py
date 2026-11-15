@@ -79,9 +79,9 @@ def compute_metrics(translation: dict) -> dict:
 
 def print_page_comparison(page_num: int, models: dict[str, dict]) -> None:
     """Print side-by-side comparison for a single page."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"PAGE {page_num}")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     # Print headings
     for model_name, translation in models.items():
@@ -95,9 +95,9 @@ def print_page_comparison(page_num: int, models: dict[str, dict]) -> None:
     for model_name in models:
         print(f"  {model_name:<15}", end="")
     print()
-    print(f"  {'-'*25}", end="")
+    print(f"  {'-' * 25}", end="")
     for _ in models:
-        print(f"  {'-'*15}", end="")
+        print(f"  {'-' * 15}", end="")
     print()
 
     metrics_by_model = {}
@@ -118,7 +118,7 @@ def print_page_comparison(page_num: int, models: dict[str, dict]) -> None:
         print(f"  {label:<25}", end="")
         for model_name in models:
             val = metrics_by_model[model_name].get(key, "?")
-            print(f"  {str(val):<15}", end="")
+            print(f"  {val!s:<15}", end="")
         print()
 
     # Print first few segments side by side
@@ -134,7 +134,9 @@ def print_page_comparison(page_num: int, models: dict[str, dict]) -> None:
             print(f"  [{model_list[0]}]: {sa.get('english', '')[:120]}")
             print(f"  [{model_list[1]}]: {sb.get('english', '')[:120]}")
             if sa.get("type") == "quran_verse":
-                print(f"  Refs: {model_list[0]}={sa.get('reference','?')} | {model_list[1]}={sb.get('reference','?')}")
+                print(
+                    f"  Refs: {model_list[0]}={sa.get('reference', '?')} | {model_list[1]}={sb.get('reference', '?')}"
+                )
     elif len(model_list) == 1:
         segs = models[model_list[0]].get("segments", [])
         for i in range(min(5, len(segs))):
@@ -151,9 +153,9 @@ def print_page_comparison(page_num: int, models: dict[str, dict]) -> None:
 
 def print_summary(all_metrics: dict[str, list[dict]]) -> None:
     """Print aggregate summary across all pages."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("AGGREGATE SUMMARY")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     for model_name, metrics_list in all_metrics.items():
         if not metrics_list:
@@ -171,7 +173,9 @@ def print_summary(all_metrics: dict[str, list[dict]]) -> None:
         print(f"\n  {model_name} ({n} pages):")
         print(f"    Avg segments/page:     {avg_segs:.1f}")
         print(f"    Avg Quran verses/page: {avg_verses:.1f}")
-        print(f"    Verse ref accuracy:    {total_refs}/{total_verses} ({ref_pct:.0f}%)")
+        print(
+            f"    Verse ref accuracy:    {total_refs}/{total_verses} ({ref_pct:.0f}%)"
+        )
         print(f"    Avg [brackets]/page:   {avg_brackets:.1f}")
         print(f"    Avg English words/page:{avg_words:.0f}")
         print(f"    Avg word length:       {avg_wl:.2f} (lower = simpler vocabulary)")
@@ -203,7 +207,7 @@ def main() -> None:
         print(f"Loaded {len(all_translations[model])} pages for {model}")
 
     # Determine pages to compare
-    all_pages = set()
+    all_pages: set[int] = set()
     for translations in all_translations.values():
         all_pages.update(translations.keys())
 
@@ -225,11 +229,13 @@ def main() -> None:
     all_metrics: dict[str, list[dict]] = {m: [] for m in model_names}
 
     for page_num in pages_sorted:
-        models_for_page = {}
+        models_for_page: dict[str, dict] = {}
         for model in model_names:
             if page_num in all_translations[model]:
                 models_for_page[model] = all_translations[model][page_num]
-                all_metrics[model].append(compute_metrics(all_translations[model][page_num]))
+                all_metrics[model].append(
+                    compute_metrics(all_translations[model][page_num])
+                )
 
         if models_for_page:
             print_page_comparison(page_num, models_for_page)

@@ -212,7 +212,9 @@ def fetch_all_usul_pages(
             page_text = _extract_page_text(html)
             if page_text:
                 all_pages.append(page_text)
-            logger.info(f"Page {page}: {len(words)} words (total pages: {len(all_pages)})")
+            logger.info(
+                f"Page {page}: {len(words)} words (total pages: {len(all_pages)})"
+            )
         except requests.exceptions.HTTPError as e:
             if "404" in str(e):
                 logger.info(f"Page {page}: not found - stopping")

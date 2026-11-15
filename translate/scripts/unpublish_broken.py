@@ -4,8 +4,8 @@ These articles have wrong tashkeel/English/word_by_word for sentences at
 position 12+ due to the refinement step's conversation continuity bug.
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -13,14 +13,35 @@ import utils.set_keys  # noqa: F401 - sets environment variables
 from utils.config_common import get_supabase_client
 
 BROKEN_ARTICLE_IDS = [
-    466, 470,  # From pre-471 investigation
-    471, 473, 474, 475, 476, 477, 478,  # Feb 26-27
-    482, 483, 484, 486, 487, 489, 490, 491, 492,  # Feb 27-28
-    495, 496, 497, 498, 499, 500, 501,  # Feb 28+
+    466,
+    470,  # From pre-471 investigation
+    471,
+    473,
+    474,
+    475,
+    476,
+    477,
+    478,  # Feb 26-27
+    482,
+    483,
+    484,
+    486,
+    487,
+    489,
+    490,
+    491,
+    492,  # Feb 27-28
+    495,
+    496,
+    497,
+    498,
+    499,
+    500,
+    501,  # Feb 28+
 ]
 
 
-def main():
+def main() -> None:
     supabase = get_supabase_client()
 
     # First check current publish status
@@ -78,7 +99,9 @@ def main():
     )
 
     if verify.data:
-        print(f"\nWARNING: {len(verify.data)} articles still published: {[a['id'] for a in verify.data]}")
+        print(
+            f"\nWARNING: {len(verify.data)} articles still published: {[a['id'] for a in verify.data]}"
+        )
     else:
         print("Verified: all broken articles are now unpublished.")
 

@@ -37,7 +37,7 @@ BASE = Path(__file__).resolve().parent
 CAMEL_MIN_CONFIDENCE = 0.8
 
 
-def _grounded(lane_conn, root: str) -> str | None:
+def _grounded(lane_conn: sqlite3.Connection, root: str) -> str | None:
     """The spelling of `root` that Lane's actually resolves, or None.
 
     Arramooz stores roots folded — ة becomes ه and ى becomes ي — so جَنَّة is
@@ -55,7 +55,9 @@ def _grounded(lane_conn, root: str) -> str | None:
     return None
 
 
-def assign_root(letters: str, ar_conn, lane_conn) -> tuple[str | None, str]:
+def assign_root(
+    letters: str, ar_conn: sqlite3.Connection, lane_conn: sqlite3.Connection
+) -> tuple[str | None, str]:
     """(root, basis) under rule D. root is None when the entry must be skipped."""
     bare = arramooz.bareword(letters)
     camel = camel_roots.analyze(bare)
@@ -94,7 +96,11 @@ def assign_root(letters: str, ar_conn, lane_conn) -> tuple[str | None, str]:
         g = _grounded(lane_conn, r)
         if g:
             return g, "arramooz"
-    if camel and camel[0].confidence >= CAMEL_MIN_CONFIDENCE and "#" not in camel[0].letters:
+    if (
+        camel
+        and camel[0].confidence >= CAMEL_MIN_CONFIDENCE
+        and "#" not in camel[0].letters
+    ):
         g = _grounded(lane_conn, camel[0].letters)
         if g:
             return g, "camel-strong"
@@ -124,10 +130,10 @@ def main() -> None:
                 f"{SUPABASE}/rest/v1/roots?select=id,letters,meaning"
                 f"&order=id&limit={page}&offset={offset}"
             )
-            req = urllib.request.Request(
+            req = urllib.request.Request(  # noqa: S310
                 url, headers={"apikey": ANON, "Authorization": f"Bearer {ANON}"}
             )
-            with urllib.request.urlopen(req, timeout=60) as resp:
+            with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
                 rows = json.loads(resp.read())
             if not rows:
                 break
@@ -164,9 +170,9 @@ def main() -> None:
     )
     from collections import Counter
 
-    basis = Counter(t["_basis"] for t in picked)
+    bases = Counter(t["_basis"] for t in picked)
     print(f"{len(picked)} rooted target(s) -> {args.out}")
-    print(f"  basis: {dict(basis)}")
+    print(f"  basis: {dict(bases)}")
     print(f"  dropped before generation: {dropped}")
 
 

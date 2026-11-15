@@ -23,6 +23,7 @@ Run from translate/.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import sqlite3
 import time
@@ -49,10 +50,10 @@ def fetch_roots() -> list[dict]:
             f"{SUPABASE}/rest/v1/roots?select=id,letters,meaning"
             f"&order=id&limit={PAGE}&offset={offset}"
         )
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # noqa: S310
             url, headers={"apikey": ANON, "Authorization": f"Bearer {ANON}"}
         )
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
             page = json.loads(resp.read())
         rows.extend(page)
         if len(page) < PAGE:
@@ -78,10 +79,8 @@ def _ids(name: str) -> set[int]:
     ids: set[int] = set()
     for line in path.read_text(encoding="utf-8").splitlines():
         if line.strip():
-            try:
+            with contextlib.suppress(json.JSONDecodeError, KeyError):
                 ids.add(json.loads(line)["root_id"])
-            except (json.JSONDecodeError, KeyError):
-                pass
     return ids
 
 
@@ -122,36 +121,43 @@ def refresh(reclassify: bool = False) -> list[dict]:
     started = time.time()
     try:
         with tmp.open("w", encoding="utf-8") as fh:
-          for i, r in enumerate(rows, 1):
-            rid = r["id"]
-            cached = cache.get(rid)
-            if cached and "basis" in cached and cached.get("letters") == r["letters"]:
-                root_hint, basis = cached.get("root_hint"), cached["basis"]
-            else:
-                root_hint, basis = assign_root(r["letters"], ar_conn, lane_conn)
-                classified += 1
-            if not (r.get("meaning") or "").strip():
-                state = "no-gloss"
-            elif rid in status:
-                state = status[rid]
-            elif root_hint:
-                state = "eligible"
-            else:
-                state = f"dropped:{basis}"
-            rec = {
-                "root_id": rid,
-                "letters": r["letters"],
-                "meaning": r.get("meaning") or "",
-                "root_hint": root_hint,
-                "basis": basis,
-                "status": state,
-            }
-            ledger.append(rec)
-            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
-            if i % 1000 == 0:
-                rate = i / max(time.time() - started, 1e-6)
-                eta = (len(rows) - i) / rate / 60
-                print(f"  [{i}/{len(rows)}] {rate:.0f}/s  eta {eta:.1f} min", flush=True)
+            for i, r in enumerate(rows, 1):
+                rid = r["id"]
+                cached = cache.get(rid)
+                if (
+                    cached
+                    and "basis" in cached
+                    and cached.get("letters") == r["letters"]
+                ):
+                    root_hint, basis = cached.get("root_hint"), cached["basis"]
+                else:
+                    root_hint, basis = assign_root(r["letters"], ar_conn, lane_conn)
+                    classified += 1
+                if not (r.get("meaning") or "").strip():
+                    state = "no-gloss"
+                elif rid in status:
+                    state = status[rid]
+                elif root_hint:
+                    state = "eligible"
+                else:
+                    state = f"dropped:{basis}"
+                rec = {
+                    "root_id": rid,
+                    "letters": r["letters"],
+                    "meaning": r.get("meaning") or "",
+                    "root_hint": root_hint,
+                    "basis": basis,
+                    "status": state,
+                }
+                ledger.append(rec)
+                fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                if i % 1000 == 0:
+                    rate = i / max(time.time() - started, 1e-6)
+                    eta = (len(rows) - i) / rate / 60
+                    print(
+                        f"  [{i}/{len(rows)}] {rate:.0f}/s  eta {eta:.1f} min",
+                        flush=True,
+                    )
     finally:
         ar_conn.close()
         lane_conn.close()
@@ -188,8 +194,10 @@ def report(ledger: list[dict]) -> None:
         print(f"\n  of the {len(eligible)} remaining, root basis: {dict(by_basis)}")
         done = counts.get("published", 0)
         reachable = done + len(eligible)
-        print(f"  ceiling: {reachable} entries can ever carry an explanation "
-              f"({100 * reachable / total:.0f}% of the dictionary)")
+        print(
+            f"  ceiling: {reachable} entries can ever carry an explanation "
+            f"({100 * reachable / total:.0f}% of the dictionary)"
+        )
         print(f"  progress: {done}/{reachable} = {100 * done / reachable:.1f}%")
 
 
@@ -206,7 +214,9 @@ def pick(ledger: list[dict], count: int, out: Path) -> None:
         for rec in ledger
         if rec["status"] == "eligible"
     ][:count]
-    out.write_text(json.dumps(targets, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    out.write_text(
+        json.dumps(targets, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     print(f"\n{len(targets)} target(s) -> {out}")
     print(f"  basis: {dict(Counter(t['_basis'] for t in targets))}")
     if targets:
@@ -230,7 +240,9 @@ def pick_roots(ledger: list[dict], count: int, out: Path) -> None:
     groups: dict[str, list[dict]] = {}
     for rec in ledger:
         if rec["root_hint"]:
-            groups.setdefault(camel_roots.weak_fold(rec["root_hint"].replace(" ", "")), []).append(rec)
+            groups.setdefault(
+                camel_roots.weak_fold(rec["root_hint"].replace(" ", "")), []
+            ).append(rec)
 
     ranked = sorted(
         ((k, v) for k, v in groups.items() if k not in have),
@@ -244,14 +256,20 @@ def pick_roots(ledger: list[dict], count: int, out: Path) -> None:
             # for joining and is not the notation Lane's resolves.
             "root": rows[0]["root_hint"],
             "headword_count": len(rows),
-            "headwords": [{"letters": r["letters"], "meaning": r["meaning"]} for r in rows[:12]],
+            "headwords": [
+                {"letters": r["letters"], "meaning": r["meaning"]} for r in rows[:12]
+            ],
         }
         for k, rows in ranked
     ]
-    out.write_text(json.dumps(targets, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    out.write_text(
+        json.dumps(targets, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     reach = sum(t["headword_count"] for t in targets)
     print(f"\n{len(targets)} root target(s) -> {out}")
-    print(f"  they serve {reach:,} headwords ({100 * reach / len(ledger):.1f}% of the dictionary)")
+    print(
+        f"  they serve {reach:,} headwords ({100 * reach / len(ledger):.1f}% of the dictionary)"
+    )
     if targets:
         busiest = ", ".join(f"{t['root']}({t['headword_count']})" for t in targets[:6])
         print(f"  busiest: {busiest}")
@@ -263,19 +281,20 @@ def _ids_str(path: Path, key: str) -> set[str]:
     out: set[str] = set()
     for line in path.read_text(encoding="utf-8").splitlines():
         if line.strip():
-            try:
+            with contextlib.suppress(json.JSONDecodeError, KeyError):
                 out.add(json.loads(line)[key])
-            except (json.JSONDecodeError, KeyError):
-                pass
     return out
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--reclassify", action="store_true", help="ignore the cached classification")
+    ap.add_argument(
+        "--reclassify", action="store_true", help="ignore the cached classification"
+    )
     ap.add_argument("--pick", type=int, help="also emit this many WORD targets")
-    ap.add_argument("--pick-roots", type=int,
-                    help="emit this many ROOT targets, busiest first")
+    ap.add_argument(
+        "--pick-roots", type=int, help="emit this many ROOT targets, busiest first"
+    )
     ap.add_argument("--out", default=str(BASE / "targets_rooted.json"))
     args = ap.parse_args()
 

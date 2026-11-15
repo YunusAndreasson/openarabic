@@ -13,12 +13,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class Sense(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
-    gloss: str = Field(description="A concise English sense, e.g. 'praise, commendation'.")
+    gloss: str = Field(
+        description="A concise English sense, e.g. 'praise, commendation'."
+    )
     note: str | None = Field(
         description="Short clarification of register/usage, or null when there is "
-                    "nothing to add. Required-but-nullable rather than optional: "
-                    "strict decoding demands every property be present, and an "
-                    "explicit null is a decision where an absent key is a shrug.",
+        "nothing to add. Required-but-nullable rather than optional: "
+        "strict decoding demands every property be present, and an "
+        "explicit null is a decision where an absent key is a shrug.",
     )
 
 
@@ -45,7 +47,9 @@ class WordEnrichment(BaseModel):
 
     model_config = ConfigDict(strict=True, extra="forbid")
 
-    triliteral_root: str = Field(description="Spaced Arabic root letters, e.g. 'ح م د'.")
+    triliteral_root: str = Field(
+        description="Spaced Arabic root letters, e.g. 'ح م د'."
+    )
     root_transliteration: str = Field(description="Root transliteration, e.g. 'ḥ-m-d'.")
     root_meaning: str = Field(
         description=(
@@ -58,7 +62,9 @@ class WordEnrichment(BaseModel):
     headword_transliteration: str = Field(
         description="Transliteration of THIS word (not the root), e.g. 'ḥamd'."
     )
-    part_of_speech: str = Field(description="e.g. 'noun (verbal noun / maṣdar)', 'verb (form I)'.")
+    part_of_speech: str = Field(
+        description="e.g. 'noun (verbal noun / maṣdar)', 'verb (form I)'."
+    )
     senses: list[Sense] = Field(description="1–4 distinct senses, most common first.")
     word_family: list[FamilyMember] = Field(
         max_length=5,
@@ -69,10 +75,12 @@ class WordEnrichment(BaseModel):
     )
     usage_note: str = Field(
         description="One or two sentences on how the word is used (register, "
-                    "Qur'anic/classical note). REQUIRED — this is the body the "
-                    "reader sheet expands to show, so a record without one renders "
-                    "as a bare root line. It was optional until a 20-word trial "
-                    "came back missing it 47% of the time; the model was not "
-                    "disobeying the prompt, the schema permitted the omission.",
+        "Qur'anic/classical note). REQUIRED — this is the body the "
+        "reader sheet expands to show, so a record without one renders "
+        "as a bare root line. It was optional until a 20-word trial "
+        "came back missing it 47% of the time; the model was not "
+        "disobeying the prompt, the schema permitted the omission.",
     )
-    faq: list[Faq] = Field(description="1–2 FAQ items; the first should be 'How do you say X in Arabic?'.")
+    faq: list[Faq] = Field(
+        description="1–2 FAQ items; the first should be 'How do you say X in Arabic?'."
+    )

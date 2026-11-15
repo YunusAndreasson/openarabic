@@ -353,9 +353,7 @@ def translate_file(
             actual_count = 0
             missing_count = 0
         else:
-            results, errors = process_batches(
-                all_units, batch_size, article_context
-            )
+            results, errors = process_batches(all_units, batch_size, article_context)
             actual_count, missing_count = validate_results(results, all_units)
 
         if errors:
@@ -424,9 +422,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    success = translate_file(
-        args.input, args.output, args.batch_size
-    )
+    success = translate_file(args.input, args.output, args.batch_size)
     if success:
         logger.info(
             f"Translation completed successfully. Output saved to {args.output}"

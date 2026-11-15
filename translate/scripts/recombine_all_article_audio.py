@@ -22,11 +22,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import utils.set_keys  # noqa: F401, E402
-
-from scripts.regenerate_audio import regenerate_article_audio  # noqa: E402
-from utils.responses_api import load_api_keys  # noqa: E402
-from utils.storage import get_supabase_client  # noqa: E402
+import utils.set_keys  # noqa: F401
+from scripts.regenerate_audio import regenerate_article_audio
+from utils.responses_api import load_api_keys
+from utils.storage import get_supabase_client
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)

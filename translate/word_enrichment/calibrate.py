@@ -82,10 +82,11 @@ def main() -> None:
             stats["arramooz_correct"] += ar_ok
 
             resolved = lexicon._resolve_root(lane_conn, bare)
-            lane_hit = bool(resolved)
-            lane_ok = lane_hit and camel_roots.weak_fold(
-                arramooz.fold_root(resolved[0])
-            ) == want
+            lane_hit = resolved is not None
+            lane_ok = (
+                resolved is not None
+                and camel_roots.weak_fold(arramooz.fold_root(resolved[0])) == want
+            )
             stats["lane_attempted"] += lane_hit
             stats["lane_correct"] += lane_ok
 
@@ -120,7 +121,9 @@ def main() -> None:
         lane_conn.close()
 
     n = len(pairs)
-    print(f"{'source':12} {'attempted':>10} {'correct':>9} {'precision':>10} {'recall':>8}")
+    print(
+        f"{'source':12} {'attempted':>10} {'correct':>9} {'precision':>10} {'recall':>8}"
+    )
     for src in ("camel", "arramooz", "lane"):
         att, cor = stats[f"{src}_attempted"], stats[f"{src}_correct"]
         prec = 100 * cor / att if att else 0

@@ -1,43 +1,41 @@
 """Fix oversized sentences (31+ Arabic words) by splitting, retranslating, and reinserting."""
 
 import argparse
+import contextlib
 import json
 import logging
 import os
 import sys
-import tempfile
-from typing import Any
+from typing import Any, cast
 
 # Bootstrap: add translate/ to sys.path so we can import pipeline modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Load API keys at startup
-try:
+with contextlib.suppress(ImportError):
     import utils.set_keys  # noqa: F401
-except ImportError:
-    pass
 
 from utils import load_api_keys
 
 load_api_keys()
 
-from audio import create_article_audio, create_multi_audio_with_delays, generate_speech
-from audio.storage import generate_audio_filename
-from data.config import (
+from elevenlabs import VoiceSettings  # noqa: E402
+
+from audio import create_multi_audio_with_delays, generate_speech  # noqa: E402
+from audio.storage import generate_audio_filename  # noqa: E402
+from data.config import (  # noqa: E402
     ARABIC_VOICE_ID,
     ARABIC_VOICE_SETTINGS,
     BILINGUAL_AUDIO_PAUSE_MS,
     ENGLISH_VOICE_ID,
     ENGLISH_VOICE_SETTINGS,
-    MAX_TRANSLATION_BATCH_SIZE,
 )
-from elevenlabs import VoiceSettings
-from pipeline.split_file import _split_long_unit
-from pipeline.translate import process_batch
-from utils.arabic_text import clean_arabic_text
-from utils.config_common import get_storage_url
-from utils.database import insert_sentence_words
-from utils.storage import get_supabase_client
+from pipeline.split_file import _split_long_unit  # noqa: E402
+from pipeline.translate import process_batch  # noqa: E402
+from utils.arabic_text import clean_arabic_text  # noqa: E402
+from utils.config_common import get_storage_url  # noqa: E402
+from utils.database import insert_sentence_words  # noqa: E402
+from utils.storage import get_supabase_client  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -201,7 +199,7 @@ def translate_new_sentences(sentence_list: list[dict[str, Any]]) -> None:
 
     # All sentences as context
     all_sentences = [s["arabic"] for s in sentence_list]
-    contexts = [""] * len(arabic_texts)
+    contexts: list[str | None] = [""] * len(arabic_texts)
 
     # Build context cache for proper surrounding-sentence context
     from utils.context_cache import ContextCache
@@ -221,7 +219,7 @@ def translate_new_sentences(sentence_list: list[dict[str, Any]]) -> None:
             f"Translation returned {len(results)} results for {len(new_entries)} sentences"
         )
 
-    for (idx, _), translation in zip(new_entries, results):
+    for (idx, _), translation in zip(new_entries, results, strict=False):
         sentence_list[idx]["english"] = translation.full_translation
         sentence_list[idx]["tashkeel"] = translation.tashkeel
         sentence_list[idx]["translation_dict"] = translation.model_dump()
@@ -300,13 +298,13 @@ def generate_sentence_audio(sentence: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 # 7a. Smart article audio rebuild (download existing + generate only new)
 # ---------------------------------------------------------------------------
-def _download_audio_from_storage(filename: str) -> bytes | None:
+def _download_audio_from_storage(filename: str | None) -> bytes | None:
     """Download an audio file from Supabase storage by filename."""
     if not filename:
         return None
     try:
         data = get_supabase_client().storage.from_("audio").download(filename)
-        return data
+        return cast("bytes", data)
     except Exception as e:
         logger.warning(f"Failed to download audio {filename}: {e}")
         return None
@@ -321,7 +319,11 @@ def _rebuild_article_audio_smart(
     """Rebuild article audio by reusing existing sentence audio and only generating new clips."""
     from audio.combiner import create_multi_audio_with_delays
     from audio.storage import generate_audio_filename
-    from data.config import BILINGUAL_AUDIO_PAUSE_MS, ENGLISH_VOICE_ID, ENGLISH_VOICE_SETTINGS
+    from data.config import (
+        BILINGUAL_AUDIO_PAUSE_MS,
+        ENGLISH_VOICE_ID,
+        ENGLISH_VOICE_SETTINGS,
+    )
     from utils.config_common import get_storage_url
 
     arabic_segments: list[bytes] = []
@@ -434,7 +436,7 @@ def reinsert_article(
     # Verify deletion completed before reinserting (unique constraint on position)
     import time
 
-    for attempt in range(10):
+    for _attempt in range(10):
         remaining = (
             supabase.table("article_sentences")
             .select("id", count="exact")
@@ -443,7 +445,9 @@ def reinsert_article(
         )
         if remaining.count == 0:
             break
-        logger.info(f"Waiting for deletion to propagate ({remaining.count} remaining)...")
+        logger.info(
+            f"Waiting for deletion to propagate ({remaining.count} remaining)..."
+        )
         time.sleep(1)
     else:
         raise RuntimeError(
@@ -492,9 +496,9 @@ def reinsert_article(
 # ---------------------------------------------------------------------------
 def process_article(article_id: int, max_words: int) -> None:
     """Full fix pipeline for one article."""
-    logger.info(f"\n{'='*60}")
+    logger.info(f"\n{'=' * 60}")
     logger.info(f"Processing article {article_id}")
-    logger.info(f"{'='*60}")
+    logger.info(f"{'=' * 60}")
 
     # Fetch and backup
     data = fetch_article_data(article_id)

@@ -22,8 +22,6 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import utils.set_keys  # noqa: F401
-
 from improve_common import (
     ALLOWED_FIELDS,
     APPLIED_DIR,
@@ -40,6 +38,8 @@ from improve_common import (
     read_json,
     save_checkpoint,
 )
+
+import utils.set_keys  # noqa: F401
 from utils.storage import get_supabase_client
 
 
@@ -64,9 +64,12 @@ def _backed_up_sentence_ids() -> set[int]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Apply improvements to sentence_words")
-    parser.add_argument("--dry-run", action="store_true", help="Show changes, write nothing")
     parser.add_argument(
-        "--db-log", action="store_true",
+        "--dry-run", action="store_true", help="Show changes, write nothing"
+    )
+    parser.add_argument(
+        "--db-log",
+        action="store_true",
         help="Also insert each change into translation_improvements (status='applied')",
     )
     args = parser.parse_args()
@@ -117,7 +120,9 @@ def main() -> int:
         reason = ch.get("reason", "")
 
         if field not in allowed:
-            print(f"  skip word {word_id}: field '{field}' not in scope {sorted(allowed)}")
+            print(
+                f"  skip word {word_id}: field '{field}' not in scope {sorted(allowed)}"
+            )
             skipped += 1
             continue
         cur = word_lookup.get(word_id)
@@ -130,7 +135,9 @@ def main() -> int:
             skipped += 1
             continue
         if contains_arabic(new):
-            print(f"  SKIP word {word_id} ({cur['english']}) [{field}]: contains Arabic letters — not allowed in notes")
+            print(
+                f"  SKIP word {word_id} ({cur['english']}) [{field}]: contains Arabic letters — not allowed in notes"
+            )
             skipped += 1
             continue
 
@@ -140,33 +147,47 @@ def main() -> int:
         if reason:
             print(f"      why: {reason}")
 
-        if args.dry_run:
+        if client is None:  # --dry-run
             applied += 1
             continue
 
         # 1) back up the full original row once
         if word_id not in already_backed:
-            append_jsonl(ORIGINALS, {
-                "word_id": word_id,
-                "sentence_id": cur["sentence_id"],
-                "english": cur["english"],
-                "grammar_note": cur["grammar_note"],
-                "backed_up_at": now_iso(),
-            })
+            append_jsonl(
+                ORIGINALS,
+                {
+                    "word_id": word_id,
+                    "sentence_id": cur["sentence_id"],
+                    "english": cur["english"],
+                    "grammar_note": cur["grammar_note"],
+                    "backed_up_at": now_iso(),
+                },
+            )
             already_backed.add(word_id)
 
         # 2) write the change in place
         client.table("sentence_words").update({field: new}).eq("id", word_id).execute()
 
         # 3) local audit log
-        append_jsonl(CHANGELOG, {
-            "ts": now_iso(), "word_id": word_id, "field": field,
-            "old": old, "new": new, "reason": reason,
-        })
+        append_jsonl(
+            CHANGELOG,
+            {
+                "ts": now_iso(),
+                "word_id": word_id,
+                "field": field,
+                "old": old,
+                "new": new,
+                "reason": reason,
+            },
+        )
 
         # 4) optional DB audit trail
         if args.db_log:
-            rec = {"sentence_word_id": word_id, "status": "applied", "reviewer_notes": reason}
+            rec = {
+                "sentence_word_id": word_id,
+                "status": "applied",
+                "reviewer_notes": reason,
+            }
             rec[f"suggested_{field}"] = new
             client.table("translation_improvements").insert(rec).execute()
 
@@ -203,22 +224,37 @@ def main() -> int:
         if reason:
             print(f"      why: {reason}")
 
-        if args.dry_run:
+        if client is None:  # --dry-run
             sentence_fixed += 1
             continue
 
         if sid not in already_backed_sentences:
-            append_jsonl(SENTENCE_ORIGINALS, {
-                "sentence_id": sid, "arabic": old, "backed_up_at": now_iso(),
-            })
+            append_jsonl(
+                SENTENCE_ORIGINALS,
+                {
+                    "sentence_id": sid,
+                    "arabic": old,
+                    "backed_up_at": now_iso(),
+                },
+            )
             already_backed_sentences.add(sid)
 
-        client.table("article_sentences").update({"arabic": new}).eq("id", sid).execute()
+        client.table("article_sentences").update({"arabic": new}).eq(
+            "id", sid
+        ).execute()
 
-        append_jsonl(CHANGELOG, {
-            "ts": now_iso(), "kind": "sentence_arabic", "sentence_id": sid,
-            "field": "arabic", "old": old, "new": new, "reason": reason,
-        })
+        append_jsonl(
+            CHANGELOG,
+            {
+                "ts": now_iso(),
+                "kind": "sentence_arabic",
+                "sentence_id": sid,
+                "field": "arabic",
+                "old": old,
+                "new": new,
+                "reason": reason,
+            },
+        )
         sentence_fixed += 1
 
     if args.dry_run:
@@ -236,8 +272,12 @@ def main() -> int:
     save_checkpoint(cp)
 
     # archive the batch
-    shutil.copy(INBOX, os.path.join(APPLIED_DIR, f"batch_{inbox['cursor_to']}_inbox.json"))
-    shutil.copy(OUTBOX, os.path.join(APPLIED_DIR, f"batch_{inbox['cursor_to']}_outbox.json"))
+    shutil.copy(
+        INBOX, os.path.join(APPLIED_DIR, f"batch_{inbox['cursor_to']}_inbox.json")
+    )
+    shutil.copy(
+        OUTBOX, os.path.join(APPLIED_DIR, f"batch_{inbox['cursor_to']}_outbox.json")
+    )
 
     print(
         f"\nApplied {applied} note change(s), {sentence_fixed} sentence tashkeel fix(es) "

@@ -138,6 +138,11 @@ known-first-party = ["translate"]
 # CLI tools that use print for user interaction
 "pipeline/extract.py" = ["T201"]
 "utils/web_scraper.py" = ["T201"]
+"utils/config_common.py" = ["T201"]  # anon-key warning to stderr
+"utils/validation_db.py" = ["T201"]
+"scripts/**/*" = ["T201"]
+"word_enrichment/**/*" = ["T201"]
+"data/fawaid/**/*" = ["T201"]
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.

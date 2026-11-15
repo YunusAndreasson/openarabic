@@ -10,10 +10,7 @@ import os
 import subprocess
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
+from typing import Any, cast
 
 from data.config import CLAUDE_CLI_MODEL
 
@@ -85,8 +82,10 @@ def summarise_usage(records: list[dict[str, Any]]) -> str:
     """One line totalling a batch, for a run to print when it finishes."""
     if not records:
         return "no usage recorded"
-    tot = {k: sum(r.get(k, 0) for r in records) for k in
-           ("input", "cache_creation", "cache_read", "output", "cost_usd")}
+    tot = {
+        k: sum(r.get(k, 0) for r in records)
+        for k in ("input", "cache_creation", "cache_read", "output", "cost_usd")
+    }
     cold = sum(1 for r in records if r.get("cache_creation", 0) > 1000)
     billed = tot["input"] + tot["cache_creation"] + tot["cache_read"] + tot["output"]
     return (
@@ -133,8 +132,10 @@ def call_claude_cli(
     cmd = [
         "claude",
         "--print",
-        "--output-format", "json",
-        "--model", model,
+        "--output-format",
+        "json",
+        "--model",
+        model,
         "--no-session-persistence",
         # This pipeline uses neither skills nor MCP servers, and loading them is
         # pure startup cost on a call that only wants one structured completion.
@@ -154,7 +155,9 @@ def call_claude_cli(
     # Unset CLAUDECODE to avoid nested session detection
     env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
 
-    logger.info(f"Calling Claude CLI (model={model}, structured={response_model is not None})")
+    logger.info(
+        f"Calling Claude CLI (model={model}, structured={response_model is not None})"
+    )
 
     try:
         result = subprocess.run(
@@ -167,7 +170,10 @@ def call_claude_cli(
         )
 
         if result.returncode != 0:
-            error_msg = result.stderr.strip() or f"claude CLI exited with code {result.returncode}"
+            error_msg = (
+                result.stderr.strip()
+                or f"claude CLI exited with code {result.returncode}"
+            )
             logger.error(f"Claude CLI error: {error_msg}")
             return {"data": {}, "success": False, "error": error_msg}
 
@@ -203,7 +209,11 @@ def call_claude_cli(
         # Plain text response. `raw_result` is only bound inside the structured
         # branch above, so reading it here raised UnboundLocalError on every
         # response_model=None call; read the envelope directly instead.
-        return {"data": {"text": envelope.get("result", "")}, "success": True, "usage": usage}
+        return {
+            "data": {"text": envelope.get("result", "")},
+            "success": True,
+            "usage": usage,
+        }
 
     except subprocess.TimeoutExpired:
         logger.error("Claude CLI timed out after 600s")
@@ -262,9 +272,7 @@ def _compact_words_prompt(words_data: list[dict[str, Any]]) -> str:
             ensure_ascii=False,
         )
         parts.append(
-            f'Sentence: "{arabic}"\n'
-            f'Translation: "{english}"\n'
-            f"Words: {words_list}"
+            f'Sentence: "{arabic}"\nTranslation: "{english}"\nWords: {words_list}'
         )
 
     return "\n\n".join(parts)
@@ -316,11 +324,11 @@ Example output:
             f"Claude CLI validation failed: {result.get('error', 'Unknown error')}"
         )
 
-    return result["data"]
+    return cast("dict[str, Any]", result["data"])
 
 
 def validate_words_batch(
-    words_data: list[dict[str, Any]], retry_count: int = 0  # noqa: ARG001
+    words_data: list[dict[str, Any]], retry_count: int = 0
 ) -> dict[str, Any]:
     """Validate word translations for morpheme-to-English alignment using Claude CLI.
 
@@ -420,12 +428,14 @@ def review_improvements_batch(
     # Build compact review list
     items = []
     for imp in improvements:
-        items.append({
-            "id": imp["id"],
-            "arabic": imp["arabic_word"],
-            "original": imp["original_english"],
-            "suggested": imp["suggested_english"],
-        })
+        items.append(
+            {
+                "id": imp["id"],
+                "arabic": imp["arabic_word"],
+                "original": imp["original_english"],
+                "suggested": imp["suggested_english"],
+            }
+        )
 
     items_json = json.dumps(items, ensure_ascii=False)
 
@@ -450,7 +460,7 @@ Changes to review:
             f"Claude CLI review failed: {result.get('error', 'Unknown error')}"
         )
 
-    return result["data"]
+    return cast("dict[str, Any]", result["data"])
 
 
 def review_all_improvements(
@@ -462,7 +472,10 @@ def review_all_improvements(
     Returns list of review dicts with id, approve, reason.
     """
     if len(improvements) <= _REVIEW_BATCH_SIZE:
-        return review_improvements_batch(improvements, model=model)["reviews"]
+        return cast(
+            "list[dict[str, Any]]",
+            review_improvements_batch(improvements, model=model)["reviews"],
+        )
 
     batches: list[list[dict[str, Any]]] = []
     for i in range(0, len(improvements), _REVIEW_BATCH_SIZE):
@@ -474,9 +487,7 @@ def review_all_improvements(
     results_by_index: dict[int, list[dict[str, Any]]] = {}
     with ThreadPoolExecutor(max_workers=_MAX_PARALLEL_BATCHES) as executor:
         future_to_idx = {
-            executor.submit(
-                review_improvements_batch, batch, model
-            ): idx
+            executor.submit(review_improvements_batch, batch, model): idx
             for idx, batch in enumerate(batches)
         }
         for future in as_completed(future_to_idx):

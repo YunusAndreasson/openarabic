@@ -23,12 +23,7 @@ from word_enrichment import lexicon, sql_seed
 
 BASE = Path(__file__).resolve().parent
 IN = BASE / "verified.jsonl"
-OUT = (
-    BASE.parent.parent
-    / "admin-dashboard"
-    / "lib"
-    / "word-enrichment.ts"
-)
+OUT = BASE.parent.parent / "admin-dashboard" / "lib" / "word-enrichment.ts"
 
 SQL_OUT = BASE / "seed_root_enrichment.sql"
 JSON_OUT = BASE / "seed_root_enrichment.json"
@@ -64,7 +59,7 @@ REVIEWED_OK: dict[int, str] = {
     13110: "نشأ — ن ش أ, matches Arramooz's نشا once hamza is folded",
     14557: "رزية — ر ز ي / رزا, weak-final notation only",
     14566: "هات — ه ي ت confirmed: Lane lists هَات and هَيْتَ as headwords there; "
-           "Arramooz simply has no entry for the imperative particle",
+    "Arramooz simply has no entry for the imperative particle",
     14966: "بني 'my son' — Lane files it under ا ب ن (ibn), Arramooz under ب ن ي; both standard",
     15001: "باق — ب ق ي correct; Arramooz lacks the participle",
     16751: "أسيد — diminutive of أسد, so Lane's ا س د is right and Arramooz's سود is wrong",
@@ -81,9 +76,9 @@ REVIEWED_OK: dict[int, str] = {
 MANUAL_EXCLUDE: dict[int, str] = {
     5247: "مِنْ 'from' — primitive preposition, not derived from م ن ن 'to bestow a favour'",
     5250: "عَنْ 'of' — primitive preposition; the note itself admits Lane only reaches it "
-          "via عَنْعَنَة, a dialectal ع/hamzah feature, which is not a derivation",
+    "via عَنْعَنَة, a dialectal ع/hamzah feature, which is not a derivation",
     5281: "بِهَا 'for it' — بِ + هَا, a preposition plus a clitic pronoun; ب ه و "
-          "'to be beautiful' is a spurious match on the bare letters",
+    "'to be beautiful' is a spurious match on the bare letters",
     5334: "Adam — foreign name, resolver gave root د م م",
     5761: "إلى 'to' — preposition, no derivational root (ا ل و)",
     5858: "زاد 'to increase' — mis-resolved to provisions root ز و د (real root ز ي د)",
@@ -119,22 +114,28 @@ def load_roots_index() -> dict[str, list[dict]]:
     offset, page = 0, 1000
     while True:
         url = f"{SUPABASE}/rest/v1/roots?select=id,letters,meaning&order=id&limit={page}&offset={offset}"
-        req = urllib.request.Request(url, headers={"apikey": ANON, "Authorization": f"Bearer {ANON}"})
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        req = urllib.request.Request(  # noqa: S310
+            url, headers={"apikey": ANON, "Authorization": f"Bearer {ANON}"}
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
             rows = json.loads(resp.read())
         if not rows:
             break
         for r in rows:
             bw = lexicon.bareword(r["letters"]).replace(" ", "")
             if bw and r.get("meaning", "").strip():
-                index.setdefault(bw, []).append({"id": r["id"], "meaning": r["meaning"]})
+                index.setdefault(bw, []).append(
+                    {"id": r["id"], "meaning": r["meaning"]}
+                )
         if len(rows) < page:
             break
         offset += page
     return index
 
 
-def resolve_member(letters: str, meaning: str, roots_index: dict[str, list[dict]]) -> dict | None:
+def resolve_member(
+    letters: str, meaning: str, roots_index: dict[str, list[dict]]
+) -> dict | None:
     """The dictionary entry this family member is, when it is unambiguously one.
 
     Returns both the id and the web path. The website links by path; the app has
@@ -157,7 +158,8 @@ def resolve_member(letters: str, meaning: str, roots_index: dict[str, list[dict]
         agree = [
             c
             for c in matches
-            if (cm := _norm_meaning(c["meaning"])) and (fam_meaning in cm or cm in fam_meaning)
+            if (cm := _norm_meaning(c["meaning"]))
+            and (fam_meaning in cm or cm in fam_meaning)
         ]
         if len(agree) == 1:
             m = agree[0]
@@ -165,7 +167,9 @@ def resolve_member(letters: str, meaning: str, roots_index: dict[str, list[dict]
     return None
 
 
-def resolve_link(letters: str, meaning: str, roots_index: dict[str, list[dict]]) -> str | None:
+def resolve_link(
+    letters: str, meaning: str, roots_index: dict[str, list[dict]]
+) -> str | None:
     member = resolve_member(letters, meaning, roots_index)
     return member["path"] if member else None
 
@@ -173,7 +177,11 @@ def resolve_link(letters: str, meaning: str, roots_index: dict[str, list[dict]])
 def to_ts_record(rec: dict, roots_index: dict[str, list[dict]]) -> dict:
     family = []
     for m in rec["word_family"]:
-        entry = {"letters": m["letters"], "transliteration": m["transliteration"], "meaning": m["meaning"]}
+        entry = {
+            "letters": m["letters"],
+            "transliteration": m["transliteration"],
+            "meaning": m["meaning"],
+        }
         resolved = resolve_member(m["letters"], m["meaning"], roots_index)
         if resolved:
             entry["path"] = resolved["path"]
@@ -186,8 +194,10 @@ def to_ts_record(rec: dict, roots_index: dict[str, list[dict]]) -> dict:
         "rootMeaning": rec.get("root_meaning", ""),
         "headwordTransliteration": rec["headword_transliteration"],
         "partOfSpeech": rec["part_of_speech"],
-        "senses": [{"gloss": s["gloss"], **({"note": s["note"]} if s.get("note") else {})}
-                   for s in rec["senses"]],
+        "senses": [
+            {"gloss": s["gloss"], **({"note": s["note"]} if s.get("note") else {})}
+            for s in rec["senses"]
+        ],
         "wordFamily": family,
         "faq": [{"q": f["q"], "a": f["a"]} for f in rec["faq"]],
         "source": rec["source"],
@@ -260,7 +270,11 @@ def publishable() -> tuple[list[dict], list[dict]]:
     """
     if not IN.exists():
         return [], []
-    records = [json.loads(line) for line in IN.read_text(encoding="utf-8").splitlines() if line.strip()]
+    records = [
+        json.loads(line)
+        for line in IN.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
     # verify.py routes anything the second opinion does not corroborate to
     # review.jsonl. Pull back the ones a human has explicitly cleared; the rest
@@ -306,7 +320,9 @@ def main() -> None:
     for rec in pending:
         why = rec.get("_withheld")
         if why == "manual-exclude":
-            print(f"  – manual exclude {rec['root_id']} {rec['letters']}: {MANUAL_EXCLUDE[rec['root_id']]}")
+            print(
+                f"  – manual exclude {rec['root_id']} {rec['letters']}: {MANUAL_EXCLUDE[rec['root_id']]}"
+            )
         else:
             op = rec.get("_second_opinion", {})
             print(
@@ -315,7 +331,7 @@ def main() -> None:
             )
     if pending:
         print(f"  {len(pending)} record(s) withheld\n")
-    print(f"loading roots index for internal-link resolution…")
+    print("loading roots index for internal-link resolution…")
     roots_index = load_roots_index()
     print(f"  {len(roots_index)} distinct barewords indexed")
 
@@ -326,8 +342,11 @@ def main() -> None:
         linked += sum(1 for m in ts["wordFamily"] if m.get("path"))
         by_id[rec["root_id"]] = ts
 
-    body = "export const WORD_ENRICHMENT: Record<number, WordEnrichment> = " + \
-        json.dumps(by_id, ensure_ascii=False, indent=2) + ";\n"
+    body = (
+        "export const WORD_ENRICHMENT: Record<number, WordEnrichment> = "
+        + json.dumps(by_id, ensure_ascii=False, indent=2)
+        + ";\n"
+    )
     OUT.write_text(HEADER + body + FOOTER, encoding="utf-8")
     print(f"wrote {len(by_id)} enrichment(s), {linked} internal family links → {OUT}")
 
@@ -335,16 +354,22 @@ def main() -> None:
     # is switched over to read the table; the SQL is what puts the identical rows
     # in Supabase so the app can reach them.
     written = sql_seed.write(
-        SQL_OUT, records, lambda letters, meaning: resolve_member(letters, meaning, roots_index)
+        SQL_OUT,
+        records,
+        lambda letters, meaning: resolve_member(letters, meaning, roots_index),
     )
     rows_json = sql_seed.write_json(
-        JSON_OUT, records, lambda letters, meaning: resolve_member(letters, meaning, roots_index)
+        JSON_OUT,
+        records,
+        lambda letters, meaning: resolve_member(letters, meaning, roots_index),
     )
     missing = sum(1 for r in records if not r.get("root_meaning"))
     print(f"wrote {written} row(s) → {SQL_OUT}")
     print(f"wrote {rows_json} row(s) → {JSON_OUT}")
     if missing:
-        print(f"  ! {missing} record(s) have no root_meaning — run backfill_root_meaning")
+        print(
+            f"  ! {missing} record(s) have no root_meaning — run backfill_root_meaning"
+        )
 
 
 if __name__ == "__main__":

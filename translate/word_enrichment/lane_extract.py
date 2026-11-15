@@ -50,9 +50,20 @@ _PLURAL = re.compile(r"\bpl\.\s*(?:is\s*)?<foreign lang=\"ar\">([^<]+)</foreign>
 # anchored to "which (the) latter/former" and must sit just before the "pl.".
 _OTHER_FORM = re.compile(r"which\s+(?:the\s+)?(?:latter|former)\b[^.]{0,20}$", re.I)
 _VERB_FORM = {
-    "1": "I", "2": "II", "3": "III", "4": "IV", "5": "V", "6": "VI",
-    "7": "VII", "8": "VIII", "9": "IX", "10": "X", "11": "XI", "12": "XII",
-    "R. Q. 1": "Rq. I", "R. Q. 2": "Rq. II",
+    "1": "I",
+    "2": "II",
+    "3": "III",
+    "4": "IV",
+    "5": "V",
+    "6": "VI",
+    "7": "VII",
+    "8": "VIII",
+    "9": "IX",
+    "10": "X",
+    "11": "XI",
+    "12": "XII",
+    "R. Q. 1": "Rq. I",
+    "R. Q. 2": "Rq. II",
 }
 _TAG = re.compile(r"<[^>]+>")
 # "(S, A, Mgh, O, Msb, K,)" — Lane's source sigla. Also matches an unclosed one,
@@ -60,11 +71,13 @@ _TAG = re.compile(r"<[^>]+>")
 _CITATION = re.compile(r"\(\s*[A-Z][A-Za-z,.*&;:\-\s]{0,60}(?:\)|$)")
 # Whatever the strippers leave behind: "( ,)", "( )", stray bracket pairs.
 _EMPTY_PARENS = re.compile(r"\(\s*[,;:.&\s]*\)?")
-_EDITORIAL = re.compile(r"\[[^\]]*\]?")       # [ ... ] translator's insertions
-_SEGMENT = re.compile(r"-b\d+-")              # Perseus segment markers
+_EDITORIAL = re.compile(r"\[[^\]]*\]?")  # [ ... ] translator's insertions
+_SEGMENT = re.compile(r"-b\d+-")  # Perseus segment markers
 _DANGLING = re.compile(
     r"\b(syn|i\.\s*q|i\.\s*e|e\.\s*g|q\.\s*v|pl|sing|inf\.\s*n|aor|accord|contr\.\s*of|&c)"
-    r"\b\.?\s*[:.]?", re.I)
+    r"\b\.?\s*[:.]?",
+    re.I,
+)
 _ORPHAN = re.compile(r"[()\[\]]")
 # Lane's source abbreviations. They survive paren-stripping when a citation was
 # split by a tag boundary, and they were in 22% of extracted glosses.
@@ -73,17 +86,22 @@ _ORPHAN = re.compile(r"[()\[\]]")
 # trailing after punctuation. Several sigla ("A", "M", "S", "L", "F") are also
 # ordinary English words, and stripping them wherever they appear turns
 # "A male slave" into "male slave".
-_SIG = (r"(?:TA|Mgh|Msb|IAar|ISd|IDrd|IB|Sgh|Ham|JK|Lh|Az|Ks|Fr|AA|As|IAth|"
-        r"S|K|A|M|O|T|L|F|P|Kr|Er)")
+_SIG = (
+    r"(?:TA|Mgh|Msb|IAar|ISd|IDrd|IB|Sgh|Ham|JK|Lh|Az|Ks|Fr|AA|As|IAth|"
+    r"S|K|A|M|O|T|L|F|P|Kr|Er)"
+)
 _SIGLA_RUN = re.compile(
-    rf"[;,.]?\s*\b{_SIG}\b(?:\s*[,&]?\s*(?:\&c\.?|{_SIG})\b)+\s*[.,;:]?")
+    rf"[;,.]?\s*\b{_SIG}\b(?:\s*[,&]?\s*(?:\&c\.?|{_SIG})\b)+\s*[.,;:]?"
+)
 _SIGLA_TAIL = re.compile(rf"[;,]\s*\b{_SIG}\b\s*[.,;:]?\s*$")
 _REPEAT_PUNCT = re.compile(r"\s*([,;:])(?:\s*[,;:])+")
 # A gloss must not end mid-thought. Lane's phrases run long, so a word budget
 # lands on these constantly: "or it has a more special signification than".
 _TRAILING = re.compile(
     r"\s+\b(than|of|as|and|or|to|with|in|for|by|from|the|a|an|is|was|that|which|"
-    r"upon|into|like|its|his|him|it)\b[\s,;:]*$", re.I)
+    r"upon|into|like|its|his|him|it)\b[\s,;:]*$",
+    re.I,
+)
 _WS = re.compile(r"\s+")
 # Lane's TEI keeps the print edition's line-break hyphens, so "watering-troughs"
 # arrives as "water-ing-troughs". Rejoin only when both sides are lower-case
@@ -95,8 +113,8 @@ _AMPC = re.compile(r"\s*&\s*c\.?", re.I)
 # letter after the tanwin is part of the word, and stripping it turned Lane's
 # دُمًى into دُمً.
 _TRAILING_LETTER = re.compile(
-    "(?<=[\u064b\u064c\u064d\u064e\u064f\u0650])"
-    "[\u0621-\u0625\u0627-\u0648\u064a]$")
+    "(?<=[\u064b\u064c\u064d\u064e\u064f\u0650])[\u0621-\u0625\u0627-\u0648\u064a]$"
+)
 # Removing inline Arabic leaves holes: "praying for , for a man".
 _ORPHAN_COMMA = re.compile(r"\s+([,;:])")
 _EMPTY_CLAUSE = re.compile(r"([,;:])\s*\1")
@@ -176,7 +194,6 @@ def gloss(xml: str, max_words: int = MAX_GLOSS_WORDS) -> str:
     return _clean_gloss_text(span.group(1), max_words)
 
 
-
 # A short vowel, specifically. Lane also lists half-pointed headwords carrying
 # only a shadda (تقلّب, علّمهُ); those look vocalised to a naive check but have no
 # vowels to romanise, and came out as "tqllb" and "ʿllmhu".
@@ -250,13 +267,15 @@ def family_for(
         if not text:
             continue
         seen.add(headword)
-        members.append({
-            "letters": headword,
-            "transliteration": roman,
-            "meaning": text,
-            "plural": plural_of(xml),
-            "verb_form": verb_form(itype),
-        })
+        members.append(
+            {
+                "letters": headword,
+                "transliteration": roman,
+                "meaning": text,
+                "plural": plural_of(xml),
+                "verb_form": verb_form(itype),
+            }
+        )
         if len(members) >= limit:
             break
     return members

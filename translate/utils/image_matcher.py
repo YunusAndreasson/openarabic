@@ -19,106 +19,314 @@ _TITLE_OVERRIDES: list[tuple[list[str], str]] = [
     # Quran / Scripture — open Quran on wooden rehal
     (["scripture", "quran", "qur'an", "quranic"], "shutterstock_1178327119.webp"),
     # Ablution / Purification — brass faucet with water droplet
-    (["ablution", "wudu", "wuḍū", "tayammum", "purification"], "shutterstock_1981671665.webp"),
+    (
+        ["ablution", "wudu", "wuḍū", "tayammum", "purification"],
+        "shutterstock_1981671665.webp",
+    ),
     # Prophet's Mosque / Medina — Al-Masjid an-Nabawi courtyard
-    (["prophet's household", "wives of the prophet", "raised in the prophet",
-      "household of the prophet", "medina"], "haidan-RhkbHU14MoA-unsplash.webp"),
+    (
+        [
+            "prophet's household",
+            "wives of the prophet",
+            "raised in the prophet",
+            "household of the prophet",
+            "medina",
+        ],
+        "haidan-RhkbHU14MoA-unsplash.webp",
+    ),
     # Mecca / Hajj / Pilgrimage — aerial Masjid al-Haram at night
-    (["mecca", "makkah", "hajj", "pilgrimage", "kaaba", "ka'ba"], "shutterstock_660976327.webp"),
+    (
+        ["mecca", "makkah", "hajj", "pilgrimage", "kaaba", "ka'ba"],
+        "shutterstock_660976327.webp",
+    ),
     # Adam / Creation — moonlit desert dunes
     (["adam's", "adam and", "lessons from adam", "story of adam"], "175df9b2.webp"),
     # Angels at sacred sites — ornate mosque interior
     (["bayt al-maqdis", "al-aqsa", "angels at", "angels of"], "4a0b8963.webp"),
     # Cave — underground cave with river and light
-    (["in the cave", "supplication in cave", "cave of", "men in cave", "in cave",
-      "three men in", "sincere deeds rescue", "deeds rescue three"], "pexels-6877001.webp"),
+    (
+        [
+            "in the cave",
+            "supplication in cave",
+            "cave of",
+            "men in cave",
+            "in cave",
+            "three men in",
+            "sincere deeds rescue",
+            "deeds rescue three",
+        ],
+        "pexels-6877001.webp",
+    ),
     # Mother / Parents — serene courtyard with olive trees
-    (["mother's feet", "mothers' feet", "mothers feet", "honor your mother",
-      "rights of parents", "rights of the mother"], "5a8bd377.webp"),
+    (
+        [
+            "mother's feet",
+            "mothers' feet",
+            "mothers feet",
+            "honor your mother",
+            "rights of parents",
+            "rights of the mother",
+        ],
+        "5a8bd377.webp",
+    ),
     # Battle / Ghazwa — dramatic canyon (majestic, no humans)
     (["battle of", "ghazwa", "expedition of"], "598afaec.webp"),
     # Heart / Shaytan / Spiritual battle — Milky Way starry night sky
-    (["heart against", "heart that repels", "guarding the heart", "repels the devil",
-      "repels satan", "heart against satan", "heart against shaytan",
-      "armor against satan", "armor against shaytan", "repel the devil"], "milky-way-984050_1920.webp"),
+    (
+        [
+            "heart against",
+            "heart that repels",
+            "guarding the heart",
+            "repels the devil",
+            "repels satan",
+            "heart against satan",
+            "heart against shaytan",
+            "armor against satan",
+            "armor against shaytan",
+            "repel the devil",
+        ],
+        "milky-way-984050_1920.webp",
+    ),
     # Scholarly disputation / debate — illuminated Arabic manuscript
-    (["scholarly disputation", "avoiding disputation", "scholarly debate",
-      "disputation in", "forbidden disputation"], "pexels-29342494.webp"),
+    (
+        [
+            "scholarly disputation",
+            "avoiding disputation",
+            "scholarly debate",
+            "disputation in",
+            "forbidden disputation",
+        ],
+        "pexels-29342494.webp",
+    ),
     # Islamic science / dialectic / jurisprudence methodology — library shelves
-    (["science of islamic", "islamic dialectic", "usul al-fiqh", "principles of fiqh",
-      "jurisprudence methodology", "islamic logic"], "pexels-19369819.webp"),
+    (
+        [
+            "science of islamic",
+            "islamic dialectic",
+            "usul al-fiqh",
+            "principles of fiqh",
+            "jurisprudence methodology",
+            "islamic logic",
+        ],
+        "pexels-19369819.webp",
+    ),
     # Night prayer / Tahajjud — dark mosque interior
-    (["tahajjud", "night prayer", "qiyam al-layl", "qiyam", "night vigil"], "pexels-19657344.webp"),
+    (
+        ["tahajjud", "night prayer", "qiyam al-layl", "qiyam", "night vigil"],
+        "pexels-19657344.webp",
+    ),
     # Fasting / Suhoor / Ramadan — predawn starry horizon
-    (["suhoor", "ramadan fast", "breaking fast", "iftar", "fasting dawn"], "pexels-35223929.webp"),
+    (
+        ["suhoor", "ramadan fast", "breaking fast", "iftar", "fasting dawn"],
+        "pexels-35223929.webp",
+    ),
     # Death / Funeral / Grave — solemn gravestone with rose
-    (["funeral prayer", "janazah", "death and burial", "visiting graves",
-      "burial rites", "washing the dead"], "pexels-6841117.webp"),
+    (
+        [
+            "funeral prayer",
+            "janazah",
+            "death and burial",
+            "visiting graves",
+            "burial rites",
+            "washing the dead",
+        ],
+        "pexels-6841117.webp",
+    ),
     # Trade / Wealth / Zakat — coins on wooden surface
-    (["zakat on wealth", "trade and commerce", "lawful earnings", "wealth and poverty",
-      "prohibition of usury", "riba"], "pexels-35431751.webp"),
+    (
+        [
+            "zakat on wealth",
+            "trade and commerce",
+            "lawful earnings",
+            "wealth and poverty",
+            "prohibition of usury",
+            "riba",
+        ],
+        "pexels-35431751.webp",
+    ),
     # Journey / Migration / Camel — camel caravan over dunes
-    (["camel", "desert journey", "hijra route", "trade route", "caravan"], "pexels-34239912.webp"),
+    (
+        ["camel", "desert journey", "hijra route", "trade route", "caravan"],
+        "pexels-34239912.webp",
+    ),
     # Storm / Trial at sea — lighthouse in storm waves
-    (["trial of", "storm of", "hardship of faith", "steadfast in trial"], "pexels-3722772.webp"),
+    (
+        ["trial of", "storm of", "hardship of faith", "steadfast in trial"],
+        "pexels-3722772.webp",
+    ),
     # Paradise / Garden / Rivers — serene riverside garden with palms
-    (["rivers of paradise", "gardens of paradise", "paradise beneath",
-      "enter paradise", "keys to paradise"], "pexels-6416136.webp"),
+    (
+        [
+            "rivers of paradise",
+            "gardens of paradise",
+            "paradise beneath",
+            "enter paradise",
+            "keys to paradise",
+        ],
+        "pexels-6416136.webp",
+    ),
     # Mosque reflection / evening worship — illuminated mosque in still water
-    (["evening prayer", "isha prayer", "maghrib prayer", "mosque at night",
-      "night at the mosque"], "pexels-20512957.webp"),
+    (
+        [
+            "evening prayer",
+            "isha prayer",
+            "maghrib prayer",
+            "mosque at night",
+            "night at the mosque",
+        ],
+        "pexels-20512957.webp",
+    ),
 ]
 
 # Keywords in the article title/summary that imply a specific sacred person
 # (prophet, angel, divine being). When found, we exclude 'avoid' images to
 # prevent implying a visual depiction of that person.
 _SACRED_PERSON_KEYWORDS = {
-    "prophet", "messenger", "angel", "jibril", "gabriel", "allah", "divine",
-    "revelation", "prophethood", "muhammad", "ibrahim", "musa", "isa",
-    "nuh", "adam", "jibreel", "michael", "mikail", "israfil", "azrael",
-    "attributes of allah", "names of allah", "throne", "preserved tablet",
+    "prophet",
+    "messenger",
+    "angel",
+    "jibril",
+    "gabriel",
+    "allah",
+    "divine",
+    "revelation",
+    "prophethood",
+    "muhammad",
+    "ibrahim",
+    "musa",
+    "isa",
+    "nuh",
+    "adam",
+    "jibreel",
+    "michael",
+    "mikail",
+    "israfil",
+    "azrael",
+    "attributes of allah",
+    "names of allah",
+    "throne",
+    "preserved tablet",
 }
 
 # Maps article keywords → image mood. Used to infer the intended mood of an
 # article from its title/summary and reward matching image moods.
 _MOOD_KEYWORDS: dict[str, str] = {
     # dramatic / intense
-    "battle": "dramatic", "war": "dramatic", "conflict": "dramatic",
-    "struggle": "dramatic", "trial": "dramatic", "punishment": "dramatic",
-    "hellfire": "dramatic", "warning": "dramatic", "fear": "dramatic",
+    "battle": "dramatic",
+    "war": "dramatic",
+    "conflict": "dramatic",
+    "struggle": "dramatic",
+    "trial": "dramatic",
+    "punishment": "dramatic",
+    "hellfire": "dramatic",
+    "warning": "dramatic",
+    "fear": "dramatic",
     # solemn
-    "death": "solemn", "grief": "solemn", "mourning": "solemn",
-    "judgment": "solemn", "accountability": "solemn", "grave": "solemn",
-    "resurrection": "solemn", "hell": "solemn",
+    "death": "solemn",
+    "grief": "solemn",
+    "mourning": "solemn",
+    "judgment": "solemn",
+    "accountability": "solemn",
+    "grave": "solemn",
+    "resurrection": "solemn",
+    "hell": "solemn",
     # majestic
-    "glory": "majestic", "greatness": "majestic", "magnificence": "majestic",
-    "creation": "majestic", "universe": "majestic", "throne": "majestic",
-    "paradise": "majestic", "heaven": "majestic",
+    "glory": "majestic",
+    "greatness": "majestic",
+    "magnificence": "majestic",
+    "creation": "majestic",
+    "universe": "majestic",
+    "throne": "majestic",
+    "paradise": "majestic",
+    "heaven": "majestic",
     # scholarly
-    "knowledge": "scholarly", "scholar": "scholarly", "learning": "scholarly",
-    "study": "scholarly", "science": "scholarly", "wisdom": "scholarly",
-    "evidence": "scholarly", "proof": "scholarly",
+    "knowledge": "scholarly",
+    "scholar": "scholarly",
+    "learning": "scholarly",
+    "study": "scholarly",
+    "science": "scholarly",
+    "wisdom": "scholarly",
+    "evidence": "scholarly",
+    "proof": "scholarly",
     # contemplative / default spiritual
-    "patience": "contemplative", "repentance": "contemplative",
-    "sincerity": "contemplative", "gratitude": "contemplative",
-    "heart": "contemplative", "soul": "contemplative", "remembrance": "contemplative",
-    "prayer": "contemplative", "worship": "contemplative",
+    "patience": "contemplative",
+    "repentance": "contemplative",
+    "sincerity": "contemplative",
+    "gratitude": "contemplative",
+    "heart": "contemplative",
+    "soul": "contemplative",
+    "remembrance": "contemplative",
+    "prayer": "contemplative",
+    "worship": "contemplative",
     # serene / peaceful
-    "peace": "serene", "tranquility": "serene", "serenity": "serene",
-    "blessings": "serene", "mercy": "serene", "forgiveness": "serene",
-    "love": "serene", "hope": "serene",
+    "peace": "serene",
+    "tranquility": "serene",
+    "serenity": "serene",
+    "blessings": "serene",
+    "mercy": "serene",
+    "forgiveness": "serene",
+    "love": "serene",
+    "hope": "serene",
     # warm
-    "family": "warm", "marriage": "warm", "children": "warm",
-    "community": "warm", "charity": "warm", "generosity": "warm",
+    "family": "warm",
+    "marriage": "warm",
+    "children": "warm",
+    "community": "warm",
+    "charity": "warm",
+    "generosity": "warm",
 }
 
 # Common English stop words to skip when extracting keywords from text
 _STOP_WORDS = {
-    "a", "an", "the", "and", "or", "but", "of", "in", "on", "at", "to",
-    "for", "with", "by", "from", "is", "are", "was", "were", "be", "been",
-    "has", "have", "had", "this", "that", "it", "its", "as", "not", "no",
-    "he", "she", "they", "we", "his", "her", "their", "our", "about",
-    "which", "who", "what", "how", "when", "where", "why", "all", "each",
+    "a",
+    "an",
+    "the",
+    "and",
+    "or",
+    "but",
+    "of",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "with",
+    "by",
+    "from",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "has",
+    "have",
+    "had",
+    "this",
+    "that",
+    "it",
+    "its",
+    "as",
+    "not",
+    "no",
+    "he",
+    "she",
+    "they",
+    "we",
+    "his",
+    "her",
+    "their",
+    "our",
+    "about",
+    "which",
+    "who",
+    "what",
+    "how",
+    "when",
+    "where",
+    "why",
+    "all",
+    "each",
 }
 
 _catalog_cache: dict | None = None
@@ -160,7 +368,9 @@ def _load_usage_counts() -> dict[str, int]:
         _usage_cache = counts
         logger.info(f"Loaded usage counts for {len(counts)} images from DB")
     except Exception as e:
-        logger.warning(f"Could not load image usage counts from DB: {e} — usage penalty disabled")
+        logger.warning(
+            f"Could not load image usage counts from DB: {e} — usage penalty disabled"
+        )
         _usage_cache = {}
 
     return _usage_cache
@@ -200,9 +410,13 @@ def match_image(category: str, title: str = "", summary: str = "") -> str | None
         if any(kw in title_lower for kw in keywords):
             if override_image in catalog:
                 logger.info(f"Title override → '{override_image}' for '{title}'")
-                _session_usage[override_image] = _session_usage.get(override_image, 0) + 1
+                _session_usage[override_image] = (
+                    _session_usage.get(override_image, 0) + 1
+                )
                 return override_image
-            logger.warning(f"Override image '{override_image}' not in catalog, falling through")
+            logger.warning(
+                f"Override image '{override_image}' not in catalog, falling through"
+            )
 
     article_keywords = _keywords(f"{title} {summary}")
     full_text = f"{title} {summary}".lower()
@@ -249,7 +463,10 @@ def match_image(category: str, title: str = "", summary: str = "") -> str | None
 
         # Topic overlap: match article keywords against suitable_topics and tags
         topic_score = len(article_keywords & img_topics)
-        tag_score = len(article_keywords & {t.replace("-", " ").split()[0] for t in img_tags}) * 0.5
+        tag_score = (
+            len(article_keywords & {t.replace("-", " ").split()[0] for t in img_tags})
+            * 0.5
+        )
 
         # Mood match bonus — reward images whose mood fits the article tone
         mood_bonus = 0.5 if img_mood == inferred_mood else 0.0
@@ -271,13 +488,24 @@ def match_image(category: str, title: str = "", summary: str = "") -> str | None
         session_uses = _session_usage.get(filename, 0)
         usage_penalty = db_uses * 0.5 + session_uses * 2.0
 
-        total = category_score + topic_score + tag_score + mood_bonus + safety_bonus - usage_penalty
+        total = (
+            category_score
+            + topic_score
+            + tag_score
+            + mood_bonus
+            + safety_bonus
+            - usage_penalty
+        )
         scored.append((total, filename))
 
     if not scored:
         # Fallback: drop strict filter and pick any safe image
-        logger.warning(f"No images passed filter for category='{category}', relaxing to safe-only")
-        scored = [(0.0, fn) for fn, d in catalog.items() if d.get("aqeedah_risk") == "safe"]
+        logger.warning(
+            f"No images passed filter for category='{category}', relaxing to safe-only"
+        )
+        scored = [
+            (0.0, fn) for fn, d in catalog.items() if d.get("aqeedah_risk") == "safe"
+        ]
 
     if not scored:
         logger.error("No images available in catalog")

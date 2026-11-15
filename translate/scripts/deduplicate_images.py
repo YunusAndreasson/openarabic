@@ -23,7 +23,6 @@ Usage:
 
 import argparse
 import hashlib
-import os
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -40,17 +39,22 @@ SUPPORTED = {".webp", ".jpg", ".jpeg", ".png"}
 
 
 def md5(path: Path) -> str:
-    h = hashlib.md5()
+    h = hashlib.md5(usedforsecurity=False)
     h.update(path.read_bytes())
     return h.hexdigest()
 
 
 def keep_priority(files: list[Path]) -> Path:
     """Pick the best filename to keep from a group of duplicates."""
+
     def score(p: Path) -> int:
         name = p.name
         # Prefer clean short hash names (8 hex chars)
-        if p.suffix == ".webp" and len(p.stem) == 8 and all(c in "0123456789abcdef" for c in p.stem):
+        if (
+            p.suffix == ".webp"
+            and len(p.stem) == 8
+            and all(c in "0123456789abcdef" for c in p.stem)
+        ):
             return 0
         # Named webp (shutterstock, pexels, unsplash, etc.)
         if p.suffix == ".webp":
@@ -80,7 +84,9 @@ def find_exact_duplicates(image_dir: Path) -> tuple[list[list[Path]], list[Path]
     # Also include one representative from each dup group for pHash phase
     unique_representatives = [keep_priority(g) for g in dup_groups]
 
-    print(f"  Found {len(dup_groups)} exact duplicate groups ({sum(len(g)-1 for g in dup_groups)} files to remove)")
+    print(
+        f"  Found {len(dup_groups)} exact duplicate groups ({sum(len(g) - 1 for g in dup_groups)} files to remove)"
+    )
     return dup_groups, unique + unique_representatives
 
 
@@ -103,13 +109,13 @@ def find_near_duplicates(files: list[Path], threshold: int) -> list[list[Path]]:
     # Group by similarity using union-find
     parent = {p: p for p, _ in hashes}
 
-    def find(x):
+    def find(x: Path) -> Path:
         while parent[x] != x:
             parent[x] = parent[parent[x]]
             x = parent[x]
         return x
 
-    def union(x, y):
+    def union(x: Path, y: Path) -> None:
         parent[find(x)] = find(y)
 
     for i, (p1, h1) in enumerate(hashes):
@@ -124,21 +130,34 @@ def find_near_duplicates(files: list[Path], threshold: int) -> list[list[Path]]:
         groups_map[find(path)].append(path)
 
     dup_groups = [g for g in groups_map.values() if len(g) > 1]
-    print(f"  Found {len(dup_groups)} near-duplicate groups ({sum(len(g)-1 for g in dup_groups)} files to remove)")
+    print(
+        f"  Found {len(dup_groups)} near-duplicate groups ({sum(len(g) - 1 for g in dup_groups)} files to remove)"
+    )
     return dup_groups
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Deduplicate images by MD5 and pHash")
     parser.add_argument("--image-dir", type=Path, default=IMAGE_DIR)
-    parser.add_argument("--threshold", type=int, default=8,
-                        help="pHash Hamming distance threshold for near-duplicates (default: 8)")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Show what would be removed without deleting anything")
-    parser.add_argument("--delete", action="store_true",
-                        help="Actually delete duplicate files")
-    parser.add_argument("--exact-only", action="store_true",
-                        help="Only remove exact (MD5) duplicates, skip pHash")
+    parser.add_argument(
+        "--threshold",
+        type=int,
+        default=8,
+        help="pHash Hamming distance threshold for near-duplicates (default: 8)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be removed without deleting anything",
+    )
+    parser.add_argument(
+        "--delete", action="store_true", help="Actually delete duplicate files"
+    )
+    parser.add_argument(
+        "--exact-only",
+        action="store_true",
+        help="Only remove exact (MD5) duplicates, skip pHash",
+    )
     args = parser.parse_args()
 
     if not args.dry_run and not args.delete:

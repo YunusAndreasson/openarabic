@@ -15,17 +15,19 @@ Run from the translate/ root:  uv run python word_enrichment/generate.py --input
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
+import sqlite3
 from pathlib import Path
+from typing import Any
 
 import utils.set_keys  # noqa: F401  (harmless env bootstrap; keeps config import happy)
 from utils.claude_cli import call_claude_cli, summarise_usage
-
 from word_enrichment import lexicon, root_normalize, root_translit
-
-BASE = Path(__file__).resolve().parent
 from word_enrichment.root_schema import RootExplanation
 from word_enrichment.schema import WordEnrichment
+
+BASE = Path(__file__).resolve().parent
 
 OUT = Path(__file__).resolve().parent / "enriched.jsonl"
 SKIPPED = Path(__file__).resolve().parent / "skipped.jsonl"
@@ -157,24 +159,35 @@ def generate_root_one(target: dict, model: str, provider: str) -> tuple[str, dic
     if provider == "openrouter":
         from utils.openrouter_structured import call_openrouter
 
-        result = call_openrouter(messages, response_model=RootExplanation,
-                                 model=None if model in ("sonnet", "opus", "haiku") else model)
+        result = call_openrouter(
+            messages,
+            response_model=RootExplanation,
+            model=None if model in ("sonnet", "opus", "haiku") else model,
+        )
     else:
         result = call_claude_cli(messages, response_model=RootExplanation, model=model)
 
     if not result.get("success"):
-        return "error", {"root_key": target["root_key"], "root": root,
-                         "error": result.get("error"), "_usage": result.get("usage")}
+        return "error", {
+            "root_key": target["root_key"],
+            "root": root,
+            "error": result.get("error"),
+            "_usage": result.get("usage"),
+        }
 
     rec = RootExplanation.model_validate(result["data"]).model_dump()
 
     # Strict decoding guarantees a string is present, not that it obeys any of the
     # rules the prompt states. Everything root_normalize checks was broken by a
     # real model in a five-root trial.
-    rec, problems = root_normalize.normalize(rec, target["root_key"])
+    rec, problems = root_normalize.normalize(rec)
     if problems:
-        return "error", {"root_key": target["root_key"], "root": root,
-                         "error": "; ".join(problems), "_usage": result.get("usage")}
+        return "error", {
+            "root_key": target["root_key"],
+            "root": root,
+            "error": "; ".join(problems),
+            "_usage": result.get("usage"),
+        }
 
     record = {
         "root_key": target["root_key"],
@@ -243,7 +256,7 @@ def generate_root_from_pool(
     target: dict,
     model: str,
     provider: str,
-    conn,
+    conn: sqlite3.Connection,
     dict_index: dict,
     reasoning_effort: str | None = None,
 ) -> tuple[str, dict]:
@@ -254,8 +267,11 @@ def generate_root_from_pool(
     root = target["root"]
     candidates = pool_mod.build(conn, root, dict_index, limit=20)
     if len(candidates) < root_normalize.MIN_FAMILY:
-        return "no_pool", {"root_key": target["root_key"], "root": root,
-                           "pool_size": len(candidates)}
+        return "no_pool", {
+            "root_key": target["root_key"],
+            "root": root,
+            "pool_size": len(candidates),
+        }
 
     by_key = {c.key: c for c in candidates}
     lines = []
@@ -265,28 +281,37 @@ def generate_root_from_pool(
 
     messages = [
         {"role": "system", "content": ROOT_POOL_SYSTEM_PROMPT},
-        {"role": "user", "content": ROOT_POOL_USER_TEMPLATE.format(
-            root=root_translit.spaced(root),
-            broot=root_translit.transliterate(root),
-            candidates="\n".join(lines),
-        )},
+        {
+            "role": "user",
+            "content": ROOT_POOL_USER_TEMPLATE.format(
+                root=root_translit.spaced(root),
+                broot=root_translit.transliterate(root),
+                candidates="\n".join(lines),
+            ),
+        },
     ]
 
     if provider == "openrouter":
         from utils.openrouter_structured import call_openrouter
 
         result = call_openrouter(
-            messages, response_model=RootExplanationFromPool,
+            messages,
+            response_model=RootExplanationFromPool,
             model=None if model in ("sonnet", "opus", "haiku") else model,
             reasoning_effort=reasoning_effort,
         )
     else:
-        result = call_claude_cli(messages, response_model=RootExplanationFromPool,
-                                 model=model)
+        result = call_claude_cli(
+            messages, response_model=RootExplanationFromPool, model=model
+        )
 
     if not result.get("success"):
-        return "error", {"root_key": target["root_key"], "root": root,
-                         "error": result.get("error"), "_usage": result.get("usage")}
+        return "error", {
+            "root_key": target["root_key"],
+            "root": root,
+            "error": result.get("error"),
+            "_usage": result.get("usage"),
+        }
 
     rec = RootExplanationFromPool.model_validate(result["data"]).model_dump()
 
@@ -318,18 +343,21 @@ def generate_root_from_pool(
         if holder is None:
             claimed[root_id] = member
         elif member.get("_exact_link") and not holder.get("_exact_link"):
-            holder["root_id"] = None      # the precise match takes it over
+            holder["root_id"] = None  # the precise match takes it over
             claimed[root_id] = member
         else:
             member["root_id"] = None
     for member in rec.get("word_family") or []:
         member.pop("_exact_link", None)
 
-    rec, problems = root_normalize.normalize(rec, target["root_key"],
-                                             pool_keys=set(by_key))
+    rec, problems = root_normalize.normalize(rec, pool_keys=set(by_key))
     if problems:
-        return "error", {"root_key": target["root_key"], "root": root,
-                         "error": "; ".join(problems), "_usage": result.get("usage")}
+        return "error", {
+            "root_key": target["root_key"],
+            "root": root,
+            "error": "; ".join(problems),
+            "_usage": result.get("usage"),
+        }
 
     return "ok", {
         "root_key": target["root_key"],
@@ -356,19 +384,27 @@ def _probe_roots(n: int) -> list[dict]:
     from collections import Counter
 
     base = Path(__file__).resolve().parent
-    records = [_json.loads(line) for line in (base / "ledger.jsonl").open(encoding="utf-8")]
+    records = [
+        _json.loads(line) for line in (base / "ledger.jsonl").open(encoding="utf-8")
+    ]
     freq = Counter(r["root_hint"] for r in records if r.get("root_hint"))
 
     skip_path = base / "pool_skip.json"
-    skip = set(_json.loads(skip_path.read_text(encoding="utf-8"))) if skip_path.exists() else set()
+    skip = (
+        set(_json.loads(skip_path.read_text(encoding="utf-8")))
+        if skip_path.exists()
+        else set()
+    )
 
     ranked = [(root, count) for root, count in freq.most_common() if root not in skip]
     if not ranked:
         return []
     stride = max(len(ranked) // n, 1)
     picked = ranked[::stride][:n]
-    return [{"root_key": root, "root": root, "headword_count": count}
-            for root, count in picked]
+    return [
+        {"root_key": root, "root": root, "headword_count": count}
+        for root, count in picked
+    ]
 
 
 def probe(n: int, model: str, provider: str, workers: int) -> None:
@@ -385,7 +421,6 @@ def probe(n: int, model: str, provider: str, workers: int) -> None:
     cheaper per USABLE record is not obvious. Cheaper calls that fail validation
     are not cheaper.
     """
-    import sqlite3
     from collections import Counter
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -398,32 +433,48 @@ def probe(n: int, model: str, provider: str, workers: int) -> None:
         return
 
     import json as _json
-    records = [_json.loads(line) for line in (base / "ledger.jsonl").open(encoding="utf-8")]
+
+    records = [
+        _json.loads(line) for line in (base / "ledger.jsonl").open(encoding="utf-8")
+    ]
     print(f"building the dictionary index over {len(records)} entries…", flush=True)
     dict_index = pool_mod.dictionary_index(records)
 
     freq = Counter(r["root_hint"] for r in records if r.get("root_hint"))
     skip_path = base / "pool_skip.json"
-    skip = set(_json.loads(skip_path.read_text(encoding="utf-8"))) if skip_path.exists() else set()
+    skip = (
+        set(_json.loads(skip_path.read_text(encoding="utf-8")))
+        if skip_path.exists()
+        else set()
+    )
     generatable = [r for r in freq if r not in skip]
     covered = sum(freq[r] for r in generatable)
 
-    print(f"probing {len(targets)} roots "
-          f"(headword counts {targets[0]['headword_count']}…{targets[-1]['headword_count']})")
+    print(
+        f"probing {len(targets)} roots "
+        f"(headword counts {targets[0]['headword_count']}…{targets[-1]['headword_count']})"
+    )
     print(f"corpus to project onto: {len(generatable)} roots / {covered} headwords\n")
 
-    rows = []
+    rows: list[dict[str, Any]] = []
     for effort in ("none", "low"):
-        conns = {}
+        conns: dict[int, sqlite3.Connection] = {}
 
-        def _one(t, _effort=effort):
+        def _one(
+            t: dict,
+            _effort: str = effort,
+            _conns: dict[int, sqlite3.Connection] = conns,
+        ) -> tuple[dict, str, dict]:
             import threading
+
             key = threading.get_ident()
-            if key not in conns:
-                conns[key] = sqlite3.connect(
-                    f"file:{lexicon.DB_PATH}?mode=ro", uri=True, check_same_thread=False)
+            if key not in _conns:
+                _conns[key] = sqlite3.connect(
+                    f"file:{lexicon.DB_PATH}?mode=ro", uri=True, check_same_thread=False
+                )
             return t, *generate_root_from_pool(
-                t, model, provider, conns[key], dict_index, reasoning_effort=_effort)
+                t, model, provider, _conns[key], dict_index, reasoning_effort=_effort
+            )
 
         ok = err = nopool = 0
         spend = 0.0
@@ -434,7 +485,7 @@ def probe(n: int, model: str, provider: str, workers: int) -> None:
             for fut in as_completed(futures):
                 try:
                     t, status, rec = fut.result()
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     err += 1
                     failures.append(str(exc)[:90])
                     continue
@@ -451,32 +502,49 @@ def probe(n: int, model: str, provider: str, workers: int) -> None:
                     failures.append(f"{t['root']}: {rec.get('error', '')[:80]}")
 
         attempted = ok + err
-        rows.append({
-            "effort": effort, "ok": ok, "err": err, "no_pool": nopool,
-            "spend": spend, "tok_in": tok_in, "tok_out": tok_out,
-            "per_call": spend / max(attempted, 1),
-            "per_usable": spend / max(ok, 1),
-            "yield": ok / max(attempted, 1),
-        })
-        print(f"reasoning={effort:5s}  ok={ok:3d} err={err:3d} no_pool={nopool:2d}  "
-              f"in={tok_in:6d} out={tok_out:6d}  ${spend:.4f}")
+        rows.append(
+            {
+                "effort": effort,
+                "ok": ok,
+                "err": err,
+                "no_pool": nopool,
+                "spend": spend,
+                "tok_in": tok_in,
+                "tok_out": tok_out,
+                "per_call": spend / max(attempted, 1),
+                "per_usable": spend / max(ok, 1),
+                "yield": ok / max(attempted, 1),
+            }
+        )
+        print(
+            f"reasoning={effort:5s}  ok={ok:3d} err={err:3d} no_pool={nopool:2d}  "
+            f"in={tok_in:6d} out={tok_out:6d}  ${spend:.4f}"
+        )
         for line in failures[:6]:
             print(f"     ✗ {line}")
         print(flush=True)
 
     print("=" * 78)
-    print(f"{'reasoning':<10} {'yield':>7} {'$/call':>10} {'$/usable':>10} "
-          f"{'out tok/call':>13} {'PROJECTED':>12}")
+    print(
+        f"{'reasoning':<10} {'yield':>7} {'$/call':>10} {'$/usable':>10} "
+        f"{'out tok/call':>13} {'PROJECTED':>12}"
+    )
     print("-" * 78)
     for r in rows:
         attempted = r["ok"] + r["err"]
         projected = r["per_usable"] * len(generatable)
-        print(f"{r['effort']:<10} {r['yield'] * 100:6.0f}% {r['per_call']:>10.4f} "
-              f"{r['per_usable']:>10.4f} {r['tok_out'] / max(attempted, 1):>13.0f} "
-              f"{'$' + format(projected, '.2f'):>12}")
+        print(
+            f"{r['effort']:<10} {r['yield'] * 100:6.0f}% {r['per_call']:>10.4f} "
+            f"{r['per_usable']:>10.4f} {r['tok_out'] / max(attempted, 1):>13.0f} "
+            f"{'$' + format(projected, '.2f'):>12}"
+        )
     print("=" * 78)
-    print("PROJECTED = $/usable-record x the whole generatable corpus, retries included.")
-    print("\nProbe complete. This command cannot start a full run — that is deliberate.")
+    print(
+        "PROJECTED = $/usable-record x the whole generatable corpus, retries included."
+    )
+    print(
+        "\nProbe complete. This command cannot start a full run — that is deliberate."
+    )
     print("To generate, re-run without --probe once you have decided on a setting.")
 
 
@@ -490,10 +558,8 @@ def _load_seen(path: Path, key: str = "root_id") -> set:
     if path.exists():
         for line in path.read_text(encoding="utf-8").splitlines():
             if line.strip():
-                try:
+                with contextlib.suppress(json.JSONDecodeError, KeyError):
                     seen.add(json.loads(line)[key])
-                except (json.JSONDecodeError, KeyError):
-                    pass
     return seen
 
 
@@ -530,7 +596,9 @@ def _upsert(path: Path, obj: dict, key: str = "root_id") -> bool:
     return replaced
 
 
-def generate_one(target: dict, model: str, provider: str = "claude") -> tuple[str, dict]:
+def generate_one(
+    target: dict, model: str, provider: str = "claude"
+) -> tuple[str, dict]:
     """Return ('ok'|'no_grounding'|'error', record)."""
     root_id = int(target["root_id"])
     letters = target["letters"]
@@ -542,7 +610,11 @@ def generate_one(target: dict, model: str, provider: str = "claude") -> tuple[st
     root_hint = target.get("root_hint")
     grounding = lexicon.lookup(letters, root_hint=root_hint)
     if not grounding or not grounding.is_usable():
-        return "no_grounding", {"root_id": root_id, "letters": letters, "meaning": meaning}
+        return "no_grounding", {
+            "root_id": root_id,
+            "letters": letters,
+            "meaning": meaning,
+        }
 
     derived = "\n".join(
         f"- {d['word']}" + (f" (form {d['form']})" if d["form"] else "")
@@ -563,13 +635,20 @@ def generate_one(target: dict, model: str, provider: str = "claude") -> tuple[st
     if provider == "openrouter":
         from utils.openrouter_structured import call_openrouter
 
-        result = call_openrouter(messages, response_model=WordEnrichment,
-                                 model=None if model in ("sonnet", "opus", "haiku") else model)
+        result = call_openrouter(
+            messages,
+            response_model=WordEnrichment,
+            model=None if model in ("sonnet", "opus", "haiku") else model,
+        )
     else:
         result = call_claude_cli(messages, response_model=WordEnrichment, model=model)
     if not result.get("success"):
-        return "error", {"root_id": root_id, "letters": letters, "error": result.get("error"),
-                         "_usage": result.get("usage")}
+        return "error", {
+            "root_id": root_id,
+            "letters": letters,
+            "error": result.get("error"),
+            "_usage": result.get("usage"),
+        }
 
     enrichment = WordEnrichment.model_validate(result["data"])
     record = {
@@ -595,44 +674,50 @@ def main() -> None:
         type=int,
         default=0,
         help="measure cost on N roots and EXIT. Picks its own stratified sample, "
-             "runs reasoning off and on, prints $/usable-record and the projection "
-             "to the whole corpus. It cannot continue into a full run.",
+        "runs reasoning off and on, prints $/usable-record and the projection "
+        "to the whole corpus. It cannot continue into a full run.",
     )
-    ap.add_argument("--input", required=False,
-                    help="word mode: [{root_id, letters, meaning}]. "
-                         "root mode: [{root_key, root, headwords}]")
+    ap.add_argument(
+        "--input",
+        required=False,
+        help="word mode: [{root_id, letters, meaning}]. "
+        "root mode: [{root_key, root, headwords}]",
+    )
     ap.add_argument(
         "--mode",
         default="word",
         choices=["word", "root", "root-legacy"],
         help="`word` writes one record per dictionary headword. `root` writes ONE "
-             "record per set of radicals, shared by every headword built on them "
-             "— 1,687 roots span 13,136 headwords, and 38%% of the word-mode "
-             "records generated so far re-derived a root already covered.",
+        "record per set of radicals, shared by every headword built on them "
+        "— 1,687 roots span 13,136 headwords, and 38%% of the word-mode "
+        "records generated so far re-derived a root already covered.",
     )
     ap.add_argument(
         "--provider",
         default="openrouter",
         choices=["claude", "openrouter"],
         help="`claude` runs `claude --print`, which boots a Claude Code harness "
-             "per word (measured: 45,838 prefix tokens and ~6,258 output tokens "
-             "for a ~500-token record) and bills a Max subscription. `openrouter` "
-             "is a plain POST that sends the prompt and nothing else, billed as "
-             "metered credit. DEFAULTS TO openrouter: this pipeline is not allowed "
-             "to spend the Max subscription, and a default that could is one "
-             "forgotten flag away from a bill. Choosing `claude` must be deliberate.",
+        "per word (measured: 45,838 prefix tokens and ~6,258 output tokens "
+        "for a ~500-token record) and bills a Max subscription. `openrouter` "
+        "is a plain POST that sends the prompt and nothing else, billed as "
+        "metered credit. DEFAULTS TO openrouter: this pipeline is not allowed "
+        "to spend the Max subscription, and a default that could is one "
+        "forgotten flag away from a bill. Choosing `claude` must be deliberate.",
     )
-    ap.add_argument("--model", default="sonnet",
-                    help="claude: sonnet|opus|haiku. openrouter: a model id, or "
-                         "omit for DEEPSEEK_MODEL.")
+    ap.add_argument(
+        "--model",
+        default="sonnet",
+        help="claude: sonnet|opus|haiku. openrouter: a model id, or "
+        "omit for DEEPSEEK_MODEL.",
+    )
     ap.add_argument("--limit", type=int, default=0, help="0 = all")
     ap.add_argument(
         "--reasoning",
         default="none",
         choices=["none", "low", "medium", "high"],
         help="openrouter only. Defaults to `none` because the probe measured the "
-             "reasoning trace, billed as output, at ~18x the tokens of the record "
-             "itself for no gain in yield on a select-and-rewrite task.",
+        "reasoning trace, billed as output, at ~18x the tokens of the record "
+        "itself for no gain in yield on a select-and-rewrite task.",
     )
     ap.add_argument(
         "--force",
@@ -644,13 +729,13 @@ def main() -> None:
         type=int,
         default=1,
         help="parallel CLI calls. Measured 3.1x at 8 workers; each call is an "
-             "independent `claude --print` subprocess with no shared state.",
+        "independent `claude --print` subprocess with no shared state.",
     )
     ap.add_argument(
         "--out",
         default=None,
         help="write records here instead of enriched.jsonl (use for benchmark runs "
-             "so throwaway output never reaches verify/build_ts)",
+        "so throwaway output never reaches verify/build_ts)",
     )
     args = ap.parse_args()
 
@@ -668,18 +753,28 @@ def main() -> None:
         # `claude --print` boots a whole Claude Code harness per call (measured at
         # 45,838 prefix tokens for a ~500-token record) and bills the Max
         # subscription, which is what made a 200-word batch cost ~$20.80.
-        print("WARNING: --provider claude bills the Max subscription and boots a "
-              "harness per call.\n         The measured cost is ~50x openrouter "
-              "for this task. Ctrl-C now if unintended.", flush=True)
+        print(
+            "WARNING: --provider claude bills the Max subscription and boots a "
+            "harness per call.\n         The measured cost is ~50x openrouter "
+            "for this task. Ctrl-C now if unintended.",
+            flush=True,
+        )
 
     out_path = Path(args.out) if args.out else OUT
-    skipped_path = out_path.with_name(out_path.stem + ".skipped.jsonl") if args.out else SKIPPED
+    skipped_path = (
+        out_path.with_name(out_path.stem + ".skipped.jsonl") if args.out else SKIPPED
+    )
 
     is_root = args.mode in ("root", "root-legacy")
     key = "root_key" if is_root else "root_id"
-    ident = (lambda t: t["root_key"]) if is_root else (lambda t: int(t["root_id"]))
-    label = (lambda t: f"{t['root']} ({t.get('headword_count', '?')} headwords)"
-             if is_root else f"{t['letters']} ({t['meaning']})")
+
+    def ident(t: dict) -> str | int:
+        return t["root_key"] if is_root else int(t["root_id"])
+
+    def label(t: dict) -> str:
+        if is_root:
+            return f"{t['root']} ({t.get('headword_count', '?')} headwords)"
+        return f"{t['letters']} ({t['meaning']})"
 
     targets = json.loads(Path(args.input).read_text(encoding="utf-8"))
     if args.limit:
@@ -693,34 +788,41 @@ def main() -> None:
     # cannot be shared across them.
     pool_state: dict = {}
     if args.mode == "root":
-        import sqlite3
         import threading
 
         from word_enrichment import pool as pool_mod
 
-        ledger = [json.loads(line) for line
-                  in (BASE / "ledger.jsonl").open(encoding="utf-8")]
+        ledger = [
+            json.loads(line) for line in (BASE / "ledger.jsonl").open(encoding="utf-8")
+        ]
         print(f"building the dictionary index over {len(ledger)} entries…", flush=True)
         pool_state["index"] = pool_mod.dictionary_index(ledger)
-        pool_state["conns"] = {}
-        pool_state["lock"] = threading.Lock()
+        conns: dict[int, sqlite3.Connection] = {}
+        lock = threading.Lock()
 
-        def _conn():
+        def _conn() -> sqlite3.Connection:
             ident_ = threading.get_ident()
-            with pool_state["lock"]:
-                if ident_ not in pool_state["conns"]:
-                    pool_state["conns"][ident_] = sqlite3.connect(
-                        f"file:{lexicon.DB_PATH}?mode=ro", uri=True,
-                        check_same_thread=False)
-                return pool_state["conns"][ident_]
+            with lock:
+                if ident_ not in conns:
+                    conns[ident_] = sqlite3.connect(
+                        f"file:{lexicon.DB_PATH}?mode=ro",
+                        uri=True,
+                        check_same_thread=False,
+                    )
+                return conns[ident_]
 
         pool_state["get"] = _conn
 
-    def _run(t):
+    def _run(t: dict) -> tuple[dict, str, dict]:
         if args.mode == "root":
             return t, *generate_root_from_pool(
-                t, args.model, args.provider, pool_state["get"](),
-                pool_state["index"], reasoning_effort=args.reasoning)
+                t,
+                args.model,
+                args.provider,
+                pool_state["get"](),
+                pool_state["index"],
+                reasoning_effort=args.reasoning,
+            )
         if args.mode == "root-legacy":
             return t, *generate_root_one(t, args.model, args.provider)
         return t, *generate_one(t, args.model, args.provider)
@@ -730,7 +832,7 @@ def main() -> None:
     total = len(pending)
     usage: list[dict] = []
 
-    def _record(t, status, record) -> None:
+    def _record(t: dict, status: str, record: dict) -> None:
         """Write one outcome. Called as each result lands, never in a final pass."""
         nonlocal ok, skip, err, done
         done += 1
@@ -739,22 +841,32 @@ def main() -> None:
         if spent:
             usage.append(spent)
         if status == "ok":
-            was_replaced = _upsert(out_path, record, key) if args.force else (_append(out_path, record) or False)
+            was_replaced = False
+            if args.force:
+                was_replaced = _upsert(out_path, record, key)
+            else:
+                _append(out_path, record)
             ok += 1
             if was_replaced:
                 print(f"  ↻ replaced existing record for {rid}")
-            detail = (f"{len(record['senses'])} senses, " if "senses" in record else "")
-            print(f"  [{done}/{total}] ✓ {rid} {label(t)} → "
-                  f"{detail}{len(record['word_family'])} family", flush=True)
+            detail = f"{len(record['senses'])} senses, " if "senses" in record else ""
+            print(
+                f"  [{done}/{total}] ✓ {rid} {label(t)} → "
+                f"{detail}{len(record['word_family'])} family",
+                flush=True,
+            )
         elif status in ("no_grounding", "no_pool"):
             _append(skipped_path, {**record, "reason": status})
             skip += 1
-            print(f"  [{done}/{total}] – {rid} {label(t)} → "
-                  f"{status}, skipped", flush=True)
+            print(
+                f"  [{done}/{total}] – {rid} {label(t)} → {status}, skipped", flush=True
+            )
         else:
             err += 1
-            print(f"  [{done}/{total}] ✗ {rid} {label(t)} → error: {record.get('error')}",
-                  flush=True)
+            print(
+                f"  [{done}/{total}] ✗ {rid} {label(t)} → error: {record.get('error')}",
+                flush=True,
+            )
 
     if args.workers > 1:
         from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -769,7 +881,7 @@ def main() -> None:
             for fut in as_completed(futures):
                 try:
                     t, status, record = fut.result()
-                except Exception as exc:  # noqa: BLE001 — one bad word must not kill the run
+                except Exception as exc:
                     t = futures[fut]
                     _record(t, "error", {"error": str(exc)})
                     continue

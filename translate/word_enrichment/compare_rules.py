@@ -24,7 +24,9 @@ from word_enrichment.calibrate import load_gold
 MAX_LEMMAS = int(os.environ.get("CALIBRATE_MAX", "3000"))
 
 
-def rules(camel, ar_folds, lane_fold):
+def rules(
+    camel: list[camel_roots.CamelRoot], ar_folds: list[str], lane_fold: str | None
+) -> dict[str, tuple[bool, str | None]]:
     """name -> (publish?, predicted_fold). All inputs already weak-folded."""
     camel_fold = (
         camel_roots.weak_fold(camel[0].letters)
@@ -35,7 +37,7 @@ def rules(camel, ar_folds, lane_fold):
     ar_top = ar_folds[0] if ar_folds else None
     others_of_camel = set(ar_folds) | ({lane_fold} if lane_fold else set())
 
-    out = {}
+    out: dict[str, tuple[bool, str | None]] = {}
 
     # A — shipped rule: CAMeL leads, anything corroborates, else CAMeL if confident.
     if camel_fold and (camel_fold in others_of_camel or camel_conf >= 0.8):
@@ -93,7 +95,9 @@ def main() -> None:
             ar_folds = [camel_roots.weak_fold(r) for r, _ in ar_cands]
             resolved = lexicon._resolve_root(lane_conn, bare)
             lane_fold = (
-                camel_roots.weak_fold(arramooz.fold_root(resolved[0])) if resolved else None
+                camel_roots.weak_fold(arramooz.fold_root(resolved[0]))
+                if resolved
+                else None
             )
             for name, (published, pred) in rules(camel, ar_folds, lane_fold).items():
                 if published:
@@ -106,13 +110,15 @@ def main() -> None:
     n = len(pairs)
     print(f"gold lemmas: {n}\n")
     print(f"{'rule':32} {'coverage':>10} {'precision':>10} {'correct/n':>11}")
-    for name in sorted(pub | Counter({k: 0 for k in cor})):
+    for name in sorted(pub | Counter(dict.fromkeys(cor, 0))):
         p, c = pub[name], cor[name]
         print(
             f"{name:32} {100 * p / n:9.1f}% {100 * c / p if p else 0:9.1f}% "
             f"{100 * c / n:10.1f}%"
         )
-    print("\ncorrect/n = share of ALL gold lemmas published AND right (coverage x precision)")
+    print(
+        "\ncorrect/n = share of ALL gold lemmas published AND right (coverage x precision)"
+    )
 
 
 if __name__ == "__main__":

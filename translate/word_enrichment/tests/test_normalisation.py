@@ -19,21 +19,23 @@ from word_enrichment import arramooz, lexicon, pool
 # cannot be reordered by a bidi renderer -- the same discipline as the codepoint
 # table in lexicon.py.
 BAREWORD_CASES = [
-    ("\u0639\u064e\u0628\u0652\u062f\u064c", "\u0639\u0628\u062f"),        # 3abdun  -> 3bd
-    ("\u0639\u0650\u0644\u0652\u0645\u064c", "\u0639\u0644\u0645"),        # 3ilmun  -> 3lm
-    ("\u0635\u064e\u062f\u064e\u0642\u064e\u0629\u064c",
-     "\u0635\u062f\u0642\u0629"),                                                # sadaqatun
-    ("\u0642\u064e\u0627\u0645\u064e", "\u0642\u0627\u0645"),                # qaama
+    ("\u0639\u064e\u0628\u0652\u062f\u064c", "\u0639\u0628\u062f"),  # 3abdun  -> 3bd
+    ("\u0639\u0650\u0644\u0652\u0645\u064c", "\u0639\u0644\u0645"),  # 3ilmun  -> 3lm
+    (
+        "\u0635\u064e\u062f\u064e\u0642\u064e\u0629\u064c",
+        "\u0635\u062f\u0642\u0629",
+    ),  # sadaqatun
+    ("\u0642\u064e\u0627\u0645\u064e", "\u0642\u0627\u0645"),  # qaama
 ]
 
 
-@pytest.mark.parametrize("vocalised,expected", BAREWORD_CASES)
+@pytest.mark.parametrize(("vocalised", "expected"), BAREWORD_CASES)
 def test_bareword_strips_marks_and_keeps_letters(vocalised, expected):
     """The regression. Every letter survives; every mark is removed."""
     assert lexicon.bareword(vocalised) == expected
 
 
-@pytest.mark.parametrize("vocalised,expected", BAREWORD_CASES)
+@pytest.mark.parametrize(("vocalised", "expected"), BAREWORD_CASES)
 def test_bareword_is_one_implementation(vocalised, expected):
     """Three modules expose this; a divergence between them is how the bug hid."""
     assert arramooz.bareword(vocalised) == expected
@@ -114,10 +116,13 @@ def test_closure_accepts_a_reordered_copy_of_a_pool_form():
     rec = {
         "root_meaning": "to clamour",
         "usage_note": "The root turns on noise and outcry, the din a crowd makes "
-                      "when it protests loudly about something.",
+        "when it protests loudly about something.",
         "word_family": [
-            {"letters": _DAJJA_VOWEL_FIRST, "transliteration": "dajja",
-             "meaning": "an outcry"},
+            {
+                "letters": _DAJJA_VOWEL_FIRST,
+                "transliteration": "dajja",
+                "meaning": "an outcry",
+            },
             {"letters": _DAJJ, "transliteration": "dajja", "meaning": "to clamour"},
         ],
     }
@@ -134,10 +139,12 @@ def test_resolve_snaps_an_under_pointed_copy_to_the_pool_spelling():
 
     pool_form = "ضَجَّة"
     under_pointed = "ضَجّة"
-    candidates = [Candidate(letters=pool_form, transliteration="dajja",
-                            camel_gloss="outcry")]
+    candidates = [
+        Candidate(letters=pool_form, transliteration="dajja", camel_gloss="outcry")
+    ]
     resolved = pool.resolve(under_pointed, candidates)
-    assert resolved is not None and resolved.letters == pool_form
+    assert resolved is not None
+    assert resolved.letters == pool_form
 
 
 def test_resolve_refuses_when_several_pool_forms_share_the_skeleton():

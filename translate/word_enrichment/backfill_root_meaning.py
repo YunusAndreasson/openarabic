@@ -83,9 +83,8 @@ def _payload(rec: dict) -> dict:
 
 
 def _run_batch(batch: list[dict], model: str) -> list[dict]:
-    user = (
-        "Give the core root sense for every item below.\n\n"
-        + json.dumps([_payload(r) for r in batch], ensure_ascii=False, indent=1)
+    user = "Give the core root sense for every item below.\n\n" + json.dumps(
+        [_payload(r) for r in batch], ensure_ascii=False, indent=1
     )
     result = call_claude_cli(
         [
@@ -97,13 +96,19 @@ def _run_batch(batch: list[dict], model: str) -> list[dict]:
     )
     if not result.get("success"):
         raise RuntimeError(result.get("error", "call failed"))
-    return [m.model_dump() for m in RootMeanings.model_validate(result["data"]).meanings]
+    return [
+        m.model_dump() for m in RootMeanings.model_validate(result["data"]).meanings
+    ]
 
 
 def _load(path: Path) -> list[dict]:
     if not path.exists():
         return []
-    return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 def main() -> None:
@@ -115,11 +120,16 @@ def main() -> None:
 
     records = _load(BASE / "enriched.jsonl")
     done = {m["root_id"] for m in _load(SIDECAR)}
-    pending = [r for r in records if r["root_id"] not in done and not r.get("root_meaning")]
-    print(f"{len(records)} record(s), {len(done)} already backfilled, {len(pending)} pending")
+    pending = [
+        r for r in records if r["root_id"] not in done and not r.get("root_meaning")
+    ]
+    print(
+        f"{len(records)} record(s), {len(done)} already backfilled, {len(pending)} pending"
+    )
 
     batches = [
-        pending[i : i + args.batch_size] for i in range(0, len(pending), args.batch_size)
+        pending[i : i + args.batch_size]
+        for i in range(0, len(pending), args.batch_size)
     ]
     if batches:
         with ThreadPoolExecutor(max_workers=args.workers) as ex:
@@ -127,7 +137,7 @@ def main() -> None:
             for n, fut in enumerate(as_completed(futures), 1):
                 try:
                     got = fut.result()
-                except Exception as exc:  # noqa: BLE001 — one bad batch must not kill the run
+                except Exception as exc:
                     print(f"  batch failed ({exc}); it stays pending")
                     continue
                 # Append as each batch lands, never at the end: a crash then

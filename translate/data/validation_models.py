@@ -76,12 +76,8 @@ class ImprovementReview(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
 
     id: int = Field(description="Improvement ID from database")
-    approve: bool = Field(
-        description="True to approve, False to reject"
-    )
-    reason: str = Field(
-        description="Brief reason for the verdict (1 sentence)"
-    )
+    approve: bool = Field(description="True to approve, False to reject")
+    reason: str = Field(description="Brief reason for the verdict (1 sentence)")
 
 
 class ImprovementReviewBatchResponse(BaseModel):
