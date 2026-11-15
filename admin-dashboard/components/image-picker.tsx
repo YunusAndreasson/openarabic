@@ -42,119 +42,96 @@ interface ImagePickerProps {
   inline?: boolean; // If true, skip Dialog wrapper and show content directly
 }
 
+function getCachedImages(): string[] | null {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+
+    const cachedData: CachedImageData = JSON.parse(cached);
+
+    // Check if cache is still valid
+    if (Date.now() - cachedData.timestamp < CACHE_DURATION) {
+      return cachedData.images;
+    }
+
+    // Cache expired, remove it
+    localStorage.removeItem(CACHE_KEY);
+    return null;
+  } catch (error) {
+    console.error('Error reading image cache:', error);
+    return null;
+  }
+}
+
+function setCachedImages(imageList: string[]): void {
+  try {
+    const cacheData: CachedImageData = { images: imageList, timestamp: Date.now() };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+  } catch (error) {
+    console.error('Error saving image cache:', error);
+  }
+}
+
+/** The library's .webp names, from the 24 h cache or else from storage (unshuffled). */
+async function loadImageList(): Promise<string[]> {
+  const cachedImages = getCachedImages();
+  if (cachedImages && cachedImages.length > 0) return cachedImages;
+
+  const { data, error } = await supabase.storage.from('images').list('', {
+    limit: 10000,
+    sortBy: { column: 'created_at', order: 'desc' },
+  });
+  if (error) {
+    console.error('Error fetching images:', error);
+    return [];
+  }
+  const imageFiles = (data || [])
+    .filter(file => file.name.split('.').pop()?.toLowerCase() === 'webp')
+    .map(file => file.name);
+  setCachedImages(imageFiles);
+  return imageFiles;
+}
+
 export function ImagePicker({ onSelect, currentImage, inline = false }: ImagePickerProps) {
   const [open, setOpen] = useState(false);
   const [images, setImages] = useState<string[]>([]);
-  const [filteredImages, setFilteredImages] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalImages, setTotalImages] = useState(0);
+  const active = open || inline;
+  const loading = active && !loaded;
+  const totalImages = images.length;
 
   useEffect(() => {
-    if (open || inline) {
-      loadImages();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, inline]);
+    if (!active) return;
+    let cancelled = false;
+    loadImageList().then(list => {
+      if (cancelled) return;
+      // Randomize the order every time the picker opens
+      setImages(shuffleArray(list));
+      setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [active]);
 
-  useEffect(() => {
-    setCurrentPage(1); // Reset to first page on search
-    if (searchTerm) {
-      setFilteredImages(images.filter(img => img.toLowerCase().includes(searchTerm.toLowerCase())));
-    } else {
-      setFilteredImages(images);
-    }
-  }, [searchTerm, images]);
+  const filteredImages = searchTerm
+    ? images.filter(img => img.toLowerCase().includes(searchTerm.toLowerCase()))
+    : images;
+
+  // Reset to the first page on search, adjusted during render rather than in an effect.
+  const [pageSearchTerm, setPageSearchTerm] = useState(searchTerm);
+  if (pageSearchTerm !== searchTerm) {
+    setPageSearchTerm(searchTerm);
+    setCurrentPage(1);
+  }
 
   const totalPages = Math.ceil(filteredImages.length / IMAGES_PER_PAGE);
   const startIndex = (currentPage - 1) * IMAGES_PER_PAGE;
   const endIndex = startIndex + IMAGES_PER_PAGE;
   const currentImages = filteredImages.slice(startIndex, endIndex);
-
-  const getCachedImages = (): string[] | null => {
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (!cached) return null;
-
-      const cachedData: CachedImageData = JSON.parse(cached);
-      const now = Date.now();
-
-      // Check if cache is still valid
-      if (now - cachedData.timestamp < CACHE_DURATION) {
-        return cachedData.images;
-      }
-
-      // Cache expired, remove it
-      localStorage.removeItem(CACHE_KEY);
-      return null;
-    } catch (error) {
-      console.error('Error reading image cache:', error);
-      return null;
-    }
-  };
-
-  const setCachedImages = (imageList: string[]) => {
-    try {
-      const cacheData: CachedImageData = {
-        images: imageList,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-    } catch (error) {
-      console.error('Error saving image cache:', error);
-    }
-  };
-
-  const loadImages = async () => {
-    // Try to load from cache first
-    const cachedImages = getCachedImages();
-
-    if (cachedImages && cachedImages.length > 0) {
-      // Randomize the order every time the dialog opens
-      const randomizedImages = shuffleArray(cachedImages);
-      setImages(randomizedImages);
-      setFilteredImages(randomizedImages);
-      setTotalImages(randomizedImages.length);
-      return;
-    }
-
-    // No cache or expired, fetch from server
-    await fetchImages();
-  };
-
-  const fetchImages = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.storage.from('images').list('', {
-        limit: 10000,
-        sortBy: { column: 'created_at', order: 'desc' },
-      });
-
-      if (error) throw error;
-
-      const imageFiles = (data || [])
-        .filter(file => {
-          const ext = file.name.split('.').pop()?.toLowerCase();
-          return ext === 'webp';
-        })
-        .map(file => file.name);
-
-      // Save to cache (unshuffled for consistency)
-      setCachedImages(imageFiles);
-
-      // Randomize the order for display
-      const randomizedImages = shuffleArray(imageFiles);
-      setImages(randomizedImages);
-      setFilteredImages(randomizedImages);
-      setTotalImages(randomizedImages.length);
-    } catch (error) {
-      console.error('Error fetching images:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));

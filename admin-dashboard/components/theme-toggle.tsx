@@ -1,14 +1,15 @@
 'use client';
 
 import { Moon, Sun, Monitor } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { useTheme } from '@/components/providers/theme-provider';
+
+const subscribeNever = () => () => {};
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  // false on the server and during hydration, true once on the client.
+  const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
 
   const cycleTheme = () => {
     if (theme === 'light') setTheme('dark');

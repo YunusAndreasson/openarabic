@@ -129,11 +129,6 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
     return wordIds;
   }, [sentences, translationsMap]);
 
-  useEffect(() => {
-    fetchSentences();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [articleId]);
-
   // Close tooltip on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -151,12 +146,10 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
     return () => document.removeEventListener('click', handleClickOutside);
   }, [selectedWord]);
 
-  const fetchSentences = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: fetchError } = await supabase
+  // setState only in promise callbacks, so the effect below can call it.
+  const requestSentences = () =>
+    Promise.resolve(
+      supabase
         .from('article_sentences')
         .select(
           `
@@ -176,18 +169,28 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
         `,
         )
         .eq('article_id', articleId)
-        .order('position');
-
-      if (fetchError) throw fetchError;
-
-      setSentences(data || []);
-    } catch (err) {
-      console.error('Error fetching sentences:', err);
-      setError('Failed to load sentences. Please try again.');
-    } finally {
+        .order('position'),
+    ).then(({ data, error: fetchError }) => {
+      if (fetchError) {
+        console.error('Error fetching sentences:', fetchError);
+        setError('Failed to load sentences. Please try again.');
+      } else {
+        setSentences(data || []);
+      }
       setLoading(false);
-    }
+    });
+
+  /** The Retry button. */
+  const fetchSentences = () => {
+    setLoading(true);
+    setError(null);
+    void requestSentences();
   };
+
+  useEffect(() => {
+    requestSentences();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [articleId]);
 
   const handleEdit = (sentence: Sentence) => {
     setEditingId(sentence.id);

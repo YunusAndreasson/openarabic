@@ -43,6 +43,28 @@ interface Stats {
   rejected: number;
 }
 
+async function loadRootImprovements(status: string): Promise<RootImprovement[]> {
+  const response = await fetch(`/api/root-improvements?status=${status}`);
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to fetch improvements');
+  }
+  return result.data || [];
+}
+
+async function loadRootStats(): Promise<Stats> {
+  const [pending, approved, rejected] = await Promise.all(
+    ['pending', 'approved', 'rejected'].map(status =>
+      fetch(`/api/root-improvements?status=${status}`).then(res => res.json()),
+    ),
+  );
+  return {
+    pending: pending.count || 0,
+    approved: approved.count || 0,
+    rejected: rejected.count || 0,
+  };
+}
+
 export default function RootReviewsPage() {
   const [improvements, setImprovements] = useState<RootImprovement[]>([]);
   const [stats, setStats] = useState<Stats>({ pending: 0, approved: 0, rejected: 0 });
@@ -54,58 +76,45 @@ export default function RootReviewsPage() {
   // Track which items are selected for bulk reject
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
+  // Every setState here runs in a promise callback, never synchronously, so
+  // the effect below can start a load without a cascading render.
+  const fetchImprovements = () =>
+    loadRootImprovements(statusFilter).then(
+      data => {
+        setImprovements(data);
+        // Clear selections when switching views
+        setSelectedIds(new Set());
+        setError(null);
+        setLoading(false);
+      },
+      (err: unknown) => {
+        console.error('Error fetching improvements:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load improvements');
+        setLoading(false);
+      },
+    );
+
+  const fetchStats = () =>
+    loadRootStats().then(setStats, (err: unknown) => console.error('Error fetching stats:', err));
+
+  /** Show the spinner, then reload the current view (the Refresh button). */
+  const refreshImprovements = () => {
+    setLoading(true);
+    setError(null);
+    void fetchImprovements();
+  };
+
+  const changeStatusFilter = (status: string) => {
+    setLoading(true);
+    setError(null);
+    setStatusFilter(status);
+  };
+
   useEffect(() => {
     fetchImprovements();
     fetchStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
-
-  const fetchImprovements = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch(`/api/root-improvements?status=${statusFilter}`);
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch improvements');
-      }
-
-      setImprovements(result.data || []);
-      // Clear selections when switching views
-      setSelectedIds(new Set());
-    } catch (err) {
-      console.error('Error fetching improvements:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load improvements');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchStats = async () => {
-    try {
-      const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
-        fetch('/api/root-improvements?status=pending'),
-        fetch('/api/root-improvements?status=approved'),
-        fetch('/api/root-improvements?status=rejected'),
-      ]);
-
-      const [pending, approved, rejected] = await Promise.all([
-        pendingRes.json(),
-        approvedRes.json(),
-        rejectedRes.json(),
-      ]);
-
-      setStats({
-        pending: pending.count || 0,
-        approved: approved.count || 0,
-        rejected: rejected.count || 0,
-      });
-    } catch (err) {
-      console.error('Error fetching stats:', err);
-    }
-  };
 
   const handleSingleAction = async (improvementId: number, action: 'approve' | 'reject') => {
     setProcessingAction(`single-${improvementId}`);
@@ -313,7 +322,7 @@ export default function RootReviewsPage() {
 
       {/* Filter and Actions */}
       <div className="flex items-center justify-between gap-4">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={changeStatusFilter}>
           <SelectTrigger className="w-48">
             <SelectValue />
           </SelectTrigger>
@@ -375,7 +384,7 @@ export default function RootReviewsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchImprovements}
+            onClick={refreshImprovements}
             className="ml-auto cursor-pointer"
           >
             Retry

@@ -1,23 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { X } from 'lucide-react';
 
 const STORAGE_KEY = 'reading-hint-dismissed';
 
-export function ReadingHint() {
-  const [isVisible, setIsVisible] = useState(false);
+const subscribeNever = () => () => {};
 
-  useEffect(() => {
-    // Check if user has dismissed the hint before
-    const dismissed = localStorage.getItem(STORAGE_KEY) === 'true';
-    if (!dismissed) {
-      setIsVisible(true);
-    }
-  }, []);
+export function ReadingHint() {
+  // Hidden on the server and during hydration; on the client, shown until the
+  // user has dismissed it (now or on an earlier visit).
+  const dismissedBefore = useSyncExternalStore(
+    subscribeNever,
+    () => localStorage.getItem(STORAGE_KEY) === 'true',
+    () => true,
+  );
+  const [dismissedNow, setDismissedNow] = useState(false);
+  const isVisible = !dismissedBefore && !dismissedNow;
 
   const handleDismiss = () => {
-    setIsVisible(false);
+    setDismissedNow(true);
     localStorage.setItem(STORAGE_KEY, 'true');
   };
 

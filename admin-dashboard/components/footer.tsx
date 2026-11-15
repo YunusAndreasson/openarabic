@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
-const SOCIAL_LINKS = [
+export const SOCIAL_LINKS = [
   {
     name: 'Twitter',
     href: 'https://x.com/openarabicio',

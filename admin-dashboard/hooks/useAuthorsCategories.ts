@@ -16,68 +16,59 @@ interface CacheData {
 const CACHE_KEY = 'oa3-authors-categories-cache';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+/** Authors and categories from the 5-minute localStorage cache, or else the database. */
+async function fetchAuthorsCategories(): Promise<Omit<CacheData, 'timestamp'>> {
+  const cached = localStorage.getItem(CACHE_KEY);
+  if (cached) {
+    const cacheData: CacheData = JSON.parse(cached);
+    if (Date.now() - cacheData.timestamp < CACHE_DURATION) {
+      return { authors: cacheData.authors, categories: cacheData.categories };
+    }
+  }
+
+  const [authorsRes, categoriesRes] = await Promise.all([
+    supabase.from('authors').select('*').order('name'),
+    supabase.from('categories').select('*').order('name'),
+  ]);
+
+  if (authorsRes.error) throw authorsRes.error;
+  if (categoriesRes.error) throw categoriesRes.error;
+
+  const fresh = { authors: authorsRes.data || [], categories: categoriesRes.data || [] };
+  const cacheData: CacheData = { ...fresh, timestamp: Date.now() };
+  localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+  return fresh;
+}
+
 export function useAuthorsCategories() {
   const [authors, setAuthors] = useState<Author[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Every setState runs in a promise callback, so the mount effect can call it.
+  const loadData = () =>
+    fetchAuthorsCategories().then(
+      data => {
+        setAuthors(data.authors);
+        setCategories(data.categories);
+        setLoading(false);
+      },
+      (err: unknown) => {
+        console.error('Error loading authors/categories:', err);
+        setError('Failed to load authors and categories');
+        setLoading(false);
+      },
+    );
+
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Try loading from localStorage cache first
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const cacheData: CacheData = JSON.parse(cached);
-        const now = Date.now();
-
-        // Check if cache is still valid
-        if (now - cacheData.timestamp < CACHE_DURATION) {
-          setAuthors(cacheData.authors);
-          setCategories(cacheData.categories);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Fetch from database
-      const [authorsRes, categoriesRes] = await Promise.all([
-        supabase.from('authors').select('*').order('name'),
-        supabase.from('categories').select('*').order('name'),
-      ]);
-
-      if (authorsRes.error) throw authorsRes.error;
-      if (categoriesRes.error) throw categoriesRes.error;
-
-      const authorsData = authorsRes.data || [];
-      const categoriesData = categoriesRes.data || [];
-
-      // Save to cache
-      const cacheData: CacheData = {
-        authors: authorsData,
-        categories: categoriesData,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-
-      setAuthors(authorsData);
-      setCategories(categoriesData);
-    } catch (err) {
-      console.error('Error loading authors/categories:', err);
-      setError('Failed to load authors and categories');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const refresh = async () => {
     localStorage.removeItem(CACHE_KEY);
+    setLoading(true);
+    setError(null);
     await loadData();
   };
 

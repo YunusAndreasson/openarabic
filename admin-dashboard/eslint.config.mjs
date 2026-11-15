@@ -25,4 +25,12 @@ export default [
       'jsx-a11y/alt-text': 'error',
     },
   },
+  {
+    // Standalone CommonJS Node scripts run as `node scripts/<name>.js` with
+    // NODE_PATH resolution, which ESM `import` does not honour.
+    files: ['scripts/**/*.js'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
 ];

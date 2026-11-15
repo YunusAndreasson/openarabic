@@ -59,6 +59,34 @@ interface Stats {
   rejected: number;
 }
 
+async function loadTranslationImprovements(status: string): Promise<TranslationImprovement[]> {
+  const response = await fetch(`/api/translation-improvements?status=${status}`);
+  const result = await response.json();
+
+  console.log('API Response:', result);
+
+  if (!result.success) {
+    const errorMsg = result.error || 'Failed to fetch improvements';
+    const detailsMsg = result.details ? `\n\nDetails: ${result.details}` : '';
+    const fullErrorMsg = result.fullError ? `\n\nFull Error: ${result.fullError}` : '';
+    throw new Error(errorMsg + detailsMsg + fullErrorMsg);
+  }
+  return result.data || [];
+}
+
+async function loadTranslationStats(): Promise<Stats> {
+  const [pending, approved, rejected] = await Promise.all(
+    ['pending', 'approved', 'rejected'].map(status =>
+      fetch(`/api/translation-improvements?status=${status}`).then(res => res.json()),
+    ),
+  );
+  return {
+    pending: pending.count || 0,
+    approved: approved.count || 0,
+    rejected: rejected.count || 0,
+  };
+}
+
 export default function TranslationReviewsPage() {
   const [improvements, setImprovements] = useState<TranslationImprovement[]>([]);
   const [stats, setStats] = useState<Stats>({ pending: 0, approved: 0, rejected: 0 });
@@ -71,73 +99,55 @@ export default function TranslationReviewsPage() {
   const [editedEnglish, setEditedEnglish] = useState<Record<number, string>>({});
   const [editedGrammarNote, setEditedGrammarNote] = useState<Record<number, string | null>>({});
 
+  // Every setState here runs in a promise callback, never synchronously, so
+  // the effect below can start a load without a cascading render.
+  const fetchImprovements = () =>
+    loadTranslationImprovements(statusFilter).then(
+      data => {
+        setImprovements(data);
+
+        // Initialize edit states
+        const initialEnglish: Record<number, string> = {};
+        const initialGrammar: Record<number, string | null> = {};
+        data.forEach(imp => {
+          initialEnglish[imp.id] = imp.suggested_english;
+          initialGrammar[imp.id] = imp.suggested_grammar_note;
+        });
+        setEditedEnglish(initialEnglish);
+        setEditedGrammarNote(initialGrammar);
+        setError(null);
+        setLoading(false);
+      },
+      (err: unknown) => {
+        console.error('Error fetching improvements:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load improvements');
+        setLoading(false);
+      },
+    );
+
+  const fetchStats = () =>
+    loadTranslationStats().then(setStats, (err: unknown) =>
+      console.error('Error fetching stats:', err),
+    );
+
+  /** Show the spinner, then reload the current view (the Refresh button). */
+  const refreshImprovements = () => {
+    setLoading(true);
+    setError(null);
+    void fetchImprovements();
+  };
+
+  const changeStatusFilter = (status: string) => {
+    setLoading(true);
+    setError(null);
+    setStatusFilter(status);
+  };
+
   useEffect(() => {
     fetchImprovements();
     fetchStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
-
-  const fetchImprovements = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch(`/api/translation-improvements?status=${statusFilter}`);
-      const result = await response.json();
-
-      console.log('API Response:', result);
-
-      if (!result.success) {
-        const errorMsg = result.error || 'Failed to fetch improvements';
-        const detailsMsg = result.details ? `\n\nDetails: ${result.details}` : '';
-        const fullErrorMsg = result.fullError ? `\n\nFull Error: ${result.fullError}` : '';
-        throw new Error(errorMsg + detailsMsg + fullErrorMsg);
-      }
-
-      setImprovements(result.data || []);
-
-      // Initialize edit states
-      const initialEnglish: Record<number, string> = {};
-      const initialGrammar: Record<number, string | null> = {};
-
-      result.data?.forEach((imp: TranslationImprovement) => {
-        initialEnglish[imp.id] = imp.suggested_english;
-        initialGrammar[imp.id] = imp.suggested_grammar_note;
-      });
-
-      setEditedEnglish(initialEnglish);
-      setEditedGrammarNote(initialGrammar);
-    } catch (err) {
-      console.error('Error fetching improvements:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load improvements');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchStats = async () => {
-    try {
-      const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
-        fetch('/api/translation-improvements?status=pending'),
-        fetch('/api/translation-improvements?status=approved'),
-        fetch('/api/translation-improvements?status=rejected'),
-      ]);
-
-      const [pending, approved, rejected] = await Promise.all([
-        pendingRes.json(),
-        approvedRes.json(),
-        rejectedRes.json(),
-      ]);
-
-      setStats({
-        pending: pending.count || 0,
-        approved: approved.count || 0,
-        rejected: rejected.count || 0,
-      });
-    } catch (err) {
-      console.error('Error fetching stats:', err);
-    }
-  };
 
   const handleAction = async (improvementId: number, action: 'approve' | 'reject') => {
     setProcessingIds(prev => new Set(prev).add(improvementId));
@@ -228,7 +238,7 @@ export default function TranslationReviewsPage() {
 
       {/* Filter */}
       <div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={changeStatusFilter}>
           <SelectTrigger className="w-48">
             <SelectValue />
           </SelectTrigger>
@@ -248,7 +258,7 @@ export default function TranslationReviewsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchImprovements}
+            onClick={refreshImprovements}
             className="ml-auto cursor-pointer"
           >
             Retry

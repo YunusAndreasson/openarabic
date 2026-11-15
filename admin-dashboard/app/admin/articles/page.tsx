@@ -94,6 +94,12 @@ type Category = Database['public']['Tables']['categories']['Row'];
 type SortField = 'title' | 'author' | 'category' | 'summary' | 'created_at';
 type SortDirection = 'asc' | 'desc' | null;
 
+/** True when the URL carries a complete, valid sort to start from. */
+function initialSort(params: URLSearchParams): boolean {
+  const direction = params.get('sortDirection');
+  return Boolean(params.get('sortField')) && (direction === 'asc' || direction === 'desc');
+}
+
 function ArticlesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -104,46 +110,44 @@ function ArticlesPageContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [updatingIds, setUpdatingIds] = useState<Set<number>>(new Set());
-  const [sortField, setSortField] = useState<SortField | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  // Sort state starts from the URL; handleSort keeps the two in step afterwards.
+  const [sortField, setSortField] = useState<SortField | null>(() =>
+    initialSort(searchParams) ? (searchParams.get('sortField') as SortField) : null,
+  );
+  const [sortDirection, setSortDirection] = useState<SortDirection>(() =>
+    initialSort(searchParams) ? (searchParams.get('sortDirection') as SortDirection) : null,
+  );
   const [currentPage, setCurrentPage] = useState(1);
+  // Back to page 1 whenever the filters change, adjusted during render rather
+  // than in an effect so the stale page never paints.
+  const filterKey = `${debouncedSearchTerm}|${sortField}|${sortDirection}`;
+  const [pageFilterKey, setPageFilterKey] = useState(filterKey);
+  if (pageFilterKey !== filterKey) {
+    setPageFilterKey(filterKey);
+    setCurrentPage(1);
+  }
   const ITEMS_PER_PAGE = 50;
   const [editingImageId, setEditingImageId] = useState<number | null>(null);
   const [savingImageId, setSavingImageId] = useState<number | null>(null);
 
-  // Initialize sort state from URL params
   useEffect(() => {
-    const field = searchParams.get('sortField') as SortField | null;
-    const direction = searchParams.get('sortDirection') as SortDirection;
-
-    if (field && (direction === 'asc' || direction === 'desc')) {
-      setSortField(field);
-      setSortDirection(direction);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    fetchData();
+    let cancelled = false;
+    supabase
+      .from('articles')
+      .select(
+        '*, authors(name), categories(name), article_sentences(english_repeat, arabic_repeat)',
+      )
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) console.error('Error fetching data:', error);
+        else setArticles((data as Article[]) || []);
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
-
-  const fetchData = async () => {
-    try {
-      const articlesRes = await supabase
-        .from('articles')
-        .select(
-          '*, authors(name), categories(name), article_sentences(english_repeat, arabic_repeat)',
-        )
-        .order('created_at', { ascending: false });
-
-      if (articlesRes.error) throw articlesRes.error;
-
-      setArticles((articlesRes.data as Article[]) || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleImageSelect = async (articleId: number, imageUrl: string) => {
     setSavingImageId(articleId);
@@ -315,10 +319,6 @@ function ArticlesPageContent() {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchTerm, sortField, sortDirection]);
 
   // ESC key handler to close modal
   useEffect(() => {

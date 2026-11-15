@@ -101,20 +101,22 @@ export function useGlobalTranslationCache(): UseGlobalTranslationCacheReturn {
     [buildTranslationMap, calculateStats],
   );
 
-  const loadCache = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const words = await fetchFromDatabase();
-      applyWords(words);
-    } catch (err) {
-      console.error('Error loading translation data:', err);
-      setError('Failed to load translation data');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchFromDatabase, applyWords]);
+  // Every setState runs in a promise callback, so the mount effect can call it.
+  const loadCache = useCallback(
+    () =>
+      fetchFromDatabase().then(
+        words => {
+          applyWords(words);
+          setIsLoading(false);
+        },
+        (err: unknown) => {
+          console.error('Error loading translation data:', err);
+          setError('Failed to load translation data');
+          setIsLoading(false);
+        },
+      ),
+    [fetchFromDatabase, applyWords],
+  );
 
   const refresh = useCallback(async () => {
     setIsLoading(true);

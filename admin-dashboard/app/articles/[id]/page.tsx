@@ -65,31 +65,32 @@ export default function EditArticlePage() {
   const [optimizedWordCount, setOptimizedWordCount] = useState(0);
 
   useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let cancelled = false;
+    supabase
+      .from('articles')
+      .select('*')
+      .eq('id', articleId)
+      .single()
+      .then(({ data: articleData, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.error('Error fetching data:', error);
+        } else {
+          setArticle(articleData);
+          setTitle(articleData.title);
+          setSummary(articleData.summary);
+          setAuthorId(articleData.author_id.toString());
+          setCategoryId(articleData.category_id.toString());
+          setDifficultyLevel(articleData.difficulty_level.toString());
+          setImageUrl(articleData.image_url);
+          setImagePreview(normalizeImageUrl(articleData.image_url));
+        }
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [articleId]);
-
-  const fetchData = async () => {
-    try {
-      const articleRes = await supabase.from('articles').select('*').eq('id', articleId).single();
-
-      if (articleRes.error) throw articleRes.error;
-
-      const articleData = articleRes.data;
-      setArticle(articleData);
-      setTitle(articleData.title);
-      setSummary(articleData.summary);
-      setAuthorId(articleData.author_id.toString());
-      setCategoryId(articleData.category_id.toString());
-      setDifficultyLevel(articleData.difficulty_level.toString());
-      setImageUrl(articleData.image_url);
-      setImagePreview(normalizeImageUrl(articleData.image_url));
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

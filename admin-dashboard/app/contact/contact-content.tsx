@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Footer } from '@/components/footer';
+// lucide-react 1.0 dropped its brand icons; the footer carries the official marks.
+import { Footer, SOCIAL_LINKS } from '@/components/footer';
 import { PublicHeader } from '@/components/public-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, CheckCircle2, Bug, Lightbulb, HelpCircle, MessageSquare, Mail, Twitter, Instagram, Facebook } from 'lucide-react';
+import { Loader2, CheckCircle2, Bug, Lightbulb, HelpCircle, MessageSquare, Mail } from 'lucide-react';
 
 type Category = Database['public']['Tables']['categories']['Row'];
 
@@ -243,39 +244,20 @@ export function ContactContent() {
       <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
         <h3 className="font-semibold mb-4">Follow Us</h3>
         <div className="space-y-3">
-          <a
-            href="https://x.com/openarabicio"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors group"
-          >
-            <div className="p-2 bg-muted group-hover:bg-muted/80 rounded-lg transition-colors">
-              <Twitter className="w-4 h-4" />
-            </div>
-            <span>Twitter</span>
-          </a>
-          <a
-            href="https://www.instagram.com/openarabic.io/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors group"
-          >
-            <div className="p-2 bg-muted group-hover:bg-muted/80 rounded-lg transition-colors">
-              <Instagram className="w-4 h-4" />
-            </div>
-            <span>Instagram</span>
-          </a>
-          <a
-            href="https://www.facebook.com/OpenArabic.io/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors group"
-          >
-            <div className="p-2 bg-muted group-hover:bg-muted/80 rounded-lg transition-colors">
-              <Facebook className="w-4 h-4" />
-            </div>
-            <span>Facebook</span>
-          </a>
+          {SOCIAL_LINKS.map((link) => (
+            <a
+              key={link.name}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+            >
+              <div className="p-2 bg-muted group-hover:bg-muted/80 rounded-lg transition-colors">
+                {link.icon}
+              </div>
+              <span>{link.name}</span>
+            </a>
+          ))}
         </div>
       </div>
     </div>

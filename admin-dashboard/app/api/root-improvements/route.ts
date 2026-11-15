@@ -4,6 +4,7 @@ import type { Database } from '@/lib/database.types';
 
 type RootImprovement = Database['public']['Tables']['root_translation_improvements']['Row'];
 type Root = Database['public']['Tables']['roots']['Row'];
+type RootUpdate = Database['public']['Tables']['roots']['Update'];
 
 interface RootImprovementWithContext extends RootImprovement {
   roots: Root | null;
@@ -142,7 +143,7 @@ export async function PATCH(request: NextRequest) {
 
       // Update each root with the suggested values
       const updatePromises = pendingImprovements.map(async improvement => {
-        const updateData: any = {};
+        const updateData: RootUpdate = {};
 
         if (improvement.suggested_english) {
           updateData.meaning = improvement.suggested_english;
@@ -212,7 +213,7 @@ export async function PATCH(request: NextRequest) {
 
     // If approving, apply changes to roots table
     if (action === 'approve') {
-      const updateData: any = {};
+      const updateData: RootUpdate = {};
 
       if (improvement.suggested_english) {
         updateData.meaning = improvement.suggested_english;

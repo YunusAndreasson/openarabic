@@ -14,60 +14,55 @@ const IMAGES_PER_PAGE = 24;
 
 export default function ImagesPage() {
   const [images, setImages] = useState<string[]>([]);
-  const [filteredImages, setFilteredImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingImages, setDeletingImages] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    fetchImages();
-  }, []);
+  const matchesSearch = (img: string) =>
+    !debouncedSearchTerm || img.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+  const filteredImages = images.filter(matchesSearch);
 
-  useEffect(() => {
-    if (debouncedSearchTerm) {
-      setFilteredImages(images.filter(img => img.toLowerCase().includes(debouncedSearchTerm.toLowerCase())));
-    } else {
-      setFilteredImages(images);
-    }
-  }, [debouncedSearchTerm, images]);
-
-  // Only reset to page 1 when search term changes, not when images change
-  useEffect(() => {
+  // Only reset to page 1 when the search term changes, not when images change.
+  // Adjusted during render rather than in an effect so the stale page never paints.
+  const [pageSearchTerm, setPageSearchTerm] = useState(debouncedSearchTerm);
+  if (pageSearchTerm !== debouncedSearchTerm) {
+    setPageSearchTerm(debouncedSearchTerm);
     setCurrentPage(1);
-  }, [debouncedSearchTerm]);
+  }
 
   const totalPages = Math.ceil(filteredImages.length / IMAGES_PER_PAGE);
   const startIndex = (currentPage - 1) * IMAGES_PER_PAGE;
   const endIndex = startIndex + IMAGES_PER_PAGE;
   const currentImages = filteredImages.slice(startIndex, endIndex);
 
-  const fetchImages = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.storage.from('images').list('', {
+  useEffect(() => {
+    let cancelled = false;
+    supabase.storage
+      .from('images')
+      .list('', {
         limit: 10000,
         sortBy: { column: 'created_at', order: 'desc' },
+      })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.error('Error fetching images:', error);
+        } else {
+          setImages(
+            (data || [])
+              .filter(file => file.name.split('.').pop()?.toLowerCase() === 'webp')
+              .map(file => file.name),
+          );
+        }
+        setLoading(false);
       });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-      if (error) throw error;
-
-      const imageFiles = (data || [])
-        .filter(file => {
-          const ext = file.name.split('.').pop()?.toLowerCase();
-          return ext === 'webp';
-        })
-        .map(file => file.name);
-
-      setImages(imageFiles);
-      setFilteredImages(imageFiles);
-    } catch (error) {
-      console.error('Error fetching images:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const deleteImage = async (imageName: string) => {
     if (!confirm(`Are you sure you want to delete "${imageName}"? This action cannot be undone.`)) {
@@ -84,17 +79,13 @@ export default function ImagesPage() {
 
       // Remove from local state
       setImages(prev => prev.filter(img => img !== imageName));
-      setFilteredImages(prev => {
-        const updated = prev.filter(img => img !== imageName);
 
-        // If this deletion empties the current page, go to the previous page
-        const newTotalPages = Math.ceil(updated.length / IMAGES_PER_PAGE);
-        if (currentPage > newTotalPages && newTotalPages > 0) {
-          setCurrentPage(newTotalPages);
-        }
-
-        return updated;
-      });
+      // If this deletion empties the current page, go to the previous page
+      const remaining = filteredImages.filter(img => img !== imageName).length;
+      const newTotalPages = Math.ceil(remaining / IMAGES_PER_PAGE);
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      }
     } catch (error) {
       console.error('Error deleting image:', error);
       alert('Failed to delete image. It may be in use by an article.');

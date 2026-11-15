@@ -55,51 +55,69 @@ export function TranslationImprovementModal({
   const [error, setError] = useState<string | null>(null);
   const [savingWordIds, setSavingWordIds] = useState<Set<number>>(new Set());
 
-  // Auto-load AI suggestions when modal opens
+  // Auto-load AI suggestions when the modal opens. The spinner is switched on
+  // while rendering the open transition, so the effect itself only fetches.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open && suggestions.length === 0 && !isLoading && !error) setIsLoading(true);
+  }
+
+  const fetchSuggestions = async (): Promise<TranslationSuggestion[]> => {
+    const response = await fetch('/api/ai/improve-translations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        arabicSentence,
+        englishSentence,
+        words: words.map(w => ({
+          arabic: w.arabic,
+          english: w.english,
+          position: w.position,
+        })),
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      const errorMsg = data.error || 'Failed to get translation suggestions';
+      const debugInfo = data.rawResponse ? `\n\nAI Response Preview: ${data.rawResponse}` : '';
+      console.error('API Error:', data);
+      throw new Error(errorMsg + debugInfo);
+    }
+
+    return data.suggestions || [];
+  };
+
+  // setState only after an await, in promise callbacks.
+  const requestSuggestions = () =>
+    fetchSuggestions().then(
+      result => {
+        setSuggestions(result);
+        setIsLoading(false);
+      },
+      (err: unknown) => {
+        console.error('Error loading suggestions:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load suggestions');
+        setIsLoading(false);
+      },
+    );
+
   useEffect(() => {
-    if (open && suggestions.length === 0 && !isLoading && !error) {
-      loadSuggestions();
+    if (open && suggestions.length === 0 && !error) {
+      requestSuggestions();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const loadSuggestions = async () => {
+  /** The Retry button. */
+  const loadSuggestions = () => {
     setIsLoading(true);
     setError(null);
-
-    try {
-      const response = await fetch('/api/ai/improve-translations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          arabicSentence,
-          englishSentence,
-          words: words.map(w => ({
-            arabic: w.arabic,
-            english: w.english,
-            position: w.position,
-          })),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        const errorMsg = data.error || 'Failed to get translation suggestions';
-        const debugInfo = data.rawResponse ? `\n\nAI Response Preview: ${data.rawResponse}` : '';
-        console.error('API Error:', data);
-        throw new Error(errorMsg + debugInfo);
-      }
-
-      setSuggestions(data.suggestions || []);
-    } catch (err) {
-      console.error('Error loading suggestions:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load suggestions');
-    } finally {
-      setIsLoading(false);
-    }
+    void requestSuggestions();
   };
 
   const handleSaveWord = async (wordId: number, newEnglish: string) => {
