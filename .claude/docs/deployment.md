@@ -52,13 +52,13 @@ eas build --platform ios --profile preview --clear-cache
 eas build --platform android --profile production --clear-cache --non-interactive
 eas build --platform all --profile development --clear-cache
 
-# OTA updates — ALWAYS use the yarn scripts, never raw `--branch root`.
-# Production builds (TestFlight + App Store) subscribe to channel `production`,
-# which reads from branch `production`. Pushing to `root` or any other branch
-# silently does nothing for prod binaries.
-yarn ota "Fix critical bug"           # iOS prod channel
-yarn ota:android "Fix critical bug"   # Android prod channel
-yarn ota:all "Fix critical bug"       # both platforms, prod channel
+# OTA updates — ALWAYS use `yarn ota` (scripts/eas-update.sh), never raw
+# `eas update`. Production builds subscribe to channel `production`, which reads
+# from branch `production`; any other branch silently reaches no one.
+yarn ota "Fix critical bug"                               # both platforms
+yarn ota ios "Fix critical bug"                           # or android
+yarn ota "Fix critical bug" --rollout-percentage 10       # staged
+yarn ota "Fix critical bug" --dry-run                     # checks only
 
 # List recent builds
 eas build:list --platform ios --limit 5 --non-interactive
@@ -78,7 +78,10 @@ eas config
 
 ## OTA Pre-flight Checklist
 
-Native dependency updates require a new binary. Runtime `1448.5.10` carries the
+Native dependency updates require a new binary. Runtime `1448.5.11` carries the
+2026-11-06 in-range update (Expo 58.0.23 native modules, `react-native-safe-area-context`
+5.11 and the working tree's native bumps); JS built from it must never be aimed at
+`1448.5.10` (build 283). Runtime `1448.5.10` carries the
 2026-11-02 upgrade (`react-native-skia` 3.9.0, `react-native-executorch` 0.11,
 React Native 0.88.1 and the Expo 58.0.22 native modules); JS built from it must
 never be aimed at `1448.5.9` (build 282), whose binary links the older versions.
@@ -98,20 +101,28 @@ native builds have shipped; until then `yarn ota` reaches no one on it. JS that
 imports `react-native-skia` must never be aimed at 1448.5.3, whose binaries
 link `@shopify/react-native-skia`.
 
-Before publishing an OTA, verify:
+`yarn ota` refuses to publish unless:
 
-1. **Local is in sync with origin** — `yarn release` auto-bumps app version
-   and commits to origin via the GitHub workflow. If you have local commits
-   that haven't been pushed yet, the binary that gets built from origin will
-   not include them. Run `git pull --rebase` and check `git status` is clean
-   before publishing OTAs.
-2. **OTA bundle's native modules match the running binary's** — adding a
-   native dependency (anything in `package.json` that ships a `.podspec` /
-   Android Gradle module) means existing TestFlight builds don't have it
-   linked. Pushing JS that imports the new module can either silently
-   no-op or crash on launch, in which case expo-updates rolls back to the
-   embedded bundle. New native deps require a fresh `yarn release`.
-3. **BrandFooter OTA hash confirms delivery** — Settings screen shows the
+1. **The runtime gate passes** (`yarn runtime:check`, scripts/check-runtime.js).
+   `native-runtimes.json` holds the iOS and Android native fingerprint of each
+   `runtimeVersion` (fingerprint.config.js says what counts: native package
+   versions, app.json, local plugins, native Yarn patches). A native change
+   without a new runtimeVersion fails here, in `yarn verify` and in
+   `eas-build-post-install`, so it can neither publish nor build. To ship one:
+   set a new `runtimeVersion` in app.json, run `yarn runtime:record`, commit
+   `native-runtimes.json` with the change, then `yarn release`. Never edit or
+   replace an existing record; retire a broken runtime by adding it to `blocked`.
+2. **The tree is clean and HEAD equals its upstream**, so the update maps to a
+   pushed commit.
+
+After publishing it uploads source maps to Sentry, but only once
+`metro.config.js` uses `getSentryExpoConfig` (Sentry matches bundles by the
+debug IDs that serializer writes) and `SENTRY_AUTH_TOKEN` is set. Until then
+it prints a warning and skips the upload.
+
+Then check:
+
+1. **BrandFooter OTA hash confirms delivery** — Settings screen shows the
    current bundle's update group ID (first 8 chars). Compare against
    `eas update:list --branch production` to confirm the latest push landed.
 
@@ -120,6 +131,15 @@ Before publishing an OTA, verify:
 - `development` - Development builds with Expo Go
 - `preview` - Internal testing builds (TestFlight/Internal Track)
 - `production` - Production builds for App Store/Play Store
+
+## What EAS uploads
+
+`.easignore` is an allow-list: it replaces `.gitignore` for EAS and uploads only
+the app (about 18 MB instead of ~200 MB with translate/, admin-dashboard/ and
+docs/). A new top-level file or directory that a build needs, or a new
+fingerprint source, must be added there. Check with
+`eas build:inspect --platform android --stage archive --output <empty dir> --profile production`
+(local only, nothing uploads).
 
 ## Critical Flags
 

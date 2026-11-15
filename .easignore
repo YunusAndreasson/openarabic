@@ -1,0 +1,63 @@
+# EAS uploads only what a build of the mobile app needs. The other projects in
+# this repo (translate/, admin-dashboard/, docs/, social/, publish/, brand/,
+# store-listing/) never reach a build. A file the build needs must be listed
+# here, and so must every fingerprint source (fingerprint.config.js): the
+# eas-build-post-install gate fails on the worker if one is missing.
+#
+# No trailing slashes: without requireCommit, EAS copies the working tree and
+# matches each directory as a bare path (`app`, not `app/`), so a pattern such as
+# `!/app/` would match nothing and drop the directory.
+/*
+!/.easignore
+!/package.json
+!/yarn.lock
+!/.yarnrc.yml
+!/.yarn
+/.yarn/*
+!/.yarn/patches
+!/.yarn/plugins
+!/.yarn/releases
+!/app.json
+!/eas.json
+!/metro.config.js
+!/tsconfig.json
+!/fingerprint.config.js
+!/.fingerprintignore
+!/native-runtimes.json
+!/app
+!/assets
+!/components
+!/constants
+!/hooks
+!/lib
+!/plugins
+!/services
+!/store
+!/types
+!/utils
+!/scripts
+/scripts/output
+
+# .easignore replaces .gitignore, so its generated-file and credential
+# exclusions are repeated here, wherever they sit.
+node_modules
+.expo
+dist
+expo-env.d.ts
+/android
+/ios
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+.metro-health-check*
+*.log
+.DS_Store
+.env
+.env.*
+*.tsbuildinfo
+*service-account*.json
+secrets.env

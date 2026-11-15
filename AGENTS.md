@@ -52,7 +52,9 @@ Use agent-cli for operations that have no yarn script here.
 - Don't run tests during development. Run them when I ask you to commit.
 - Fix formatting with `yarn prettier:fix`, never by hand.
 - Before a release or an OTA update, read [deployment.md](.claude/docs/deployment.md).
-  OTA updates go through the `yarn ota*` scripts only.
+  OTA updates go through `yarn ota` only. A native change (native package,
+  local plugin, native patch, app.json) needs a new `runtimeVersion` and
+  `yarn runtime:record`; `yarn verify` fails until then.
 
 ## Stack
 

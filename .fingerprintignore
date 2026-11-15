@@ -1,0 +1,15 @@
+# From edenmind: build outputs these packages download for the CURRENT platform
+# at install, so they differ between this Linux machine and the EAS macOS worker.
+# Keep the download scripts, podspecs and release-tag files hashed: they select
+# the native versions. (The default preset keys native modules by name and
+# version, so these matter only if fingerprint.config.js ever hashes files.)
+node_modules/react-native-audio-api/android/src/main/jniLibs/**/*
+node_modules/react-native-audio-api/common/cpp/audioapi/external/android/**/*
+node_modules/react-native-audio-api/common/cpp/audioapi/external/iphoneos/**/*
+node_modules/react-native-audio-api/common/cpp/audioapi/external/iphonesimulator/**/*
+node_modules/react-native-audio-api/common/cpp/audioapi/external/macosx/**/*
+node_modules/react-native-audio-api/common/cpp/audioapi/external/ffmpeg_ios/**/*
+node_modules/react-native-audio-api/audioapi-binaries-temp/**/*
+node_modules/react-native-sherpa-onnx/android/src/main/jniLibs/**/*
+node_modules/react-native-sherpa-onnx/android/src/main/cpp/include/**/*
+node_modules/react-native-sherpa-onnx/ios/Frameworks/**/*
