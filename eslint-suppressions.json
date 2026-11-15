@@ -188,11 +188,6 @@
       "count": 2
     }
   },
-  "services/analytics.ts": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 1
-    }
-  },
   "services/audioPlayer.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
