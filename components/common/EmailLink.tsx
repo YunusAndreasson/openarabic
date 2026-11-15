@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import type { ThemedTextProps } from '@/types/ui/text.types';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 
@@ -38,6 +39,8 @@ export const EmailLink = ({ email, type = 'body' }: EmailLinkProps) => {
     });
   }, [email]);
 
+  const { handlePress } = useButtonPress({ onPress: handleEmailPress });
+
   return (
     <ThemedText
       type={type}
@@ -45,8 +48,7 @@ export const EmailLink = ({ email, type = 'body' }: EmailLinkProps) => {
       style={styles.link}
       accessibilityRole="link"
       accessibilityLabel={email}
-      onPress={handleEmailPress}
-      suppressHighlighting={true}
+      onPress={handlePress}
     >
       {email}
     </ThemedText>

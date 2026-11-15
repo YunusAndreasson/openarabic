@@ -13,12 +13,15 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ONBOARDING_CONFIG, OnboardingStep } from '@/constants/onboarding';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import type { OnboardingChecklistState } from '@/hooks/onboarding/useOnboardingChecklist';
+import type {
+  ChecklistItem,
+  OnboardingChecklistState,
+} from '@/hooks/onboarding/useOnboardingChecklist';
 import { useOpenStarterArticle } from '@/hooks/onboarding/useOpenStarterArticle';
 import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
 import type { Article } from '@/types/articles.types';
-import { selectionFeedback } from '@/utils/haptics';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { fillTemplate } from '@/utils/fillTemplate';
 
 const CHECK_ICON_SIZE = 22;
@@ -61,7 +64,6 @@ const GetStartedChecklistComponent = ({
   checklist,
   isSuppressedByIntro = false,
 }: GetStartedChecklistProps) => {
-  const colors = useColors();
   const router = useRouter();
   const { isChecklistVisible, items, doneCount, allDone, finalizeCompletion, dismiss } = checklist;
 
@@ -110,7 +112,6 @@ const GetStartedChecklistComponent = ({
 
   const handleRowPress = useCallback(
     (step: OnboardingStep) => {
-      selectionFeedback();
       void analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_ITEM_TAPPED, { item: step });
 
       // Practice is the one step that doesn't happen inside an article. Send the
@@ -160,43 +161,62 @@ const GetStartedChecklistComponent = ({
           </View>
 
           {items.map(item => (
-            <Pressable
-              key={item.step}
-              style={styles.row}
-              onPress={() => handleRowPress(item.step)}
-              disabled={item.done}
-              accessibilityRole="button"
-              accessibilityLabel={item.label}
-              accessibilityState={{ checked: item.done }}
-            >
-              {item.done ? (
-                <Animated.View entering={ENTERING_CHECK}>
-                  <Icon name="checkmark-circle" size={CHECK_ICON_SIZE} color={colors.success} />
-                </Animated.View>
-              ) : (
-                <Icon name="ellipse-outline" size={CHECK_ICON_SIZE} color={colors.textTertiary} />
-              )}
-              <ThemedText
-                colorName={item.done ? 'secondaryText' : 'text'}
-                style={styles.rowLabel}
-                type="body"
-              >
-                {item.label}
-              </ThemedText>
-              {!item.done && (
-                <Icon
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  color={colors.textTertiary}
-                />
-              )}
-            </Pressable>
+            <ChecklistRow key={item.step} item={item} onPress={handleRowPress} />
           ))}
         </BaseCard>
       </View>
     </Animated.View>
   );
 };
+
+function ChecklistRow({
+  item,
+  onPress,
+}: {
+  item: ChecklistItem;
+  onPress: (step: OnboardingStep) => void;
+}) {
+  const colors = useColors();
+  const { handlePress, rippleConfig } = useButtonPress({
+    onPress: () => onPress(item.step),
+    disabled: item.done,
+    hapticType: 'selection',
+  });
+
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.elevation2 }]}
+      onPress={handlePress}
+      android_ripple={rippleConfig}
+      disabled={item.done}
+      accessibilityRole="button"
+      accessibilityLabel={item.label}
+      accessibilityState={{ checked: item.done, disabled: item.done }}
+    >
+      {item.done ? (
+        <Animated.View entering={ENTERING_CHECK}>
+          <Icon name="checkmark-circle" size={CHECK_ICON_SIZE} color={colors.success} />
+        </Animated.View>
+      ) : (
+        <Icon name="ellipse-outline" size={CHECK_ICON_SIZE} color={colors.textTertiary} />
+      )}
+      <ThemedText
+        colorName={item.done ? 'secondaryText' : 'text'}
+        style={styles.rowLabel}
+        type="body"
+      >
+        {item.label}
+      </ThemedText>
+      {!item.done && (
+        <Icon
+          name="chevron-forward"
+          size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+          color={colors.textTertiary}
+        />
+      )}
+    </Pressable>
+  );
+}
 
 const styles = StyleSheet.create({
   cardWrapper: {

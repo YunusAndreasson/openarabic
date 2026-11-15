@@ -54,7 +54,7 @@ export const BrandFooter = memo(({ showDetails = false }: BrandFooterProps) => {
         {fillTemplate(STRINGS.COPYRIGHT, { year: CURRENT_YEAR })}
       </ThemedText>
       <Image
-        source={require('@/assets/images/oaLogo.png')}
+        source={require('@/assets/images/oaLogo.png') as number}
         style={styles.logo}
         contentFit="contain"
       />

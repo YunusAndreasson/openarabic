@@ -136,6 +136,7 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
     <BaseCard
       elevation="none"
       style={cardStyle}
+      contentStyle={styles.cardContent}
       onPress={isToggleRow ? handleToggleRowPress : onPress}
       accessibilityRole={isToggleRow ? 'switch' : undefined}
       accessibilityState={props.rightType === 'toggle' ? { checked: props.toggleValue } : undefined}
@@ -177,6 +178,8 @@ const styles = StyleSheet.create({
   card: {
     // SettingsSection owns the group's rounded surface and elevation.
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
+  },
+  cardContent: {
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,

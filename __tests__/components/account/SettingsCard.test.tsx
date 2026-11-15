@@ -114,7 +114,7 @@ describe('SettingsCard', () => {
           onToggleChange={mockOnToggleChange}
         />,
       );
-      expect(getByLabelText('Notifications').props.accessibilityState).toEqual({ checked: true });
+      expect(getByLabelText('Notifications').props.accessibilityState).toEqual({ checked: true, disabled: false });
     });
 
     test('renders custom component', () => {

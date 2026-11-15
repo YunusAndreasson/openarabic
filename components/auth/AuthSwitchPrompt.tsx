@@ -13,6 +13,7 @@ interface AuthSwitchPromptProps {
   accessibilityLabel: string;
   testID: string;
   onPress: () => void;
+  disabled?: boolean;
 }
 
 /**
@@ -27,13 +28,15 @@ export function AuthSwitchPrompt({
   accessibilityLabel,
   testID,
   onPress,
+  disabled = false,
 }: AuthSwitchPromptProps): JSX.Element {
   return (
     <View style={styles.container}>
-      <ThemedText type="body" colorName="secondaryText">
-        {prompt}{' '}
+      <ThemedText type="body" colorName="secondaryText" align="center">
+        {prompt}
       </ThemedText>
       <TextLink
+        disabled={disabled}
         accessibilityLabel={accessibilityLabel}
         label={label}
         testID={testID}
@@ -48,6 +51,9 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: LAYOUT.SPACING.TINY,
+    rowGap: LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginTop: LAYOUT.SPACING.LARGE,
     width: '100%',

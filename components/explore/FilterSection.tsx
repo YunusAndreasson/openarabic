@@ -63,7 +63,7 @@ function CompactNavCard({
   return (
     <BaseCard
       accessibilityLabel={accessibilityLabel}
-      style={compactCardStyles.card}
+      contentStyle={compactCardStyles.card}
       onPress={onPress}
     >
       {/* The count shares the title's line, not the card's full height. Beside

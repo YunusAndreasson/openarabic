@@ -155,13 +155,9 @@ export const FeedbackForm = memo(() => {
         analyticsEventName: 'Feedback_Capture_Error',
       });
 
-      Alert.alert(STRINGS.FEEDBACK_ERROR_TITLE, STRINGS.FEEDBACK_ERROR_MESSAGE, [
-        { text: STRINGS.CANCEL, style: 'cancel' },
-        {
-          text: STRINGS.RETRY,
-          onPress: () => setIsSubmitting(false),
-        },
-      ]);
+      // Keep the draft on screen. The native acknowledgement dismisses this
+      // message; Send remains the explicit way to try again.
+      Alert.alert(STRINGS.FEEDBACK_ERROR_TITLE, STRINGS.FEEDBACK_ERROR_MESSAGE);
     } finally {
       setIsSubmitting(false);
     }
@@ -192,6 +188,7 @@ export const FeedbackForm = memo(() => {
           <View style={styles.removeButton}>
             <IconButton
               accessibilityLabel={STRINGS.FEEDBACK_SCREENSHOT_REMOVE_A11Y}
+              disabled={isSubmitting}
               icon="close"
               size="small"
               tone="destructive"
@@ -203,6 +200,7 @@ export const FeedbackForm = memo(() => {
         <ThemedButton
           allowTitleWrap
           fullWidth
+          disabled={isSubmitting}
           icon="image"
           style={styles.addScreenshotButton}
           title={STRINGS.FEEDBACK_SCREENSHOT_LABEL}
@@ -225,7 +223,10 @@ export const FeedbackForm = memo(() => {
       <ThemedButton
         title={isSubmitting ? STRINGS.FEEDBACK_SENDING : STRINGS.FEEDBACK_SUBMIT}
         onPress={() => void handleSubmit()}
-        disabled={isSubmitting || characterCount < MIN_CHARACTERS}
+        disabled={characterCount < MIN_CHARACTERS}
+        loading={isSubmitting}
+        allowTitleWrap
+        fullWidth
         variant={characterCount < MIN_CHARACTERS ? 'outlined' : 'filled'}
         style={styles.submitButton}
       />

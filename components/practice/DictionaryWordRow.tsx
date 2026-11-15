@@ -12,6 +12,8 @@ import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reani
 import { SortMeter } from '@/components/practice/SortMeter';
 import { WordListRow } from '@/components/practice/WordListRow';
 import { STRINGS } from '@/constants/strings';
+import { LAYOUT } from '@/constants/layout';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DictionarySortField } from '@/hooks/vocabulary/useDictionaryList';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -58,6 +60,8 @@ interface RowActionsProps {
  */
 function RowActions({ drag, onReset, onRemove }: RowActionsProps) {
   const colors = useColors();
+  const { handlePress: handleReset } = useButtonPress({ onPress: onReset });
+  const { handlePress: handleRemove } = useButtonPress({ onPress: onRemove });
 
   const animatedStyle = useAnimatedStyle(() => ({
     // `drag` is 0 at rest and -ACTIONS_WIDTH when fully open, so this holds the
@@ -68,20 +72,28 @@ function RowActions({ drag, onReset, onRemove }: RowActionsProps) {
   return (
     <Animated.View style={[styles.actions, animatedStyle]}>
       <Pressable
-        onPress={onReset}
-        style={[styles.action, { backgroundColor: colors.warning }]}
+        onPress={() => handleReset()}
+        style={({ pressed }) => [
+          styles.action,
+          { backgroundColor: colors.warning },
+          pressed && styles.pressed,
+        ]}
         accessibilityRole="button"
         accessibilityLabel={STRINGS.RESET_PROGRESS_ACTION}
       >
         <Icon name="refresh" size={ACTION_ICON_SIZE} color={colors.onWarning} />
       </Pressable>
       <Pressable
-        onPress={onRemove}
-        style={[styles.action, { backgroundColor: colors.error }]}
+        onPress={() => handleRemove()}
+        style={({ pressed }) => [
+          styles.action,
+          { backgroundColor: colors.error },
+          pressed && styles.pressed,
+        ]}
         accessibilityRole="button"
         accessibilityLabel={STRINGS.REMOVE_FROM_PRACTICE_ACTION}
       >
-        <Icon name="trash" size={ACTION_ICON_SIZE} color={colors.onTint} />
+        <Icon name="trash" size={ACTION_ICON_SIZE} color={colors.onError} />
       </Pressable>
     </Animated.View>
   );
@@ -262,6 +274,9 @@ const styles = StyleSheet.create({
     // No gap, no padding, no radius: the panels sit flush against each other and
     // against the row, and stretch the row's full height.
     width: ACTIONS_WIDTH,
+  },
+  pressed: {
+    opacity: LAYOUT.OPACITY.PRESSED,
   },
   action: {
     width: ACTION_WIDTH,

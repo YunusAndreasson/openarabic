@@ -98,7 +98,6 @@ export default function SleepTimerScreen(): JSX.Element {
                   <OptionCard
                     accessibilityLabel={label}
                     selected={selectedMinutes === minutes}
-                    style={styles.optionCard}
                     onPress={handleOptionSelect(minutes)}
                   >
                     <ThemedText type="body" style={styles.optionLabel}>
@@ -146,10 +145,6 @@ const styles = StyleSheet.create({
     width: '50%',
     paddingHorizontal: LAYOUT.SPACING.TINY,
     paddingVertical: LAYOUT.SPACING.TINY,
-  },
-  // OptionCard draws the selected state (fill and edge); this is only its box.
-  optionCard: {
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   optionLabel: {
     textAlign: 'center',

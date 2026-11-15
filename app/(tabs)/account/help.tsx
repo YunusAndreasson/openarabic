@@ -2,12 +2,13 @@
 import { Icon } from '@/components/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Fragment, memo, useCallback } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { ThemedView } from '@/components/primitives/ThemedView';
+import { KEYBOARD_AWARE_SCROLL_PROPS, ThemedView } from '@/components/primitives/ThemedView';
+import { ThemedInput } from '@/components/primitives/ThemedInput';
 import { ArabicColoringExamples } from '@/components/account/ArabicColoringExamples';
 import { BaseCard, EmptyState, SectionLabel } from '@/components/common';
 import { type FAQCategoryData, type FAQItem } from '@/constants/faq';
@@ -41,7 +42,7 @@ const FAQItemComponent = memo(({ item, isExpanded, onToggle }: FAQItemComponentP
   return (
     <View>
       <BaseCard
-        style={styles.faqButton}
+        contentStyle={styles.faqButton}
         onPress={handlePress}
         accessibilityRole="button"
         accessibilityLabel={item.question}
@@ -121,7 +122,6 @@ FAQCategorySection.displayName = 'FAQCategorySection';
 
 // Main Help screen
 const HelpScreen = () => {
-  const colors = useColors();
   const params = useLocalSearchParams<{ expandItem?: string }>();
 
   // FAQ search and state management
@@ -147,55 +147,24 @@ const HelpScreen = () => {
   const showEmptyState = !hasResults && Boolean(searchQuery.trim());
 
   return (
-    <ThemedView
-      includeBottomInset={false}
-      safeAreaEdges={['left', 'right']}
-      style={styles.container}
-    >
+    <ThemedView safeAreaEdges={['left', 'right', 'bottom']} style={styles.container}>
       {/* Search Bar */}
-      <View style={[styles.searchContainer, { backgroundColor: colors.background }]}>
-        <View
-          style={[
-            styles.searchInputContainer,
-            { backgroundColor: colors.card, borderColor: colors.cardBorder },
-          ]}
-        >
-          <Icon
-            name="search"
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={colors.textTertiary}
-            style={styles.searchIcon}
-          />
-          <TextInput
-            accessibilityLabel={STRINGS.HELP_SEARCH_PLACEHOLDER}
-            style={[styles.searchInput, { color: colors.text }]}
-            placeholder={STRINGS.HELP_SEARCH_PLACEHOLDER}
-            placeholderTextColor={colors.textTertiary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="search"
-          />
-          {searchQuery.length > 0 && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={STRINGS.HELP_SEARCH_CLEAR}
-              onPress={handleClearSearch}
-              style={styles.clearButton}
-              hitSlop={LAYOUT.HIT_SLOP.SMALL}
-            >
-              {({ pressed }) => (
-                <Icon
-                  name="close-circle"
-                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                  color={colors.textTertiary}
-                  style={{ opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL }}
-                />
-              )}
-            </Pressable>
-          )}
-        </View>
+      <View style={styles.searchContainer}>
+        <ThemedInput
+          icon="search"
+          accessibilityLabel={STRINGS.HELP_SEARCH_PLACEHOLDER}
+          placeholder={STRINGS.HELP_SEARCH_PLACEHOLDER}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+          {...(searchQuery.length > 0
+            ? {
+                rightIcon: 'close-circle' as const,
+                rightIconAccessibilityLabel: STRINGS.HELP_SEARCH_CLEAR,
+                onRightIconPress: handleClearSearch,
+              }
+            : { rightIcon: undefined, rightIconAccessibilityLabel: undefined })}
+        />
         {searchQuery.trim() && (
           <ThemedText type="caption" colorName="textTertiary" style={styles.resultCount}>
             {totalResults}{' '}
@@ -215,10 +184,9 @@ const HelpScreen = () => {
           showEmptyState ? [styles.scrollContent, styles.scrollContentEmpty] : styles.scrollContent
         }
         scrollViewProps={{
+          ...KEYBOARD_AWARE_SCROLL_PROPS,
           showsVerticalScrollIndicator: true,
           removeClippedSubviews: false,
-          keyboardShouldPersistTaps: 'handled',
-          keyboardDismissMode: 'on-drag',
         }}
       >
         {showEmptyState ? (
@@ -283,30 +251,10 @@ const styles = StyleSheet.create({
   },
   // Search bar styles
   searchContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.SMALL,
     gap: LAYOUT.SPACING.TINY,
-  },
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    minHeight: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-  },
-  searchIcon: {
-    marginRight: LAYOUT.SPACING.SMALL,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-  },
-  clearButton: {
-    padding: LAYOUT.SPACING.TINY,
-    marginLeft: LAYOUT.SPACING.SMALL,
   },
   resultCount: {
     paddingHorizontal: LAYOUT.SPACING.SMALL,

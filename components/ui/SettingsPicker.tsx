@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetHeader } from '@/components/common/BottomSheetHeader';
 import { OptionCard } from '@/components/common/OptionCard';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 export interface SettingsPickerOption<T> {
@@ -50,6 +50,8 @@ function SettingsPickerComponent<T>({
 
         {/* Options */}
         <View
+          accessibilityRole="radiogroup"
+          accessibilityLabel={title}
           style={[styles.optionsContainer, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
         >
           {options.map(option => {
@@ -62,36 +64,34 @@ function SettingsPickerComponent<T>({
                   option.subtitle ? `${option.title}. ${option.subtitle}` : option.title
                 }
                 selected={isSelected}
-                style={styles.optionCard}
+                contentStyle={styles.optionCard}
                 onPress={() => onSelect(option.id)}
               >
                 <View style={styles.cardContent}>
-                  <View style={styles.cardLeft}>
-                    <View style={styles.cardIconContainer}>
-                      <Icon
-                        name={option.icon}
-                        size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                        color={colors.text}
-                      />
-                    </View>
-                    <View style={styles.optionContent}>
+                  <View style={styles.cardIconContainer}>
+                    <Icon
+                      name={option.icon}
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                      color={colors.text}
+                    />
+                  </View>
+                  <View style={styles.optionContent}>
+                    <ThemedText
+                      type="body"
+                      colorName={isSelected ? 'tint' : 'text'}
+                      style={styles.optionTitle}
+                    >
+                      {option.title}
+                    </ThemedText>
+                    {option.subtitle && (
                       <ThemedText
-                        type="body"
-                        colorName={isSelected ? 'tint' : 'text'}
-                        style={styles.optionTitle}
+                        type="caption"
+                        colorName="secondaryText"
+                        style={styles.optionSubtitle}
                       >
-                        {option.title}
+                        {option.subtitle}
                       </ThemedText>
-                      {option.subtitle && (
-                        <ThemedText
-                          type="caption"
-                          colorName="secondaryText"
-                          style={styles.optionSubtitle}
-                        >
-                          {option.subtitle}
-                        </ThemedText>
-                      )}
-                    </View>
+                    )}
                   </View>
                 </View>
               </OptionCard>
@@ -111,23 +111,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     gap: LAYOUT.SPACING.MEDIUM,
   },
-  // OptionCard's BaseCard supplies the radius; this is only its box.
+  // A roomier inset for options with supporting text.
   optionCard: {
-    marginBottom: 0,
-    minHeight: MIN_TOUCH_TARGET.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.LARGE,
   },
   cardContent: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  cardLeft: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flex: 1,
-    paddingRight: LAYOUT.SPACING.SMALL,
   },
   cardIconContainer: {
     alignItems: 'center',

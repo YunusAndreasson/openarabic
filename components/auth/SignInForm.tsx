@@ -48,6 +48,7 @@ export function SignInForm(): JSX.Element {
         disabled={loading}
         loading={loading}
         fullWidth
+        allowTitleWrap
         style={styles.button}
         title={STRINGS.SIGN_IN}
         testID="sign-in-button"
@@ -58,6 +59,7 @@ export function SignInForm(): JSX.Element {
       {/* Forgot Password Link */}
       <View style={styles.forgotPasswordContainer}>
         <TextLink
+          disabled={loading}
           accessibilityLabel="Forgot password"
           label={STRINGS.FORGOT_PASSWORD}
           testID="forgot-password-button"
@@ -66,6 +68,7 @@ export function SignInForm(): JSX.Element {
       </View>
 
       <AuthSwitchPrompt
+        disabled={loading}
         prompt={STRINGS.DONT_HAVE_ACCOUNT}
         label={STRINGS.CREATE_ACCOUNT}
         accessibilityLabel="Go to create account"

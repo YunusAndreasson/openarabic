@@ -17,14 +17,14 @@ interface ErrorStateProps {
 export function ErrorState({ message, onRetry }: ErrorStateProps) {
   return (
     <View style={styles.container}>
-      <View style={styles.textContainer}>
+      <View accessibilityLiveRegion="polite" style={styles.textContainer}>
         <ThemedText align="center" type="body" colorName="error">
           {message}
         </ThemedText>
       </View>
       {onRetry ? (
         <View style={styles.buttonContainer}>
-          <ThemedButton title={STRINGS.REFRESH} onPress={onRetry} />
+          <ThemedButton title={STRINGS.RETRY} onPress={onRetry} allowTitleWrap />
         </View>
       ) : null}
     </View>

@@ -41,7 +41,8 @@ export interface BaseCardProps extends Omit<BaseComponentProps, 'loading'> {
    * @default false
    */
   bordered?: boolean;
-  /** Additional styling for the content container */
+  /** Inner padding and child layout. Keep these here so the entire surface
+   * remains tappable; `style` is for the outer surface and external layout. */
   contentStyle?: StyleProp<ViewStyle>;
   /**
    * Pressable implementation. Defaults to react-native's.

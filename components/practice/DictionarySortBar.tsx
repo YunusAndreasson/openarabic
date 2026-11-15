@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { Icon, SegmentedControl, type SegmentedControlOption } from '@/components/ui';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { isNarrowScope } from '@/hooks/vocabulary/useDictionaryList';
@@ -12,7 +12,7 @@ import type {
   DictionarySortField,
   SortDirection,
 } from '@/hooks/vocabulary/useDictionaryList';
-import { selectionFeedback } from '@/utils/haptics';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { formatWordCount } from '@/utils/wordCountText';
 
 const SORT_LABELS: { field: DictionarySortField; label: string }[] = [
@@ -42,7 +42,7 @@ export const SCOPE_LABELS: Record<DictionaryScope, string> = {
   'depth-none': STRINGS.SCOPE_DEPTH_NONE,
 };
 
-const CHEVRON_SIZE = 12;
+const CHEVRON_SIZE = LAYOUT.SPACING.MEDIUM;
 
 interface DictionarySortBarProps {
   sortField: DictionarySortField;
@@ -108,13 +108,14 @@ const DictionarySortBarComponent = ({
   // way out — the picker cannot show it, so a chevron there would open a list
   // that disagrees with the line above it.
   const handlePressScope = useCallback(() => {
-    selectionFeedback();
     if (isNarrowFilter) {
       onClearScope();
       return;
     }
     onPressScope();
   }, [isNarrowFilter, onClearScope, onPressScope]);
+
+  const { handlePress } = useButtonPress({ onPress: handlePressScope, hapticType: 'selection' });
 
   const isScoped = scope !== 'all';
   // Scoped, the count leads with the scope's name ("Due now · 24"); unscoped it
@@ -142,8 +143,8 @@ const DictionarySortBarComponent = ({
         accessibilityLabel={countLabel}
         accessibilityRole="button"
         hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-        style={styles.scopeButton}
-        onPress={handlePressScope}
+        style={({ pressed }) => [styles.scopeButton, pressed && styles.pressed]}
+        onPress={handlePress}
       >
         <ThemedText
           colorName={isScoped ? 'tint' : 'subtleLabelText'}
@@ -177,7 +178,11 @@ const styles = StyleSheet.create({
     // Seats the control against the first row, matching the list's separators
     borderBottomWidth: LAYOUT.BORDER.WIDTH.HAIRLINE,
   },
+  pressed: {
+    opacity: LAYOUT.OPACITY.PRESSED,
+  },
   scopeButton: {
+    minHeight: MIN_TOUCH_TARGET.SMALL,
     flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.TINY,

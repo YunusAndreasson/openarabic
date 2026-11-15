@@ -4,9 +4,9 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 
 export interface SegmentedControlOption<T extends string> {
   value: T;
@@ -28,8 +28,6 @@ interface SegmentedControlProps<T extends string> {
   style?: StyleProp<ViewStyle>;
 }
 
-const ACTIVE_ICON_SIZE = 12;
-
 /**
  * A row of mutually exclusive text options — the app's "pick one of N" inline
  * control, as used by the dictionary's sort bar.
@@ -48,50 +46,66 @@ function SegmentedControlComponent<T extends string>({
   accessibilityLabel,
   style,
 }: SegmentedControlProps<T>) {
-  const colors = useColors();
-
   return (
     <View
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="radiogroup"
       style={[styles.container, style]}
     >
-      {options.map(option => {
-        const isActive = option.value === value;
-        return (
-          <Pressable
-            key={option.value}
-            accessibilityRole="radio"
-            accessibilityLabel={
-              isActive ? (option.activeAccessibilityLabel ?? option.label) : option.label
-            }
-            accessibilityState={{ selected: isActive, checked: isActive }}
-            hitSlop={LAYOUT.HIT_SLOP.SMALL}
-            style={styles.option}
-            onPress={() => {
-              selectionFeedback();
-              onChange(option.value);
-            }}
-          >
-            <ThemedText
-              colorName={isActive ? 'text' : 'subtleLabelText'}
-              type={isActive ? 'label' : 'caption'}
-            >
-              {option.label}
-            </ThemedText>
-            {isActive && option.activeIcon ? (
-              <Icon
-                accessible={false}
-                importantForAccessibility="no"
-                color={colors.secondaryText}
-                name={option.activeIcon}
-                size={ACTIVE_ICON_SIZE}
-              />
-            ) : null}
-          </Pressable>
-        );
-      })}
+      {options.map(option => (
+        <SegmentOption
+          key={option.value}
+          option={option}
+          isActive={option.value === value}
+          onChange={onChange}
+        />
+      ))}
     </View>
+  );
+}
+
+function SegmentOption<T extends string>({
+  option,
+  isActive,
+  onChange,
+}: {
+  option: SegmentedControlOption<T>;
+  isActive: boolean;
+  onChange: (value: T) => void;
+}) {
+  const colors = useColors();
+  const { handlePress } = useButtonPress({
+    onPress: () => onChange(option.value),
+    hapticType: 'selection',
+  });
+
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityLabel={
+        isActive ? (option.activeAccessibilityLabel ?? option.label) : option.label
+      }
+      accessibilityState={{ selected: isActive, checked: isActive }}
+      hitSlop={LAYOUT.HIT_SLOP.SMALL}
+      style={({ pressed }) => [styles.option, pressed && styles.pressed]}
+      onPress={handlePress}
+    >
+      <ThemedText
+        colorName={isActive ? 'text' : 'subtleLabelText'}
+        type={isActive ? 'label' : 'caption'}
+      >
+        {option.label}
+      </ThemedText>
+      {isActive && option.activeIcon ? (
+        <Icon
+          accessible={false}
+          importantForAccessibility="no"
+          color={colors.secondaryText}
+          name={option.activeIcon}
+          size={LAYOUT.SPACING.MEDIUM}
+        />
+      ) : null}
+    </Pressable>
   );
 }
 
@@ -100,8 +114,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: LAYOUT.SPACING.LARGE,
+    flexWrap: 'wrap',
+    flexShrink: 1,
+  },
+  pressed: {
+    opacity: LAYOUT.OPACITY.PRESSED,
   },
   option: {
+    minHeight: MIN_TOUCH_TARGET.SMALL,
     alignItems: 'center',
     flexDirection: 'row',
     gap: LAYOUT.SPACING.HALF_TINY,

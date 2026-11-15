@@ -50,6 +50,7 @@ export function SignUpForm(): JSX.Element {
         disabled={loading}
         loading={loading}
         fullWidth
+        allowTitleWrap
         style={styles.button}
         title={STRINGS.CREATE_ACCOUNT}
         testID="create-account-button"
@@ -58,6 +59,7 @@ export function SignUpForm(): JSX.Element {
       />
 
       <AuthSwitchPrompt
+        disabled={loading}
         prompt={STRINGS.ALREADY_HAVE_ACCOUNT}
         label={STRINGS.SIGN_IN}
         accessibilityLabel="Go to sign in"

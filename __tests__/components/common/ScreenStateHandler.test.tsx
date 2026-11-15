@@ -37,7 +37,7 @@ describe('ScreenStateHandler', () => {
     expect(screen.getByText(ERROR)).toBeTruthy();
     expect(screen.queryByText('Content')).toBeNull();
 
-    fireEvent.press(screen.getByText(STRINGS.REFRESH));
+    fireEvent.press(screen.getByText(STRINGS.RETRY));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 

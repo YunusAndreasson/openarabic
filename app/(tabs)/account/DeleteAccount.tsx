@@ -85,6 +85,7 @@ const DeleteAccountScreen = () => {
         disabled={!confirmationText || loading}
         loading={loading}
         fullWidth
+        allowTitleWrap
         title={loading ? STRINGS.ACCOUNT_DELETION_IN_PROGRESS : STRINGS.DELETE_ACCOUNT}
         tone="destructive"
         onPress={handleDeletePress}

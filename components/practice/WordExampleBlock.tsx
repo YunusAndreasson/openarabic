@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ArticleSentence } from '@/components/article/ArticleSentence';
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { DisclosureChevron } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -49,6 +50,12 @@ const WordExampleBlockComponent = ({
   const colors = useColors();
   const { article } = sentence;
   const canOpen = !!article && !!onOpenArticle;
+  const { handlePress, rippleConfig } = useButtonPress({
+    onPress: () => {
+      if (article) onOpenArticle?.(article, sentence.id);
+    },
+    disabled: !canOpen,
+  });
 
   const body = (
     <>
@@ -99,9 +106,9 @@ const WordExampleBlockComponent = ({
     <Pressable
       accessibilityLabel={STRINGS.WORD_EXAMPLE_OPEN_A11Y.replace('{title}', article.title)}
       accessibilityRole="link"
-      android_ripple={{ color: colors.navigationRipple, borderless: false }}
-      style={blockStyle}
-      onPress={() => onOpenArticle(article, sentence.id)}
+      android_ripple={rippleConfig}
+      style={({ pressed }) => [blockStyle, pressed && { backgroundColor: colors.elevation2 }]}
+      onPress={handlePress}
     >
       {body}
     </Pressable>

@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { SkiaColoredArabic } from '@/components/common/SkiaColoredArabic';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
@@ -129,6 +130,7 @@ interface Props {
  */
 export const ReviewContextSentence = memo(({ example, onPlay }: Props) => {
   const colors = useColors();
+  const { handlePress: handlePlay } = useButtonPress({ onPress: onPlay });
   // Same debounce as ThemedText's own Arabic path, so the example and the hero
   // above it resize in lockstep while the size slider is being dragged.
   const readerFontSize = useDebouncedArabicFontSize(100);
@@ -217,7 +219,7 @@ export const ReviewContextSentence = memo(({ example, onPlay }: Props) => {
         // Neutral, not tinted: inside this block `tint` means "the word you are
         // practising", and a tinted control would compete with the chip for it.
         <Pressable
-          onPress={onPlay}
+          onPress={handlePlay}
           accessibilityRole="button"
           accessibilityLabel={STRINGS.PLAY_SENTENCE_AUDIO}
           hitSlop={LAYOUT.HIT_SLOP.SMALL}

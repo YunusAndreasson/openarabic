@@ -55,34 +55,35 @@ export function EmptyState({
         </ThemedText>
       </View>
 
-      {action && (
-        <View style={styles.actionContainer}>
-          <ThemedButton
-            title={action.label}
-            icon={action.icon}
-            onPress={action.onPress}
-            variant="filled"
-            size="medium"
-            loading={action.loading}
-            disabled={action.disabled}
-          />
-        </View>
-      )}
-
-      {secondaryAction && (
-        <View style={styles.secondaryActionContainer}>
-          <ThemedButton
-            title={secondaryAction.label}
-            icon={secondaryAction.icon}
-            onPress={secondaryAction.onPress}
-            variant="outlined"
-            size="medium"
-            loading={secondaryAction.loading}
-            disabled={secondaryAction.disabled}
-          />
+      {(action || secondaryAction) && (
+        <View style={styles.actions}>
+          {action && <EmptyStateButton action={action} variant="filled" />}
+          {secondaryAction && <EmptyStateButton action={secondaryAction} variant="outlined" />}
         </View>
       )}
     </View>
+  );
+}
+
+function EmptyStateButton({
+  action,
+  variant,
+}: {
+  action: EmptyStateAction;
+  variant: 'filled' | 'outlined';
+}) {
+  return (
+    <ThemedButton
+      title={action.label}
+      icon={action.icon}
+      onPress={action.onPress}
+      variant={variant}
+      size="medium"
+      loading={action.loading}
+      disabled={action.disabled}
+      allowTitleWrap
+      fullWidth
+    />
   );
 }
 
@@ -113,12 +114,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.LOOSE, // 1.6x for better readability
   },
-  actionContainer: {
+  actions: {
     marginTop: LAYOUT.SPACING.XLARGE,
-    minWidth: LAYOUT.EMPTY_STATE.ACTION_MIN_WIDTH,
-  },
-  secondaryActionContainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    minWidth: LAYOUT.EMPTY_STATE.ACTION_MIN_WIDTH,
+    gap: LAYOUT.SPACING.MEDIUM,
+    width: '100%',
+    maxWidth: LAYOUT.EMPTY_STATE.HINT_MAX_WIDTH,
   },
 });

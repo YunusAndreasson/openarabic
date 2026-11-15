@@ -53,6 +53,11 @@ The English type roles are `heading1`, `heading2`, `heading3`, `body`,
 English `weight` prop to Arabic text because it would replace the selected
 Arabic font.
 
+Single-line inputs use a minimum height and intrinsic text measurement so they
+can grow with system text size. Empty-state actions share a bounded full-width
+column and wrap their labels. Auth prompts wrap onto another line when needed;
+these layouts must accommodate larger text without capping the user's font scale.
+
 ## Color and surfaces
 
 Light, dark, and sepia themes expose the same semantic contract. UI code should
@@ -170,6 +175,15 @@ stand, or set the button to `hapticType="none"` and keep the outcome haptic.
   `elevation2`), and `bordered` — rather than a hand-rolled radius, fill and
   shadow. A card that needs a different background is a `surface` value, not a
   new component.
+- Put card padding and child layout in `contentStyle`; reserve `style` for
+  the outer surface and external layout. Padding on the outer wrapper sits
+  outside the touch target.
+- `OptionCard` owns one-of-N selection: a checked/empty circle, a selected
+  surface, radio semantics, and internal padding. Settings, Arabic typefaces,
+  and timer durations share it; callers do not draw a second selection mark.
+- Inline sort/filter controls use the shared press handler with a pressed
+  opacity, a compact minimum target plus hit slop, and wrapping at large text
+  sizes.
 - `BaseCard` renders a plain `View` until it is given an `onPress`, at which
   point it mounts the pressable half. Do not move the press engine back up into
   the shared path: a static row would pay for a shared value, a worklet and a

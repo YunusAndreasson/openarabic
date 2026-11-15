@@ -10,6 +10,7 @@ import { NEW_PASSWORD_ACCESSIBILITY_HINT } from '@/utils/authUtils';
 
 interface AuthEmailInputProps {
   value: string;
+  editable: boolean;
   onChangeText: (text: string) => void;
   onBlur?: () => void;
   onSubmitEditing?: () => void;
@@ -19,6 +20,7 @@ interface AuthEmailInputProps {
 
 interface AuthPasswordInputProps {
   value: string;
+  editable: boolean;
   onChangeText: (text: string) => void;
   onBlur?: () => void;
   onSubmitEditing?: () => void;
@@ -29,6 +31,7 @@ interface AuthPasswordInputProps {
 }
 
 export interface AuthCredentialFieldState {
+  loading: boolean;
   email: string;
   password: string;
   emailError?: string;
@@ -59,6 +62,7 @@ interface AuthCredentialFieldsProps {
  */
 function AuthEmailInput({
   value,
+  editable,
   onChangeText,
   onBlur,
   onSubmitEditing,
@@ -68,6 +72,7 @@ function AuthEmailInput({
   return (
     <View style={styles.inputWrapper}>
       <ThemedInput
+        editable={editable}
         autoCapitalize="none"
         autoComplete="email"
         error={error}
@@ -102,6 +107,7 @@ function AuthEmailInput({
  */
 function AuthPasswordInput({
   value,
+  editable,
   onChangeText,
   onBlur,
   onSubmitEditing,
@@ -120,6 +126,7 @@ function AuthPasswordInput({
     <View style={styles.inputWrapper}>
       <ThemedInput
         ref={inputRef}
+        editable={editable}
         autoCapitalize="none"
         autoComplete={isSignUp ? 'password-new' : 'password'}
         error={error}
@@ -154,6 +161,7 @@ export function AuthCredentialFields({
   children,
 }: AuthCredentialFieldsProps) {
   const {
+    loading,
     email,
     password,
     emailError,
@@ -169,6 +177,7 @@ export function AuthCredentialFields({
   return (
     <>
       <AuthEmailInput
+        editable={!loading}
         value={email}
         onChangeText={handleEmailChange}
         onBlur={handleEmailBlur}
@@ -176,10 +185,13 @@ export function AuthCredentialFields({
         error={emailError}
       />
       <AuthPasswordInput
+        editable={!loading}
         value={password}
         onChangeText={handlePasswordChange}
         onBlur={handlePasswordBlur}
-        onSubmitEditing={onPasswordSubmit}
+        onSubmitEditing={() => {
+          if (!loading) onPasswordSubmit();
+        }}
         error={passwordError}
         isSignUp={isSignUp}
         inputRef={passwordInputRef}

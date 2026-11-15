@@ -3,11 +3,13 @@ import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import type { TextTypeName } from '@/types/ui/text.types';
 
 interface TextLinkProps {
   label: string;
   onPress: () => void;
+  disabled?: boolean;
   /** Typography, matched to the text this link sits beside (default: 'body'). */
   type?: TextTypeName;
   /** Underline it — for a link inside a running sentence. */
@@ -34,25 +36,36 @@ interface TextLinkProps {
 export const TextLink = ({
   label,
   onPress,
+  disabled = false,
   type = 'body',
   underline = false,
   accessibilityLabel,
   style,
   testID,
-}: TextLinkProps) => (
-  <Pressable
-    accessibilityLabel={accessibilityLabel ?? label}
-    accessibilityRole="link"
-    hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-    style={({ pressed }) => [style, pressed ? styles.pressed : null]}
-    testID={testID}
-    onPress={onPress}
-  >
-    <ThemedText colorName="tint" style={underline ? styles.underline : undefined} type={type}>
-      {label}
-    </ThemedText>
-  </Pressable>
-);
+}: TextLinkProps) => {
+  const { handlePress } = useButtonPress({ onPress, disabled });
+
+  return (
+    <Pressable
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityRole="link"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+      style={({ pressed }) => [style, pressed ? styles.pressed : null]}
+      testID={testID}
+      onPress={handlePress}
+    >
+      <ThemedText
+        colorName={disabled ? 'disabled' : 'tint'}
+        style={underline ? styles.underline : undefined}
+        type={type}
+      >
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+};
 
 const styles = StyleSheet.create({
   pressed: {

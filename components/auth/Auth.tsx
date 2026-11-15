@@ -39,7 +39,7 @@ export function Auth(): JSX.Element {
       <View style={styles.headerContainer}>
         {/* Logo */}
         <EnhancedImage
-          source={require('@/assets/images/oaLogo.png')}
+          source={require('@/assets/images/oaLogo.png') as number}
           style={styles.logo}
           contentFit="contain"
         />

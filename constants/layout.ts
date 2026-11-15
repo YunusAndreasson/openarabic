@@ -326,7 +326,6 @@ export const LAYOUT = {
   /** The centred icon, title, hint and action of an empty list or screen */
   EMPTY_STATE: {
     HINT_MAX_WIDTH: BASE_UNIT * 80, // 320 - keeps the hint to a readable measure on wide screens
-    ACTION_MIN_WIDTH: BASE_UNIT * 50, // 200 - so a short action label still reads as a button
   },
 
   /** Common sizes for bottom sheet UI elements */

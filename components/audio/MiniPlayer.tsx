@@ -11,6 +11,7 @@ import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { EnhancedImage, IconButton } from '@/components/ui';
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
 import { FONTS } from '@/constants/fonts';
@@ -120,6 +121,7 @@ const MiniPlayerComponent = ({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const isTabBarHidden = useIsTabBarHidden();
+  const { handlePress: handleOpenArticle } = useButtonPress({ onPress: onOpenArticle });
 
   // Float above the native tab bar. `insets.bottom` covers the home-indicator
   // area on iOS; `BOTTOM_BAR.HEIGHT` is the tab bar's own intrinsic height.
@@ -231,7 +233,7 @@ const MiniPlayerComponent = ({
             accessibilityRole="button"
             accessibilityLabel={article.title}
             accessibilityHint={STRINGS.MINI_PLAYER_OPEN_ARTICLE_HINT}
-            onPress={onOpenArticle}
+            onPress={handleOpenArticle}
             style={nowPlayingPressableStyle}
             testID="mini-player-open-article"
           >

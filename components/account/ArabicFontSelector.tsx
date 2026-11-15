@@ -5,7 +5,6 @@
 // that from onValueChange would write to redux-persist on every frame and
 // re-render every Arabic sample with it. The community package is not
 // deprecated — revisit only if @expo/ui grows a release event.
-import { Icon } from '@/components/ui';
 import Slider from '@react-native-community/slider';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -31,8 +30,6 @@ interface FontPreviewCardProps {
 }
 
 function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreviewCardProps) {
-  const colors = useColors();
-
   const handlePress = () => {
     onSelect(option.name);
   };
@@ -41,7 +38,6 @@ function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreview
     <OptionCard
       accessibilityLabel={`${option.displayName}. ${option.description}`}
       selected={isSelected}
-      style={styles.fontCard}
       onPress={handlePress}
     >
       <View style={styles.fontHeader}>
@@ -49,13 +45,6 @@ function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreview
           <ThemedText style={styles.fontName} type="body" weight="semibold">
             {option.displayName}
           </ThemedText>
-          {isSelected && (
-            <Icon
-              name="checkmark-circle"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={colors.tint}
-            />
-          )}
         </View>
         <ThemedText colorName="textTertiary" style={styles.fontDescription} type="caption">
           {option.description}
@@ -198,16 +187,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  },
-  // Deliberately NOT `alignItems: 'center'`. That centred the card's children by
-  // shrinking them to their content, and BaseCard nests two more auto-width
-  // views between the card and its children — so the Arabic sample was measured
-  // at whatever width it wanted, the row was sized from that, and the text was
-  // then re-laid out inside it. Every child here centres itself instead, which
-  // leaves the sample a full-width box: one width for both passes, so what it
-  // measures is what it paints.
-  fontCard: {
-    padding: LAYOUT.SPACING.MEDIUM,
   },
   fontHeader: {
     alignItems: 'center',

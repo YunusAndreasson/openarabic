@@ -53,10 +53,10 @@ describe('ScreenErrorFallback', () => {
     expect(getByText(STRINGS.SOMETHING_WENT_WRONG)).toBeTruthy();
   });
 
-  test('Refresh asks the router to render the screen again', () => {
+  test('Retry asks the router to render the screen again', () => {
     const { getByText } = render(<ScreenErrorFallback error={error} retry={retry} />);
 
-    fireEvent.press(getByText(STRINGS.REFRESH));
+    fireEvent.press(getByText(STRINGS.RETRY));
 
     expect(retry).toHaveBeenCalledTimes(1);
   });

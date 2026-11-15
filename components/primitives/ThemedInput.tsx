@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.INPUT.BORDER_WIDTH.DEFAULT,
     flexDirection: 'row',
-    height: LAYOUT.INPUT.HEIGHT,
+    minHeight: LAYOUT.INPUT.HEIGHT,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
   },
@@ -191,12 +191,15 @@ const styles = StyleSheet.create({
     // learner writes was set in SF Pro / Roboto beside Inter everywhere else.
     fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    height: '100%',
-    paddingVertical: 0,
+    // Let the native field grow with system text size. A percentage height
+    // inside a fixed-height shell clipped large accessibility text.
+    minHeight: LAYOUT.INPUT.HEIGHT - LAYOUT.INPUT.BORDER_WIDTH.DEFAULT * 2,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
     textAlignVertical: 'center',
   },
   inputMultiline: {
-    height: 'auto',
+    minHeight: 0,
+    paddingVertical: 0,
     textAlignVertical: 'top',
   },
   leftIcon: {

@@ -65,7 +65,7 @@ describe('ErrorState', () => {
       // AppTab for anything ErrorState later renders.
       const { getByText } = render(<ErrorState message="Error" onRetry={mockOnRetry} />);
 
-      expect(getByText(STRINGS.REFRESH)).toBeTruthy();
+      expect(getByText(STRINGS.RETRY)).toBeTruthy();
     });
 
     test('does not render retry button when onRetry is not provided', () => {

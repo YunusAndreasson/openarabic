@@ -1,9 +1,10 @@
 import { BaseCard } from '@/components/common/BaseCard';
 import type { ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
+import { Icon } from '@/components/ui/Icon';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface OptionCardProps {
@@ -13,17 +14,13 @@ interface OptionCardProps {
   /** Spoken name — include the subtitle, since selection is the whole point. */
   accessibilityLabel: string;
   style?: StyleProp<ViewStyle>;
+  /** Padding and layout inside the touch target. */
+  contentStyle?: StyleProp<ViewStyle>;
 }
 
 /**
- * A selectable card in a one-of-N list — a theme, an Arabic typeface.
- *
- * The settings picker and the font selector each built this from `BaseCard`
- * with the same selected/unselected border-and-fill logic, differing only in
- * the *unselected* surface (`elevation2` vs `card`). That difference was not a
- * decision, and it made the same control read as two different components
- * depending on which screen you opened. `elevation2` wins: these lists appear
- * inside sheets, where `card` is barely distinguishable from the sheet itself.
+ * A one-of-N choice. The shared mark communicates selection without relying
+ * on colour; padding belongs inside the pressable so the whole card responds.
  */
 export const OptionCard = ({
   children,
@@ -31,6 +28,7 @@ export const OptionCard = ({
   onPress,
   accessibilityLabel,
   style,
+  contentStyle,
 }: OptionCardProps) => {
   const colors = useColors();
 
@@ -39,6 +37,8 @@ export const OptionCard = ({
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="radio"
       accessibilityState={{ checked: selected }}
+      elevation="none"
+      contentStyle={[styles.content, contentStyle]}
       style={[
         styles.card,
         {
@@ -49,7 +49,14 @@ export const OptionCard = ({
       ]}
       onPress={onPress}
     >
-      {children}
+      <View style={styles.body}>{children}</View>
+      <Icon
+        accessible={false}
+        importantForAccessibility="no"
+        name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+        color={selected ? colors.tint : colors.secondaryText}
+        size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+      />
     </BaseCard>
   );
 };
@@ -57,6 +64,17 @@ export const OptionCard = ({
 const styles = StyleSheet.create({
   card: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+  },
+  content: {
+    minHeight: MIN_TOUCH_TARGET.MEDIUM,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+    padding: LAYOUT.SPACING.MEDIUM,
+  },
+  body: {
+    flex: 1,
+    minWidth: 0,
   },
 });
 
