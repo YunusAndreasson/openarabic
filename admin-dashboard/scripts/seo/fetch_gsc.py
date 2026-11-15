@@ -46,8 +46,8 @@ SCOPES = ["https://www.googleapis.com/auth/webmasters.readonly"]
 DEFAULT_KEY = os.path.expanduser(
     os.environ.get("GSC_SA_KEY", "~/.config/openarabic/gsc-sa.json")
 )
-# URL-prefix property (verified via HTML tag). Trailing slash matters.
-DEFAULT_SITE = os.environ.get("GSC_SITE_URL", "https://openarabic.io/")
+# Domain property: covers every scheme and subdomain of openarabic.io.
+DEFAULT_SITE = os.environ.get("GSC_SITE_URL", "sc-domain:openarabic.io")
 
 # Each entry: (label, [dimensions]). query+page powers striking-distance analysis.
 DIMENSION_SETS = [
