@@ -94,6 +94,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
         await analytics.track(ANALYTICS_EVENTS.ACCOUNT_DELETED, {
           timestamp: new Date().toISOString(),
         });
+        await analytics.reset();
       } catch {
         // Best effort only.
       }

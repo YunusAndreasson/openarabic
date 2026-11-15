@@ -251,7 +251,9 @@ Sentry.init({
   // emulator, not a user). Local failures are already visible in Metro.
   enabled: !!sentryDsn && !__DEV__,
   tracesSampleRate: __DEV__ ? 1.0 : 0.1, // Sample everything in dev; 10% in production (Sentry guidance: don't ship 1.0)
-  attachScreenshot: true, // Helps debug UI crashes
+  // No screenshots: a crash screen can show the reader's email or what they study,
+  // and the privacy policy says reports carry no screen content.
+  attachScreenshot: false,
   debug: false, // Disable Sentry debug logging for performance
   enableNative: true, // CRITICAL: Enable native crash reporting
   enableNativeCrashHandling: true, // Catch native crashes
@@ -349,7 +351,7 @@ function AppContent() {
   // Configure Android navigation bar button style (background is transparent in
   // edge-to-edge mode). Own effect with isDark in deps so bar contrast follows
   // theme changes — kept separate from the session effect below, whose
-  // analytics.identify / audio-session work must not re-run on a theme switch.
+  // audio-session work must not re-run on a theme switch.
   useEffect(() => {
     if (!appReady || isAuthLoading) return;
 
@@ -370,22 +372,7 @@ function AppContent() {
     simpleAudioService.preconfigureAudioSession().catch(() => {
       // Pre-warm only — the playback path retries and owns real error reporting.
     });
-
-    const identifyUser = async () => {
-      if (userId) {
-        try {
-          await analytics.identify(userId, {
-            last_active: new Date().toISOString(),
-          });
-        } catch (err) {
-          // Silently ignore analytics errors
-          void handleError(err, { showToast: false });
-        }
-      }
-    };
-
-    void identifyUser();
-  }, [userId, appReady, isAuthLoading]);
+  }, [appReady, isAuthLoading]);
 
   const colors = useColors();
 

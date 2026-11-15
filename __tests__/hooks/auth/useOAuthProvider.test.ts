@@ -81,7 +81,6 @@ describe('useOAuthProvider', () => {
     })) as unknown as typeof mockSupabase.auth.updateUser;
 
     // Default analytics mocks
-    mockAnalytics.identify = jest.fn(async (..._args: unknown[]): Promise<void> => undefined);
     mockAnalytics.trackSignIn = jest.fn(async (..._args: unknown[]): Promise<void> => undefined);
 
     // Default utility mocks
@@ -166,12 +165,6 @@ describe('useOAuthProvider', () => {
         provider: 'google',
         token: 'test-id-token',
       });
-      expect(mockAnalytics.identify).toHaveBeenCalledWith(
-        'user-123',
-        expect.objectContaining({
-          last_sign_in: expect.any(String),
-        }),
-      );
       expect(mockAnalytics.trackSignIn).toHaveBeenCalledWith('google');
       // Navigation is now handled by root layout, not the hook
       expect(mockSuccessFeedback).toHaveBeenCalled();
@@ -537,12 +530,6 @@ describe('useOAuthProvider', () => {
       const { result } = renderHook(() => useOAuthProvider(config));
       await result.current.signIn();
 
-      expect(mockAnalytics.identify).toHaveBeenCalledWith(
-        'user-123',
-        expect.objectContaining({
-          last_sign_in: expect.any(String),
-        }),
-      );
       expect(mockAnalytics.trackSignIn).toHaveBeenCalledWith('apple');
     });
   });

@@ -33,36 +33,28 @@
  * - Type-safe interface
  */
 
-// Minimal interface for analytics properties
+import type * as MixpanelModule from 'mixpanel-react-native';
+
 import type { AnalyticsEventName } from '@/constants/analytics';
 import { ANALYTICS_EVENTS, MIXPANEL_TOKEN } from '@/constants/analytics';
 
+// Keep app properties narrower than the SDK's permissive property values.
 type AnalyticsProperties = Record<string, string | number | boolean | null | undefined>;
 
-// Minimal interface for Mixpanel instance
-interface MixpanelInstance {
-  init(): Promise<void>;
-  identify(userId: string): Promise<void>;
-  getPeople(): Promise<{ set: (properties: AnalyticsProperties) => void }>;
-  track(event: string, properties?: AnalyticsProperties): Promise<void>;
-  reset(): Promise<void>;
-}
-
 // Analytics instance and initialization state
-let mixpanelInstance: MixpanelInstance | null = null;
+let mixpanelInstance: MixpanelModule.Mixpanel | null = null;
 
 // React Native global for development mode detection
 declare const __DEV__: boolean;
 
 const startMixpanel = async (token: string): Promise<void> => {
-  const { Mixpanel } = require('mixpanel-react-native');
+  const { Mixpanel } = require('mixpanel-react-native') as typeof MixpanelModule;
 
-  // Official v3.1.2 initialization pattern
+  // Publish only a successfully initialized SDK instance.
   const trackAutomaticEvents = false;
-  mixpanelInstance = new Mixpanel(token.trim(), trackAutomaticEvents);
-  if (mixpanelInstance) {
-    await mixpanelInstance.init();
-  }
+  const instance = new Mixpanel(token.trim(), trackAutomaticEvents);
+  await instance.init();
+  mixpanelInstance = instance;
 };
 
 /**
@@ -94,8 +86,8 @@ const sendToMixpanel = async (event: string, properties?: AnalyticsProperties): 
   try {
     await initializeMixpanel();
 
-    if (mixpanelInstance?.track) {
-      await mixpanelInstance.track(event, properties);
+    if (mixpanelInstance) {
+      mixpanelInstance.track(event, properties);
     }
     // Silent success - no logging needed for normal operation
   } catch {
@@ -103,28 +95,14 @@ const sendToMixpanel = async (event: string, properties?: AnalyticsProperties): 
   }
 };
 
-// Simple analytics service with Mixpanel integration
+/**
+ * Simple analytics service with Mixpanel integration.
+ *
+ * Anonymous by design: events stay on the device's own Mixpanel distinct_id.
+ * There is deliberately no `identify` or people-profile door, and no event may
+ * carry a user id, email or name — the account is never linked to analytics.
+ */
 export const analytics = {
-  // Identify user with properties
-  identify: async (userId: string, properties?: AnalyticsProperties): Promise<void> => {
-    try {
-      await initializeMixpanel();
-
-      if (mixpanelInstance?.identify) {
-        await mixpanelInstance.identify(userId);
-        if (properties) {
-          const people = await mixpanelInstance.getPeople();
-          if (people) {
-            people.set(properties);
-          }
-        }
-      }
-      // Silent success - no logging needed for normal operation
-    } catch {
-      // Analytics failed silently - this is expected behavior when MIXPANEL_TOKEN is not configured
-    }
-  },
-
   /**
    * Track a product event.
    *
@@ -148,13 +126,13 @@ export const analytics = {
     await sendToMixpanel(event, properties);
   },
 
-  // Reset user (for logout)
+  // Start a fresh anonymous distinct_id (sign-out, account deletion)
   reset: async (): Promise<void> => {
     try {
       await initializeMixpanel();
 
-      if (mixpanelInstance?.reset) {
-        await mixpanelInstance.reset();
+      if (mixpanelInstance) {
+        mixpanelInstance.reset();
       }
       // Silent success - no logging needed for normal operation
     } catch {

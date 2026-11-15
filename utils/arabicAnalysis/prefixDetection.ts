@@ -5,6 +5,7 @@
 import { ARABIC_PREFIXES, ComponentType, GrammaticalRole } from '@/constants/arabicWordComponents';
 
 import { findComponent, hasNonArticleAlef } from './componentDetection';
+import { DIACRITIC_REGEX } from './constants';
 import { hasEnglishMatch } from './englishMatching';
 import { normalizeEnglish } from './normalization';
 import type { AnalyzedComponent } from './types';
@@ -32,6 +33,34 @@ const SINGLE_LETTER_CONJUNCTION_SET = new Set(['و', 'ف', 'ب', 'ل']);
  * Unvocalized text carries no mark and is left alone.
  */
 const NON_FATHA_VOWELS = new Set(['ُ', 'ِ', 'ْ']); // ُ ِ ْ
+
+/** لَكِنْ / لَكِنَّ "but", alone or with an attached pronoun (normalized). */
+const LAKIN_FORMS_REGEX = /^لكن(ه|ها|هم|هما|هن|ني|ي|ك|كم|كما|كن|نا|ما)?$/;
+
+/** Non-global twin of UNICODE_FORMAT_REGEX, safe for per-character `.test`. */
+const FORMAT_CHAR_REGEX = /[​-‏‪-‮﻿]/;
+
+/**
+ * Whether the letter at `index` of the normalized word carries damma, kasra or sukun
+ * in the original. normalizeArabic keeps one character per letter (alef folding is
+ * 1:1) and drops only marks and format characters, so walking the original while
+ * skipping those finds the same letter at any prefix position, not just the first.
+ */
+function hasNonFathaVowelAt(originalArabic: string | undefined, index: number): boolean {
+  const text = originalArabic?.trim() ?? '';
+  let letter = -1;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charAt(i);
+    if (DIACRITIC_REGEX.test(char) || FORMAT_CHAR_REGEX.test(char)) continue;
+    letter++;
+    if (letter < index) continue;
+    for (let j = i + 1; j < text.length && DIACRITIC_REGEX.test(text.charAt(j)); j++) {
+      if (NON_FATHA_VOWELS.has(text.charAt(j))) return true;
+    }
+    return false;
+  }
+  return false;
+}
 
 /** Conjunction triggers the و/ف prefixes claim; used to detect an elided "and". */
 const CONJUNCTION_IN_GLOSS_REGEX = /\b(and|then|so|but|or|nor|yet)\b/i;
@@ -188,6 +217,29 @@ export function detectPrefixes(
         detectedPrefixes.length === 0 &&
         role === GrammaticalRole.DEFINITE_ARTICLE &&
         hasNonArticleAlef(originalArabic)
+      ) {
+        continueDetection = false;
+        continue;
+      }
+
+      // VALIDATION 0d: the emphatic لَ ("surely"/"indeed") is always written with
+      // fatha. A ل with kasra, damma or sukun is the preposition or a root letter:
+      // لِأَنَّهَا "because indeed it" is لِ + أَنَّ, and the "indeed" belongs to أَنَّ.
+      if (
+        role === GrammaticalRole.PARTICLE &&
+        prefixMatch.arabicMatch === 'ل' &&
+        hasNonFathaVowelAt(originalArabic, normalizedArabic.length - remaining.length)
+      ) {
+        continueDetection = false;
+        continue;
+      }
+
+      // VALIDATION 0e: the ل of لَكِنَّ "but (indeed)" is part of the particle, not the
+      // emphatic prefix — glosses like "but indeed" for وَلَكِنَّ would otherwise paint it.
+      if (
+        role === GrammaticalRole.PARTICLE &&
+        prefixMatch.arabicMatch === 'ل' &&
+        LAKIN_FORMS_REGEX.test(remaining)
       ) {
         continueDetection = false;
         continue;

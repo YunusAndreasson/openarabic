@@ -213,6 +213,10 @@ const OTHER_PREFIXES = [
     role: GrammaticalRole.PARTICLE,
   },
   { arabic: 'إن', english: ['indeed', 'verily', 'if'], role: GrammaticalRole.PARTICLE },
+  // Emphatic لَ (lām al-tawkīd / answer of an oath or of لو): لَأُغْوِيَنَّهُمْ "surely I will
+  // lead them astray", لَقَالَ "he would surely have said". Same letter as the preposition ل,
+  // which is listed earlier and so still wins whenever the gloss has 'to'/'for'.
+  { arabic: 'ل', english: ['surely', 'indeed', 'certainly'], role: GrammaticalRole.PARTICLE },
   // Note: "فإن" compound removed - should be detected as ف + إن (two prefixes) per database-examples test
   // Note: "إنما" compound removed - should be detected as إن + ما (two prefixes) per database-examples test
   {

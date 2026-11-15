@@ -38,7 +38,7 @@ export function PrivacyContent() {
       {/* Content */}
       <main className="flex-1 max-w-4xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-        <p className="text-sm text-muted-foreground mb-8">Effective Date: January 1, 2025</p>
+        <p className="text-sm text-muted-foreground mb-8">Effective Date: November 15, 2026</p>
 
         <div className="prose prose-gray max-w-none space-y-6">
           <p className="text-muted-foreground">
@@ -64,9 +64,12 @@ export function PrivacyContent() {
 
             <h3 className="text-lg font-semibold mb-2">Usage Analytics</h3>
             <p className="text-muted-foreground mb-4">
-              We use Mixpanel and Google Analytics to track basic events like sign in, sign up, and
-              practice sessions. This helps us understand how the app and website are used and
-              improve them.
+              In the app, we use Mixpanel to record how the app is used: which screens are opened,
+              actions such as reading articles, studying words and practice sessions, and errors.
+              These events are linked to a random identifier created on your device, not to your
+              account, and do not include your name, email address or account ID. A new identifier
+              is created when you sign out or delete your account. On the website, we use Google
+              Analytics to record page views and referral sources.
             </p>
           </section>
 
@@ -92,8 +95,10 @@ export function PrivacyContent() {
 
             <h3 className="text-lg font-semibold mb-2">Mixpanel</h3>
             <p className="text-muted-foreground mb-4">
-              We use Mixpanel for analytics to understand app usage patterns and improve the
-              learning experience.
+              Mixpanel receives the app usage events described in section 1, along with device and
+              app details (device model, operating system, app version) and an approximate location
+              (city, region, country) derived from your IP address. Mixpanel stores this data in the
+              United States.
             </p>
 
             <h3 className="text-lg font-semibold mb-2">Google Analytics</h3>
@@ -105,7 +110,9 @@ export function PrivacyContent() {
             <h3 className="text-lg font-semibold mb-2">Sentry</h3>
             <p className="text-muted-foreground mb-4">
               We use Sentry for error tracking and crash reporting to identify and fix issues that
-              affect app stability and performance.
+              affect app stability and performance. A report contains the error, the device and app
+              version. It does not include your account, email address or screenshots. Sentry stores
+              this data in the United States.
             </p>
 
             <h3 className="text-lg font-semibold mb-2">Apple and Google</h3>

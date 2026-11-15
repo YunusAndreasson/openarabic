@@ -61,7 +61,6 @@ jest.mock('@/utils/haptics', () => ({
 // Mock analytics
 jest.mock('@/services/analytics', () => ({
   analytics: {
-    identify: jest.fn(async (..._args: unknown[]) => undefined),
     trackSignUp: jest.fn(async (..._args: unknown[]) => undefined),
     trackSignIn: jest.fn(async (..._args: unknown[]) => undefined),
   },
@@ -81,7 +80,6 @@ describe('useAuthForm', () => {
   let mockShowSuccessToast: jest.Mock;
   let mockHandleError: jest.Mock;
   let mockSuccessFeedback: jest.Mock;
-  let mockAnalyticsIdentify: jest.Mock;
   let mockAnalyticsTrackSignUp: jest.Mock;
   let mockAnalyticsTrackSignIn: jest.Mock;
 
@@ -102,7 +100,6 @@ describe('useAuthForm', () => {
     mockSuccessFeedback = haptics.successFeedback as jest.Mock;
 
     const analytics = require('@/services/analytics');
-    mockAnalyticsIdentify = analytics.analytics.identify as jest.Mock;
     mockAnalyticsTrackSignUp = analytics.analytics.trackSignUp as jest.Mock;
     mockAnalyticsTrackSignIn = analytics.analytics.trackSignIn as jest.Mock;
 
@@ -249,7 +246,7 @@ describe('useAuthForm', () => {
         expect(mockRouterReplace).toHaveBeenCalledWith(ROUTE_PATHS.EXPLORE_TAB);
       });
 
-      test('tracks analytics identify with user data', async () => {
+      test('tracks sign-up with the method only', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -261,14 +258,7 @@ describe('useAuthForm', () => {
           await result.current.signUpWithEmail();
         });
 
-        // Verify analytics identify was called with user data
-        expect(mockAnalyticsIdentify).toHaveBeenCalledWith(
-          'user-123',
-          expect.objectContaining({
-            email: 'newuser@example.com',
-            created_at: expect.any(String),
-          }),
-        );
+        expect(mockAnalyticsTrackSignUp).toHaveBeenCalledWith('email');
       });
 
       test('calls supabase signUp with correct credentials', async () => {
@@ -352,7 +342,7 @@ describe('useAuthForm', () => {
         expect(mockSuccessFeedback).toHaveBeenCalledTimes(1);
       });
 
-      test('still tracks analytics identify', async () => {
+      test('still tracks sign-up', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -364,13 +354,7 @@ describe('useAuthForm', () => {
           await result.current.signUpWithEmail();
         });
 
-        expect(mockAnalyticsIdentify).toHaveBeenCalledWith(
-          'user-456',
-          expect.objectContaining({
-            email: 'confirmemail@example.com',
-            created_at: expect.any(String),
-          }),
-        );
+        expect(mockAnalyticsTrackSignUp).toHaveBeenCalledWith('email');
       });
     });
 
@@ -586,15 +570,8 @@ describe('useAuthForm', () => {
       });
 
       await waitFor(() => {
-        expect(mockAnalyticsIdentify).toHaveBeenCalledWith(
-          '1',
-          expect.objectContaining({
-            last_sign_in: expect.any(String),
-          }),
-        );
+        expect(mockAnalyticsTrackSignIn).toHaveBeenCalledWith('email');
       });
-
-      expect(mockAnalyticsTrackSignIn).toHaveBeenCalledWith('email');
     });
 
     test('triggers haptic feedback on successful sign in', async () => {
