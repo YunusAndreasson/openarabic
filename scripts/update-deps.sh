@@ -87,6 +87,9 @@ const pinned = {
 const react = pkg.dependencies.react;
 pinned['react-test-renderer'] = react;
 pinned['@types/react'] = `~${react.split('.').slice(0, 2).join('.')}.0`;
+// jest-expo peers on `^<react-native>`, and a preset behind RN breaks it. Expo
+// moves react-native but not the preset, so step 4 re-aligns it to RN exactly.
+pinned['@react-native/jest-preset'] = pkg.dependencies['react-native'];
 const executorch = 'node_modules/react-native-executorch/package.json';
 const blobUtilPeer = fs.existsSync(executorch)
   ? JSON.parse(fs.readFileSync(executorch, 'utf8')).peerDependencies?.['react-native-blob-util']
@@ -102,9 +105,6 @@ const held = {
   '@testing-library/react-native':
     'RNTL 14 requires a `test-renderer` peer that is not installed; ~63 suites fail ' +
     'with "Cannot find module \'test-renderer\'".',
-  '@react-native/jest-preset':
-    'Must track the react-native version (jest-expo requests it exactly); letting it ' +
-    'drift ahead of RN breaks the preset.',
 };
 
 for (const name of Object.keys(direct).sort()) {
@@ -153,9 +153,11 @@ echo
 echo "▸ [4/6] Re-pinning Expo-managed packages to SDK-compatible versions…"
 npx expo install --fix --yarn
 
-# Keep React's companions aligned with it; Expo intentionally ignores both.
+# Keep React's and React Native's companions aligned with them; Expo ignores all three.
 REACT_VERSION="$(node -p "require('./package.json').dependencies.react")"
-yarn add --dev "react-test-renderer@$REACT_VERSION" "@types/react@~${REACT_VERSION%.*}.0"
+RN_VERSION="$(node -p "require('./package.json').dependencies['react-native']")"
+yarn add --dev "react-test-renderer@$REACT_VERSION" "@types/react@~${REACT_VERSION%.*}.0" \
+  "@react-native/jest-preset@$RN_VERSION"
 
 echo
 echo "▸ [5/6] Normalising Expo-managed ranges and deduplicating…"
