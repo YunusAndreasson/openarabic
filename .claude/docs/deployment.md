@@ -78,10 +78,13 @@ eas config
 
 ## OTA Pre-flight Checklist
 
-Native dependency updates require a new binary. Runtime `1448.5.11` carries the
-2026-11-06 in-range update (Expo 58.0.23 native modules, `react-native-safe-area-context`
-5.11 and the working tree's native bumps); JS built from it must never be aimed at
-`1448.5.10` (build 283). Runtime `1448.5.10` carries the
+Native dependency updates require a new binary. Runtime `1448.5.12` (2026-11-19) carries
+the 2026-11-15 dependency update (`react-native-audio-api` 1.0 among the native bumps) and is
+the first runtime the gate recorded (`native-runtimes.json`). `1448.5.10` is blocked: build
+283 (2026-11-02) and build 284 (2026-11-15) both report it, but 284 links the 11-15 native
+bumps, so no OTA may target it; both binaries stay on the JS they shipped with until users
+update. `1448.5.11` was planned on 2026-11-06 and never set; it is blocked too. Runtime
+`1448.5.10` carries the
 2026-11-02 upgrade (`react-native-skia` 3.9.0, `react-native-executorch` 0.11,
 React Native 0.88.1 and the Expo 58.0.22 native modules); JS built from it must
 never be aimed at `1448.5.9` (build 282), whose binary links the older versions.

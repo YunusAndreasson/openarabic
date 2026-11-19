@@ -9,3 +9,5 @@ social
 .venv_diagnostic/
 # Written by eslint --suppress-all / --prune-suppressions (no final newline)
 eslint-suppressions.json
+# Written by scripts/check-runtime.js --record (JSON.stringify layout)
+native-runtimes.json
