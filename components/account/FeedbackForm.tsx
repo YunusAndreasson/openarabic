@@ -15,7 +15,10 @@ import { useScreenshotAttachment } from '@/hooks/account';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme';
 import pkg from '@/package.json';
-import { supabase } from '@/services/supabase';
+import {
+  FEEDBACK_SCREENSHOTS_BUCKET,
+  uploadFeedbackScreenshot,
+} from '@/services/feedbackScreenshots';
 import { handleError } from '@/utils/errorHandling';
 import { fillTemplate } from '@/utils/fillTemplate';
 
@@ -73,47 +76,30 @@ export const FeedbackForm = memo(() => {
 
     try {
       let screenshotUrl: string | null = null;
+      let screenshotPath: string | null = null;
 
-      // Upload screenshot if provided
-      if (screenshotUri) {
+      // The bucket is private and owner-only, so only a signed-in learner can attach one (the
+      // button is hidden otherwise). A failed upload never blocks the feedback itself.
+      const userId = user?.id;
+      if (screenshotUri && userId) {
         try {
-          const filename = `feedback/${user?.id || 'anonymous'}/${Date.now()}.jpg`;
-
-          const response = await fetch(screenshotUri);
-          const blob = await response.blob();
-
-          const { data, error: uploadError } = await supabase.storage
-            .from('feedback-screenshots')
-            .upload(filename, blob, {
-              contentType: 'image/jpeg',
-              cacheControl: '3600',
-            });
-
-          if (uploadError) {
-            // Screenshot upload failed - log error details but continue without screenshot
-            Sentry.captureException(uploadError, {
-              tags: { location: 'feedback_screenshot_upload' },
-              level: 'warning',
-              extra: {
-                filename,
-                uploadErrorMessage: uploadError.message,
-              },
-            });
-          } else if (data) {
-            const {
-              data: { publicUrl },
-            } = supabase.storage.from('feedback-screenshots').getPublicUrl(filename);
-            screenshotUrl = publicUrl;
-          }
-        } catch {
-          // Continue with feedback submission even if screenshot fails
+          const screenshot = await uploadFeedbackScreenshot(userId, screenshotUri);
+          screenshotPath = screenshot.path;
+          screenshotUrl = screenshot.url;
+        } catch (uploadError) {
+          Sentry.captureException(uploadError, {
+            tags: { location: 'feedback_screenshot_upload' },
+            level: 'warning',
+          });
         }
       }
 
-      // Use Sentry's captureFeedback API
-      const feedbackMessage = screenshotUrl
-        ? `${message.trim()}\n\nScreenshot: ${screenshotUrl}`
-        : message.trim();
+      // Use Sentry's captureFeedback API. The signed link expires; the path still finds the
+      // object in the dashboard after that.
+      const screenshotNote = screenshotPath
+        ? `\n\nScreenshot: ${screenshotUrl ?? '(no link)'}\nStorage: ${FEEDBACK_SCREENSHOTS_BUCKET}/${screenshotPath}`
+        : '';
+      const feedbackMessage = `${message.trim()}${screenshotNote}`;
 
       // The user and the metadata belong to THIS feedback event only. They used
       // to be set on the global scope and never cleared, so every error for the
@@ -129,8 +115,9 @@ export const FeedbackForm = memo(() => {
           app_version: pkg.version,
           submitted_at: new Date().toISOString(),
           message_length: message.trim().length,
-          has_screenshot: !!screenshotUrl,
+          has_screenshot: !!screenshotPath,
           screenshot_url: screenshotUrl || undefined,
+          screenshot_path: screenshotPath || undefined,
         });
         Sentry.captureFeedback(
           {
@@ -196,7 +183,8 @@ export const FeedbackForm = memo(() => {
             />
           </View>
         </View>
-      ) : (
+      ) : user ? (
+        // Attachments go to an owner-only bucket, so they need a signed-in learner.
         <ThemedButton
           allowTitleWrap
           fullWidth
@@ -207,7 +195,7 @@ export const FeedbackForm = memo(() => {
           variant="outlined"
           onPress={() => void handleAddScreenshot()}
         />
-      )}
+      ) : null}
 
       <View style={styles.metaRow}>
         <ThemedText type="caption" colorName="textTertiary">

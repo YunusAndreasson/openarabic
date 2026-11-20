@@ -35,8 +35,13 @@ jest.mock('../../utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));
 
+jest.mock('../../services/feedbackScreenshots', () => ({
+  removeFeedbackScreenshots: jest.fn(async (..._args: unknown[]) => undefined),
+}));
+
 const { supabase } = require('../../services/supabase');
 const { handleError } = require('../../utils/errorHandling');
+const { removeFeedbackScreenshots } = require('../../services/feedbackScreenshots');
 
 describe('AccountDeletionService', () => {
   const mockUserId = 'user-123';
@@ -156,6 +161,35 @@ describe('AccountDeletionService', () => {
         (supabase.rpc as jest.Mock).mockResolvedValue({ data: null, error: null });
         (supabase.auth.signOut as jest.Mock).mockResolvedValue({ error: null });
       };
+
+      test('removes the feedback screenshots before the account is deleted', async () => {
+        authenticateAndSucceed();
+
+        await AccountDeletionService.deleteAccount();
+
+        expect(removeFeedbackScreenshots).toHaveBeenCalledWith(mockUserId);
+        // Before the RPC: the owner-only bucket policies need the account to still exist.
+        const cleanupOrder = (removeFeedbackScreenshots as jest.Mock).mock.invocationCallOrder[0];
+        const rpcOrder = (supabase.rpc as jest.Mock).mock.invocationCallOrder[0];
+        expect(cleanupOrder).toBeLessThan(rpcOrder);
+      });
+
+      test('a screenshot cleanup failure is reported but never blocks the deletion', async () => {
+        authenticateAndSucceed();
+        const cleanupError = new Error('Storage unavailable');
+        (removeFeedbackScreenshots as jest.Mock).mockRejectedValueOnce(cleanupError);
+
+        await expect(AccountDeletionService.deleteAccount()).resolves.toBeUndefined();
+
+        expect(handleError).toHaveBeenCalledWith(
+          cleanupError,
+          expect.objectContaining({
+            showToast: false,
+            analyticsEventName: 'Account_Deletion_Screenshot_Cleanup_Error',
+          }),
+        );
+        expect(supabase.rpc).toHaveBeenCalledWith('delete_user_account', { user_id: mockUserId });
+      });
 
       test('removes every key the registry attributes to the deleted account', async () => {
         authenticateAndSucceed();

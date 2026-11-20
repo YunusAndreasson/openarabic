@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { accountOwnedStorageKeys } from '@/constants/storageKeys';
+import { removeFeedbackScreenshots } from '@/services/feedbackScreenshots';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 
@@ -16,6 +17,7 @@ export class AccountDeletionService {
    * - Reading progress
    * - Study words and FSRS data
    * - Bookmarks (reading list)
+   * - Feedback screenshots in Storage
    * - All other user-specific data
    *
    * Uses the current session to identify the user to delete.
@@ -32,6 +34,19 @@ export class AccountDeletionService {
 
     if (sessionError || !user) {
       throw new Error('User must be authenticated to delete account');
+    }
+
+    // Feedback screenshots live in Storage under the user's folder, and no cascade from
+    // auth.users reaches them. Remove them first, while this session still passes the bucket's
+    // owner-only policies. Best-effort: Storage trouble must never stop an account deletion.
+    try {
+      await removeFeedbackScreenshots(user.id);
+    } catch (error) {
+      void handleError(error, {
+        showToast: false,
+        analyticsEventName: 'Account_Deletion_Screenshot_Cleanup_Error',
+        sentryTags: { location: 'account_deletion_screenshot_cleanup' },
+      });
     }
 
     // Delete user account via RPC function

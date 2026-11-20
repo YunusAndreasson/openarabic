@@ -14,11 +14,6 @@
       "count": 2
     }
   },
-  "components/account/FeedbackForm.tsx": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 1
-    }
-  },
   "components/article/ArticleSentence.tsx": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1

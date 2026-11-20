@@ -719,6 +719,9 @@ jest.mock('@supabase/supabase-js', () => {
           download: jest.fn(() => Promise.resolve(mockResult(null))),
           remove: jest.fn(() => Promise.resolve(mockResult(null))),
           list: jest.fn(() => Promise.resolve(mockResult([]))),
+          createSignedUrl: jest.fn(() =>
+            Promise.resolve(mockResult({ signedUrl: 'https://example.com/signed.jpg' })),
+          ),
           getPublicUrl: jest.fn(() => ({
             data: { publicUrl: 'https://example.com/file.jpg' },
           })),
