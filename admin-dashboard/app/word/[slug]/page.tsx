@@ -17,6 +17,7 @@ import { Footer } from '@/components/footer';
 import { SITE_URL } from '@/lib/constants';
 import { getWordEnrichment } from '@/lib/word-enrichment';
 import type { Category } from '@/lib/types';
+import { AI_DISCLOSURE } from '@/lib/app';
 
 export async function generateMetadata({
   params,
@@ -34,13 +35,13 @@ export async function generateMetadata({
 
   return {
     title: `${root.meaning} in Arabic — ${root.letters} | OpenArabic`,
-    description: `${root.letters} means "${root.meaning}" in Arabic. Hear the pronunciation and see it used in real example sentences with grammar notes.`,
+    description: `${root.letters} means "${root.meaning}" in Arabic. Hear the Arabic audio and see it used in real example sentences with grammar notes.`,
     alternates: { canonical },
     openGraph: {
       type: 'article',
       url: canonical,
       title: `${root.meaning} in Arabic — ${root.letters}`,
-      description: `Meaning, pronunciation, and example sentences for ${root.letters} ("${root.meaning}").`,
+      description: `Meaning, audio, and example sentences for ${root.letters} ("${root.meaning}").`,
     },
   };
 }
@@ -323,8 +324,8 @@ export default async function WordPage({
             <span lang="ar" dir="rtl" className="font-arabic text-foreground">
               {root.letters}
             </span>{' '}
-            through real bilingual reading with native audio and spaced-repetition
-            practice.
+            through real bilingual reading with Arabic audio and spaced-repetition
+            practice. {AI_DISCLOSURE}
           </p>
           <Link
             href="/download-app"

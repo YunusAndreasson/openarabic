@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Filter, MessageCircle, Info, Mail, Download, BookOpen } from 'lucide-react';
+import { AI_DISCLOSURE } from '@/lib/app';
 
 interface PublicHeaderProps {
   categories: Category[];
@@ -329,7 +330,7 @@ export function PublicHeader({
           </DialogHeader>
           <div className="space-y-4 text-sm leading-relaxed">
             <p className="text-foreground">
-              A free Arabic learning app based on classical Islamic texts. You read bilingual sentence pairs (an Arabic sentence followed by an English sentence), tap words you don&apos;t understand, and add them to a spaced repetition system (FSRS) to learn over time.
+              A free Arabic learning app based on classical Islamic texts. You read bilingual sentence pairs, with English above every Arabic line. Tap for the meaning. Long-press to save it, and FSRS scheduling brings it back for review.
             </p>
 
             <div className="space-y-2">
@@ -342,7 +343,7 @@ export function PublicHeader({
             <div className="space-y-2">
               <h3 className="font-semibold text-foreground">How does it work?</h3>
               <p className="text-muted-foreground">
-                You read bilingual sentence pairs at 90-95% comprehension (i+1 level), with 5-10% new vocabulary per article. Tap unknown words to add them to spaced repetition. Regular reading builds pattern recognition without explicit grammar study.
+                Recommended texts include words you have due for review. Every text plays English first, then Arabic, or Arabic only. {AI_DISCLOSURE}
               </p>
             </div>
 

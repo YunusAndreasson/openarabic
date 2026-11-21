@@ -5,49 +5,48 @@ OpenArabic: Read the Classics
 Classical Arabic made readable
 
 === PROMOTIONAL TEXT (max 170) ===
-Real works by Ibn al-Qayyim, Ibn Taymiyyah and Imam Nawawī — with English above every
-Arabic line, native audio on every word, and reviews timed to your memory.
+Excerpts from 22 classical works by six scholars. English above every Arabic line.
+Arabic audio on every word and every line.
 
 === KEYWORDS (max 100, comma-separated, no spaces) ===
 arabic,quran,islam,hadith,tafsir,vocabulary,flashcards,spaced,repetition,nawawi,fusha,reading
 
 === DESCRIPTION (max 4000) ===
-Read classical Arabic — even as a beginner.
+If you can sound out Arabic script, you can start reading classical texts.
 
-OpenArabic gives you real works by real scholars — Ibn al-Qayyim, Ibn Taymiyyah,
-Ibn al-Jawzī, Imam Nawawī and more — with the English above each Arabic line. You
-read the actual text, not a translation of it.
+Excerpts from 22 classical works by six scholars: Ibn al-Qayyim, Ibn Taymiyyah,
+Ibn al-Jawzī, Imam Nawawī and more. Read the Arabic itself, with English line by line.
+The audio uses AI voices and the English is machine-translated.
 
 READ WITHOUT DECODING
 • Every line of Arabic sits under its English, so you are never stuck on a sentence
-• Real works on creed, fiqh, sīrah, ḥadīth and tafsīr — sorted by topic
-• Graded by difficulty, from beginner-friendly to advanced
-• Switch to Arabic-only when the help starts to feel slow
+• Excerpts on creed, fiqh, sīrah, ḥadīth and tafsīr — sorted by topic
+• Sorted by difficulty. Most texts are advanced; 48 are easier.
 • The app keeps your place for next time
 
 TAP ANY WORD YOU DON'T KNOW
-• One tap gives you the meaning, a short grammar note and native audio
-• See where the word comes from — its root, and the other words built on it
-• Colour shows you the grammar: prefixes, suffixes, cases and particles
+• One tap gives you the meaning, a grammar note and audio
+• For most words, see the root and other words built on it
+• Colour shows how multi-part words are built
 • Save it to practice without losing your place on the page
 
 HEAR EVERY LINE READ ALOUD
-• Queue any text and listen to it narrated, Arabic line then English
+• Queue any text and listen. Every text plays English first, then Arabic, or Arabic only
 • Built for a walk or a commute
-• Works offline once downloaded
+• Audio you have played stays on your phone, and reviews made offline sync when you reconnect
 
 ANSWER OUT LOUD
-• Say the word instead of tapping a button — the app listens and grades you
-• Harder to fool yourself, and you practise pronunciation at the same time
-• Speech recognition runs on your device
+• Hear the Arabic, then say what it means in English. The app grades your answer
+• You answer out loud before the app shows the meaning
+• Speech recognition runs on your device, after a 100 MB download
+• Your voice is transcribed on your device and the audio is never uploaded. The text of your answer is saved
 
-WORDS RETURN BEFORE YOU FORGET THEM
-• Saved words come back for review just before you would forget them
-• FSRS scheduling adapts to how well you actually knew each word
-• A few minutes a day is enough
+WORDS RETURN WHEN YOUR PREDICTED RECALL FALLS TO 90%
+• FSRS scheduling adapts to how well you knew each word
+• You choose 10, 20 or 30 new words a day
 • Track your vocabulary, your streak and how long each word holds
 
-Free. No ads. No subscription.
+Free. No ads. No subscription. An account is needed in the app.
 
 Choose your Arabic face — Scheherazade, Amiri, Madina, Nastaliq or Noto — and read
 in light, dark or sepia.

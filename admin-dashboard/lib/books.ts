@@ -21,7 +21,7 @@ export const BOOKS: Book[] = [
     authorArabic: 'ابن قيّم الجوزيّة',
     description:
       'A bilingual Arabic–English edition of "The Benefits" — spiritual reflections on faith, the heart, and the path to God. Learner-friendly translation preserving Arabic word order.',
-    pages: 308,
+    pages: 411,
     fileUrl: '/books/al-fawaid.pdf',
     fileSizeMb: 18,
     authorWikipedia: 'https://en.wikipedia.org/wiki/Ibn_Qayyim_al-Jawziyya',

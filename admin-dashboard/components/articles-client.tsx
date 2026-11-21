@@ -10,12 +10,15 @@ import { AppShowcaseHero } from '@/components/app-showcase-hero';
 import { ITEMS_PER_PAGE } from '@/lib/constants';
 import { BookDownloads } from '@/components/book-downloads';
 import type { PlatformInfo } from '@/lib/platform-detection';
-import type { Article, Category, Author } from '@/lib/types';
+import { AI_DISCLOSURE } from '@/lib/app';
+import type { PublishedAuthor } from '@/lib/published-catalogue';
+import type { Article, Category } from '@/lib/types';
 
 interface ArticlesClientProps {
   initialArticles: Article[];
   initialCategories: Category[];
-  initialAuthors: Author[];
+  initialAuthors: PublishedAuthor[];
+  appRating: number | null;
   platformInfo: PlatformInfo;
   selectedCategoryId: number | null;
 }
@@ -29,6 +32,7 @@ export function ArticlesClient({
   initialArticles,
   initialCategories,
   initialAuthors,
+  appRating,
   platformInfo,
   selectedCategoryId,
 }: ArticlesClientProps) {
@@ -146,6 +150,7 @@ export function ArticlesClient({
             <AppShowcaseHero
               platformInfo={platformInfo}
               authors={initialAuthors}
+              appRating={appRating}
             />
 
             {/* About + Free Books */}
@@ -157,7 +162,7 @@ export function ArticlesClient({
                 </p>
                 <h3 className="text-base font-semibold text-foreground mb-2">How does it work?</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  You read bilingual sentence pairs at 90–95% comprehension, with 5–10% new vocabulary per article. Tap unknown words to add them to spaced repetition. Regular reading builds pattern recognition without explicit grammar study.
+                  You read bilingual sentence pairs. Tap for the meaning. Long-press to save it. Recommended texts include words you have due for review. {AI_DISCLOSURE}
                 </p>
               </div>
               <BookDownloads />
@@ -172,9 +177,8 @@ export function ArticlesClient({
             </h1>
             <p className="mt-3 text-muted-foreground max-w-3xl leading-relaxed">
               Read {selectedCategory.name.toLowerCase()} articles in Arabic with
-              parallel English translations, native audio, and tap-to-translate
-              vocabulary. Every text is graded for learners reading at an
-              intermediate level.
+              English line by line, Arabic audio, and tap-to-translate
+              vocabulary. {AI_DISCLOSURE}
             </p>
           </header>
         )}

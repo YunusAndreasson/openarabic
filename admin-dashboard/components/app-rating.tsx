@@ -1,16 +1,20 @@
 import { Star } from 'lucide-react';
-import { APP_RATING } from '@/lib/app';
 
 interface AppRatingProps {
+  /** From getAppRating; null means the lookup failed, and nothing is shown. */
+  rating: number | null;
   className?: string;
 }
 
 /**
- * Quiet social proof: the real App Store rating as gold stars plus the number.
- * Honest — the average rating and nothing it can't back up (no review counts).
+ * Quiet social proof: the App Store rating as Apple reports it, with no count.
+ * Ratings differ by storefront, so this names the one it comes from.
  */
-export function AppRating({ className }: AppRatingProps) {
-  const rounded = Math.round(APP_RATING);
+export function AppRating({ rating, className }: AppRatingProps) {
+  if (rating === null) return null;
+
+  // Whole stars earned at the precision shown, so a 4.5 never shows as five stars.
+  const stars = Math.floor(Number(rating.toFixed(1)));
 
   return (
     <span className={`inline-flex items-center gap-1.5 ${className ?? ''}`}>
@@ -18,12 +22,12 @@ export function AppRating({ className }: AppRatingProps) {
         {Array.from({ length: 5 }, (_, i) => (
           <Star
             key={i}
-            className={`h-3.5 w-3.5 ${i < rounded ? 'fill-[#c2a24e] text-[#c2a24e]' : 'fill-muted text-muted'}`}
+            className={`h-3.5 w-3.5 ${i < stars ? 'fill-[#c2a24e] text-[#c2a24e]' : 'fill-muted text-muted'}`}
           />
         ))}
       </span>
-      <span className="font-medium text-foreground">{APP_RATING.toFixed(1)}</span>
-      <span className="text-muted-foreground">on the App Store</span>
+      <span className="font-medium text-foreground">{rating.toFixed(1)}</span>
+      <span className="text-muted-foreground">on the US App Store</span>
     </span>
   );
 }

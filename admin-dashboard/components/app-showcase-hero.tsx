@@ -2,6 +2,7 @@ import type { PlatformInfo } from '@/lib/platform-detection';
 import { StoreBadges } from '@/components/store-badges';
 import { PhoneShowcase } from '@/components/phone-showcase';
 import { AppRating } from '@/components/app-rating';
+import { AI_DISCLOSURE } from '@/lib/app';
 
 interface Author {
   id: number;
@@ -11,6 +12,7 @@ interface Author {
 interface AppShowcaseHeroProps {
   platformInfo: PlatformInfo;
   authors?: Author[];
+  appRating: number | null;
 }
 
 function formatAuthors(authors: Author[]): string | null {
@@ -25,7 +27,7 @@ function formatAuthors(authors: Author[]): string | null {
  * calm; the type and the screenshots do the work. Server-rendered so the H1 ships
  * in the initial HTML and the front screenshot is the LCP image.
  */
-export function AppShowcaseHero({ platformInfo, authors = [] }: AppShowcaseHeroProps) {
+export function AppShowcaseHero({ platformInfo, authors = [], appRating }: AppShowcaseHeroProps) {
   const authorLine = formatAuthors(authors);
 
   return (
@@ -40,14 +42,16 @@ export function AppShowcaseHero({ platformInfo, authors = [] }: AppShowcaseHeroP
             id="home-hero-title"
             className="text-4xl font-semibold tracking-[-0.02em] text-foreground sm:text-5xl sm:leading-[1.05]"
           >
-            Learn to Read Arabic Through Authentic Texts
+            Build your Arabic reading through classical texts.
           </h1>
 
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-            Read Ibn al-Qayyim, Ibn Taymiyyah, and Imam Nawawī in Arabic, side by side with
-            English. Tap any word for its meaning and native audio, say it out loud, and remember
-            it with spaced repetition.
+            Read Ibn al-Qayyim, Ibn Taymiyyah, and Imam Nawawī in Arabic, with English above every
+            Arabic line. One tap gives you the meaning, a grammar note and audio. Hear the Arabic,
+            then say what it means in English. The app grades your answer.
           </p>
+
+          <p className="mt-3 text-sm text-muted-foreground">{AI_DISCLOSURE}</p>
 
           <StoreBadges
             platformInfo={platformInfo}
@@ -56,10 +60,14 @@ export function AppShowcaseHero({ platformInfo, authors = [] }: AppShowcaseHeroP
           />
 
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-sm sm:justify-start">
-            <AppRating />
-            <span className="text-muted-foreground" aria-hidden>
-              ·
-            </span>
+            {appRating !== null && (
+              <>
+                <AppRating rating={appRating} />
+                <span className="text-muted-foreground" aria-hidden>
+                  ·
+                </span>
+              </>
+            )}
             <span className="text-muted-foreground">Free, no ads</span>
           </div>
 

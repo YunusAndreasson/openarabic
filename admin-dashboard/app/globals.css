@@ -1,3 +1,7 @@
+/* Declared first because Tailwind's [hidden] rule is !important, and for !important the
+   earliest layer wins. See the rule at the end of this file. */
+@layer noscript-reveal;
+
 @import 'tailwindcss';
 
 /* Tailwind v4: class-based dark mode (replaces darkMode: 'class' from v3 config) */
@@ -320,3 +324,15 @@ img:not([fetchpriority="high"]) {
   background-color: oklch(from var(--color-primary) l c h / 0.15);
 }
 
+/* Next streams each page into a hidden block and swaps it in with a script. Without
+   JavaScript that leaves only the loading skeleton, so show the content instead. */
+@layer noscript-reveal {
+  @media (scripting: none) {
+    div[hidden][id^='S:'] {
+      display: block !important;
+    }
+    template[id^='B:'] + * {
+      display: none !important;
+    }
+  }
+}

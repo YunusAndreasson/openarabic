@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { AnalyticsChoicePanel } from '@/components/analytics-consent';
 import { Footer } from '@/components/footer';
 import { PublicHeader } from '@/components/public-header';
 import { supabase } from '@/lib/supabase';
@@ -38,7 +39,9 @@ export function PrivacyContent() {
       {/* Content */}
       <main className="flex-1 max-w-4xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-        <p className="text-sm text-muted-foreground mb-8">Effective Date: January 1, 2025</p>
+        <p className="text-sm text-muted-foreground mb-8">
+          Effective Date: January 1, 2025. Last updated: October 31, 2026.
+        </p>
 
         <div className="prose prose-gray max-w-none space-y-6">
           <p className="text-muted-foreground">
@@ -62,11 +65,18 @@ export function PrivacyContent() {
               performance, and app preferences (theme, audio settings, notifications).
             </p>
 
+            <h3 className="text-lg font-semibold mb-2">Voice Answers</h3>
+            <p className="text-muted-foreground mb-4">
+              If you answer by voice in the app, your voice is transcribed on your device and the
+              audio is never uploaded. The text of your answer is saved.
+            </p>
+
             <h3 className="text-lg font-semibold mb-2">Usage Analytics</h3>
             <p className="text-muted-foreground mb-4">
-              We use Mixpanel and Google Analytics to track basic events like sign in, sign up, and
-              practice sessions. This helps us understand how the app and website are used and
-              improve them.
+              In the app, we use Mixpanel to record events like sign in, sign up, practice sessions
+              and the title and category of the texts you open, linked to your account. On this
+              website, and only if you agree, we use Google Analytics to see how visitors find and
+              use it. This helps us understand how the app and website are used and improve them.
             </p>
           </section>
 
@@ -92,15 +102,37 @@ export function PrivacyContent() {
 
             <h3 className="text-lg font-semibold mb-2">Mixpanel</h3>
             <p className="text-muted-foreground mb-4">
-              We use Mixpanel for analytics to understand app usage patterns and improve the
-              learning experience.
+              We use Mixpanel in the app to understand which features get used and to improve the
+              learning experience. Its events are linked to your account. The app does not currently
+              ask before sending them.
             </p>
 
-            <h3 className="text-lg font-semibold mb-2">Google Analytics</h3>
+            <h3 className="text-lg font-semibold mb-2">Meta (Facebook)</h3>
             <p className="text-muted-foreground mb-4">
-              We use Google Analytics to understand how visitors find and use our website. It
-              collects aggregated, anonymized usage data such as page views and referral sources.
+              The app sends a small number of app events to Meta, so we can tell whether an ad was
+              worth running: that the app was opened, an account was created, the intro was
+              finished, or a practice session was completed, along with the technical details the
+              Meta SDK attaches, such as device model and system version. On Android your device
+              advertising ID is included. This applies whether or not you installed from an ad, and the app does
+              not currently ask first. We do not send Meta your name, your email or what you study,
+              and we never ask to track you across other apps.
             </p>
+
+            <h3 id="analytics" className="text-lg font-semibold mb-2 scroll-mt-24">
+              Google Analytics
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              Only if you agree on this website, we use Google Analytics to see how visitors find
+              and use it, such as page views and referral sources. It sets cookies, and the data
+              goes to Google. Because this site is about Islamic texts, visits could suggest your
+              beliefs. If you refuse, or make no choice, nothing is loaded from Google and no
+              analytics cookie is set. Your choice is stored in your browser, and it applies to this
+              website, not the app. You can change it at any time here. Without JavaScript, Google
+              Analytics cannot run and there is nothing to choose.
+            </p>
+            <div className="mb-4">
+              <AnalyticsChoicePanel />
+            </div>
 
             <h3 className="text-lg font-semibold mb-2">Sentry</h3>
             <p className="text-muted-foreground mb-4">

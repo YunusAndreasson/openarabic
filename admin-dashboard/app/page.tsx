@@ -5,7 +5,9 @@ import { AppStructuredData } from '@/components/app-structured-data';
 import { CategoryStructuredData } from '@/components/category-structured-data';
 import { ITEMS_PER_PAGE, SITE_URL } from '@/lib/constants';
 import { detectPlatform } from '@/lib/platform-detection';
-import type { Article, Category, Author } from '@/lib/types';
+import { getAppRating } from '@/lib/app-rating';
+import { getPublishedCatalogue } from '@/lib/published-catalogue';
+import type { Article, Category } from '@/lib/types';
 
 type PageProps = {
   searchParams: Promise<{ category?: string }>;
@@ -26,7 +28,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const categoryId = parseInt(category, 10);
 
   const title = `${data.name} Articles - OpenArabic`;
-  const description = `Read ${data.name} articles in Arabic with parallel English translations, native audio, and spaced-repetition vocabulary practice.`;
+  const description = `Read ${data.name} articles in Arabic with English line by line, Arabic audio, and spaced-repetition vocabulary practice.`;
   const url = `${SITE_URL}/?category=${categoryId}`;
 
   return {
@@ -65,18 +67,19 @@ export default async function PublicArticlesPage({ searchParams }: PageProps) {
     articlesQuery = articlesQuery.eq('category_id', categoryId);
   }
 
-  // Fetch articles, categories, authors, and detect platform in parallel
-  const [articlesResult, categoriesResult, authorsResult, platformInfo] =
+  // Fetch articles, categories, the published catalogue and the App Store rating,
+  // and detect platform, in parallel
+  const [articlesResult, categoriesResult, catalogue, appRating, platformInfo] =
     await Promise.all([
       articlesQuery,
       supabase.from('categories').select('*').order('name'),
-      supabase.from('authors').select('*').order('name'),
+      getPublishedCatalogue(),
+      getAppRating(),
       detectPlatform(),
     ]);
 
   const { data: articles, error: articlesError } = articlesResult;
   const { data: categories, error: categoriesError } = categoriesResult;
-  const { data: authors, error: authorsError } = authorsResult;
 
   if (articlesError) {
     console.error('Error fetching articles:', articlesError);
@@ -84,10 +87,6 @@ export default async function PublicArticlesPage({ searchParams }: PageProps) {
 
   if (categoriesError) {
     console.error('Error fetching categories:', categoriesError);
-  }
-
-  if (authorsError) {
-    console.error('Error fetching authors:', authorsError);
   }
 
   const selectedCategory = categoryId
@@ -107,7 +106,8 @@ export default async function PublicArticlesPage({ searchParams }: PageProps) {
       <ArticlesClient
         initialArticles={(articles as Article[]) || []}
         initialCategories={(categories as Category[]) || []}
-        initialAuthors={(authors as Author[]) || []}
+        initialAuthors={catalogue?.authors ?? []}
+        appRating={appRating}
         platformInfo={platformInfo}
         selectedCategoryId={categoryId}
       />

@@ -33,7 +33,7 @@ export async function generateMetadata({
     title: `Articles by ${author.name} - OpenArabic`,
     description: `Read ${articles.length} Arabic ${
       articles.length === 1 ? 'article' : 'articles'
-    } by ${author.name} on OpenArabic — bilingual texts with parallel English translations, native audio, and tap-to-translate vocabulary.`,
+    } by ${author.name} on OpenArabic — bilingual texts with English line by line, Arabic audio, and tap-to-translate vocabulary.`,
     alternates: { canonical },
     openGraph: {
       type: 'profile',

@@ -18,6 +18,7 @@ import { generateSlug, parseIdFromSlug } from '@/lib/slugify';
 import { detectPlatform } from '@/lib/platform-detection';
 import { normalizeImageUrl } from '@/lib/article-utils';
 import { SITE_URL } from '@/lib/constants';
+import { AI_DISCLOSURE } from '@/lib/app';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;
@@ -240,7 +241,7 @@ export default async function ArticleReadPage({
             platformInfo={platformInfo}
             variant="inline"
             title="Continue learning on the app"
-            description="Get bilingual texts with synchronized audio, spaced repetition vocabulary practice, and personalized lessons."
+            description={`Get bilingual texts with audio and spaced repetition vocabulary practice. ${AI_DISCLOSURE}`}
           />
         </div>
       )}

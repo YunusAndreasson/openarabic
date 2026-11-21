@@ -102,7 +102,7 @@ export function SmartAppBanner({ platformInfo }: SmartAppBannerProps) {
                 {APP_NAME}
               </div>
               <div className="text-xs text-muted-foreground">
-                Master Arabic through reading
+                Build your Arabic reading through classical texts.
               </div>
             </div>
 

@@ -12,6 +12,7 @@ import { DictionarySearchForm } from '@/components/dictionary-search-form';
 import { Footer } from '@/components/footer';
 import { SITE_URL } from '@/lib/constants';
 import type { Category } from '@/lib/types';
+import { AI_DISCLOSURE } from '@/lib/app';
 
 /** How many entries the hub links to. Ranked by usage — the pages most worth
  *  concentrating internal-link equity on. */
@@ -25,14 +26,14 @@ const canonical = `${SITE_URL}/dictionary`;
 export const metadata: Metadata = {
   title: 'Arabic Dictionary — Words with Audio & Example Sentences | OpenArabic',
   description:
-    'Browse the OpenArabic dictionary: common Arabic words with their English meanings, native-audio pronunciation, and real example sentences drawn from classical texts.',
+    'Browse the OpenArabic dictionary: common Arabic words with their English meanings, Arabic audio, and real example sentences drawn from classical texts.',
   alternates: { canonical },
   openGraph: {
     type: 'website',
     url: canonical,
     title: 'Arabic Dictionary — OpenArabic',
     description:
-      'Common Arabic words with English meanings, pronunciation, and example sentences from real texts.',
+      'Common Arabic words with English meanings, audio, and example sentences from real texts.',
   },
 };
 
@@ -53,7 +54,7 @@ export default async function DictionaryPage() {
         name: 'Arabic Dictionary',
         url: canonical,
         description:
-          'A dictionary of Arabic words with English meanings, pronunciation, and example sentences from real texts.',
+          'A dictionary of Arabic words with English meanings, audio, and example sentences from real texts.',
         inLanguage: 'en',
         isPartOf: { '@type': 'WebSite', name: 'OpenArabic', url: `${SITE_URL}/` },
       },
@@ -92,8 +93,8 @@ export default async function DictionaryPage() {
             Arabic Dictionary
           </h1>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
-            Look up Arabic words with their English meanings, native-audio
-            pronunciation, and real example sentences from{' '}
+            Look up Arabic words with their English meanings, Arabic audio,
+            and real example sentences from{' '}
             <Link href="/" className="text-foreground hover:underline">
               classical texts
             </Link>
@@ -148,8 +149,8 @@ export default async function DictionaryPage() {
             Learn Arabic vocabulary in context
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-            OpenArabic teaches words through real bilingual reading with native
-            audio and spaced-repetition practice.
+            OpenArabic teaches words through real bilingual reading with Arabic
+            audio and spaced-repetition practice. {AI_DISCLOSURE}
           </p>
           <Link
             href="/download-app"

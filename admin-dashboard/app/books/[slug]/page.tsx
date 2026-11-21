@@ -13,6 +13,7 @@ import { ArticleNav } from '@/components/article-nav';
 import { Footer } from '@/components/footer';
 import { SITE_URL } from '@/lib/constants';
 import type { Category } from '@/lib/types';
+import { AI_DISCLOSURE } from '@/lib/app';
 
 function getBook(slug: string) {
   return BOOKS.find((b) => b.slug === slug) ?? null;
@@ -259,9 +260,8 @@ export default async function BookPage({
             Read it with translations and audio
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-            OpenArabic turns classical texts like this into bilingual reading practice —
-            tap any word for its meaning, hear native audio, and remember new vocabulary
-            with spaced repetition.
+            OpenArabic turns classical texts like this into bilingual reading practice.
+            One tap gives you the meaning, a grammar note and audio. {AI_DISCLOSURE}
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Link

@@ -7,7 +7,7 @@ import { SmartAppBanner } from '@/components/smart-app-banner';
 import { SiteStructuredData } from '@/components/site-structured-data';
 import { GoogleAnalytics } from '@/components/google-analytics';
 import { detectPlatform } from '@/lib/platform-detection';
-import { APP_STORE_ID } from '@/lib/app';
+import { AI_DISCLOSURE, APP_STORE_ID, APP_TAGLINE } from '@/lib/app';
 import { SITE_URL } from '@/lib/constants';
 
 const inter = Inter({
@@ -42,8 +42,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'OpenArabic - Learn Arabic Through Reading',
-  description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
+  title: 'OpenArabic - Build your Arabic reading through classical texts',
+  description: `Read the Arabic itself, with English line by line. ${AI_DISCLOSURE}`,
   // The maker behind OpenArabic. Renders <meta name="author"> / <meta name="creator">.
   // The brand keeps its own twitter:site/creator tags below; the Person identity
   // is carried in the JSON-LD Person node (see site-structured-data.tsx).
@@ -69,14 +69,14 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: SITE_URL,
     siteName: 'OpenArabic',
-    title: 'OpenArabic - Learn Arabic Through Reading',
-    description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
+    title: 'OpenArabic - Build your Arabic reading through classical texts',
+    description: `Read the Arabic itself, with English line by line. ${AI_DISCLOSURE}`,
     images: [
       {
         url: `${SITE_URL}/og.png`,
         width: 1200,
         height: 630,
-        alt: 'OpenArabic — read classical Arabic, even as a beginner',
+        alt: `OpenArabic — ${APP_TAGLINE}`,
       },
     ],
   },
@@ -84,8 +84,8 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     site: '@openarabicio',
     creator: '@openarabicio',
-    title: 'OpenArabic - Learn Arabic Through Reading',
-    description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
+    title: 'OpenArabic - Build your Arabic reading through classical texts',
+    description: `Read the Arabic itself, with English line by line. ${AI_DISCLOSURE}`,
     images: [`${SITE_URL}/og.png`],
   },
   alternates: {
@@ -108,8 +108,8 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Google Analytics (gtag.js) — must be in <head> for Search Console
-            "Google Analytics" ownership verification. */}
+        {/* Sets up Google Analytics with everything denied. gtag.js itself loads only
+            after consent, so a visitor who hasn't agreed makes no request to Google. */}
         <GoogleAnalytics />
 
         {/* Resource hints for faster external requests */}

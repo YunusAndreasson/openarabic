@@ -22,20 +22,19 @@ export const APP_STORE_URL =
 export const PLAY_STORE_URL =
   'https://play.google.com/store/apps/details?id=com.edenmind.OpenArabic';
 
-/** Short benefit-forward tagline. */
-export const APP_TAGLINE = 'Read classical Arabic — even as a beginner';
+/** Short positioning line. Nothing in the app teaches the script, so it says so. */
+export const APP_TAGLINE = 'If you can sound out Arabic script, you can start reading classical texts.';
+
+/** One calm line, wherever audio and translation are described. Owner to approve the wording. */
+export const AI_DISCLOSURE = 'The audio uses AI voices and the English is machine-translated.';
 
 /** One-paragraph description (manifest, structured data, download page lead). */
-export const APP_DESCRIPTION =
-  'Read classical Islamic texts — Ibn al-Qayyim, Ibn Taymiyyah, Imam Nawawī and more — in Arabic side by side with English. Tap any word for its meaning and native audio, say it out loud, and lock it in with spaced repetition.';
+export const APP_DESCRIPTION = `Read classical Islamic texts by Ibn al-Qayyim, Ibn Taymiyyah, Imam Nawawī and more in Arabic, with English above every Arabic line. One tap gives you the meaning, a grammar note and audio. Hear the Arabic, then say what it means in English. The app grades your answer. ${AI_DISCLOSURE}`;
 
 /** Headline benefits shown as a feature grid / chips. */
 export const APP_FEATURES = [
   'Bilingual texts',
-  'Native audio',
+  'Arabic audio',
   'Spaced repetition',
   'Free & no ads',
 ] as const;
-
-/** Current average App Store rating (out of 5). Keep in step with the store. */
-export const APP_RATING = 5.0;

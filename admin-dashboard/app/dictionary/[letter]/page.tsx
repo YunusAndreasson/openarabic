@@ -12,6 +12,7 @@ import { DictionaryAzNav } from '@/components/dictionary-az-nav';
 import { Footer } from '@/components/footer';
 import { SITE_URL } from '@/lib/constants';
 import type { Category } from '@/lib/types';
+import { AI_DISCLOSURE } from '@/lib/app';
 
 /** Rebuild each letter page at most once a day (ISR). Generated on demand — the
  *  sitemap drives the initial crawl, then the result is cached. */
@@ -38,13 +39,13 @@ export async function generateMetadata({
 
   return {
     title: `Arabic words starting with ${label} | OpenArabic Dictionary`,
-    description: `Arabic words whose English meaning starts with ${label} — each with native-audio pronunciation and real example sentences from classical texts. Browse the OpenArabic dictionary A–Z.`,
+    description: `Arabic words whose English meaning starts with ${label} — each with Arabic audio and real example sentences from classical texts. Browse the OpenArabic dictionary A–Z.`,
     alternates: { canonical },
     openGraph: {
       type: 'website',
       url: canonical,
       title: `Arabic words — ${label} | OpenArabic Dictionary`,
-      description: `Arabic words starting with ${label}, with pronunciation and example sentences.`,
+      description: `Arabic words starting with ${label}, with audio and example sentences.`,
     },
   };
 }
@@ -132,7 +133,7 @@ export default async function DictionaryLetterPage({
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
             {entries.length} {entries.length === 1 ? 'word' : 'words'} whose
             English meaning starts with {label}. Each links to its Arabic
-            spelling, native-audio pronunciation, and real example sentences.
+            spelling, Arabic audio, and real example sentences.
           </p>
         </header>
 
@@ -170,7 +171,7 @@ export default async function DictionaryLetterPage({
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
             OpenArabic teaches these words through real bilingual reading with
-            native audio and spaced-repetition practice.
+            Arabic audio and spaced-repetition practice. {AI_DISCLOSURE}
           </p>
           <Link
             href="/download-app"

@@ -2,7 +2,7 @@ import Image from 'next/image';
 import type { PlatformInfo } from '@/lib/platform-detection';
 import { ArabicWordCloud } from '@/components/arabic-word-cloud';
 import { StoreBadges } from '@/components/store-badges';
-import { APP_TAGLINE, APP_DESCRIPTION, APP_FEATURES } from '@/lib/app';
+import { AI_DISCLOSURE, APP_TAGLINE, APP_DESCRIPTION, APP_FEATURES } from '@/lib/app';
 
 interface Author {
   id: number;
@@ -25,8 +25,7 @@ const DEFAULTS = {
   },
   inline: {
     title: 'Continue reading in the app',
-    description:
-      'Read more articles with translations, listen to native audio, and build your vocabulary.',
+    description: `Read more articles with translations, listen to Arabic audio, and build your vocabulary. ${AI_DISCLOSURE}`,
   },
 } as const;
 

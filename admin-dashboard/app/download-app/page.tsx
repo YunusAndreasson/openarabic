@@ -8,7 +8,10 @@ import { AppStructuredData } from '@/components/app-structured-data';
 import { PhoneShowcase } from '@/components/phone-showcase';
 import { AppFeatureShowcase } from '@/components/app-feature-showcase';
 import { AppRating } from '@/components/app-rating';
-import { APP_NAME, APP_DESCRIPTION } from '@/lib/app';
+import { Footer } from '@/components/footer';
+import { AI_DISCLOSURE, APP_NAME, APP_DESCRIPTION, APP_TAGLINE } from '@/lib/app';
+import { getAppRating } from '@/lib/app-rating';
+import { countInWords, getPublishedCatalogue } from '@/lib/published-catalogue';
 import { SITE_URL } from '@/lib/constants';
 
 export const metadata: Metadata = {
@@ -27,7 +30,7 @@ export const metadata: Metadata = {
         url: `${SITE_URL}/og.png`,
         width: 1200,
         height: 630,
-        alt: 'OpenArabic — read classical Arabic, even as a beginner',
+        alt: `OpenArabic — ${APP_TAGLINE}`,
       },
     ],
   },
@@ -47,64 +50,22 @@ function Eyebrow({ children }: { children: ReactNode }) {
   );
 }
 
-// Recognisable scholars to surface first in the "what you'll read" line, matched
-// against the real author catalogue (a plain alphabetical list buries the famous
-// names and can show near-duplicate transliterations). Only names actually in the
-// library are ever shown.
-const MARQUEE_SCHOLARS = [
-  'Qayyim',
-  'Taymiyyah',
-  'Jawzi',
-  'Nawawi',
-  'Ghazali',
-  'Bukhari',
-  'Dhahabi',
-  'Suyuti',
-  'Tabari',
-  'Hanbal',
-] as const;
-
-function pickScholars(all: string[], max = 8): { names: string[]; more: boolean } {
-  const chosen: string[] = [];
-  const used = new Set<number>();
-
-  for (const key of MARQUEE_SCHOLARS) {
-    const idx = all.findIndex((n, i) => !used.has(i) && n.toLowerCase().includes(key.toLowerCase()));
-    if (idx !== -1) {
-      chosen.push(all[idx]);
-      used.add(idx);
-    }
-  }
-  for (let i = 0; i < all.length && chosen.length < max; i++) {
-    if (!used.has(i)) {
-      chosen.push(all[i]);
-      used.add(i);
-    }
-  }
-
-  return { names: chosen.slice(0, max), more: all.length > Math.min(max, chosen.length) };
-}
-
 export default async function DownloadPage() {
   // Mobile visitors are redirected to their store in middleware; desktop / bots
-  // reach this showcase. Author + category names are pulled from the same
-  // catalogue the app reads, so the "what you'll read" section can never claim a
-  // scholar or topic that isn't actually in the library.
-  const [platformInfo, authorsResult, categoriesResult] = await Promise.all([
+  // reach this showcase. Authors and counts come from published articles, so the
+  // "what you'll read" section can never claim a scholar with no text in the app.
+  const [platformInfo, catalogue, appRating, categoriesResult] = await Promise.all([
     detectPlatform(),
-    supabase.from('authors').select('name').order('name'),
+    getPublishedCatalogue(),
+    getAppRating(),
     supabase.from('categories').select('name').order('name'),
   ]);
 
-  const authors = (authorsResult.data ?? [])
-    .map((a) => a.name)
-    .filter((n): n is string => Boolean(n));
   const categories = (categoriesResult.data ?? [])
     .map((c) => c.name)
     .filter((n): n is string => Boolean(n));
 
-  const { names: scholars, more: moreScholars } = pickScholars(authors);
-  const scholarLine = scholars.join('  ·  ') + (moreScholars ? '  ·  and more' : '');
+  const scholarLine = (catalogue?.authors ?? []).map((a) => a.name).join('  ·  ');
 
   return (
     <>
@@ -130,14 +91,18 @@ export default async function DownloadPage() {
               </div>
 
               <h1 className="mt-8 font-display text-5xl font-medium leading-[1.03] tracking-[-0.02em] text-foreground sm:text-6xl lg:text-[4.25rem] lg:leading-[1.02]">
-                Read classical Arabic,{' '}
-                <span className="italic text-primary">even as a beginner.</span>
+                If you can sound out Arabic script,{' '}
+                <span className="italic text-primary">you can start reading classical texts.</span>
               </h1>
 
               <p className="mx-auto mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground sm:text-xl lg:mx-0">
-                The words of Ibn al-Qayyim, Ibn Taymiyyah and Imam Nawawī — in Arabic beside English.
-                Tap any word for its meaning and native audio, say it back out loud, and let spaced
-                repetition make it stick.
+                Ibn al-Qayyim, Ibn Taymiyyah and Imam Nawawī in Arabic, with English above every
+                Arabic line. One tap gives you the meaning, a grammar note and audio. Hear the Arabic,
+                then say what it means in English. The app grades your answer.
+              </p>
+
+              <p className="mx-auto mt-4 max-w-lg text-sm text-muted-foreground lg:mx-0">
+                {AI_DISCLOSURE}
               </p>
 
               <StoreBadges
@@ -147,10 +112,14 @@ export default async function DownloadPage() {
               />
 
               <div className="mt-5 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-sm lg:justify-start">
-                <AppRating />
-                <span className="text-muted-foreground" aria-hidden>
-                  ·
-                </span>
+                {appRating !== null && (
+                  <>
+                    <AppRating rating={appRating} />
+                    <span className="text-muted-foreground" aria-hidden>
+                      ·
+                    </span>
+                  </>
+                )}
                 <span className="text-muted-foreground">Free, no ads · iPhone &amp; Android</span>
               </div>
             </div>
@@ -168,12 +137,15 @@ export default async function DownloadPage() {
             <Eyebrow>What you’ll read</Eyebrow>
 
             <h2 className="mx-auto mt-6 max-w-2xl font-display text-[2rem] font-medium leading-[1.12] tracking-[-0.01em] text-foreground sm:text-[2.75rem]">
-              Real books by real scholars — not a phrasebook.
+              {catalogue
+                ? `Excerpts from ${countInWords(catalogue.works)} classical works by ${countInWords(catalogue.authors.length)} scholars`
+                : 'Excerpts from classical works'}
             </h2>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              Short works and excerpts on creed, jurisprudence, the Prophet’s life, hadith and
-              tafsīr — chosen because they’re worth reading, and graded by difficulty so that you can.
+              Excerpts on creed, jurisprudence, the Prophet’s life, hadith and tafsīr.
+              {catalogue &&
+                ` Sorted by difficulty. Most texts are advanced; ${catalogue.easierTexts} are easier.`}
             </p>
 
             {scholarLine && (
@@ -196,11 +168,10 @@ export default async function DownloadPage() {
             <div className="mx-auto mb-20 max-w-2xl text-center sm:mb-28">
               <Eyebrow>How it works</Eyebrow>
               <h2 className="mt-6 font-display text-4xl font-medium leading-[1.08] tracking-[-0.01em] text-foreground sm:text-5xl">
-                Learn to read by reading.
+                Build your Arabic reading through classical texts.
               </h2>
               <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-                Just enough help to keep you moving through a real text — and a system that quietly
-                remembers every word you touch.
+                Just enough help to keep you moving through a real text.
               </p>
             </div>
 
@@ -216,12 +187,13 @@ export default async function DownloadPage() {
               Open the book tonight.
             </h2>
             <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-muted-foreground">
-              Start with one short text. Tap what you don’t know, hear it read, say it back — and let
-              the app carry it in your memory.
+              Start with one short text. Tap for the meaning. Long-press to save it.
             </p>
             <StoreBadges platformInfo={platformInfo} showBoth className="mt-9 justify-center" />
           </div>
         </section>
+
+        <Footer />
       </div>
     </>
   );

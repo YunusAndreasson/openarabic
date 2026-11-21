@@ -26,7 +26,7 @@ export function ArticleVocabulary({ roots }: ArticleVocabularyProps) {
         Key vocabulary in this article
       </h2>
       <p className="text-sm text-muted-foreground mb-5">
-        Tap a word for its meaning, pronunciation, and more example sentences.
+        Tap a word for its meaning, audio, and more example sentences.
       </p>
       <ul className="flex flex-wrap gap-2">
         {roots.map((root) => (

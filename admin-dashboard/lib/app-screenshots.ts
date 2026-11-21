@@ -30,53 +30,53 @@ export const SCREENSHOTS: AppScreenshot[] = [
     label: 'Explore',
     title: 'A library of the classics',
     description:
-      'Ibn al-Qayyim, Ibn Taymiyyah, Ibn al-Jawzī, Imam Nawawī and more — real works on creed, fiqh, sīrah and tafsīr, sorted by topic. Open one and the app keeps your place for next time.',
+      'Ibn al-Qayyim, Ibn Taymiyyah, Ibn al-Jawzī, Imam Nawawī and more — excerpts on creed, fiqh, sīrah and tafsīr, sorted by topic. Open one and the app keeps your place for next time.',
     meta: 'ʿAqīdah · Fiqh · Sīrah · Ḥadīth · Tafsīr',
   },
   {
     src: '/screenshots/read-side-by-side.webp',
-    alt: 'A classical text shown with Arabic and English side by side, one word tapped for a hint',
+    alt: 'A classical text shown with English above every Arabic line, one word tapped for a hint',
     label: 'Read',
-    title: 'Arabic and English, side by side',
+    title: 'English above every Arabic line',
     description:
-      'Each line of Arabic sits above its English, so you read the actual text instead of a translation of it. When the help starts to feel slow, switch to Arabic-only.',
-    meta: 'Bilingual & Arabic-only · graded by difficulty',
+      'Read the Arabic itself, with English line by line.',
+    meta: 'Sorted by difficulty',
   },
   {
     src: '/screenshots/tap-word.webp',
-    alt: 'A tapped word showing its meaning, a grammar note, native audio and an add-to-practice button',
+    alt: 'A tapped word showing its meaning, a grammar note, audio and an add-to-practice button',
     label: 'Understand',
     title: 'Tap any word you don’t know',
     description:
-      'One tap opens its meaning, a short grammar note, and native audio — and drops it into your practice deck. No dictionary, no losing your place on the page.',
-    meta: 'Instant meaning · grammar note · native audio',
+      'One tap gives you the meaning, a grammar note and audio. Long-press to save it to practice without losing your place.',
+    meta: 'Instant meaning · grammar note · audio',
   },
   {
     src: '/screenshots/listen-audio.webp',
-    alt: 'A playlist of classical texts you can listen to with narrated audio',
+    alt: 'A playlist of classical texts you can listen to',
     label: 'Listen',
     title: 'Hear it read, back to back',
     description:
-      'Queue a text and listen to it narrated — each Arabic line followed by its English — on a walk or a commute. Everything works offline once it’s downloaded.',
-    meta: 'Narrated texts · Arabic then English · offline',
+      'Queue any text and listen on a walk or a commute. Every text plays English first, then Arabic, or Arabic only. Audio you have played stays on your phone, and reviews made offline sync when you reconnect.',
+    meta: 'Switch the audio to Arabic-only.',
   },
   {
     src: '/screenshots/speak-aloud.webp',
-    alt: 'A practice flashcard with a microphone to say the Arabic word out loud',
+    alt: 'A practice flashcard with a microphone to say what the word means in English',
     label: 'Speak',
-    title: 'Say the word out loud',
+    title: 'Hear the Arabic, then say what it means in English',
     description:
-      'Recall each word by speaking it — tap the mic and the app listens and grades you. It’s the difference between recognising a word and actually owning it.',
-    meta: 'Voice-graded · Forgot · Guessed · Knew it',
+      'The app grades your answer. You answer out loud before the app shows the meaning. Your voice is transcribed on your device and the audio is never uploaded. The text of your answer is saved.',
+    meta: 'On your device, after a 100 MB download.',
   },
   {
     src: '/screenshots/spaced-repetition.webp',
     alt: 'A practice dashboard showing memory strength, words due, streak, and mastered count',
     label: 'Remember',
-    title: 'Spaced repetition makes it stick',
+    title: 'Words return when your predicted recall falls to 90%',
     description:
-      'Every word you tap joins a deck that brings it back right before you’d forget it. Your memory strength climbs a little more with each short session.',
-    meta: 'FSRS spaced repetition · a few minutes a day',
+      'FSRS scheduling adapts to how well you knew each word. Track your vocabulary, your streak and how long each word holds.',
+    meta: 'You choose 10, 20 or 30 new words a day.',
   },
 ];
 

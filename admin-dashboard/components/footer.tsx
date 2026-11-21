@@ -89,6 +89,13 @@ export function Footer() {
               Privacy
             </Link>
             <Link
+              href="/privacy#analytics"
+              prefetch={null}
+              className="hover:text-foreground transition-colors duration-150"
+            >
+              Analytics
+            </Link>
+            <Link
               href="/terms"
               prefetch={null}
               className="hover:text-foreground transition-colors duration-150"
