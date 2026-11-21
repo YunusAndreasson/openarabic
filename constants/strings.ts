@@ -628,7 +628,7 @@ export const STRINGS = {
     'We use Sentry for error tracking and crash reporting to identify and fix issues that affect app stability and performance. A report contains the error, the device and app version. It does not include your account, email address or screenshots. Sentry stores this data in the United States.',
   PRIVACY_THIRD_PARTY_META: 'Meta (Facebook)',
   PRIVACY_THIRD_PARTY_META_DESC:
-    'If you installed Open Arabic from a Facebook or Instagram ad, we share a small number of app events with Meta — that the app was opened, an account was created, the intro was finished, or a practice session was completed — so we can tell whether an ad was worth running. We do not send Meta your name, email, or what you study. On iOS we never ask to track you across other apps, so Meta only receives this in aggregate. On Android your device advertising ID is included; you can reset or limit it in Settings → Privacy → Ads.',
+    'We share a small number of app events with Meta, whether or not you installed from an ad, so we can tell whether our Facebook and Instagram ads are worth running: that the app was opened, an account was created, the intro was finished, or a practice session was completed. We do not send Meta your name, email, or what you study. On iOS we never ask to track you across other apps, so Meta only receives this in aggregate. On Android your device advertising ID is included; you can reset or limit it in Settings → Privacy → Ads.',
   PRIVACY_THIRD_PARTY_AUTH: 'Apple and Google',
   PRIVACY_THIRD_PARTY_AUTH_DESC:
     'If you sign in with Apple or Google, their privacy policies apply to the authentication process.',
