@@ -69,8 +69,8 @@ export function useStartArticlePlayback(): StartArticlePlayback {
     warmTrackCache(firstTrack);
     void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
     void analytics.track(ANALYTICS_EVENTS.AUDIO_PLAYBACK_STARTED, {
+      // The ID only, as on Article Viewed: a title says which religious text is read.
       article_id: firstTrack.articleId,
-      article_title: firstTrack.title,
       source,
       playlist_position: startIndex + 1,
       playlist_total: tracks.length,

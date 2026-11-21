@@ -83,10 +83,10 @@ export function useArticleScreen({
   useEffect(() => {
     if (article && !hasTrackedArticleView.current) {
       hasTrackedArticleView.current = true;
+      // The ID only: a title or category (Islamic Creed, Prophetic Traditions, ...)
+      // would tell Mixpanel which religious texts an install reads. Owner, 2026-11-21.
       void analytics.track(ANALYTICS_EVENTS.ARTICLE_VIEWED, {
         article_id: article.id,
-        article_title: article.title,
-        category: article.category.name,
         source,
       });
       void markOnboardingStep(OnboardingStep.READ_TEXT);

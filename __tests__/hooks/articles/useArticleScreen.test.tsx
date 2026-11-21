@@ -276,7 +276,7 @@ describe('useArticleScreen Hook', () => {
 
       expect(analytics.track).toHaveBeenCalledWith(
         ANALYTICS_EVENTS.ARTICLE_VIEWED,
-        expect.objectContaining({ article_id: 123, source: 'intro_cta' }),
+        { article_id: 123, source: 'intro_cta' },
       );
       expect(useStudyWordMutations).toHaveBeenCalledWith(expect.any(Function), {
         source: 'article',
