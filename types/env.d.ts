@@ -18,6 +18,8 @@ declare global {
 
       // Analytics configuration
       EXPO_PUBLIC_MIXPANEL_TOKEN?: string;
+      // '1' lets a dev build send to Mixpanel (constants/analytics.ts)
+      EXPO_PUBLIC_MIXPANEL_IN_DEV?: string;
 
       // Google Sign In configuration
       EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?: string;

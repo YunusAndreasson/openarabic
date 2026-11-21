@@ -3,10 +3,20 @@
  * Mixpanel configuration and event names
  */
 
-// Your Mixpanel project token - required for analytics to work
-export const MIXPANEL_TOKEN = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN;
+declare const __DEV__: boolean | undefined;
 
-// Analytics token - gracefully handled by analytics service
+/**
+ * The Mixpanel project token; without it analytics is a silent no-op.
+ *
+ * Dev builds (Metro, `__DEV__`) get none, so a developer's installs never land in
+ * the production project, where marketer counts every First Open as a real
+ * install. Set EXPO_PUBLIC_MIXPANEL_IN_DEV=1 to send from a dev build on purpose.
+ */
+const isDevBuild = typeof __DEV__ !== 'undefined' && __DEV__;
+export const MIXPANEL_TOKEN =
+  isDevBuild && process.env.EXPO_PUBLIC_MIXPANEL_IN_DEV !== '1'
+    ? undefined
+    : process.env.EXPO_PUBLIC_MIXPANEL_TOKEN;
 
 // Analytics event names - keep consistent across the app
 export const ANALYTICS_EVENTS = {
