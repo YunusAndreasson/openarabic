@@ -8,8 +8,8 @@ import {
   Path,
   rect,
   useRSXformBuffer,
-  useTexture,
   vec,
+  type SkImage,
   type SkRect,
 } from 'react-native-skia';
 import type { JSX } from 'react';
@@ -24,6 +24,7 @@ import {
 } from 'react-native-reanimated';
 
 import { ChartBaseline } from '@/components/common/charts/ChartBaseline';
+import { bakeRasterSprite } from '@/components/common/charts/rasterSprite';
 import { useBaselineGrowth } from '@/components/common/charts/useBaselineGrowth';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { HORIZON_TRAVEL, TIMING_CONFIG } from '@/constants/animation';
@@ -131,11 +132,29 @@ const TRAVEL_DIM_RAMP = HORIZON_TRAVEL.DIM_RAMP;
 /** Each dot's ease across its slice of the sweep — the median rule's own curve. */
 const DOT_TRAVEL_EASING = Easing.inOut(Easing.cubic);
 
-/**
- * Hoisted: `useTexture` keys its UI-thread redraw on this object's identity, so
- * a literal in the call re-drew the dot texture on every render.
- */
 const DOT_TEXTURE_DIMENSIONS = { width: DOT_TEXTURE_SIZE, height: DOT_TEXTURE_SIZE };
+
+/**
+ * A single dot in `color`, baked once per colour into a raster image
+ * (`bakeRasterSprite`) and stamped N times by Atlas. Null until it lands, and
+ * where it could not be made: the field then draws no dots.
+ */
+function useDotSprite(color: string): SkImage | null {
+  const [sprite, setSprite] = useState<SkImage | null>(null);
+  useEffect(() => {
+    let live = true;
+    void bakeRasterSprite(
+      <Circle c={vec(DOT_RADIUS, DOT_RADIUS)} r={DOT_RADIUS} color={color} />,
+      DOT_TEXTURE_DIMENSIONS,
+    ).then(image => {
+      if (live) setSprite(image);
+    });
+    return () => {
+      live = false;
+    };
+  }, [color]);
+  return sprite;
+}
 
 /**
  * How far the dots that are NOT travelling step back while the others do. The
@@ -277,14 +296,9 @@ function HorizonBandCanvasComponent({
   const stayerCount = stayers.length;
   const moverCount = movers.length;
 
-  // A single dot, drawn once into a texture and stamped N times by Atlas. The
-  // colour is baked in rather than passed per-instance because every dot in this
-  // field is the same accent — one accent carries all data ink.
-  const dotTexture = useTexture(
-    <Circle c={vec(DOT_RADIUS, DOT_RADIUS)} r={DOT_RADIUS} color={chartColors.ui.dataLine} />,
-    DOT_TEXTURE_DIMENSIONS,
-    [chartColors.ui.dataLine],
-  );
+  // The colour is baked into the dot rather than passed per-instance because
+  // every dot in this field is the same accent — one accent carries all data ink.
+  const dotSprite = useDotSprite(chartColors.ui.dataLine);
 
   // The profiler showed this boundary rebuilding hundreds of dot/rect objects
   // during unrelated Practice renders. React Compiler did not optimize this
@@ -406,11 +420,11 @@ function HorizonBandCanvasComponent({
           <Group transform={growTransform} origin={GROW_ORIGIN}>
             {stayerCount > 0 && (
               <Group opacity={restingOpacity}>
-                <Atlas image={dotTexture} sprites={stayerSprites} transforms={stayerTransforms} />
+                <Atlas image={dotSprite} sprites={stayerSprites} transforms={stayerTransforms} />
               </Group>
             )}
             {moverCount > 0 && (
-              <Atlas image={dotTexture} sprites={moverSprites} transforms={moverTransforms} />
+              <Atlas image={dotSprite} sprites={moverSprites} transforms={moverTransforms} />
             )}
           </Group>
         )}

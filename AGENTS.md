@@ -134,7 +134,7 @@ other and one word has nothing to map. Gate on
 
 Read the one that matches the task; they are not loaded by default.
 
-- [patterns.md](.claude/docs/patterns.md): branded IDs, TypeScript and performance patterns
+- [patterns.md](.claude/docs/patterns.md): branded IDs, TypeScript and performance patterns, Skia and the GPU (no GPU call from JS or a worklet)
 - [state-management.md](.claude/docs/state-management.md): Redux, Query or Context decision tree
 - [ui-guidelines.md](.claude/docs/ui-guidelines.md): design system, buttons, screen scaffolding
 - [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md): the shipped design system and its lineage (Dieter Rams, Don Norman)

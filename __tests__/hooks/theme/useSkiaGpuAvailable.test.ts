@@ -27,7 +27,7 @@ const load = (isAvailable: boolean) => {
     sentry = require('@sentry/react-native');
     hook = require('@/hooks/theme/useSkiaGpuAvailable');
   });
-  const gpu = skia.Skia.gpu as { isAvailable: boolean };
+  const gpu = skia.Skia.gpu as { isAvailable: boolean; backend: string };
   gpu.isAvailable = isAvailable;
 
   /** Mounts a reader of the hook; `current()` is its latest value. */
@@ -50,6 +50,7 @@ const load = (isAvailable: boolean) => {
   return {
     hook,
     sentry,
+    gpu,
     mount,
     setAvailable: (next: boolean) => {
       gpu.isAvailable = next;
@@ -88,6 +89,21 @@ describe('useSkiaGpuAvailable', () => {
 
     second.unmount();
     expect(remove).toHaveBeenCalledTimes(1);
+  });
+
+  test('tells a device with no GPU adapter from a lost device', () => {
+    const { hook, gpu } = load(false);
+
+    // OPENARABIC-T7's device: Dawn found only its Null adapter, so no backend.
+    gpu.backend = '';
+    expect(hook.isSkiaGpuMissing()).toBe(true);
+
+    // A lost device keeps its backend while react-native-skia replaces it.
+    gpu.backend = 'Vulkan';
+    expect(hook.isSkiaGpuMissing()).toBe(false);
+
+    gpu.isAvailable = true;
+    expect(hook.isSkiaGpuMissing()).toBe(false);
   });
 
   test('names the adapter for Sentry', () => {

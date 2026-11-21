@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { SkiaDrawing } from '@/components/common/charts/SkiaDrawing';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { WordMemoryCurve } from '@/components/practice/WordMemoryCurve';
 import { LAYOUT } from '@/constants/layout';
@@ -34,13 +35,16 @@ export const WordMemoryPanel = memo<WordMemoryPanelProps>(({ memory, dueLabel })
 
       {curve && recallNow != null ? (
         <>
-          <WordMemoryCurve
-            curve={curve}
-            accessibilityLabel={STRINGS.WORD_MEMORY_CURVE_A11Y.replace(
-              '{percent}',
-              String(recallNow),
-            ).replace('{due}', dueLabel.toLowerCase())}
-          />
+          {/* Where Skia cannot draw, the captions below still say the reading. */}
+          <SkiaDrawing>
+            <WordMemoryCurve
+              curve={curve}
+              accessibilityLabel={STRINGS.WORD_MEMORY_CURVE_A11Y.replace(
+                '{percent}',
+                String(recallNow),
+              ).replace('{due}', dueLabel.toLowerCase())}
+            />
+          </SkiaDrawing>
           <View style={styles.captionRow}>
             <ThemedText type="caption" colorName="captionText" style={styles.captionLead}>
               {summaryLabel}

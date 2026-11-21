@@ -136,6 +136,15 @@ export const Skia = {
     MakeFromPath: () => createMockPathBuilder(),
   },
   RSXform: (scos, ssin, tx, ty) => createMockRSXform(scos, ssin, tx, ty),
+  // CPU surfaces only: a raster surface draws without the GPU, and the app makes
+  // no GPU surface (`__tests__/harness/skiaGpuCalls.test.ts`).
+  Surface: {
+    MakeRaster: (width, height) => ({
+      getCanvas: () => ({ drawPicture: () => {} }),
+      makeImageSnapshot: () => ({ kind: 'raster image', width, height }),
+      dispose: () => {},
+    }),
+  },
   XYWHRect: (x, y, width, height) => ({ x, y, width, height }),
   // Skia 3's GPU probe. A plain object, so a test can flip `isAvailable` to
   // exercise the Text fallback (restore it afterwards: it is module state).
@@ -190,6 +199,13 @@ export const DashPathEffect = mockStable(() => null);
 export const vec = (x, y) => ({ x, y });
 export const rect = (x, y, width, height) => ({ x, y, width, height });
 
+// Records an element into a picture, on the calling thread (no GPU).
+export const drawAsPicture = async (_element, bounds) => ({
+  kind: 'picture',
+  bounds,
+  dispose: () => {},
+});
+
 // ---------------------------------------------------------------------------
 // Reanimated-backed hooks.
 //
@@ -199,8 +215,6 @@ export const rect = (x, y, width, height) => ({ x, y, width, height });
 // and a test can assert on them. `usePathInterpolation` returns the last path in
 // the output range, which is the settled state every assertion cares about.
 // ---------------------------------------------------------------------------
-
-export const useTexture = () => ({ value: null });
 
 export const useRSXformBuffer = (size, modifier) => {
   const buffer = Array.from({ length: size }, () => createMockRSXform());
@@ -291,9 +305,9 @@ export default {
   DashPathEffect,
   vec,
   rect,
+  drawAsPicture,
   Skia,
   matchFont,
-  useTexture,
   useRSXformBuffer,
   useRectBuffer,
   usePathInterpolation,

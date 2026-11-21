@@ -139,6 +139,23 @@ rows shares one.
 `useColors()` in a component whose hook also calls it — multiplies that per
 instance. Derive what you need from a single `useColors()` result.
 
+## Skia and the GPU
+
+Skia 3 draws every canvas on its own render threads, through the GPU (Metal,
+Vulkan 1.1). App code never calls the GPU itself, from JS or from a worklet:
+`useTexture` and its siblings, `makeTextureImage`, `MakeOffscreen`,
+`drawAsImage`, a canvas ref's snapshot. Without a GPU adapter they throw, which
+in a worklet on the UI runtime is a crash (OPENARABIC-T7), and on iOS the UI
+runtime is the main thread, where they wait for Metal's pipeline compiles.
+`__tests__/harness/skiaGpuCalls.test.ts` fails on any of them.
+
+- An `Atlas` sprite is a raster image baked on the JS thread
+  (`bakeRasterSprite`); the render thread uploads it.
+- Some devices have no GPU Skia accepts, even with Vulkan 1.1 declared. There
+  the Arabic falls back to plain Text (`useSkiaGpuAvailable`), and a chart is
+  not mounted (`SkiaDrawing`, `isSkiaGpuMissing`): wrap the drawing and its
+  axis labels, not the numbers and sentences around it.
+
 ## ESLint Rules
 
 - **Import/Export**: Use `import type` for type-only imports: `import type { User } from './types'`

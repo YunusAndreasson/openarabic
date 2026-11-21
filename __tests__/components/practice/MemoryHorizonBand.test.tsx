@@ -6,7 +6,8 @@
  * tests hold that the travel, the regrow and the plain re-render stay silent.
  */
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
-import { render } from '@testing-library/react-native';
+import { render, waitFor } from '@testing-library/react-native';
+import { Atlas } from 'react-native-skia';
 
 import { rootId } from '@/__tests__/helpers/ids';
 import { MemoryHorizonBand } from '@/components/practice/charts/MemoryHorizonBand';
@@ -44,6 +45,20 @@ const expectSilence = () => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+});
+
+describe('the dot sprite', () => {
+  // `useTexture` baked it into a GPU surface on the UI runtime, which threw
+  // where Skia found no GPU adapter (OPENARABIC-T7).
+  test('is a raster image baked on the JS thread', async () => {
+    render(<MemoryHorizonBand {...field(1)} />);
+
+    await waitFor(() => {
+      expect(jest.mocked(Atlas).mock.calls.at(-1)?.[0].image).toMatchObject({
+        kind: 'raster image',
+      });
+    });
+  });
 });
 
 describe('constellation stays silent', () => {

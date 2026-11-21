@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AnimatedCount, BaseCard } from '@/components/common';
+import { SkiaDrawing } from '@/components/common/charts/SkiaDrawing';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -106,19 +107,21 @@ export function MemoryHorizonCard({
           accessibility tree wholesale. Without this, VoiceOver reads the four
           axis captions as orphan fragments — "Days", "Weeks", "Months",
           "A year+" — inside the button. */}
-      <View
-        style={styles.band}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        <MemoryHorizonBand
-          bins={distribution.bins}
-          wordsPerDot={distribution.wordsPerDot}
-          medianFraction={medianFraction}
-          hasDistribution={hasDistribution}
-          horizonByRootId={distribution.horizonByRootId}
-        />
-      </View>
+      <SkiaDrawing>
+        <View
+          style={styles.band}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <MemoryHorizonBand
+            bins={distribution.bins}
+            wordsPerDot={distribution.wordsPerDot}
+            medianFraction={medianFraction}
+            hasDistribution={hasDistribution}
+            horizonByRootId={distribution.horizonByRootId}
+          />
+        </View>
+      </SkiaDrawing>
 
       {/* The footer and chevron share one row; the text can wrap as it grows.
           Same signifier, same ink and the same right edge as the due card above

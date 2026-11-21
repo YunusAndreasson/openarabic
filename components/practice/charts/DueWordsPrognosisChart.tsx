@@ -1,6 +1,7 @@
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { SkiaDrawing } from '@/components/common/charts/SkiaDrawing';
 import { useMeasuredWidth } from '@/components/common/charts/useMeasuredWidth';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { DAYS_7 } from '@/constants/chartConstants';
@@ -74,17 +75,20 @@ export function DueWordsPrognosisChart({ studyWords }: DueWordsPrognosisChartPro
       accessibilityLabel={accessibilityLabel}
     >
       {/* Nothing to draw until the width is known — at the height the bars
-          will have, so the sheet fitted to this does not change height. */}
-      {width === null ? (
-        <View style={styles.barsPlaceholder} />
-      ) : (
-        <WeekAheadBars
-          counts={days.map(day => day.count)}
-          width={width}
-          height={BAR_HEIGHT}
-          gap={COLUMN_GAP}
-        />
-      )}
+          will have, so the sheet fitted to this does not change height. The
+          count and day rows below stand as a table where Skia cannot draw. */}
+      <SkiaDrawing>
+        {width === null ? (
+          <View style={styles.barsPlaceholder} />
+        ) : (
+          <WeekAheadBars
+            counts={days.map(day => day.count)}
+            width={width}
+            height={BAR_HEIGHT}
+            gap={COLUMN_GAP}
+          />
+        )}
+      </SkiaDrawing>
 
       <View style={[styles.labelRow, styles.countRow]}>
         {days.map((day, index) => (

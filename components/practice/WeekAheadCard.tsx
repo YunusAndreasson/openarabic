@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AnimatedCount, BaseCard } from '@/components/common';
+import { SkiaDrawing } from '@/components/common/charts/SkiaDrawing';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, LETTER_SPACING } from '@/constants/layout';
@@ -103,13 +104,15 @@ export function WeekAheadCard({
 
           {/* One drawing, read through the card's own label — never as seven
               loose weekday fragments inside the button. */}
-          <View
-            style={styles.bars}
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          >
-            <WeekAheadBars counts={counts} />
-          </View>
+          <SkiaDrawing>
+            <View
+              style={styles.bars}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              <WeekAheadBars counts={counts} />
+            </View>
+          </SkiaDrawing>
         </View>
       </PracticeCardBody>
 

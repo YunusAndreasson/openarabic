@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BottomSheetHeader, BottomSheetStateHandler, SheetExplainer } from '@/components/common';
+import { SkiaDrawing } from '@/components/common/charts/SkiaDrawing';
 import { StreakChart, StreakMetrics } from '@/components/explore';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -46,8 +47,10 @@ export default function StudyStreakScreen(): JSX.Element {
             drawing under it. What was worth keeping is the sentence that says
             what a bar IS, and that is a closing caption, in the same place and
             the same ink as every other sheet's. */}
+        {/* The caption is the chart's legend, so it goes with the chart where
+            Skia cannot draw; the metrics above still say the streak. */}
         {streakHistory?.dailyActivity && streakHistory?.streakPeriods && (
-          <>
+          <SkiaDrawing>
             <StreakChart
               dailyActivity={streakHistory.dailyActivity}
               streakPeriods={streakHistory.streakPeriods}
@@ -59,7 +62,7 @@ export default function StudyStreakScreen(): JSX.Element {
                   : STRINGS.STUDY_STREAK_CHART_DESCRIPTION
               }
             />
-          </>
+          </SkiaDrawing>
         )}
       </BottomSheetStateHandler>
     </ResponsiveSheetScreen>
