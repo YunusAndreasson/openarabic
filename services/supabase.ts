@@ -8,6 +8,9 @@ import type { Database } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
 import { toError } from '@/utils/toError';
 
+/** What the deadline aborts with: how its rejection is told from a caller's abort. */
+const DEADLINE_REASON = Symbol('supabase-request-deadline');
+
 /**
  * `fetch` with a deadline, for every Supabase request.
  *
@@ -19,8 +22,13 @@ import { toError } from '@/utils/toError';
  * A caller-supplied signal (supabase-js `.abortSignal()`, and the auth client's
  * own cancellation) is chained rather than replaced, so aborting from outside
  * still works and the deadline applies on top of it.
+ *
+ * The deadline rejects with a `TimeoutError` of its own. expo/fetch reports
+ * every cancelled request alike — "fetch failed: Fetch request has been
+ * canceled" (OPENARABIC-TC) — so without it a timed-out request and a
+ * superseded one could not be told apart on the breadcrumb trail.
  */
-const fetchWithTimeout: typeof fetch = async (input, init) => {
+export const fetchWithTimeout: typeof fetch = async (input, init) => {
   const controller = new AbortController();
   const callerSignal = init?.signal;
 
@@ -30,10 +38,20 @@ const fetchWithTimeout: typeof fetch = async (input, init) => {
 
   const abortFromCaller = (): void => controller.abort();
   callerSignal?.addEventListener('abort', abortFromCaller);
-  const timeoutId = setTimeout(() => controller.abort(), SUPABASE_REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(
+    () => controller.abort(DEADLINE_REASON),
+    SUPABASE_REQUEST_TIMEOUT_MS,
+  );
 
   try {
     return await fetch(input, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (controller.signal.reason !== DEADLINE_REASON) throw error;
+    const timeoutError = new Error(`Request timed out after ${SUPABASE_REQUEST_TIMEOUT_MS} ms`, {
+      cause: error,
+    });
+    timeoutError.name = 'TimeoutError';
+    throw timeoutError;
   } finally {
     clearTimeout(timeoutId);
     callerSignal?.removeEventListener('abort', abortFromCaller);

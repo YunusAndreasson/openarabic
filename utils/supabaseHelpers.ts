@@ -5,6 +5,31 @@ import { checkAuthentication } from '@/services/supabase';
 import type { ErrorOptions } from '@/utils/errorHandling';
 import { handleError } from '@/utils/errorHandling';
 
+/** Longest PostgREST error message kept as it came; anything longer is a response body. */
+const MAX_ERROR_MESSAGE_LENGTH = 200;
+
+/**
+ * What postgrest-js resolves a failure as. Its type promises a `code`, but a
+ * body it cannot parse as JSON is reported as `{ message: body }` and nothing
+ * else — so `code`, `details` and `hint` can be missing at runtime.
+ */
+type PostgrestFailure = Pick<PostgrestError, 'message'> &
+  Partial<Pick<PostgrestError, 'code' | 'details' | 'hint'>>;
+
+/**
+ * Whether postgrest-js made the response body itself the error message.
+ *
+ * It does that for a 2xx whose body would not parse — a body cut short, or
+ * not JSON at all — and for an error page from something in front of
+ * PostgREST. The body is the learner's rows or a page of HTML. As a message it
+ * became the Sentry title (OPENARABIC-NN was an issue titled with article
+ * JSON), and a new issue for every payload. A PostgREST error always has a
+ * code; a short code-less message (a gateway's JSON `message`) is kept.
+ */
+const isResponseBody = (error: PostgrestFailure, status: number): boolean =>
+  error.code === undefined &&
+  ((status >= 200 && status < 300) || error.message.length > MAX_ERROR_MESSAGE_LENGTH);
+
 /**
  * A failed PostgREST request, as a real `Error` that keeps the HTTP status.
  *
@@ -26,16 +51,18 @@ export class SupabaseRequestError extends Error {
   readonly hint: string;
   private pendingReport: ErrorOptions | undefined;
 
-  constructor(
-    error: Pick<PostgrestError, 'message' | 'code' | 'details' | 'hint'>,
-    status: number,
-    pendingReport?: ErrorOptions,
-  ) {
-    super(error.message);
+  constructor(error: PostgrestFailure, status: number, pendingReport?: ErrorOptions) {
+    const isBody = isResponseBody(error, status);
+    // The status names the failure and the length describes the body, which
+    // stays out of the report: a fixed title groups every occurrence into one
+    // issue and carries none of the payload.
+    super(isBody ? `Unreadable response body (HTTP ${status})` : error.message);
     this.status = status;
-    this.code = error.code;
-    this.details = error.details;
-    this.hint = error.hint;
+    this.code = error.code ?? '';
+    this.details = isBody
+      ? `${error.message.length} characters that are not JSON`
+      : (error.details ?? '');
+    this.hint = error.hint ?? '';
     this.pendingReport = pendingReport;
   }
 

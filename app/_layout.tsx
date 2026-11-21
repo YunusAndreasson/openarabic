@@ -70,7 +70,7 @@ import { simpleAudioService } from '@/services/audioPlayer';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
 import { cleanupNotifications, initializeNotifications } from '@/services/notificationService';
 import { persistor, store } from '@/store/store';
-import { handleError } from '@/utils/errorHandling';
+import { handleError, isDroppedSentryEvent } from '@/utils/errorHandling';
 import { registerMutationDefaults } from '@/utils/mutationDefaults';
 import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
 import { flushPersistedQueryCache, PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
@@ -267,7 +267,12 @@ Sentry.init({
   // (the voice watchdog termination behind build 274 was one).
   enableMetricKit: true,
 
-  beforeSend(event) {
+  beforeSend(event, hint) {
+    // A request that got no answer, captured around handleError (a direct
+    // captureException, an unhandled rejection): dropped like handleError
+    // drops it, as a breadcrumb.
+    if (isDroppedSentryEvent(event.level, hint.originalException)) return null;
+
     // Add environment diagnostic context to all events
     const skiaGpu = getSkiaGpuContext();
     event.contexts = {

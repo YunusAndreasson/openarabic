@@ -17,6 +17,8 @@ import { audioCache } from '@/services/audioCache';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { handleError, toError } from '@/utils/errorHandling';
+import { isKnownOffline } from '@/utils/network';
+import { isNetworkFailure } from '@/utils/networkErrors';
 import { isSessionActive, mark } from '@/utils/reviewDiagnostics';
 import { playTransitionSound } from '@/utils/transitionSound';
 
@@ -106,6 +108,22 @@ class SourceLoadError extends Error {
     super(`Audio source failed to load: ${nativeMessage}`);
     this.name = 'SourceLoadError';
   }
+}
+
+/**
+ * Whether a source that failed to load is the connection's fault, not the
+ * audio's: a REMOTE stream that never became ready, or that the native player
+ * failed on with a network error or while the device is offline.
+ *
+ * Offline, the cache cannot download, so it hands back the remote URL and the
+ * player waits on a stream that cannot arrive — reported as "Player ready
+ * timeout" once per card or track (OPENARABIC-NF, -P3). A LOCAL file that
+ * fails to load is still reported: the file is corrupt, or the player is.
+ */
+async function isUnreachableStream(audioUrl: string, error: unknown): Promise<boolean> {
+  if (!isRemoteAudioUrl(audioUrl)) return false;
+  if (!(error instanceof SourceLoadError)) return true;
+  return isNetworkFailure(error) || isKnownOffline();
 }
 
 // How often the native player emits a status update. 500 ms is right for the
@@ -312,6 +330,11 @@ class SimpleAudioService {
   // skip-on-failure advance uses this to stop instead of looping forever when
   // every remaining source is broken.
   private consecutivePlaylistFailures = 0;
+  // Whether the most recent failed play was a stream that could not arrive
+  // (isUnreachableStream). Read only straight after a failure: by the
+  // playlist lane to stop streaming into a known-offline connection, and by
+  // the stop toast to say it was the connection.
+  private lastFailureUnreachable = false;
 
   // SLEEP TIMER SUPPORT: Track when sleep timer has expired
   private sleepTimerExpired = false;
@@ -981,6 +1004,9 @@ class SimpleAudioService {
         }
       }
 
+      this.lastFailureUnreachable =
+        isSourceFailure && (await isUnreachableStream(track.audioUrl, error));
+
       // No toast for a failed source: the self-healing lanes — review
       // (useReview.playAudio) and playlist (playPlaylistTrack) — invalidate
       // the cached file and retry on failure, and toasting before that
@@ -990,6 +1016,7 @@ class SimpleAudioService {
       void handleError(error, {
         showToast: !isSourceFailure,
         toastMessage: STRINGS.AUDIO_PLAY_FAILED,
+        networkFailure: this.lastFailureUnreachable,
       });
       return isUnplayable ? 'unplayable' : 'failure';
     }
@@ -1071,6 +1098,25 @@ class SimpleAudioService {
     track: SourceTrackedAudioTrack,
     options: { skipLoadingState?: boolean } = {},
   ): Promise<PlayOutcome> {
+    // The track before this one was a stream that could not arrive. While the
+    // device is known to be offline, so would this one be: skip it now rather
+    // than sit out its 20 s ready budget. Walking an uncached playlist offline
+    // cost twenty seconds of silence per track before the stop toast; cached
+    // tracks still play. Asked only after such a failure, so a healthy
+    // playlist never pays for the check.
+    if (
+      this.consecutivePlaylistFailures > 0 &&
+      this.lastFailureUnreachable &&
+      isRemoteAudioUrl(track.audioUrl)
+    ) {
+      const generation = this.playGeneration;
+      const offline = await isKnownOffline();
+      // A play() or stop() during the check owns playback now; a 'failure'
+      // here would have the advance stop or skip over it.
+      if (this.playGeneration !== generation) return 'superseded';
+      if (offline) return 'failure';
+    }
+
     const outcome = await this.playCore(track, options);
     if (outcome === 'success') {
       this.consecutivePlaylistFailures = 0;
@@ -1267,11 +1313,18 @@ class SimpleAudioService {
    * ONE user-visible toast when playlist playback stops because tracks kept
    * failing — the individual track failures are deliberately quiet (see the
    * ready-timeout handling in playCore's catch).
+   *
+   * Not a Sentry event. It is a consequence with no cause of its own
+   * (OPENARABIC-TE): playCore has already reported each failed track with
+   * its real error, or left a breadcrumb for a stream that could not arrive.
+   * When that was the last failure, the toast says it is the connection.
    */
   private notifyPlaylistStoppedByFailures(): void {
     void handleError(new Error('Playlist stopped after repeated track playback failures'), {
       showToast: true,
       toastMessage: STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS,
+      captureSentry: false,
+      networkFailure: this.lastFailureUnreachable,
     });
   }
 

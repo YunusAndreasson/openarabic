@@ -9,8 +9,10 @@ import {
   setGlobalToastHandler,
   showSuccessToast,
   handleError,
+  isDroppedSentryEvent,
   toError,
 } from '@/utils/errorHandling';
+import { STRINGS } from '@/constants/strings';
 import { ToastType } from '@/types/enums';
 
 // Mock dependencies
@@ -534,6 +536,99 @@ describe('errorHandling utility', () => {
 
       expect(mockToastHandler).not.toHaveBeenCalled();
       expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+  });
+
+  // OPENARABIC-NV, -T5, -PK, -RE, -TC: requests that never got an answer were
+  // the biggest share of the issue list.
+  describe('a request that never got an answer', () => {
+    /** As executeQuery throws it: postgrest-js's message, status 0. */
+    const offline = (): Error =>
+      Object.assign(
+        new Error(
+          'Error: fetch failed: UnexpectedException: A data connection is not currently allowed.',
+        ),
+        { status: 0, code: '' },
+      );
+
+    test('leaves a breadcrumb instead of a Sentry event', async () => {
+      await handleError(offline(), {
+        showToast: false,
+        analyticsEventName: 'Articles_Load_Error',
+        sentryTags: { location: 'explore' },
+      });
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: 'network',
+          level: 'warning',
+          data: expect.objectContaining({ event: 'Articles_Load_Error', location: 'explore' }),
+        }),
+      );
+    });
+
+    test('is still counted in analytics', async () => {
+      await handleError(offline(), { showToast: false, analyticsEventName: 'Articles_Load_Error' });
+
+      expect(analytics.trackError).toHaveBeenCalledWith(
+        'Articles_Load_Error',
+        expect.objectContaining({ errorCode: '0' }),
+      );
+    });
+
+    test('tells the learner it is the connection, not that the screen failed', async () => {
+      await handleError(offline(), { toastMessage: STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS });
+
+      expect(mockToastHandler).toHaveBeenCalledWith(
+        STRINGS.NO_INTERNET_CONNECTION,
+        undefined,
+        ToastType.ERROR,
+      );
+    });
+
+    test('a caller that knows it was the connection can say so', async () => {
+      await handleError(new Error('Player ready timeout'), {
+        showToast: false,
+        networkFailure: true,
+      });
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
+        expect.objectContaining({ category: 'network' }),
+      );
+    });
+
+    test('a failure the server answered is still reported', async () => {
+      const serverError = Object.assign(new Error('Request timed out'), { status: 504 });
+
+      await handleError(serverError, { showToast: false });
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(serverError);
+      expect(Sentry.addBreadcrumb).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("isDroppedSentryEvent (beforeSend's gate)", () => {
+    const abort = Object.assign(new Error('The operation was aborted.'), { name: 'AbortError' });
+
+    test('drops a network failure captured around handleError, leaving a breadcrumb', () => {
+      expect(isDroppedSentryEvent('error', abort)).toBe(true);
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
+        expect.objectContaining({ category: 'network' }),
+      );
+    });
+
+    test('keeps a fatal one: an uncaught AbortError that crashes the app is a bug', () => {
+      expect(isDroppedSentryEvent('fatal', abort)).toBe(false);
+    });
+
+    test('keeps every other event, and events with no exception', () => {
+      expect(isDroppedSentryEvent('error', new Error('boom'))).toBe(false);
+      expect(isDroppedSentryEvent(undefined, undefined)).toBe(false);
+      // captureMessage hands its own text over as the original exception.
+      expect(isDroppedSentryEvent('warning', 'The network connection was lost.')).toBe(false);
+      expect(Sentry.addBreadcrumb).not.toHaveBeenCalled();
     });
   });
 });

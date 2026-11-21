@@ -7,9 +7,10 @@
  * - Note: test.concurrent() used where tests are independent
  */
 
-import { jest } from '@jest/globals';
+import { afterEach, jest } from '@jest/globals';
 
-import { checkAuthentication, supabase } from '../../services/supabase';
+import { SUPABASE_REQUEST_TIMEOUT_MS } from '@/constants/supabase';
+import { checkAuthentication, fetchWithTimeout, supabase } from '../../services/supabase';
 import { handleError } from '../../utils/errorHandling';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSessionMock, createUserMock } from '@/__tests__/helpers/serviceMocks';
@@ -96,5 +97,49 @@ describe('checkAuthentication', () => {
         sentrySeverity: 'error',
       }),
     );
+  });
+});
+
+describe('fetchWithTimeout', () => {
+  const realFetch = global.fetch;
+
+  afterEach(() => {
+    global.fetch = realFetch;
+    jest.useRealTimers();
+  });
+
+  /** A request that never answers, and rejects as expo/fetch does once cancelled. */
+  const installHangingFetch = (): void => {
+    global.fetch = ((_input: unknown, init?: RequestInit) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(new Error('fetch failed: Fetch request has been canceled'));
+        });
+      })) as typeof fetch;
+  };
+
+  test('the deadline rejects with a TimeoutError of its own', async () => {
+    jest.useFakeTimers();
+    installHangingFetch();
+
+    const pending = fetchWithTimeout('https://example.test/rest/v1/articles');
+    jest.advanceTimersByTime(SUPABASE_REQUEST_TIMEOUT_MS);
+
+    await expect(pending).rejects.toMatchObject({
+      name: 'TimeoutError',
+      message: `Request timed out after ${SUPABASE_REQUEST_TIMEOUT_MS} ms`,
+    });
+  });
+
+  test("a caller's own abort comes through as it was", async () => {
+    installHangingFetch();
+    const controller = new AbortController();
+
+    const pending = fetchWithTimeout('https://example.test/rest/v1/articles', {
+      signal: controller.signal,
+    });
+    controller.abort();
+
+    await expect(pending).rejects.toThrow('fetch failed: Fetch request has been canceled');
   });
 });

@@ -65,6 +65,7 @@ jest.mock('@/utils/transitionSound', () => ({
 }));
 
 // Import mocked modules
+import NetInfo from '@react-native-community/netinfo';
 import { createAudioPlayer, setAudioModeAsync, setIsAudioActiveAsync } from 'expo-audio';
 import { AppState } from 'react-native';
 import { isArticleAudioPaused } from '@/hooks/audio/articleAudioStatus';
@@ -82,6 +83,7 @@ const mockPlayTransitionSound = jest.mocked(playTransitionSound);
 // Import service AFTER mocks
 import type { AudioStatus } from '@/services/audioPlayer';
 import { articleId } from '@/__tests__/helpers/ids';
+import { createNetInfoStateMock } from '@/__tests__/helpers/serviceMocks';
 import { STRINGS } from '@/constants/strings';
 import type { AudioPlayer } from 'expo-audio';
 
@@ -1105,6 +1107,10 @@ describe('audioPlayer service', () => {
         expect.objectContaining({
           showToast: true,
           toastMessage: STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS,
+          // The track's own failure was reported; the stop is only its
+          // consequence (OPENARABIC-TE).
+          captureSentry: false,
+          networkFailure: false,
         }),
       );
     });
@@ -1209,6 +1215,101 @@ describe('audioPlayer service', () => {
 
       expect(await audioService.togglePause()).toBe(true);
       expect(mockPlayer.play).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('A stream that cannot arrive', () => {
+    /** A player whose source never loads: no ready event, never `isLoaded`. */
+    const neverReadyPlayer = () => ({
+      ...mockPlayer,
+      addListener: jest.fn((..._args: unknown[]) => ({ remove: jest.fn() })),
+    });
+
+    /** A player the native side fails because the device is offline. */
+    const offlinePlayer = () => ({
+      ...mockPlayer,
+      addListener: jest.fn((event: string, callback: StatusListener) => {
+        if (event === 'playbackStatusUpdate') {
+          process.nextTick(() =>
+            callback({
+              isLoaded: false,
+              error: 'The Internet connection appears to be offline.',
+            }),
+          );
+        }
+        return { remove: jest.fn() };
+      }),
+    });
+
+    // OPENARABIC-NF, -P3: offline, the cache hands the player the remote URL,
+    // and it times out waiting for bytes that cannot come.
+    test('a remote source that never became ready is the connection, not a Sentry error', async () => {
+      mockCreateAudioPlayer.mockReturnValue(neverReadyPlayer() as unknown as AudioPlayer);
+      mockHandleError.mockClear();
+
+      expect(await audioService.play(testTrack, { readyTimeoutMs: 10 })).toBe(false);
+
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Player ready timeout - audio may be corrupted or unavailable',
+        }),
+        expect.objectContaining({ showToast: false, networkFailure: true }),
+      );
+    });
+
+    test('a cached file that never became ready is still reported', async () => {
+      mockCreateAudioPlayer.mockReturnValue(neverReadyPlayer() as unknown as AudioPlayer);
+      mockHandleError.mockClear();
+
+      const cachedTrack = { ...testTrack, audioUrl: 'file:///cache/audio1.mp3' };
+      expect(await audioService.play(cachedTrack, { readyTimeoutMs: 10 })).toBe(false);
+
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ networkFailure: false }),
+      );
+    });
+
+    test('a native network error on a stream is the connection too', async () => {
+      mockCreateAudioPlayer.mockReturnValue(offlinePlayer() as unknown as AudioPlayer);
+      mockHandleError.mockClear();
+
+      expect(await audioService.playPlaylist([testTrack, testTrack2])).toBe(false);
+
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'SourceLoadError' }),
+        expect.objectContaining({ networkFailure: true }),
+      );
+      // The stop toast says it was the connection, and is no Sentry event.
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Playlist stopped after repeated track playback failures',
+        }),
+        expect.objectContaining({ showToast: true, captureSentry: false, networkFailure: true }),
+      );
+    });
+
+    test('offline, the rest of the streamed tracks are skipped instead of each timing out', async () => {
+      await audioService.playPlaylist([testTrack, testTrack2, testTrack3]);
+      const firstPlayerListener = mockPlayer.addListener.mock.calls[0]?.[1];
+      mockCreateAudioPlayer.mockClear();
+      mockCreateAudioPlayer.mockReturnValue(offlinePlayer() as unknown as AudioPlayer);
+      jest.mocked(NetInfo.fetch).mockResolvedValue(createNetInfoStateMock(false));
+      mockHandleError.mockClear();
+
+      // Track 1 ends; track 2's stream fails offline; track 3 is never tried.
+      firstPlayerListener?.({ didJustFinish: true });
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1);
+      expect(mockCreateAudioPlayer).toHaveBeenCalledWith(testTrack2.audioUrl, expect.anything());
+      expect(audioService.getPlaylistInfo().isPlaylistMode).toBeFalsy();
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Playlist stopped after repeated track playback failures',
+        }),
+        expect.objectContaining({ networkFailure: true }),
+      );
     });
   });
 

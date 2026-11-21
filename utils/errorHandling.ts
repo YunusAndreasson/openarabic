@@ -1,9 +1,11 @@
 import * as Sentry from '@sentry/react-native';
 
 import { DEFAULT_TOAST_DURATION } from '@/constants/animation';
+import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
 import { ToastType } from '@/types/enums';
 import { getAnalyticsErrorCode } from '@/utils/authUtils';
+import { isNetworkFailure } from '@/utils/networkErrors';
 import { toError } from '@/utils/toError';
 
 // Re-exported so the many `import { toError } from '@/utils/errorHandling'`
@@ -21,7 +23,7 @@ export { toError };
  * Fire-and-forget, like the haptics helpers: a breadcrumb is diagnostic, never
  * something the user or the caller can act on.
  */
-type BreadcrumbCategory = 'auth' | 'voice' | 'preloader';
+type BreadcrumbCategory = 'auth' | 'voice' | 'preloader' | 'network';
 
 export const breadcrumb = (
   category: BreadcrumbCategory,
@@ -106,7 +108,8 @@ export type ErrorSeverityLevel = Exclude<Sentry.SeverityLevel, 'log'>;
 export interface ErrorOptions {
   // Whether to show a toast message to the user
   showToast?: boolean;
-  // Custom toast message (if not provided, will use error.message)
+  // Custom toast message (if not provided, will use error.message). A network
+  // failure shows STRINGS.NO_INTERNET_CONNECTION instead; see `networkFailure`.
   toastMessage?: string;
   // Toast duration in ms (default: 2500)
   toastDuration?: number;
@@ -134,6 +137,13 @@ export interface ErrorOptions {
   sentryTags?: Record<string, string>;
   // Sentry extra context
   sentryExtra?: Record<string, unknown>;
+  /**
+   * The caller knows this failure is the connection's even though the error
+   * does not say so — a stream that never became ready. Handled exactly like
+   * an error `isNetworkFailure` recognises: a breadcrumb instead of a Sentry
+   * event, and the connection toast in place of `toastMessage`.
+   */
+  networkFailure?: boolean;
 }
 
 const DEFAULT_OPTIONS: ErrorOptions = {
@@ -180,8 +190,8 @@ function applyDefaults(defaults: ErrorOptions, overrides: ErrorOptions): ErrorOp
  * Checks if an error is an expected authentication failure that shouldn't be logged to Sentry.
  * These are normal user errors (wrong password, invalid credentials) not system errors.
  *
- * We still log system errors like:
- * - Network failures
+ * We still log system errors like (a request that got no answer at all is a
+ * separate rule, `isNetworkFailure`):
  * - Server errors (500s, etc.)
  * - Configuration issues
  * - Token refresh failures
@@ -215,32 +225,45 @@ const isExpectedAuthError = (error: Error | string): boolean => {
   return isUserMistake || isInvalidCredentialsAuthError;
 };
 
-/**
- * Connectivity failures that say only "this user was offline".
- *
- * They are unactionable — no build fixes a train tunnel — and they crowd the
- * issue list, where volume is the signal we actually triage on. Suppressed for
- * Sentry ONLY: the caller's toast still fires, so the user is still told why
- * nothing loaded.
- *
- * Deliberately NOT suppressed: AbortError / FetchRequestCanceledException. Those
- * are usually OUR 20s fetch timeout firing (supabase-js ships no timeout of its
- * own), and a socket that goes dead often enough to trip it is a real report.
- */
-const isExpectedNetworkError = (error: Error): boolean => {
-  // supabase-js marks these retryable and retries them itself.
-  if (error.name === 'AuthRetryableFetchError') {
-    return true;
-  }
+/** Longest message a breadcrumb keeps; a network failure's text is a host name and a reason. */
+const MAX_BREADCRUMB_MESSAGE_LENGTH = 200;
 
-  const message = error.message?.toLowerCase() || '';
-  return [
-    'unable to resolve host', // Android DNS, no connection
-    'unknownhostexception',
-    'the internet connection appears to be offline', // iOS URLSession
-    'the network connection was lost',
-    'network request failed', // React Native's generic fetch failure
-  ].some(pattern => message.includes(pattern));
+/**
+ * The trace a network failure leaves instead of a Sentry event: it rides on
+ * the trail of whatever real error comes next, which is where "the learner was
+ * offline just before" is worth knowing.
+ */
+const networkFailureBreadcrumb = (error: unknown, context?: Record<string, unknown>): void => {
+  const errorObj = toError(error);
+  breadcrumb(
+    'network',
+    'Request failed without an answer',
+    {
+      name: errorObj.name,
+      message: errorObj.message.slice(0, MAX_BREADCRUMB_MESSAGE_LENGTH),
+      ...context,
+    },
+    'warning',
+  );
+};
+
+/**
+ * Sentry's `beforeSend` gate (app/_layout.tsx) for an event that reached
+ * Sentry around `handleError` — a direct `captureException`, an unhandled
+ * rejection: a network failure is dropped there too, leaving a breadcrumb.
+ *
+ * A fatal event is always kept. An AbortError that takes the app down is a
+ * missing catch, not a train tunnel. So is a `captureMessage`, whose
+ * "exception" is its own text: a deliberate report, never a failed request.
+ */
+export const isDroppedSentryEvent = (
+  level: Sentry.SeverityLevel | undefined,
+  originalException: unknown,
+): boolean => {
+  if (level === 'fatal' || typeof originalException !== 'object') return false;
+  if (!isNetworkFailure(originalException)) return false;
+  networkFailureBreadcrumb(originalException, { path: 'beforeSend' });
+  return true;
 };
 
 // Helper functions to reduce complexity
@@ -325,13 +348,27 @@ export const handleError = async (error: unknown, options: ErrorOptions = {}): P
   // the literal Sentry title "Error: [object Object]".
   const errorObj = toError(error);
 
+  // A request that never got an answer is unactionable — no build fixes a
+  // train tunnel, a phone with cellular data off for the app, or a socket cut
+  // off by our own deadline — and it crowded the issue list, where volume is
+  // what we triage on. It stays visible as a breadcrumb and in analytics, and
+  // the learner is told it is their connection rather than a generic failure.
+  // Read off the raw value, not `errorObj`: a supabase-js error object's
+  // status would not survive `toError`.
+  const isNetwork = opts.networkFailure === true || isNetworkFailure(error);
+
   // Skip Sentry logging for expected authentication errors (wrong password, invalid credentials, etc.)
-  const shouldSkipSentry = isExpectedAuthError(errorObj) || isExpectedNetworkError(errorObj);
+  const shouldSkipSentry = isExpectedAuthError(errorObj) || isNetwork;
   const shouldCaptureSentry = opts.captureSentry && !shouldSkipSentry;
 
   try {
     if (shouldCaptureSentry) {
       captureInSentry(errorObj, opts.sentrySeverity, opts.sentryTags, opts.sentryExtra);
+    } else if (isNetwork) {
+      networkFailureBreadcrumb(error, {
+        event: opts.analyticsEventName ?? 'Error Occurred',
+        ...(opts.sentryTags?.['location'] ? { location: opts.sentryTags['location'] } : {}),
+      });
     }
 
     if (opts.trackAnalytics) {
@@ -339,7 +376,8 @@ export const handleError = async (error: unknown, options: ErrorOptions = {}): P
     }
 
     if (opts.showToast) {
-      showToastMessage(errorObj, opts.toastMessage, opts.toastDuration, opts.toastType);
+      const toastMessage = isNetwork ? STRINGS.NO_INTERNET_CONNECTION : opts.toastMessage;
+      showToastMessage(errorObj, toastMessage, opts.toastDuration, opts.toastType);
     }
   } catch (errorHandlingError) {
     // Error handling failed - this is a critical meta-failure

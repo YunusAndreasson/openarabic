@@ -78,6 +78,33 @@ describe('supabaseHelpers', () => {
       const error = new SupabaseRequestError(createPostgrestErrorMock('x'), 500);
       expect(error.name).toBe('Error');
     });
+
+    // OPENARABIC-NN: postgrest-js makes a body it cannot parse the message,
+    // with no code. A 2xx body is the learner's rows, and it became the title.
+    test('never makes a response body its message', () => {
+      const body = JSON.stringify([{ id: 524, published: true, title: 'Wives of the Prophet' }]);
+      const error = new SupabaseRequestError({ message: body.slice(0, -2) }, 200);
+
+      expect(error.message).toBe('Unreadable response body (HTTP 200)');
+      expect(error.message).not.toContain('Wives');
+      expect(error.details).toBe(`${body.length - 2} characters that are not JSON`);
+      expect(error.code).toBe('');
+      expect(error.hint).toBe('');
+    });
+
+    test('an error page in front of PostgREST is named by its status, not its HTML', () => {
+      const page = `<!DOCTYPE html><html><body>${'Bad gateway '.repeat(40)}</body></html>`;
+      const error = new SupabaseRequestError({ message: page }, 502);
+
+      expect(error.message).toBe('Unreadable response body (HTTP 502)');
+      expect(error.status).toBe(502);
+    });
+
+    test("keeps a gateway's short code-less message as it is", () => {
+      const error = new SupabaseRequestError({ message: 'Invalid API key' }, 401);
+
+      expect(error.message).toBe('Invalid API key');
+    });
   });
 
   describe('executeQuery', () => {
