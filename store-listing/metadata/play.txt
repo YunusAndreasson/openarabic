@@ -1,5 +1,5 @@
 === APP NAME (max 30) ===
-OpenArabic: Read the Classics
+OpenArabic - Learn Vocabulary
 
 === SHORT DESCRIPTION (max 80) ===
 Read classical Arabic texts with English, audio and spaced repetition.
@@ -7,14 +7,12 @@ Read classical Arabic texts with English, audio and spaced repetition.
 === FULL DESCRIPTION (max 4000) ===
 If you can sound out Arabic script, you can start reading classical texts.
 
-Excerpts from 22 classical works by six scholars: Ibn al-Qayyim, Ibn Taymiyyah,
-Ibn al-Jawzī, Imam Nawawī and more. Read the Arabic itself, with English line by line.
-The audio uses AI voices and the English is machine-translated.
+Excerpts from 22 classical works by six scholars: Ibn al-Qayyim, Ibn Taymiyyah, Ibn al-Jawzī, Imam Nawawī and more. Read the Arabic itself, with English line by line. The audio uses AI voices and the English is machine-translated.
 
 READ WITHOUT DECODING
 • Every line of Arabic sits under its English, so you are never stuck on a sentence
-• Excerpts on creed, fiqh, sīrah, ḥadīth and tafsīr — sorted by topic
-• Sorted by difficulty. Most texts are advanced; 48 are easier.
+• Excerpts on creed, fiqh, sīrah, ḥadīth and tafsīr, sorted by topic
+• Sorted by difficulty, with a set of easier texts to start with
 • The app keeps your place for next time
 
 TAP ANY WORD YOU DON'T KNOW
@@ -24,15 +22,14 @@ TAP ANY WORD YOU DON'T KNOW
 • Save it to practice without losing your place on the page
 
 HEAR EVERY LINE READ ALOUD
-• Queue any text and listen. Every text plays English first, then Arabic, or Arabic only
+• Queue any text and listen: English first, then Arabic, or Arabic only
 • Built for a walk or a commute
 • Audio you have played stays on your phone, and reviews made offline sync when you reconnect
 
 ANSWER OUT LOUD
 • Hear the Arabic, then say what it means in English. The app grades your answer
 • You answer out loud before the app shows the meaning
-• Speech recognition runs on your device, after a 100 MB download
-• Your voice is transcribed on your device and the audio is never uploaded. The text of your answer is saved
+• Speech recognition runs on your device, after a 100 MB download, and your voice is never uploaded
 
 WORDS RETURN WHEN YOUR PREDICTED RECALL FALLS TO 90%
 • FSRS scheduling adapts to how well you knew each word
