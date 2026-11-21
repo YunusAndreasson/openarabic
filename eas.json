@@ -8,7 +8,7 @@
       "env": {
         "NODE_PATH": "/Users/expo/workingdir/build",
         "SENTRY_ORG": "openarabic",
-        "SENTRY_PROJECT": "react-native",
+        "SENTRY_PROJECT": "openarabic",
         "SENTRY_DISABLE_AUTO_UPLOAD": "false",
         "SENTRY_ALLOW_FAILURE": "true"
       }
