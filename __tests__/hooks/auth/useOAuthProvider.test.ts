@@ -32,6 +32,7 @@ import { supabase } from '@/services/supabase';
 import { analytics } from '@/services/analytics';
 import { metaEvents } from '@/services/metaEvents';
 import { successFeedback } from '@/utils/haptics';
+import { STRINGS } from '@/constants/strings';
 import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 import { captureException } from '@sentry/react-native';
 import {
@@ -445,6 +446,93 @@ describe('useOAuthProvider', () => {
 
       expect(mockHandleError).toHaveBeenCalledTimes(1);
       expect(mockSentryCaptureException).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Failures that are not the app’s', () => {
+    const providerConfig = (
+      executeSignIn: OAuthProviderConfig['executeSignIn'],
+      expectedFailureMessage?: OAuthProviderConfig['expectedFailureMessage'],
+    ): OAuthProviderConfig => ({
+      provider: 'apple',
+      loadModule: jest.fn(async (..._args: unknown[]) => {}),
+      executeSignIn,
+      ...(expectedFailureMessage ? { expectedFailureMessage } : {}),
+    });
+
+    test('an exchange that got no answer says so, and is not a Sentry error', async () => {
+      // supabase-js auth wraps a rejected fetch as AuthRetryableFetchError, status 0.
+      const unanswered = Object.assign(
+        createAuthErrorMock('fetch failed: A data connection is not currently allowed.', 0),
+        { name: 'AuthRetryableFetchError' },
+      );
+      mockSupabase.auth.signInWithIdToken = jest.fn(async () => ({
+        data: { user: null, session: null },
+        error: unanswered,
+      })) as unknown as typeof mockSupabase.auth.signInWithIdToken;
+
+      const { result } = renderHook(() =>
+        useOAuthProvider(providerConfig(jest.fn(async () => ({ idToken: 'token' })))),
+      );
+      await result.current.signIn();
+
+      expect(mockHandleError).toHaveBeenCalledTimes(1);
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          toastMessage: STRINGS.NO_INTERNET_CONNECTION,
+          captureSentry: false,
+          networkFailure: true,
+        }),
+      );
+      expect(mockAnalytics.trackAuthFailed).toHaveBeenCalledWith('apple', 'unknown');
+    });
+
+    test("a failure the provider names is told in the provider's words, outside Sentry", async () => {
+      const appleUnknown = Object.assign(new Error('error 1000'), { code: '1000' });
+      const { result } = renderHook(() =>
+        useOAuthProvider(
+          providerConfig(
+            jest.fn(async () => {
+              throw appleUnknown;
+            }),
+            error => (error === appleUnknown ? STRINGS.APPLE_SIGN_IN_UNAVAILABLE : undefined),
+          ),
+        ),
+      );
+      await result.current.signIn();
+
+      expect(mockHandleError).toHaveBeenCalledWith(
+        appleUnknown,
+        expect.objectContaining({
+          toastMessage: STRINGS.APPLE_SIGN_IN_UNAVAILABLE,
+          captureSentry: false,
+          networkFailure: false,
+        }),
+      );
+      // Still counted, with its code: a jump in 1000s is how a broken
+      // entitlement would show.
+      expect(mockAnalytics.trackAuthFailed).toHaveBeenCalledWith('apple', '1000');
+    });
+
+    test('anything the provider does not name is reported as before', async () => {
+      const failed = Object.assign(new Error('failed'), { code: '1004' });
+      const { result } = renderHook(() =>
+        useOAuthProvider(
+          providerConfig(
+            jest.fn(async () => {
+              throw failed;
+            }),
+            () => undefined,
+          ),
+        ),
+      );
+      await result.current.signIn();
+
+      const options = mockHandleError.mock.calls[0]?.[1];
+      expect(options?.captureSentry).toBeUndefined();
+      expect(options?.sentrySeverity).toBe('error');
+      expect(options?.toastMessage).toContain('Error Code: 1004');
     });
   });
 

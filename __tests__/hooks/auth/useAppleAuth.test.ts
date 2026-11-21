@@ -27,6 +27,7 @@ jest.mock('@/hooks/auth/useOAuthProvider', () => ({
   useOAuthProvider: jest.fn(),
 }));
 
+import { STRINGS } from '@/constants/strings';
 import { useAppleAuth } from '@/hooks/auth/useAppleAuth';
 import { useOAuthProvider, type OAuthProviderConfig } from '@/hooks/auth/useOAuthProvider';
 import { authBreadcrumb } from '@/utils/errorHandling';
@@ -107,6 +108,22 @@ describe('useAppleAuth', () => {
       },
       'error',
     );
+  });
+
+  // OPENARABIC-RY: error 1000 after its retry is the device (no Apple Account
+  // signed in, a sheet that could not be shown), not a bug.
+  it('names error 1000 an expected failure with a message to act on, and nothing else', async () => {
+    const { config } = await renderAppleProvider();
+    const withCode = (code: string) => Object.assign(new Error('failed'), { code });
+
+    expect(config.expectedFailureMessage?.(withCode('1000'))).toBe(
+      STRINGS.APPLE_SIGN_IN_UNAVAILABLE,
+    );
+    expect(config.expectedFailureMessage?.(withCode('1004'))).toBeUndefined();
+    expect(config.expectedFailureMessage?.(withCode('1001'))).toBeUndefined();
+    expect(
+      config.expectedFailureMessage?.(new Error('No identity token returned')),
+    ).toBeUndefined();
   });
 
   it('leaves a cancel alone', async () => {

@@ -30,6 +30,7 @@ jest.mock('@/hooks/auth/useOAuthProvider', () => ({
 
 import { captureException } from '@sentry/react-native';
 
+import { STRINGS } from '@/constants/strings';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
 import { useOAuthProvider, type OAuthProviderConfig } from '@/hooks/auth/useOAuthProvider';
 import { authBreadcrumb } from '@/utils/errorHandling';
@@ -141,5 +142,15 @@ describe('useGoogleAuth executeSignIn', () => {
 
     await expect(executeSignIn(googleLibrary(signIn))).rejects.toBe(failure);
     expect(signIn).toHaveBeenCalledTimes(1);
+  });
+
+  // OPENARABIC-TD: Play Services' NETWORK_ERROR, from the sign-in activity.
+  it("names Play Services' network error the connection, and nothing else", () => {
+    const { expectedFailureMessage } = renderGoogleProvider();
+    const withCode = (code: string) => Object.assign(new Error('NETWORK_ERROR'), { code });
+
+    expect(expectedFailureMessage?.(withCode('7'))).toBe(STRINGS.NO_INTERNET_CONNECTION);
+    expect(expectedFailureMessage?.(withCode('10'))).toBeUndefined();
+    expect(expectedFailureMessage?.(new Error('Google Sign-In failed'))).toBeUndefined();
   });
 });

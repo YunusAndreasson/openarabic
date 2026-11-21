@@ -2,6 +2,7 @@ import type * as GoogleSigninLibrary from '@react-native-google-signin/google-si
 import * as Sentry from '@sentry/react-native';
 import { useEffect, useState } from 'react';
 
+import { STRINGS } from '@/constants/strings';
 import { useOAuthProvider } from '@/hooks/auth/useOAuthProvider';
 import { delay } from '@/utils/async';
 import { getErrorCode } from '@/utils/authUtils';
@@ -42,6 +43,12 @@ function getGoogleSignin(): GoogleSignInModule | null {
  * comparison against the number never matched, so this retry once never ran.
  */
 const INTERNAL_ERROR_CODE = '8';
+/**
+ * Play Services' CommonStatusCodes.NETWORK_ERROR, rejected as the string '7'
+ * with the message "NETWORK_ERROR" (OPENARABIC-TD, from the sign-in activity's
+ * result): Google could not be reached. Android only; iOS codes are negative.
+ */
+const NETWORK_ERROR_CODE = '7';
 /** One retry for INTERNAL_ERROR, after a linear backoff. */
 const MAX_SIGN_IN_RETRIES = 1;
 const RETRY_BACKOFF_MS = 1000;
@@ -173,13 +180,15 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       // google-signin stopped throwing for it in v13, and v16 also turns the
       // native SIGN_IN_CANCELLED code into one. Unhandled, it fell through to
       // the missing-token branch below: a 15-second "update Google Play
-      // Services" toast for someone who changed their mind.
+      // Services" toast for someone who changed their mind. That fall-through
+      // was all of OPENARABIC-H4 ("completed but no ID token", 1448.4.3).
       if (isCancelledResponse(response)) return null;
 
       const { idToken, user, serverAuthCode } = response.data;
       if (!idToken) {
-        // Typically a Google Play Services environmental issue on low-end
-        // Android devices, not an app bug. No email on the trail.
+        // google-signin returns a null token only when configure() had no web
+        // client ID it could use — a build or Cloud Console configuration
+        // fault, so it stays a reported failure. No email on the trail.
         authBreadcrumb(
           'Google Sign-In completed but no ID token returned',
           { hasServerAuthCode: !!serverAuthCode },
@@ -212,6 +221,10 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
 
       return undefined;
     },
+
+    // The device's connection, not a fault: told as such, kept out of Sentry.
+    expectedFailureMessage: (error: unknown) =>
+      getErrorCode(error) === NETWORK_ERROR_CODE ? STRINGS.NO_INTERNET_CONNECTION : undefined,
   });
 
   return {

@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 
+import { REFUSAL_TOAST_DURATION } from '@/constants/animation';
+import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
 import { metaEvents } from '@/services/metaEvents';
 import { supabase } from '@/services/supabase';
@@ -11,6 +13,7 @@ import {
 } from '@/utils/authUtils';
 import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
+import { isNetworkFailure } from '@/utils/networkErrors';
 import { toError } from '@/utils/toError';
 
 /**
@@ -90,6 +93,18 @@ export interface OAuthProviderConfig<TModule = unknown> {
    * Return error message if handled, undefined to use default handling
    */
   handleProviderError?: (error: unknown) => string | undefined;
+
+  /**
+   * Optional: a failure that is the device's circumstances rather than a fault
+   * — no Apple Account signed in, Google's own network check failing — as the
+   * message the learner is shown. It is still an Auth Failed with its code,
+   * but it is told in that message and kept out of Sentry; the breadcrumbs
+   * keep the details. Return undefined for everything else.
+   *
+   * A request that got no answer at all is recognised for every provider
+   * without this (`isNetworkFailure`).
+   */
+  expectedFailureMessage?: (error: unknown) => string | undefined;
 
   /**
    * Module not available error message
@@ -285,6 +300,24 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
         config.provider,
         getAnalyticsErrorCode(originalError) ?? getAnalyticsErrorCode(error) ?? step,
       );
+
+      // Not the app's fault: the learner is told what to do, and Sentry is
+      // spared an issue no build can fix. A Supabase exchange that failed
+      // offline arrives wrapped, so the error it carries is checked too.
+      const isConnectionFailure = isNetworkFailure(error) || isNetworkFailure(originalError);
+      const expectedMessage = isConnectionFailure
+        ? STRINGS.NO_INTERNET_CONNECTION
+        : config.expectedFailureMessage?.(error);
+      if (expectedMessage) {
+        void handleError(error, {
+          toastMessage: expectedMessage,
+          toastDuration: REFUSAL_TOAST_DURATION,
+          analyticsEventName: `${providerName}_Sign_In_Error`,
+          captureSentry: false,
+          networkFailure: isConnectionFailure,
+        });
+        return;
+      }
 
       const detailedErrorMessage = [
         `❌ ${providerName} Sign In Failed`,

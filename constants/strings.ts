@@ -649,6 +649,9 @@ export const STRINGS = {
   PRIVACY_CONTACT_SUFFIX: ". We'll respond as soon as possible.",
   // Social auth
   SIGN_IN_WITH_APPLE: 'Sign in with Apple',
+  // ASAuthorizationError 1000: typically no Apple Account signed in on the device
+  APPLE_SIGN_IN_UNAVAILABLE:
+    "Apple sign-in didn't finish. Check that you're signed in to your Apple Account in Settings, then try again.",
   SIGN_IN_WITH_GOOGLE: 'Sign in with Google',
   SIGN_IN_WITH_EMAIL: 'Sign in with email',
   CREATE_ACCOUNT_WITH_EMAIL: 'Create account with email',

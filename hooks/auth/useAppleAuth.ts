@@ -2,6 +2,7 @@ import type * as AppleAuthLibrary from '@invertase/react-native-apple-authentica
 import { useState } from 'react';
 import { Platform } from 'react-native';
 
+import { STRINGS } from '@/constants/strings';
 import { useOAuthProvider } from '@/hooks/auth/useOAuthProvider';
 import { delay } from '@/utils/async';
 import { getErrorCode, isCancellationError } from '@/utils/authUtils';
@@ -185,6 +186,20 @@ export function useAppleAuth(): UseAppleAuthReturn {
       );
 
       return undefined; // Use default error handling
+    },
+
+    // ASAuthorizationError.unknown (1000), still there after its retry
+    // (OPENARABIC-RY). It is what the sheet says when the device has no Apple
+    // Account signed in, or the sheet could not be shown at all — the device's
+    // state, not a bug, so the learner is told what to check and Sentry hears
+    // nothing. A missing Sign in with Apple entitlement fails the same way,
+    // but for everyone: that shows as a jump in Auth Failed code 1000.
+    // 1002-1004 (invalid response, not handled, failed) are still reported.
+    expectedFailureMessage: (error: unknown) => {
+      const appleAuth = getAppleAuth();
+      return appleAuth && getErrorCode(error) === appleAuth.Error.UNKNOWN
+        ? STRINGS.APPLE_SIGN_IN_UNAVAILABLE
+        : undefined;
     },
   });
 
