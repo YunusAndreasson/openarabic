@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { handleError, type ErrorOptions } from '@/utils/errorHandling';
+import type * as ErrorHandling from '@/utils/errorHandling';
 
 /**
  * A typed value kept as JSON under one AsyncStorage key.
@@ -18,7 +18,8 @@ import { handleError, type ErrorOptions } from '@/utils/errorHandling';
  */
 
 /** How a failed read or write is reported; `false` for a best-effort store that stays silent. */
-export type JsonStoreReporting = false | { read: ErrorOptions; write: ErrorOptions };
+export type JsonStoreReporting =
+  false | { read: ErrorHandling.ErrorOptions; write: ErrorHandling.ErrorOptions };
 
 export interface JsonStoreOptions<T> {
   /** The AsyncStorage key, or a function read at each call. */
@@ -61,6 +62,16 @@ const QUIET_REPORTING: JsonStoreReporting = {
   write: { showToast: false },
 };
 
+/**
+ * Loaded when something fails rather than imported at the top. errorHandling
+ * imports services/analytics, which reads consent through one of these stores, so
+ * an import here would close a cycle through every store in the app.
+ */
+const reportFailure = (error: unknown, options: ErrorHandling.ErrorOptions): void => {
+  const { handleError } = require('@/utils/errorHandling') as typeof ErrorHandling;
+  void handleError(error, options);
+};
+
 export function createJsonStore<T>({
   key,
   decode,
@@ -82,7 +93,7 @@ export function createJsonStore<T>({
       if (!raw) return empty();
       return decode(JSON.parse(raw)) ?? empty();
     } catch (error) {
-      if (report) void handleError(error, report.read);
+      if (report) reportFailure(error, report.read);
       return onReadError();
     }
   };
@@ -102,7 +113,7 @@ export function createJsonStore<T>({
       try {
         await AsyncStorage.setItem(resolveKey(), JSON.stringify(encode(value)));
       } catch (error) {
-        if (report) void handleError(error, report.write);
+        if (report) reportFailure(error, report.write);
       }
     },
 

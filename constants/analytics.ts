@@ -20,11 +20,20 @@ export const ANALYTICS_EVENTS = {
   // App lifecycle events
   /** A launch the learner sees: never sent while the app runs in the background. */
   APP_OPENED: 'App Opened',
-  /** Once per install, at the first App Opened. */
+  /**
+   * Once per install, at the first App Opened that analytics may see: on a
+   * launch that asks first, when the learner allows it. A contract with the
+   * system that reads it (see services/installAttribution): never rename it.
+   */
   FIRST_OPEN: 'First Open',
   APP_BACKGROUNDED: 'App Backgrounded',
   APP_RESUMED: 'App Resumed',
   SCREEN_VIEWED: 'Screen Viewed',
+
+  // Install attribution (services/installAttribution). These names are a
+  // contract with the system that reads them, as First Open is: never rename one.
+  INSTALL_ATTRIBUTION: 'Install Attribution',
+  ACTIVATED: 'Activated',
 
   // Review/Practice session events
   REVIEW_SESSION_STARTED: 'Review Session Started',
@@ -132,9 +141,15 @@ export const FIRST_TIME_EVENTS: ReadonlySet<string> = new Set<AnalyticsEventName
 
 /**
  * Super properties: on every event once registered (`analytics.registerSuperProperties`).
- * None identifies anyone; each splits the anonymous ids into groups.
+ * None identifies anyone; all but `install_id` split the anonymous ids into groups.
  */
 export const SUPER_PROPERTIES = {
+  /**
+   * A random ID for this install, made the first time analytics is allowed. It
+   * joins an install's events for the system that reads them (the name is a
+   * contract with it), and identifies no one. Never send it to Meta.
+   */
+  INSTALL_ID: 'install_id',
   /** YYYY-MM-DD the app was installed, for cohorts by install week */
   INSTALL_DATE: 'install_date',
   /** The OS lets the app notify */
@@ -152,8 +167,8 @@ export const SUPER_PROPERTIES = {
  * where the Facebook SDK is not linked.
  *
  * `fb_mobile_activate_app` (install / launch) is NOT listed: the native SDK logs it
- * automatically via `autoLogAppEventsEnabled` in app.json. Only events we raise
- * ourselves belong here.
+ * automatically once services/metaEvents has turned auto-logging on, which happens
+ * only after consent. Only events we raise ourselves belong here.
  *
  * Keep this list short. Every event here is data shared with Meta, so add one only
  * when it is genuinely needed to judge whether an ad is paying for itself.

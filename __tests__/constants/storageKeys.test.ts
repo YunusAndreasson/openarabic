@@ -60,6 +60,15 @@ describe('storageKeys', () => {
   });
 
   describe('accountOwnedStorageKeys', () => {
+    // Consent lives on the device: deleting an account must not silently re-open
+    // what its owner refused, and `install_id` is once per install, not per account.
+    test('leaves the privacy choice and the install attribution state alone', () => {
+      const keys = accountOwnedStorageKeys('user-7');
+
+      expect(keys).not.toContain(STORAGE_KEYS.PRIVACY_CONSENT);
+      expect(keys).not.toContain(STORAGE_KEYS.ANALYTICS_INSTALL);
+    });
+
     test('sweeps the data that would otherwise follow the device to the next account', () => {
       const keys = accountOwnedStorageKeys('user-7');
 
@@ -107,6 +116,7 @@ describe('storageKeys', () => {
         STORAGE_KEYS.AUDIO_CACHE_LEGACY_SWEEP,
         STORAGE_KEYS.LAST_SIGNED_IN_USER,
         STORAGE_KEYS.ANALYTICS_INSTALL,
+        STORAGE_KEYS.PRIVACY_CONSENT,
         STORAGE_KEYS.REDUX_PERSIST_ROOT,
       ];
       const expectedStatic = Object.values(STORAGE_KEYS).length - deviceKeys.length;

@@ -22,6 +22,7 @@ export default function AuthLayout(): JSX.Element {
       <Stack.Screen name="sign-up" options={modalOptions(STRINGS.CREATE_ACCOUNT_TITLE)} />
       <Stack.Screen name="terms" options={modalOptions(STRINGS.TERMS_OF_SERVICE)} />
       <Stack.Screen name="privacy" options={modalOptions(STRINGS.PRIVACY_POLICY)} />
+      <Stack.Screen name="privacy-choices" options={modalOptions(STRINGS.PRIVACY_CHOICES)} />
     </Stack>
   );
 }

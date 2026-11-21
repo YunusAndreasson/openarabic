@@ -78,7 +78,12 @@ eas config
 
 ## OTA Pre-flight Checklist
 
-Native dependency updates require a new binary. Runtime `1448.5.12` (2026-11-19) carries
+Native dependency updates require a new binary. Runtime `1448.6.13` carries the
+consent gating (`services/consent`, the Meta flags in `app.json` and the
+`react-native-fbsdk-next` patch). Only a binary built with them keeps the Meta SDK
+off before JS runs, so JS built from it must never be aimed at an older runtime: it
+would ask for consent while that binary's SDK goes on sending to Meta for people who
+refused. Runtime `1448.5.12` (2026-11-19) carries
 the 2026-11-15 dependency update (`react-native-audio-api` 1.0 among the native bumps) and is
 the first runtime the gate recorded (`native-runtimes.json`). `1448.5.10` is blocked: build
 283 (2026-11-02) and build 284 (2026-11-15) both report it, but 284 links the 11-15 native

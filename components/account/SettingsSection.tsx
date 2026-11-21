@@ -7,7 +7,8 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface SettingsSectionProps {
-  title: string;
+  /** Leave it off for a group that is the only one on its screen. */
+  title?: string;
   /**
    * A caveat the whole group shares, shown under the label.
    *
@@ -40,7 +41,7 @@ export const SettingsSection = memo(({ title, subtitle, children }: SettingsSect
     <>
       {/* No style override: `density="comfortable"` is already the 24/8 rhythm
           this used to restate by hand. */}
-      <SectionLabel title={title} subtitle={subtitle} />
+      {title ? <SectionLabel title={title} subtitle={subtitle} /> : null}
       <BaseCard style={styles.sectionContainer}>
         <View style={styles.linksContainer}>{childrenWithDividers}</View>
       </BaseCard>

@@ -39,6 +39,7 @@ import interSemiBold from '@/assets/fonts/Inter-SemiBold.ttf';
 import interBold from '@/assets/fonts/Inter-Bold.ttf';
 import { AudioErrorBoundary, GlobalMiniPlayer } from '@/components/audio';
 import { AppErrorFallback, ScreenErrorFallback } from '@/components/common';
+import { ConsentOverlay } from '@/components/privacy/ConsentOverlay';
 import {
   AuthProvider,
   FSRSDataProvider,
@@ -69,6 +70,7 @@ import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
 import { cleanupNotifications, initializeNotifications } from '@/services/notificationService';
+import { restoreConsentChoices } from '@/services/privacy';
 import { persistor, store } from '@/store/store';
 import { handleError, isDroppedSentryEvent } from '@/utils/errorHandling';
 import { registerMutationDefaults } from '@/utils/mutationDefaults';
@@ -312,6 +314,12 @@ function AppContent() {
   const { isLoading: isAuthLoading, session } = useAuth();
   const userId = session?.user?.id;
   const navigationRef = useNavigationContainerRef();
+
+  // Start whatever the stored privacy choice allows. Nothing waits on it, the
+  // splash logic included: until it lands, the consent gates read "not allowed".
+  useEffect(() => {
+    void restoreConsentChoices();
+  }, []);
 
   // Runtime font load for Expo Go + Android — see RUNTIME_FONT_MAP above
   const [fontsLoaded, fontError] = useFonts(NEEDS_RUNTIME_FONTS ? RUNTIME_FONT_MAP : {});
@@ -683,6 +691,10 @@ function AppContent() {
 
               {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
               <AudioOverlays />
+
+              {/* Rendered only once the app is ready, so it never waits on, or
+                  holds up, the splash logic above. */}
+              <ConsentOverlay />
 
               <StatusBar style={isDark ? 'light' : 'dark'} />
             </GlobalAudioStateProvider>

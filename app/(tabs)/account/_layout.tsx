@@ -36,6 +36,7 @@ export default function AccountLayout() {
       <Stack.Screen name="advanced" options={screenOptions(STRINGS.ADVANCED_VOICE_GRADING)} />
       <Stack.Screen name="terms" options={screenOptions(STRINGS.TERMS_OF_SERVICE)} />
       <Stack.Screen name="privacy" options={screenOptions(STRINGS.PRIVACY_POLICY)} />
+      <Stack.Screen name="privacy-choices" options={screenOptions(STRINGS.PRIVACY_CHOICES)} />
       <Stack.Screen name="legal" options={screenOptions(STRINGS.LEGAL_ATTRIBUTIONS)} />
     </Stack>
   );

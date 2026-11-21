@@ -599,6 +599,22 @@ export const STRINGS = {
     'We may suspend or terminate your access if you violate these terms. You may stop using OpenArabic at any time.',
   TERMS_CONTACT_TITLE: '10. Contact',
   TERMS_CONTACT: 'Questions about these terms? Contact us at ',
+  // Consent step and Privacy choices (components/privacy). A wording change that
+  // should ask everyone again also bumps CONSENT_VERSION in services/consent.
+  CONSENT_TITLE: 'Your privacy',
+  CONSENT_INTRO:
+    'OpenArabic is free and has no ads. With your permission, we measure how people find and use the app. Because OpenArabic is about Islamic texts, this data could suggest your religious beliefs. You choose, and the app works the same either way.',
+  CONSENT_ANALYTICS_LABEL: 'App usage',
+  CONSENT_ANALYTICS_DESC:
+    'Which features get used, so we can improve them. Linked to a random ID for this install, not to your account. Sent to Mixpanel.',
+  CONSENT_MEASUREMENT_LABEL: 'Ad measurement',
+  CONSENT_MEASUREMENT_DESC:
+    "Whether an ad led someone to install and use the app, so we only pay for ads that help people. Sent to Meta. On Android this includes your device's advertising ID. If App usage is on too, Mixpanel also gets which ad or link it was. We never send Meta your name, your email or what you study.",
+  CONSENT_ALLOW_BOTH: 'Allow both',
+  CONSENT_REFUSE_BOTH: 'Refuse both',
+  CONSENT_SAVE_CHOICES: 'Save my choices',
+  CONSENT_FOOTNOTE: 'You can change this at any time in Settings, Privacy choices.',
+  PRIVACY_CHOICES: 'Privacy choices',
   // Privacy Policy - Full text
   PRIVACY_EFFECTIVE_DATE: 'Effective Date: November 15, 2026',
   PRIVACY_INTRO:
@@ -610,9 +626,12 @@ export const STRINGS = {
   PRIVACY_COLLECTION_LEARNING: 'Learning Data',
   PRIVACY_COLLECTION_LEARNING_DESC:
     'We store your reading progress, vocabulary lists, practice session history, review performance, and app preferences (theme, audio settings, notifications).',
+  PRIVACY_COLLECTION_VOICE: 'Voice Answers',
+  PRIVACY_COLLECTION_VOICE_DESC:
+    'If you turn on voice answers, the app uses your microphone and transcribes what it hears on your device. The audio never leaves your device. The text of what it heard is saved with your answer, so we can improve grading.',
   PRIVACY_COLLECTION_ANALYTICS: 'Usage Analytics',
   PRIVACY_COLLECTION_ANALYTICS_DESC:
-    'We use Mixpanel to record how the app is used: which screens are opened, actions such as reading articles, studying words and practice sessions, and errors. These events are linked to a random identifier created on your device, not to your account, and do not include your name, email address or account ID. A new identifier is created when you sign out or delete your account.',
+    'Only if you turn on App usage in Settings, Privacy choices, we use Mixpanel to record how the app is used: which screens are opened, actions such as reading articles, studying words and practice sessions, and errors. These events are linked to random identifiers created on your device, not to your account, and do not include your name, email address or account ID. One identifies this install and is kept until the app is removed; the other is replaced when you sign out or delete your account.',
   PRIVACY_USE_TITLE: '2. How We Use Your Information',
   PRIVACY_USE:
     'We use your data to: provide the learning service, sync your progress across devices, personalize your learning experience, send practice reminders (if enabled), and improve the app.',
@@ -622,13 +641,13 @@ export const STRINGS = {
     'We use Supabase for authentication, database, and file storage. Your data is stored securely on their servers.',
   PRIVACY_THIRD_PARTY_MIXPANEL: 'Mixpanel',
   PRIVACY_THIRD_PARTY_MIXPANEL_DESC:
-    'Mixpanel receives the usage events described in section 1, along with device and app details (device model, operating system, app version) and an approximate location (city, region, country) derived from your IP address. Mixpanel stores this data in the United States.',
+    'Only if you turn on App usage in Settings, Privacy choices, Mixpanel receives the usage events described in section 1, along with device and app details (device model, operating system, app version) and an approximate location (city, region, country) derived from your IP address. If Ad measurement is on as well, on Android this includes the Google Play install referrer, which can say which ad or link led to the install. Mixpanel stores this data in the United States. With App usage off, nothing is sent to Mixpanel. You can withdraw at any time in Settings, Privacy choices.',
   PRIVACY_THIRD_PARTY_SENTRY: 'Sentry',
   PRIVACY_THIRD_PARTY_SENTRY_DESC:
     'We use Sentry for error tracking and crash reporting to identify and fix issues that affect app stability and performance. A report contains the error, the device and app version. It does not include your account, email address or screenshots. Sentry stores this data in the United States.',
   PRIVACY_THIRD_PARTY_META: 'Meta (Facebook)',
   PRIVACY_THIRD_PARTY_META_DESC:
-    'If you installed Open Arabic from a Facebook or Instagram ad, we share a small number of app events with Meta — that the app was opened, an account was created, the intro was finished, or a practice session was completed — so we can tell whether an ad was worth running. We do not send Meta your name, email, or what you study. On iOS we never ask to track you across other apps, so Meta only receives this in aggregate. On Android your device advertising ID is included; you can reset or limit it in Settings → Privacy → Ads.',
+    'Only if you turn on Ad measurement in Settings, Privacy choices, we share a small number of app events with Meta — that the app was opened, an account was created, the intro was finished, or a practice session was completed — along with the technical details the Meta SDK attaches to them, such as device model and system version, so we can tell whether an ad was worth running. We do not send Meta your name, email, or what you study. On iOS we never ask to track you across other apps, so no advertising ID is included. On Android your device advertising ID is included; you can reset or limit it in your device settings, under Privacy, Ads. With Ad measurement off, nothing is sent to Meta. You can withdraw at any time in Settings, Privacy choices.',
   PRIVACY_THIRD_PARTY_AUTH: 'Apple and Google',
   PRIVACY_THIRD_PARTY_AUTH_DESC:
     'If you sign in with Apple or Google, their privacy policies apply to the authentication process.',
@@ -1214,8 +1233,9 @@ export const STRINGS = {
   // "entirely", no third sentence restating the second.
   // The answer spoken is the ENGLISH meaning, so this must not promise
   // pronunciation practice — it used to, and that was never true.
+  // The last sentence keeps "runs on your device" honest: the text does leave it.
   VOICE_PRIMING_BODY:
-    'Say answers out loud instead of tapping. Harder to fool yourself. Runs on your device, 100 MB.',
+    'Say answers out loud instead of tapping. Harder to fool yourself. Runs on your device, 100 MB. Only the text of your answer is saved.',
   VOICE_PRIMING_ACCEPT: 'Turn it on',
   VOICE_PRIMING_DECLINE: 'No thanks',
   // Smart reminder notifications (selection logic in utils/notificationCopy.ts).

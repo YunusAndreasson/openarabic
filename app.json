@@ -31,7 +31,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select screenshots for issue reports or profile photos.",
         "NSCameraUsageDescription": "This app needs access to your camera to let you take a profile photo for your account.",
-        "NSMicrophoneUsageDescription": "Open Arabic uses the microphone to grade your spoken English answer. Audio is transcribed on your device and never leaves it.",
+        "NSMicrophoneUsageDescription": "Open Arabic uses the microphone to grade your spoken English answer. Audio is transcribed on your device and never leaves it. Only the text of your answer is saved.",
         "NSUserNotificationsUsageDescription": "This app sends study reminders to help you practice Arabic vocabulary at your scheduled times."
       },
       "privacyManifests": {
@@ -328,14 +328,14 @@
       [
         "react-native-fbsdk-next",
         {
-          "_comment": "Meta app events for ad attribution. AEM-only: no ATT prompt is ever shown, so on iOS the IDFA stays zeroed and Meta attributes via Aggregated Event Measurement + SKAdNetwork. advertiserIDCollectionEnabled is a no-op on iOS without ATT, but IS what lets Android report the Google Advertising ID — that is where user-level attribution actually comes from.",
+          "_comment": "Meta app events for ad attribution. These three are false so that nothing runs before consent: services/metaEvents.ts switches auto-logging and advertising ID collection on at runtime once the person allows Ad measurement, and off again if they withdraw. Being native config, a change here needs a new build, not an OTA, and JS gating cannot stand in for it on a binary built with them true. isAutoInitEnabled only does anything on Android; on iOS the SDK removed that flag, so the patch in .yarn/patches stops this package's AppDelegate subscriber starting the SDK at launch. AEM-only: no ATT prompt is ever shown, so on iOS the IDFA stays zeroed and Meta attributes via Aggregated Event Measurement + SKAdNetwork. advertiserIDCollectionEnabled is a no-op on iOS without ATT, but once on IS what lets Android report the Google Advertising ID — that is where user-level attribution actually comes from.",
           "appID": "1579869453486353",
           "clientToken": "c39b97bf7d2917ab6725e95be8506aab",
           "displayName": "Open Arabic",
           "scheme": "fb1579869453486353",
-          "isAutoInitEnabled": true,
-          "autoLogAppEventsEnabled": true,
-          "advertiserIDCollectionEnabled": true
+          "isAutoInitEnabled": false,
+          "autoLogAppEventsEnabled": false,
+          "advertiserIDCollectionEnabled": false
         }
       ],
       [
@@ -375,7 +375,7 @@
       }
     },
     "owner": "edenmind",
-    "runtimeVersion": "1448.6.12",
+    "runtimeVersion": "1448.6.13",
     "updates": {
       "url": "https://u.expo.dev/644480e0-3ac0-4ce6-b6ca-b950f62ca438",
       "enableBsdiffPatchSupport": true,

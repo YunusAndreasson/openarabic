@@ -49,13 +49,19 @@ jest.mock('expo-application', () => ({
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 
 type AnalyticsModule = typeof import('@/services/analytics');
+type ConsentModule = typeof import('@/services/consent');
 
-const loadAnalytics = (): AnalyticsModule['analytics'] => {
+/** A fresh copy with analytics allowed: nothing reaches Mixpanel without it. */
+const loadAnalytics = async (): Promise<AnalyticsModule['analytics']> => {
   let loaded: AnalyticsModule | undefined;
+  let consent: ConsentModule | undefined;
   jest.isolateModules(() => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    consent = require('@/services/consent') as ConsentModule;
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     loaded = require('@/services/analytics') as AnalyticsModule;
   });
+  await consent!.saveConsent({ analytics: true, measurement: false });
   return loaded!.analytics;
 };
 
@@ -67,7 +73,7 @@ describe('analytics: first_time and super properties', () => {
   });
 
   test('the first of each core action carries first_time, and only the first', async () => {
-    const analytics = loadAnalytics();
+    const analytics = await loadAnalytics();
 
     await analytics.track(ANALYTICS_EVENTS.ARTICLE_VIEWED, { source: 'search' });
     await analytics.track(ANALYTICS_EVENTS.ARTICLE_VIEWED, { source: 'search' });
@@ -79,7 +85,7 @@ describe('analytics: first_time and super properties', () => {
   });
 
   test('a sign-out does not make a first happen again', async () => {
-    const analytics = loadAnalytics();
+    const analytics = await loadAnalytics();
 
     await analytics.track(ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE);
     await analytics.reset();
@@ -90,7 +96,7 @@ describe('analytics: first_time and super properties', () => {
   });
 
   test('events outside the core actions never carry first_time', async () => {
-    const analytics = loadAnalytics();
+    const analytics = await loadAnalytics();
 
     await analytics.track(ANALYTICS_EVENTS.APP_OPENED, { launch: 'foreground' });
     await analytics.trackError('Some_Error', { errorName: 'Error' });
@@ -102,12 +108,16 @@ describe('analytics: first_time and super properties', () => {
   });
 
   test('super properties registered before Mixpanel started are applied at init', async () => {
-    const analytics = loadAnalytics();
+    const analytics = await loadAnalytics();
 
     // Registering is also what starts Mixpanel here, so the init itself
     // applies the store and the call then applies its own properties.
     await analytics.registerSuperProperties({ install_date: '2026-11-21', signed_in: false });
 
-    expect(mockMixpanel.registered[0]).toEqual({ install_date: '2026-11-21', signed_in: false });
+    expect(mockMixpanel.registered[0]).toEqual({
+      install_date: '2026-11-21',
+      signed_in: false,
+      install_id: expect.any(String),
+    });
   });
 });

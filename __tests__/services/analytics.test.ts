@@ -2,7 +2,7 @@
  * Analytics Service Tests
  *
  * Tests the analytics service which provides Mixpanel integration with:
- * - Lazy initialization (only initializes on first use)
+ * - Lazy initialization (only initializes on first use, and only with consent)
  * - Silent operation (graceful fallback when Mixpanel unavailable)
  * - Event tracking
  * - No user identification: events stay on the anonymous device id
@@ -16,7 +16,7 @@
 
 import type { Mixpanel, People } from 'mixpanel-react-native';
 
-import { describe, test, expect, jest } from '@jest/globals';
+import { beforeAll, describe, test, expect, jest } from '@jest/globals';
 
 // Mock Mixpanel before importing service
 const mockInit = jest.fn<Mixpanel['init']>(async () => undefined);
@@ -28,6 +28,9 @@ const mockSetPeople = jest.fn((..._args: unknown[]): ReturnType<People['set']> =
 const mockGetPeople = jest.fn((): Pick<ReturnType<Mixpanel['getPeople']>, 'set'> => ({
   set: mockSetPeople,
 }));
+const mockHasOptedOutTracking = jest.fn<Mixpanel['hasOptedOutTracking']>(async () => false);
+const mockOptInTracking = jest.fn<Mixpanel['optInTracking']>();
+const mockOptOutTracking = jest.fn<Mixpanel['optOutTracking']>();
 
 // A plain class, not jest.fn: resetMocks empties a jest.fn implementation
 // before each test, which would leave the constructed instance without methods.
@@ -39,6 +42,9 @@ class MockMixpanel {
   reset = mockReset;
   getPeople = mockGetPeople;
   registerSuperProperties = mockRegisterSuperProperties;
+  hasOptedOutTracking = mockHasOptedOutTracking;
+  optInTracking = mockOptInTracking;
+  optOutTracking = mockOptOutTracking;
 }
 
 jest.mock('mixpanel-react-native', () => ({
@@ -56,8 +62,15 @@ jest.mock('@/constants/analytics', () => ({
 // Import service after mocks
 import { analytics } from '@/services/analytics';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { saveConsent } from '@/services/consent';
 
 describe('analytics service', () => {
+  // Everything below needs analytics allowed; the gate itself is covered in
+  // analytics.init.test.ts and services/privacy.test.ts.
+  beforeAll(async () => {
+    await saveConsent({ analytics: true, measurement: false });
+  });
+
   /**
    * Analytics service is designed to fail silently.
    * The primary goal is to ensure it never throws errors, even when:
@@ -86,6 +99,8 @@ describe('analytics service', () => {
       expect(Object.keys(analytics).sort()).toEqual([
         'registerSuperProperties',
         'reset',
+        'startTracking',
+        'stopTracking',
         'track',
         'trackAuthFailed',
         'trackError',
@@ -211,6 +226,22 @@ describe('analytics service', () => {
 
       await expect(analytics.track(ANALYTICS_EVENTS.APP_OPENED)).resolves.not.toThrow();
       await expect(analytics.reset()).resolves.not.toThrow();
+    });
+
+    test('should not throw from the consent controls when Mixpanel fails', async () => {
+      mockHasOptedOutTracking.mockRejectedValueOnce(new Error('hasOptedOut failed'));
+      mockRegisterSuperProperties.mockImplementationOnce(() => {
+        throw new Error('register failed');
+      });
+      mockOptOutTracking.mockImplementationOnce(() => {
+        throw new Error('optOut failed');
+      });
+
+      await expect(analytics.startTracking()).resolves.not.toThrow();
+      await expect(analytics.registerSuperProperties({ signed_in: true })).resolves.not.toThrow();
+      await saveConsent({ analytics: false, measurement: false });
+      await expect(analytics.stopTracking()).resolves.not.toThrow();
+      await saveConsent({ analytics: true, measurement: false });
     });
   });
 });

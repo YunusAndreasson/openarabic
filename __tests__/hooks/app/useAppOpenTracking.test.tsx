@@ -19,11 +19,17 @@ jest.mock('@/services/analytics', () => ({
 const mockInstall = { firstOpen: true };
 jest.mock('@/services/analyticsInstall', () => ({
   loadInstallRecord: async () => ({ installDate: '2026-11-21', installKind: 'new' }),
-  claimFirstOpen: async () => {
-    if (!mockInstall.firstOpen) return null;
+  claimOnce: async (flag: string) => {
+    if (flag !== 'firstOpenSent' || !mockInstall.firstOpen) return null;
     mockInstall.firstOpen = false;
     return { installDate: '2026-11-21', installKind: 'new' };
   },
+}));
+
+// Analytics allowed: what consent changes is covered in services/installAttribution.
+jest.mock('@/services/consent', () => ({
+  loadConsent: async () => null,
+  isAllowed: () => true,
 }));
 
 import { useAppOpenTracking } from '@/hooks/app/useAppOpenTracking';

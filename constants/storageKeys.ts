@@ -31,8 +31,10 @@ export const STORAGE_KEYS = {
   AUDIO_CACHE_LEGACY_SWEEP: '@openarabic/audioCache/legacySweepV1',
   /** Id of the account that last signed in here — see utils/accountSwitch. */
   LAST_SIGNED_IN_USER: '@openarabic/auth/lastSignedInUser',
-  /** Install date, First Open and first actions for analytics — see services/analyticsInstall. */
+  /** Install date, install_id and once-per-install flags — see services/analyticsInstall. */
   ANALYTICS_INSTALL: '@openarabic/analytics/install',
+  /** What may be sent to Mixpanel and Meta — see services/consent. */
+  PRIVACY_CONSENT: '@openarabic/privacy/consent',
 
   TUTORIAL_WELCOME_INTRO: '@openarabic/tutorials/welcomeIntroSeen',
   TUTORIAL_WORD_TAP: '@openarabic/tutorials/wordTapCompleted',
@@ -105,6 +107,8 @@ const STORAGE_KEY_SCOPES = {
   LAST_SIGNED_IN_USER: 'device',
   /** Belongs to the install: a sign-out must not make the install new again. */
   ANALYTICS_INSTALL: 'device',
+  /** A choice about this device's data flows; signing out or in must not reset it. */
+  PRIVACY_CONSENT: 'device',
   /** See the note on the key itself — mixed contents, swept a different way. */
   REDUX_PERSIST_ROOT: 'device',
 } satisfies Record<keyof typeof STORAGE_KEYS, StorageKeyScope>;

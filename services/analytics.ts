@@ -21,13 +21,21 @@
  * - ❌ NEVER throws exceptions
  * - ❌ NEVER logs errors in production
  *
+ * CONSENT GATE
+ * ============
+ * Mixpanel is not constructed or initialised until the `analytics` choice in
+ * services/consent allows it, so before that there is no network at all. Every
+ * call first waits for the stored choice to load and then returns silently unless
+ * it allows the call, so a first-launch `App Opened` is dropped rather than
+ * queued. services/privacy starts and stops tracking when the choice changes.
+ *
  * Testing Implications:
  * - Tests should verify "does not throw" rather than mock internals
  * - No need to test Mixpanel SDK behavior (third-party responsibility)
  * - Focus on: method signatures, type safety, error resilience
  *
  * Features:
- * - Lazy initialization (only when first analytics call is made)
+ * - Lazy initialization (only when first allowed analytics call is made)
  * - Automatic fallback when Mixpanel is unavailable
  * - Silent success operation (no production logging)
  * - Type-safe interface
@@ -36,8 +44,14 @@
 import type * as MixpanelModule from 'mixpanel-react-native';
 
 import type { AnalyticsEventName } from '@/constants/analytics';
-import { ANALYTICS_EVENTS, FIRST_TIME_EVENTS, MIXPANEL_TOKEN } from '@/constants/analytics';
-import { claimFirstTime } from '@/services/analyticsInstall';
+import {
+  ANALYTICS_EVENTS,
+  FIRST_TIME_EVENTS,
+  MIXPANEL_TOKEN,
+  SUPER_PROPERTIES,
+} from '@/constants/analytics';
+import { claimFirstTime, ensureInstallId } from '@/services/analyticsInstall';
+import { isAllowed, loadConsent } from '@/services/consent';
 
 // Keep app properties narrower than the SDK's permissive property values.
 type AnalyticsProperties = Record<string, string | number | boolean | null | undefined>;
@@ -47,8 +61,9 @@ let mixpanelInstance: MixpanelModule.Mixpanel | null = null;
 
 /**
  * Kept here as well as on the instance because Mixpanel forgets them: `reset()`
- * clears the super properties, and the instance may not exist yet when they
- * arrive. Applied at init and again after every reset.
+ * and `optOutTracking()` both clear the super properties, and the instance may
+ * not exist yet when they arrive. Applied at init, after every reset and on
+ * opting back in.
  */
 let superProperties: AnalyticsProperties = {};
 
@@ -66,6 +81,14 @@ const startMixpanel = async (token: string): Promise<void> => {
   const trackAutomaticEvents = false;
   const instance = new Mixpanel(token.trim(), trackAutomaticEvents);
   await instance.init();
+
+  // `install_id` joins an install's events for the system that reads them, so
+  // it is in place before the first event goes out. Made here, the first time
+  // analytics is allowed, and kept by services/analyticsInstall. Mixpanel only:
+  // it must never reach Meta.
+  const installId = await ensureInstallId();
+  if (installId) superProperties = { ...superProperties, [SUPER_PROPERTIES.INSTALL_ID]: installId };
+
   applySuperProperties(instance);
   mixpanelInstance = instance;
 };
@@ -92,6 +115,20 @@ const initializeMixpanel = (): Promise<void> => {
 };
 
 /**
+ * The gate every call passes through: the instance to use, or null when nothing
+ * may be sent. This is the only path to `initializeMixpanel`, which is what keeps
+ * Mixpanel unconstructed without consent. The second check is for a withdrawal
+ * that landed while an initialization was in flight.
+ */
+const getConsentedInstance = async (): Promise<MixpanelModule.Mixpanel | null> => {
+  await loadConsent();
+  if (!isAllowed('analytics')) return null;
+
+  await initializeMixpanel();
+  return isAllowed('analytics') ? mixpanelInstance : null;
+};
+
+/**
  * `first_time: true` on the first of each core action this install sends
  * (FIRST_TIME_EVENTS). Claimed only once an instance exists to send it.
  */
@@ -109,9 +146,7 @@ const withFirstTime = async (
  */
 const sendToMixpanel = async (event: string, properties?: AnalyticsProperties): Promise<void> => {
   try {
-    await initializeMixpanel();
-
-    const instance = mixpanelInstance;
+    const instance = await getConsentedInstance();
     if (instance) {
       instance.track(event, await withFirstTime(event, properties));
     }
@@ -155,12 +190,13 @@ export const analytics = {
   // Start a fresh anonymous distinct_id (sign-out, account deletion)
   reset: async (): Promise<void> => {
     try {
-      await initializeMixpanel();
+      const instance = await getConsentedInstance();
 
-      if (mixpanelInstance) {
-        mixpanelInstance.reset();
-        // reset() clears the super properties; install_date and the rest outlive a sign-out.
-        applySuperProperties(mixpanelInstance);
+      if (instance) {
+        instance.reset();
+        // reset() clears the super properties; install_id, install_date and the
+        // rest outlive a sign-out.
+        applySuperProperties(instance);
       }
       // Silent success - no logging needed for normal operation
     } catch {
@@ -177,8 +213,49 @@ export const analytics = {
     superProperties = { ...superProperties, ...properties };
 
     try {
-      await initializeMixpanel();
-      mixpanelInstance?.registerSuperProperties(properties);
+      const instance = await getConsentedInstance();
+      instance?.registerSuperProperties(properties);
+    } catch {
+      // Analytics failed silently
+    }
+  },
+
+  /**
+   * Analytics is allowed, now or from an earlier launch: bring Mixpanel up.
+   *
+   * The opt-out is checked rather than remembered, because Mixpanel persists it
+   * natively and it survives both a relaunch and `init`: someone who withdrew on an
+   * earlier launch would otherwise be initialised and still silently opted out.
+   * Opting back in comes first, since an opted-out SDK ignores the calls after it,
+   * and the super properties go back on after it, since opting out cleared them.
+   */
+  startTracking: async (): Promise<void> => {
+    try {
+      const instance = await getConsentedInstance();
+      if (!instance) return;
+
+      if (await instance.hasOptedOutTracking()) {
+        instance.optInTracking();
+      }
+      applySuperProperties(instance);
+    } catch {
+      // Analytics failed silently
+    }
+  },
+
+  /**
+   * Analytics is not allowed. Opts an existing instance out, which also deletes
+   * whatever it has not sent yet. Never constructs one: with no instance this
+   * launch, refusing has nothing to do and Mixpanel stays untouched.
+   */
+  stopTracking: async (): Promise<void> => {
+    try {
+      // An initialization in flight has to land first, or there is nothing to opt
+      // out, and the choice may have changed again by the time it has.
+      await initialization;
+      if (!isAllowed('analytics')) {
+        mixpanelInstance?.optOutTracking();
+      }
     } catch {
       // Analytics failed silently
     }

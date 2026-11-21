@@ -5032,7 +5032,7 @@ __metadata:
     react-native-blob-util: "npm:^0.24.0"
     react-native-draggable-flatlist: "patch:react-native-draggable-flatlist@npm%3A4.0.3#~/.yarn/patches/react-native-draggable-flatlist-npm-4.0.3-4f5f75341e.patch"
     react-native-executorch: "npm:0.11.0"
-    react-native-fbsdk-next: "npm:^13.4.3"
+    react-native-fbsdk-next: "patch:react-native-fbsdk-next@npm%3A13.4.3#~/.yarn/patches/react-native-fbsdk-next-npm-13.4.3-e85e3d02f0.patch"
     react-native-gesture-handler: "npm:~3.3.0"
     react-native-reanimated: "npm:4.7.1"
     react-native-safe-area-context: "npm:~5.11.1"
@@ -12366,7 +12366,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-fbsdk-next@npm:^13.4.3":
+"react-native-fbsdk-next@npm:13.4.3":
   version: 13.4.3
   resolution: "react-native-fbsdk-next@npm:13.4.3"
   peerDependencies:
@@ -12376,6 +12376,19 @@ __metadata:
     expo:
       optional: true
   checksum: 10c0/58ec2a0e9ff3befe0d17f5ddd93986fd7cba7afd114fc6f0fba62063276cad4866ea7736e0d83bfc7ca75a6164a7092f673d99b3b4300c9ae53892f2935c30bb
+  languageName: node
+  linkType: hard
+
+"react-native-fbsdk-next@patch:react-native-fbsdk-next@npm%3A13.4.3#~/.yarn/patches/react-native-fbsdk-next-npm-13.4.3-e85e3d02f0.patch":
+  version: 13.4.3
+  resolution: "react-native-fbsdk-next@patch:react-native-fbsdk-next@npm%3A13.4.3#~/.yarn/patches/react-native-fbsdk-next-npm-13.4.3-e85e3d02f0.patch::version=13.4.3&hash=0da3a3"
+  peerDependencies:
+    expo: ">=47.0.0"
+    react-native: ">=0.63.3"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 10c0/8df7000fc9497f1bdb62dbe0f9b1d74a96f61840adcee46c60ccf5d84eca08a484e1f27deb78ba0c3dd140c53d3de4d69ce7151b8ba1b7a3f9491b28f6971f0e
   languageName: node
   linkType: hard
 

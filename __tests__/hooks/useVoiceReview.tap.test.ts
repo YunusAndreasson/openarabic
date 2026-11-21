@@ -3,9 +3,11 @@ import { act, renderHook } from '@testing-library/react-native';
 import { useToast, useVoiceGrading } from '@/components/providers';
 import { armRetryDelay, useVoiceReview } from '@/hooks/review/useVoiceReview';
 import { __resetMicPermissionForTests } from '@/lib/voice/recording';
+import { analytics } from '@/services/analytics';
 import { logVoiceArmFailure, logVoiceAttempt } from '@/services/voiceTelemetry';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import type { RootState } from '@/store/store';
+import { voiceBreadcrumb } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
 jest.mock('@/components/providers', () => ({ useToast: jest.fn(), useVoiceGrading: jest.fn() }));
@@ -260,6 +262,22 @@ describe('disclosure', () => {
     expect(callbacks.onKnownAuto).toHaveBeenCalledTimes(1);
     expect(callbacks.onVagueAuto).not.toHaveBeenCalled();
   });
+});
+
+test('what was said and what was expected stay out of Mixpanel and Sentry', async () => {
+  jest.mocked(voice.transcribe).mockResolvedValueOnce('table');
+  jest.mocked(voice.arm).mockResolvedValueOnce(capturedSpeech());
+  const { result } = renderReview();
+
+  await act(async () => result.current.speakNow());
+
+  const sentOutside = JSON.stringify([
+    jest.mocked(analytics.track).mock.calls,
+    jest.mocked(voiceBreadcrumb).mock.calls,
+  ]);
+  expect(result.current.result?.heard).toBe('table');
+  expect(sentOutside).not.toContain('table');
+  expect(sentOutside).not.toContain('book');
 });
 
 test('callbacks replaced while an attempt is in flight are the ones that fire', async () => {
