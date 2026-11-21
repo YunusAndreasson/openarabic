@@ -41,7 +41,7 @@ import { Platform } from 'react-native';
 import type * as NotificationsModule from 'expo-notifications';
 import type { Href } from 'expo-router';
 
-import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { ANALYTICS_EVENTS, SUPER_PROPERTIES } from '@/constants/analytics';
 import { Colors } from '@/constants/colors';
 import {
   NOTIFICATION_ROUTE_BY_TYPE,
@@ -138,12 +138,7 @@ export function handleNotificationResponse(
   if (notificationKey === lastRoutedNotificationKey) return false;
   lastRoutedNotificationKey = notificationKey;
 
-  if (type === NOTIFICATION_TYPES.SRS_DUE || type === NOTIFICATION_TYPES.SRS_SLIPPING) {
-    void analytics.track(
-      ANALYTICS_EVENTS.SMART_REMINDER_OPENED,
-      coldStart ? { type, coldStart } : { type },
-    );
-  }
+  void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_OPENED, { type, cold_start: coldStart });
   navigate(NOTIFICATION_ROUTE_BY_TYPE[type as AnyNotificationType]);
   return true;
 }
@@ -300,6 +295,15 @@ export async function cancelSmartNotifications(): Promise<void> {
   }
 }
 
+/** The `trigger` the headless background task syncs with. */
+export const BACKGROUND_SYNC_TRIGGER = 'background-task';
+
+/**
+ * The scheduled count last reported to analytics this launch. A sync runs on
+ * every change to the word set, so only a changed count is news.
+ */
+let lastReportedScheduledCount: number | null = null;
+
 /**
  * Replace the scheduled smart reminders with a freshly computed plan.
  * Idempotent: cancels every managed notification, then schedules the plan.
@@ -364,12 +368,16 @@ export async function syncSmartNotifications(
       }
     }
 
-    void analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_SYNCED, {
-      scheduledCount,
-      planned: plan.length,
-      horizonDays: SMART_NOTIFICATIONS.HORIZON_DAYS,
-      trigger,
-    });
+    // Never from the background task, whose run is not a use of the app.
+    if (trigger !== BACKGROUND_SYNC_TRIGGER && scheduledCount !== lastReportedScheduledCount) {
+      lastReportedScheduledCount = scheduledCount;
+      void analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_SYNCED, {
+        scheduledCount,
+        planned: plan.length,
+        horizonDays: SMART_NOTIFICATIONS.HORIZON_DAYS,
+        trigger,
+      });
+    }
     return scheduledCount;
   } catch (error) {
     void handleError(error, {
@@ -420,14 +428,6 @@ export async function dismissDeliveredSmartNotifications(): Promise<void> {
 }
 
 /**
- * Reported once per app session. A rejected badge write is not an error and not
- * rare — it is the normal state of every install that has never granted
- * notifications — so one event per session is the signal, and a per-write event
- * would be pure noise.
- */
-let badgeRejectionReported = false;
-
-/**
  * Write the app icon badge. Returns whether the OS actually took the number.
  *
  * THE WRITE IS PERMISSION-GATED. iOS grants the badge as part of notification
@@ -450,15 +450,10 @@ export async function setAppBadgeCount(count: number): Promise<boolean> {
     const validCount = Math.max(0, Math.floor(count));
 
     // Expo already reports false by itself when badge permission is missing,
-    // so pass its answer through rather than claiming success.
-    const applied = await Notifications.setBadgeCountAsync(validCount);
-
-    if (!applied && !badgeRejectionReported) {
-      badgeRejectionReported = true;
-      void analytics.track(ANALYTICS_EVENTS.BADGE_WRITE_REJECTED, { count: validCount });
-    }
-
-    return applied;
+    // so pass its answer through rather than claiming success. Not an event: a
+    // rejection is the normal state of every install without notifications,
+    // which the `notifications_enabled` super property already says.
+    return await Notifications.setBadgeCountAsync(validCount);
   } catch (error) {
     void handleError(error, {
       showToast: false,
@@ -517,17 +512,66 @@ export async function getPermissionStatus(): Promise<NotificationPermissionStatu
   }
 }
 
+/** Where an ask for the notification permission came from. */
+export type NotificationPermissionSource = 'review_complete' | 'first_word_saved' | 'settings';
+
+export interface NotificationPermissionAsk {
+  source: NotificationPermissionSource;
+  /** A priming card explained the reminders before the OS dialog could appear */
+  primed: boolean;
+}
+
+/** The OS grant, on every event from now on. */
+const registerNotificationsEnabled = (granted: boolean): void => {
+  void analytics.registerSuperProperties({ [SUPER_PROPERTIES.NOTIFICATIONS_ENABLED]: granted });
+};
+
+/**
+ * Read the OS grant again and put it on every event (`notifications_enabled`):
+ * at launch and on every return to the foreground, since the learner can change
+ * it in system settings at any time. Check-only.
+ */
+export async function refreshNotificationsEnabled(): Promise<void> {
+  registerNotificationsEnabled((await getPermissionStatus()) === 'granted');
+}
+
+const reportPermissionResult = (
+  granted: boolean,
+  prompted: boolean,
+  { source, primed }: NotificationPermissionAsk,
+): void => {
+  void analytics.track(ANALYTICS_EVENTS.PERMISSION_RESULT, {
+    permission: 'notifications',
+    granted,
+    primed,
+    prompted,
+    source,
+  });
+  registerNotificationsEnabled(granted);
+};
+
 /**
  * Whether reminders may be delivered, asking the OS only when the answer is
  * still open. A granted or final answer is returned as it stands (Expo best
  * practice: check before requesting); an undetermined one shows the dialog.
+ *
+ * Every ask is a `Permission Result`, with `prompted` saying whether a dialog
+ * appeared; `Permission Prompt Shown` goes out only when one is about to.
  */
-export async function ensurePermissions(): Promise<boolean> {
+export async function ensurePermissions(ask: NotificationPermissionAsk): Promise<boolean> {
   if (!Notifications) return false;
   try {
     const current = toPermissionStatus(Notifications, await Notifications.getPermissionsAsync());
-    if (current !== 'undetermined') return current === 'granted';
+    if (current !== 'undetermined') {
+      reportPermissionResult(current === 'granted', false, ask);
+      return current === 'granted';
+    }
 
+    void analytics.track(ANALYTICS_EVENTS.PERMISSION_PROMPT_SHOWN, {
+      permission: 'notifications',
+      primed: ask.primed,
+      source: ask.source,
+    });
     const requested = await Notifications.requestPermissionsAsync({
       ios: {
         allowAlert: true,
@@ -541,7 +585,9 @@ export async function ensurePermissions(): Promise<boolean> {
       // is a single yes/no permission), so the key is omitted entirely.
     });
 
-    return toPermissionStatus(Notifications, requested) === 'granted';
+    const granted = toPermissionStatus(Notifications, requested) === 'granted';
+    reportPermissionResult(granted, true, ask);
+    return granted;
   } catch (error) {
     void handleError(error, {
       showToast: false,

@@ -92,10 +92,18 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
       successFeedback();
       showToast(STRINGS.WORDS_ADDED_SUCCESS, undefined, ToastType.SUCCESS);
 
-      // Track analytics
+      // Track analytics. The starter deck is also a way to save words, and
+      // counts as one in the save funnel; Common Words Added keeps its history.
       void analytics.track(ANALYTICS_EVENTS.COMMON_WORDS_ADDED, {
         count: addedCount,
       });
+      if (addedCount > 0) {
+        void analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
+          method: 'common_words',
+          source: 'practice',
+          count: addedCount,
+        });
+      }
 
       // Seeded words count for the first-run checklist — the goal is a working
       // practice loop, however the words got there

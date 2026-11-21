@@ -146,14 +146,18 @@ export function useOnboardingChecklist(articlesData: Article[]) {
   const isEligible = Boolean(state?.initializedAt && !state.dismissed);
   const isChecklistVisible = isEligible && !state?.completedAt;
 
-  // Track shown once per session, and item completions while visible
+  // Shown once per session, reported by the card itself once it is on screen:
+  // eligibility alone is not enough, since the card waits behind the welcome
+  // intro. Item completions are tracked below while it is visible.
   const hasTrackedShownRef = useRef(false);
-  useEffect(() => {
-    if (isChecklistVisible && !hasTrackedShownRef.current) {
-      hasTrackedShownRef.current = true;
-      void analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_SHOWN, { done_count: doneCount });
-    }
-  }, [isChecklistVisible, doneCount]);
+  // A callback, because the returned object is memoised on it.
+  const trackShown = useCallback((shownDoneCount: number): void => {
+    if (hasTrackedShownRef.current) return;
+    hasTrackedShownRef.current = true;
+    void analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_SHOWN, {
+      done_count: shownDoneCount,
+    });
+  }, []);
 
   // Partial, not total: `Object.fromEntries` genuinely cannot promise a key per
   // step, and asserting one meant `previous[step]` claimed `boolean` for a step
@@ -192,8 +196,10 @@ export function useOnboardingChecklist(articlesData: Article[]) {
       finalizeCompletion,
       /** Hide the checklist for good, at the learner's request */
       dismiss: dismissChecklist,
+      /** The card is on screen: Onboarding Checklist Shown, once per session */
+      trackShown,
     }),
-    [isEligible, isChecklistVisible, items, doneCount, allDone, finalizeCompletion],
+    [isEligible, isChecklistVisible, items, doneCount, allDone, finalizeCompletion, trackShown],
   );
 }
 

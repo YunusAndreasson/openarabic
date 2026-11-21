@@ -1,16 +1,46 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useTutorialContext } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { TutorialId } from '@/constants/tutorials';
 import { useVoiceOfferEligible } from '@/hooks/review/useVoicePriming';
 import { analytics } from '@/services/analytics';
-import { ensurePermissions, getPermissionStatus } from '@/services/notificationService';
+import {
+  ensurePermissions,
+  getPermissionStatus,
+  type NotificationPermissionSource,
+} from '@/services/notificationService';
+import type { AppDispatch } from '@/store/store';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { remindersToggled } from '@/store/settingsSlice';
 import {
   loadNotificationPromptState,
   recordAccepted,
+  recordFirstWordOffer,
   recordImpression,
 } from '@/utils/notificationPromptStorage';
+
+/** The two moments the priming card appears in. */
+type PrimingSource = Extract<NotificationPermissionSource, 'review_complete' | 'first_word_saved'>;
+
+/**
+ * "Turn on reminders", from either moment: remembered as accepted whatever the
+ * OS answers, then the OS dialog, which is never shown without this card first.
+ */
+async function acceptPriming(source: PrimingSource, dispatch: AppDispatch): Promise<void> {
+  void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_ACCEPTED, { source });
+  await recordAccepted();
+
+  const granted = await ensurePermissions({ source, primed: true });
+  if (granted) {
+    // useSmartNotifications watches this setting and schedules the plan.
+    dispatch(remindersToggled(true));
+  }
+}
+
+function declinePriming(source: PrimingSource): void {
+  void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_DECLINED, { source });
+}
 
 /** After a decline, ask once more only after this many further sessions */
 const PRIMING_REASK_SESSION_GAP = 5;
@@ -108,7 +138,9 @@ export function useNotificationPriming(): UseNotificationPrimingResult {
       impressionRecordedRef.current = true;
       setShowPrimingCard(true);
       void recordImpression();
-      void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_SHOWN);
+      void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_SHOWN, {
+        source: 'review_complete',
+      });
     };
 
     void evaluate().finally(() => {
@@ -120,24 +152,76 @@ export function useNotificationPriming(): UseNotificationPrimingResult {
   }, [reminderTime.enabled, voiceOfferOpen]);
 
   const accept = useCallback(async (): Promise<void> => {
-    void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_ACCEPTED);
-    await recordAccepted();
-
-    const granted = await ensurePermissions();
-    void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PERMISSION_RESULT, { granted });
-
-    if (granted) {
-      // useSmartNotifications watches this setting and schedules the plan.
-      dispatch(remindersToggled(true));
-    }
+    await acceptPriming('review_complete', dispatch);
     // OS-denied: hide silently — no follow-up alert on a celebration screen.
     setShowPrimingCard(false);
   }, [dispatch]);
 
   const decline = useCallback((): void => {
-    void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_DECLINED);
+    declinePriming('review_complete');
     setShowPrimingCard(false);
   }, []);
 
   return { showPrimingCard, resolved, accept, decline };
+}
+
+export interface UseFirstWordNotificationPrimingResult {
+  showPrimingCard: boolean;
+  /** A word was just saved into an empty study list: offer reminders, if this is the moment. */
+  offer: () => void;
+  accept: () => Promise<void>;
+  decline: () => void;
+}
+
+/**
+ * The same ask, right after the learner's first saved word: the first moment
+ * "we'll remind you when it's due" is about something they have. Shown once,
+ * only while the OS has never been asked (a denial goes through settings, a
+ * grant needs nothing), never while the welcome intro is still to come, and
+ * not at all once reminders are on or the review card was accepted.
+ *
+ * It has its own flag rather than one of the review card's two impressions, so
+ * that card still gets its turn after a "Not now" here.
+ */
+export function useFirstWordNotificationPriming(): UseFirstWordNotificationPrimingResult {
+  const dispatch = useAppDispatch();
+  const remindersEnabled = useAppSelector(state => state.settings.reminderTime.enabled);
+  const { shouldShowTutorial } = useTutorialContext();
+  const [showPrimingCard, setShowPrimingCard] = useState(false);
+  // One evaluation at a time: two quick saves must not both pass the checks.
+  const evaluatingRef = useRef(false);
+
+  const evaluate = async (): Promise<void> => {
+    const state = await loadNotificationPromptState();
+    if (state.accepted || state.firstWordOfferShown) return;
+    if ((await getPermissionStatus()) !== 'undetermined') return;
+
+    await recordFirstWordOffer();
+    setShowPrimingCard(true);
+    void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_SHOWN, {
+      source: 'first_word_saved',
+    });
+  };
+
+  const offer = (): void => {
+    if (remindersEnabled || showPrimingCard || evaluatingRef.current) return;
+    if (shouldShowTutorial(TutorialId.WELCOME_INTRO)) return;
+
+    evaluatingRef.current = true;
+    void evaluate().finally(() => {
+      evaluatingRef.current = false;
+    });
+  };
+
+  const accept = async (): Promise<void> => {
+    await acceptPriming('first_word_saved', dispatch);
+    setShowPrimingCard(false);
+  };
+
+  const decline = (): void => {
+    declinePriming('first_word_saved');
+    setShowPrimingCard(false);
+  };
+
+  return { showPrimingCard, offer, accept, decline };
 }

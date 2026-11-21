@@ -4,6 +4,7 @@ import { StyleSheet } from 'react-native';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import type { CardElevation } from '@/types/ui/card.types';
 
 interface PrimingCardProps {
   title: string;
@@ -17,6 +18,8 @@ interface PrimingCardProps {
    * title weight distinguishes the two cards that use this.
    */
   emphasis?: 'flagship' | 'quiet';
+  /** `floating` where the card sits over content instead of in a slot */
+  elevation?: CardElevation;
 }
 
 /**
@@ -40,8 +43,9 @@ export const PrimingCard = ({
   declineLabel,
   onDecline,
   emphasis = 'quiet',
+  elevation,
 }: PrimingCardProps) => (
-  <BaseCard contentStyle={styles.content}>
+  <BaseCard contentStyle={styles.content} elevation={elevation}>
     <ThemedText type={emphasis === 'flagship' ? 'heading3' : 'bodyBold'}>{title}</ThemedText>
     <ThemedText colorName="secondaryText" style={styles.body} type="body">
       {body}

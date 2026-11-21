@@ -35,7 +35,28 @@ export interface AddRefusal {
   message: string;
 }
 
+/** How a single word was saved: the word card's Save, or a long press on the word. */
+export type WordAddMethod = 'sheet' | 'long_press';
+
+/** Where the saving screen is, as Word Added to Study reports it. */
+export type WordAddSource = 'article' | 'practice';
+
+/** Refusal reasons as Word Add Refused spells them. */
+const REFUSAL_EVENT_REASON: Record<AddRefusal['reason'], string> = {
+  'daily-limit': 'daily_limit',
+  'due-backlog': 'due_backlog',
+};
+
+export interface StudyWordMutationsOptions {
+  /** Where the adds through this hook happen. */
+  source?: WordAddSource;
+  /** An add landed in a study list that was empty: the learner's first saved word. */
+  onFirstWordSaved?: () => void;
+}
+
 export interface StudyWordPressOptions {
+  /** How the add was made; the word card's Save when left out. */
+  method?: WordAddMethod;
   /**
    * Fired once the gates have passed and the quota is reserved, immediately
    * before the write goes out — so a caller can commit to UI that implies
@@ -69,10 +90,12 @@ interface StudyWordMutationsResult {
  * Handles adding and removing words from user's study list with validation
  *
  * @param refetchStudyWords - Function to refetch study words (returns a Promise)
+ * @param options - Where adds happen, and what to do after the first saved word
  * @returns Object with study word mutation functions
  */
 export const useStudyWordMutations = (
   refetchStudyWords?: () => Promise<void>,
+  { source, onFirstWordSaved }: StudyWordMutationsOptions = {},
 ): StudyWordMutationsResult => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -176,6 +199,9 @@ export const useStudyWordMutations = (
     (refusal: AddRefusal) => {
       showToast(refusal.message, REFUSAL_TOAST_DURATION, ToastType.IMPORTANT);
       warningFeedback();
+      void analytics.track(ANALYTICS_EVENTS.WORD_ADD_REFUSED, {
+        reason: REFUSAL_EVENT_REASON[refusal.reason],
+      });
     },
     [showToast],
   );
@@ -247,11 +273,8 @@ export const useStudyWordMutations = (
         const removedWord = context?.previousStudyWords?.find(sw => sw.root_id === rootId);
         void decrementIfAddedToday(removedWord?.created_at);
       } else if (result.changed && result.inStudyList && !wasInStudyList) {
-        void analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
-          root_id: rootId,
-          source: 'article',
-        });
-        // First-run checklist signal (idempotent, fire-and-forget)
+        // Word Added to Study is tracked by handleRootPress, which knows how
+        // the add was made. First-run checklist signal (idempotent, fire-and-forget)
         void markOnboardingStep(OnboardingStep.SAVE_WORD);
       }
       // No event when an intent-carrying call was a no-op (state unchanged)
@@ -304,6 +327,8 @@ export const useStudyWordMutations = (
         const wordExists = existingWords?.some(word => word.root_id === rootId) ?? false;
         // Explicit intent (from the button the user saw) wins over the cache guess
         const isAdd = intent ? intent === 'add' : !wordExists;
+        // A loaded, empty study list: this add is the learner's first saved word
+        const isFirstWord = isAdd && existingWords?.length === 0;
 
         // Gates apply to adds only — removing must always be possible
         if (isAdd) {
@@ -342,6 +367,14 @@ export const useStudyWordMutations = (
             intent,
           });
           if (isAdd && !result.changed) await decrementDailyWordCount();
+          if (isAdd && result.changed && result.inStudyList) {
+            void analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
+              root_id: rootId,
+              method: options?.method ?? 'sheet',
+              source,
+            });
+            if (isFirstWord) onFirstWordSaved?.();
+          }
           return result.inStudyList;
         } catch {
           // Adding reserves the daily quota before the network write so two
@@ -374,6 +407,8 @@ export const useStudyWordMutations = (
       decrementDailyWordCount,
       getLimitReachedMessage,
       queryClient,
+      source,
+      onFirstWordSaved,
     ],
   );
 

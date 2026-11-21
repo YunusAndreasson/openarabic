@@ -108,7 +108,10 @@ export function ArticleCard({
   const metadataText = getArticleMetadata(article);
 
   // Generate article route - featured articles start from beginning
-  const articleHref = getArticleRoute(article.id, { disableAutoScroll: isFeaturedArticle });
+  const articleHref = getArticleRoute(article.id, {
+    disableAutoScroll: isFeaturedArticle,
+    source: isFeaturedArticle ? 'featured' : undefined,
+  });
 
   const handlePress = useCallback(() => {
     router.push(articleHref);

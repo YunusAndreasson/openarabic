@@ -15,6 +15,11 @@ import type { SentenceWord, StudyWordIntent } from '@/types/vocabulary.types';
 import type { StudyWordPressOptions } from '@/hooks/articles/useStudyWordMutations';
 import { mediumFeedback } from '@/utils/haptics';
 
+/** The step before a save: `in_study` says whether the word was already saved. */
+const trackWordCardOpened = (via: 'tap' | 'tooltip', inStudy: boolean): void => {
+  void analytics.track(ANALYTICS_EVENTS.WORD_CARD_OPENED, { via, in_study: inStudy });
+};
+
 export interface UseArticleWordInteractionsOptions {
   /** Handler for toggling word study status */
   handleRootPress: (
@@ -54,6 +59,24 @@ export function useArticleWordInteractions({
   // no per-screen local copy that can drift once a word is toggled elsewhere.
   const studyWordsQuery = useQuery({
     ...gated(fsrsQueries.all, user?.id),
+  });
+
+  /**
+   * Whether a root is currently in the study list. Reads the shared
+   * fsrsQueries.all cache reactively — the same source every screen mutates
+   * through, so a toggle from the dictionary list or the word-detail page is
+   * reflected here without waiting for this screen to remount.
+   */
+  const isRootInStudyList = (rootId: RootId): boolean => {
+    return studyWordsQuery.data?.some(word => word.root_id === rootId) ?? false;
+  };
+
+  // Ref mirror (synced every commit) so handleWordPress and handleWordLongPress keep
+  // stable identities across optimistic study-state updates (avoids re-rendering
+  // every sentence)
+  const isRootInStudyListRef = useRef(isRootInStudyList);
+  useEffect(() => {
+    isRootInStudyListRef.current = isRootInStudyList;
   });
 
   // Tooltip state for word tap preview
@@ -107,6 +130,7 @@ export function useArticleWordInteractions({
 
       if (!showTooltipFirstRef.current) {
         wordDetailsModal.open(word);
+        trackWordCardOpened('tap', !!word.root_id && isRootInStudyListRef.current(word.root_id));
         return;
       }
 
@@ -151,6 +175,8 @@ export function useArticleWordInteractions({
     if (tooltip?.word) {
       setActiveTooltip(null);
       wordDetailsModal.open(tooltip.word);
+      const { root_id: rootId } = tooltip.word;
+      trackWordCardOpened('tooltip', !!rootId && isRootInStudyListRef.current(rootId));
     }
   }, [wordDetailsModal.open]);
 
@@ -183,24 +209,6 @@ export function useArticleWordInteractions({
     [user?.id, handleRootPress, refetchStudyWords],
   );
 
-  /**
-   * Whether a root is currently in the study list. Reads the shared
-   * fsrsQueries.all cache reactively — the same source every screen mutates
-   * through, so a toggle from the dictionary list or the word-detail page is
-   * reflected here without waiting for this screen to remount.
-   */
-  const isRootInStudyList = (rootId: RootId): boolean => {
-    return studyWordsQuery.data?.some(word => word.root_id === rootId) ?? false;
-  };
-
-  // Ref mirror (synced every commit) so handleWordLongPress keeps a stable
-  // identity across optimistic study-state updates (avoids re-rendering
-  // every sentence)
-  const isRootInStudyListRef = useRef(isRootInStudyList);
-  useEffect(() => {
-    isRootInStudyListRef.current = isRootInStudyList;
-  });
-
   // The query mutation/refetch callbacks can receive new identities when the
   // study cache updates. Long-press is handed to every mounted word, so keep
   // that public callback stable and read the latest mutation through a ref.
@@ -229,15 +237,14 @@ export function useArticleWordInteractions({
 
       mediumFeedback();
       const wasInStudy = isRootInStudyListRef.current(word.root_id);
-      // Explicit intent: the toast below promises this exact direction
-      const succeeded = await handleAddWordToStudyRef.current(word, wasInStudy ? 'remove' : 'add');
+      // Explicit intent: the toast below promises this exact direction. The
+      // save itself is counted once, as Word Added to Study with this method.
+      const succeeded = await handleAddWordToStudyRef.current(word, wasInStudy ? 'remove' : 'add', {
+        method: 'long_press',
+      });
       // Guard failures (daily limit, auth) already showed their own feedback
       if (!succeeded) return;
 
-      void analytics.track(ANALYTICS_EVENTS.WORD_LONG_PRESS_SAVE, {
-        root_id: word.root_id,
-        action: wasInStudy ? 'remove' : 'add',
-      });
       showToast(
         wasInStudy ? STRINGS.WORD_QUICK_REMOVED : STRINGS.WORD_QUICK_SAVED,
         3000,

@@ -1197,6 +1197,9 @@ export const STRINGS = {
   NOTIFICATION_PRIMING_TITLE: 'Catch words before they fade',
   NOTIFICATION_PRIMING_BODY:
     "Each word you just practised is now on its own forgetting curve. We'll nudge you only when a review actually matters — usually just before words start to fade.",
+  // The same ask in the reader, right after the first saved word
+  NOTIFICATION_PRIMING_FIRST_WORD_BODY:
+    "Your first word now has its own review schedule. We'll nudge you only when it's due, just before it starts to fade.",
   NOTIFICATION_PRIMING_ACCEPT: 'Turn on reminders',
   NOTIFICATION_PRIMING_DECLINE: 'Not now',
   // Speak-the-answer priming (practice screen). The download size is stated in

@@ -126,12 +126,14 @@ export const useAccountScreen = () => {
               try {
                 // Stop audio before signing out to prevent stale audio state
                 await simpleAudioService.stop();
-                await analytics.trackSignOut();
                 const { error } = await supabase.auth.signOut();
                 if (error) {
                   Alert.alert(STRINGS.ERROR, error.message);
                   return;
                 }
+                // Only a sign-out that happened, and before reset() replaces the
+                // anonymous id it belongs to.
+                await analytics.trackSignOut();
                 await analytics.reset();
                 router.replace(ROUTE_PATHS.AUTH);
               } catch (error) {
@@ -210,7 +212,7 @@ export const useAccountScreen = () => {
     async (enabled: boolean) => {
       if (enabled) {
         try {
-          const granted = await ensurePermissions();
+          const granted = await ensurePermissions({ source: 'settings', primed: false });
 
           if (!granted) {
             showEnableNotificationsAlert();

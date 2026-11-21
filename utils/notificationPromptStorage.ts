@@ -1,7 +1,7 @@
 /**
  * Notification priming prompt state
- * Device-local funnel state for the "turn on smart reminders" card on the
- * review completion screen: a single JSON blob, read through an in-module
+ * Device-local funnel state for the "turn on smart reminders" card, on the
+ * review completion screen and after the first saved word: a single JSON blob, read through an in-module
  * cache, with fail-safe reads. Kept out of Redux — this is prompt
  * bookkeeping, not a preference.
  *
@@ -26,6 +26,8 @@ export interface NotificationPromptState {
   lastImpressionSession: number;
   /** User pressed "Turn on reminders" (any OS outcome) or enabled from settings */
   accepted: boolean;
+  /** The one offer after the first saved word has been shown */
+  firstWordOfferShown: boolean;
 }
 
 function createState(overrides: Partial<NotificationPromptState> = {}): NotificationPromptState {
@@ -35,6 +37,7 @@ function createState(overrides: Partial<NotificationPromptState> = {}): Notifica
     impressions: 0,
     lastImpressionSession: 0,
     accepted: false,
+    firstWordOfferShown: false,
     ...overrides,
   };
 }
@@ -48,11 +51,13 @@ const promptStore = createJsonStore<NotificationPromptState>({
       impressions: 'number',
       lastImpressionSession: 'number',
       accepted: 'boolean',
+      firstWordOfferShown: 'boolean',
     }),
   empty: () => createState(),
   // FAIL-SAFE: a read/parse error yields an exhausted state (impressions maxed,
   // not persisted) so a storage problem can never turn into a nagging prompt.
-  onReadError: () => createState({ impressions: Number.MAX_SAFE_INTEGER }),
+  onReadError: () =>
+    createState({ impressions: Number.MAX_SAFE_INTEGER, firstWordOfferShown: true }),
   cache: true,
 });
 
@@ -83,6 +88,15 @@ export async function recordImpression(): Promise<void> {
     impressions: state.impressions + 1,
     lastImpressionSession: state.sessionsCompleted,
   });
+}
+
+/**
+ * Record that the offer after the first saved word was shown. It shows once, and
+ * keeps out of the review card's two impressions: a different moment, asked once.
+ */
+export async function recordFirstWordOffer(): Promise<void> {
+  const state = await loadNotificationPromptState();
+  await promptStore.write({ ...state, firstWordOfferShown: true });
 }
 
 /** Record the user's choice — the card never shows again after this. */

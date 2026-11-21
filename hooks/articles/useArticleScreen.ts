@@ -24,6 +24,7 @@ import { ToastType } from '@/types/enums';
 import { stopNonPlaylistAudioSafely } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
+import type { ArticleOpenSource } from '@/utils/routeBuilders';
 import { dismissOrReplace } from '@/utils/sheetNavigation';
 
 export interface UseArticleScreenOptions {
@@ -31,6 +32,10 @@ export interface UseArticleScreenOptions {
   showToast: (message: string, duration: number, type: ToastType) => void;
   disableAutoScroll?: boolean;
   targetSentenceId?: number;
+  /** What opened the reader, for Article Viewed */
+  source?: ArticleOpenSource | 'other';
+  /** The learner's first word was just saved, here */
+  onFirstWordSaved?: () => void;
 }
 
 /**
@@ -45,6 +50,8 @@ export function useArticleScreen({
   showToast,
   disableAutoScroll = false,
   targetSentenceId,
+  source = 'other',
+  onFirstWordSaved,
 }: UseArticleScreenOptions) {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -80,16 +87,20 @@ export function useArticleScreen({
         article_id: article.id,
         article_title: article.title,
         category: article.category.name,
+        source,
       });
       void markOnboardingStep(OnboardingStep.READ_TEXT);
     }
-  }, [article]);
+  }, [article, source]);
 
   // Article mutations - using focused hooks directly
   const { handleToggleReadingList } = useReadingListMutations();
-  const { handleRootPress } = useStudyWordMutations(async () => {
-    await refetchStudyWords();
-  });
+  const { handleRootPress } = useStudyWordMutations(
+    async () => {
+      await refetchStudyWords();
+    },
+    { source: 'article', onFirstWordSaved },
+  );
 
   // Reading preference: default is tap-to-open-card; opt-in tooltip-first.
   const showTooltipFirst = useAppSelectorShallow(selectWordTapShowsTooltip);

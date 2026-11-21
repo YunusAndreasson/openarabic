@@ -30,7 +30,7 @@ export default function FilterScreen(): JSX.Element {
 
   // Stable identity: FilteredArticleView's renderItem depends on this callback
   const handleArticlePress = useCallback((article: Article) => {
-    router.push(getArticleRoute(article.id));
+    router.push(getArticleRoute(article.id, { source: 'category' }));
   }, []);
 
   // Both states stand in for a list that does not exist yet. Gated on

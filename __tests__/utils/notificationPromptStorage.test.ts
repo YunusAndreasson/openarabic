@@ -103,13 +103,34 @@ describe('notificationPromptStorage', () => {
     expect(state.impressions).toBe(1);
   });
 
-  test('stores the same bytes it always did', async () => {
+  test('stores the same bytes it always did, with the first-word flag after them', async () => {
     const { recordSessionCompleted } = freshModule();
     await recordSessionCompleted();
 
     expect(mockMemoryStore.get(STORAGE_KEYS.NOTIFICATION_PROMPT_STATE)).toBe(
-      '{"version":1,"sessionsCompleted":1,"impressions":0,"lastImpressionSession":0,"accepted":false}',
+      '{"version":1,"sessionsCompleted":1,"impressions":0,"lastImpressionSession":0,"accepted":false,"firstWordOfferShown":false}',
     );
+  });
+
+  test('a blob written before the first-word offer reads it as not yet shown', async () => {
+    mockMemoryStore.set(
+      STORAGE_KEYS.NOTIFICATION_PROMPT_STATE,
+      '{"version":1,"sessionsCompleted":4,"impressions":1,"lastImpressionSession":2,"accepted":false}',
+    );
+
+    const state = await freshModule().loadNotificationPromptState();
+
+    expect(state.firstWordOfferShown).toBe(false);
+    expect(state.impressions).toBe(1);
+  });
+
+  test('recordFirstWordOffer is remembered and spends none of the review card impressions', async () => {
+    const first = freshModule();
+    await first.recordFirstWordOffer();
+
+    const state = await freshModule().loadNotificationPromptState();
+    expect(state.firstWordOfferShown).toBe(true);
+    expect(state.impressions).toBe(0);
   });
 
   test('a stored field of the wrong type reads as its default, not as stored', async () => {
@@ -154,6 +175,7 @@ describe('notificationPromptStorage', () => {
         impressions: 1,
         lastImpressionSession: 0,
         accepted: false,
+        firstWordOfferShown: false,
       },
     );
   });
@@ -165,6 +187,7 @@ describe('notificationPromptStorage', () => {
     const state = await loadNotificationPromptState();
 
     expect(state.impressions).toBeGreaterThanOrEqual(2);
+    expect(state.firstWordOfferShown).toBe(true);
     // Fail-safe state is not persisted — a transient error retries next launch
     expect(mockSetItem).not.toHaveBeenCalled();
   });

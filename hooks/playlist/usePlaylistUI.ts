@@ -37,7 +37,7 @@ export const usePlaylistUI = ({ sortedReadingList, editMode }: ListenUIParams) =
         runWhenIdle(() => {
           prefetchArticle(articleId);
         });
-        router.push(getArticleRoute(articleId));
+        router.push(getArticleRoute(articleId, { source: 'playlist' }));
       }
     },
     [prefetchArticle, sortedReadingList, editMode],

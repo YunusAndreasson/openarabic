@@ -3,6 +3,7 @@
  */
 
 import { STRINGS } from '@/constants/strings';
+import { timestampMs } from '@/utils/dateTimeUtils';
 import { fillTemplate } from '@/utils/fillTemplate';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -56,6 +57,36 @@ export function getErrorCode(error: unknown): string | undefined {
   const { code } = error;
   if (typeof code === 'string') return code;
   return typeof code === 'number' ? String(code) : undefined;
+}
+
+/**
+ * A short machine code for an analytics event: the error's own code (a native
+ * code, Supabase's `invalid_credentials`), else its HTTP status. Never the
+ * message, which is free text. Undefined when the error carries neither.
+ */
+export function getAnalyticsErrorCode(error: unknown): string | undefined {
+  const code = getErrorCode(error);
+  if (code) return code;
+  if (typeof error === 'object' && error !== null && 'status' in error) {
+    const { status } = error;
+    if (typeof status === 'number') return String(status);
+  }
+  return undefined;
+}
+
+/** Signed in this close to the account's creation: the account was made by this sign-in. */
+const NEW_ACCOUNT_WINDOW_MS = 60_000;
+
+/**
+ * Whether the sign-in that returned `user` also created the account. Apple and
+ * Google sign-in create the account on first use, through the same call as every
+ * later sign-in; both stamps come from the server, so the device clock plays no
+ * part. A missing or unreadable stamp reads as an existing account.
+ */
+export function isNewAccount(user: { created_at: string; last_sign_in_at?: string }): boolean {
+  const createdAt = timestampMs(user.created_at);
+  const signedInAt = timestampMs(user.last_sign_in_at);
+  return signedInAt - createdAt < NEW_ACCOUNT_WINDOW_MS;
 }
 
 /**

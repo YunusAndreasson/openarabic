@@ -69,7 +69,8 @@ export class ReadingProgressService {
         }),
       {
         ...errorConfig.update,
-        analyticsProperties: { userId, articleId },
+        // Never the userId: Mixpanel does not get the account id.
+        analyticsProperties: { articleId },
       },
       request,
     );
@@ -94,7 +95,7 @@ export class ReadingProgressService {
           .order('article_id')
           .range(from, to)
           .abortSignal(signal),
-      { errorConfig: { ...errorConfig.bulkGet, analyticsProperties: { userId } }, request },
+      { errorConfig: errorConfig.bulkGet, request },
     );
 
     // Convert to Map for easy lookup
@@ -116,10 +117,7 @@ export class ReadingProgressService {
     // were only ever read to see whether there were any.
     const deletedCount = await executeCountQuery(
       () => supabase.from('reading_progress').delete({ count: 'exact' }).eq('user_id', userId),
-      {
-        ...errorConfig.deleteAll,
-        analyticsProperties: { userId },
-      },
+      errorConfig.deleteAll,
     );
 
     // Verify rows were actually deleted
@@ -139,10 +137,7 @@ export class ReadingProgressService {
             .from('reading_progress')
             .update({ last_sentence_read: -1 })
             .eq('user_id', userId),
-        {
-          ...errorConfig.resetUpdate,
-          analyticsProperties: { userId },
-        },
+        errorConfig.resetUpdate,
       );
     }
   }

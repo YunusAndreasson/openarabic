@@ -8,7 +8,7 @@ import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { metaEvents } from '@/services/metaEvents';
 import { supabase } from '@/services/supabase';
-import { getEmailError, getPasswordError } from '@/utils/authUtils';
+import { getAnalyticsErrorCode, getEmailError, getPasswordError } from '@/utils/authUtils';
 import { handleError, showSuccessToast } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 import { isKnownOffline } from '@/utils/network';
@@ -34,7 +34,12 @@ interface AuthRequestFailure {
   analyticsEventName: string;
   /** Shown under the password field as well, when the form has room for it. */
   fieldError?: string;
+  /** A sign-in or sign-up, whose failures are counted as `Auth Failed` (a reset email is neither). */
+  isAuthAttempt?: boolean;
 }
+
+/** The method every request in this form signs in with. */
+const EMAIL_METHOD = 'email';
 
 /**
  * Hook handling authentication form logic
@@ -89,6 +94,7 @@ export function useAuthForm(): UseAuthFormReturn {
   const runAuthRequest = useCallback(
     async (request: () => Promise<void>, failure: AuthRequestFailure): Promise<void> => {
       if (await isKnownOffline()) {
+        if (failure.isAuthAttempt) void analytics.trackAuthFailed(EMAIL_METHOD, 'offline');
         setPasswordError(STRINGS.NO_INTERNET_CONNECTION);
         void handleError(new Error('No network connection available'), {
           toastMessage: STRINGS.NO_INTERNET_CONNECTION,
@@ -109,6 +115,9 @@ export function useAuthForm(): UseAuthFormReturn {
       try {
         await request();
       } catch (err) {
+        if (failure.isAuthAttempt) {
+          void analytics.trackAuthFailed(EMAIL_METHOD, getAnalyticsErrorCode(err) ?? 'unknown');
+        }
         if (failure.fieldError) setPasswordError(failure.fieldError);
         void handleError(err, {
           toastMessage: failure.toastMessage,
@@ -135,6 +144,7 @@ export function useAuthForm(): UseAuthFormReturn {
         });
 
         if (error) {
+          void analytics.trackAuthFailed(EMAIL_METHOD, getAnalyticsErrorCode(error) ?? 'unknown');
           // Show inline error so it's visible even when auth screen overlays the toast
           setPasswordError(error.message);
           void handleError(error, {
@@ -145,7 +155,7 @@ export function useAuthForm(): UseAuthFormReturn {
           return;
         }
 
-        await analytics.trackSignIn('email');
+        await analytics.trackSignIn(EMAIL_METHOD);
         successFeedback();
         router.replace(ROUTE_PATHS.EXPLORE_TAB);
       },
@@ -153,6 +163,7 @@ export function useAuthForm(): UseAuthFormReturn {
         toastMessage: `${STRINGS.SIGN_IN_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
         analyticsEventName: 'Sign_In_Error',
         fieldError: STRINGS.PLEASE_TRY_AGAIN,
+        isAuthAttempt: true,
       },
     );
   }, [email, password, validateEmail, validatePassword, runAuthRequest]);
@@ -171,6 +182,7 @@ export function useAuthForm(): UseAuthFormReturn {
           password,
         });
         if (error) {
+          void analytics.trackAuthFailed(EMAIL_METHOD, getAnalyticsErrorCode(error) ?? 'unknown');
           // "User already registered" is expected user behavior, not a system error
           const isAlreadyRegistered = error.message.toLowerCase().includes('already registered');
           setPasswordError(error.message);
@@ -202,16 +214,25 @@ export function useAuthForm(): UseAuthFormReturn {
           showSuccessToast(STRINGS.CHECK_EMAIL_CONFIRMATION, 5000);
         }
 
-        // Analytics can happen asynchronously without blocking UX
-        analytics.trackSignUp('email').catch(() => {
-          // Silent failure for analytics
-        });
-        metaEvents.logSignUp('email');
+        // Sign Up only for an account that was made. With email confirmation on,
+        // Supabase answers an address that is already registered with a stand-in
+        // user that has no identities, and no error, so that nobody can probe
+        // which addresses have accounts. Fire-and-forget: analytics never
+        // blocks the UX.
+        if (data.user?.identities?.length) {
+          analytics.trackSignUp(EMAIL_METHOD).catch(() => {
+            // Silent failure for analytics
+          });
+          metaEvents.logSignUp(EMAIL_METHOD);
+        } else if (data.user) {
+          void analytics.trackAuthFailed(EMAIL_METHOD, 'user_already_exists');
+        }
       },
       {
         toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
         analyticsEventName: 'Sign_Up_Error',
         fieldError: STRINGS.PLEASE_TRY_AGAIN,
+        isAuthAttempt: true,
       },
     );
   }, [email, password, validateEmail, validatePassword, runAuthRequest]);

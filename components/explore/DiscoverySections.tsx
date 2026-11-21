@@ -22,7 +22,7 @@ const DiscoverySectionsComponent = ({ rails }: DiscoverySectionsProps) => {
 
   const handleArticlePress = useCallback(
     (article: Article) => {
-      router.push(getArticleRoute(article.id, { disableAutoScroll: true }));
+      router.push(getArticleRoute(article.id, { disableAutoScroll: true, source: 'discovery' }));
     },
     [router],
   );

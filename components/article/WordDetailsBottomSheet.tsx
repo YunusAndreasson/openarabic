@@ -226,6 +226,7 @@ export function WordDetailsBottomSheet({
         // Removal is a correction rather than an exit — keep the sheet open
         // there so a mistaken tap can be undone in place.
         const succeeded = await onAddToStudy(word, newValue ? 'add' : 'remove', {
+          method: 'sheet',
           onAllowed: newValue ? requestClose : undefined,
         });
 

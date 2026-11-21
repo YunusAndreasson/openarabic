@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react-native';
 import { DEFAULT_TOAST_DURATION } from '@/constants/animation';
 import { analytics } from '@/services/analytics';
 import { ToastType } from '@/types/enums';
+import { getAnalyticsErrorCode } from '@/utils/authUtils';
 import { toError } from '@/utils/toError';
 
 // Re-exported so the many `import { toError } from '@/utils/errorHandling'`
@@ -283,17 +284,25 @@ const showToastMessage = (
   }
 };
 
+/**
+ * The name and a machine code, and never the message or the stack: those are
+ * free text, which can hold what the learner typed or studied, and Mixpanel is
+ * kept to anonymous counts. Sentry, which gets the whole error, is where a
+ * failure is read.
+ */
 const trackErrorAnalytics = async (
+  error: unknown,
   errorObj: Error,
   eventName?: string,
   additionalProperties?: Record<string, boolean | number | string>,
 ): Promise<void> => {
   try {
+    // Read off what was thrown: `toError` keeps an Error as it is, and wraps
+    // anything else in a fresh Error with no code.
+    const errorCode = getAnalyticsErrorCode(error);
     const analyticsProperties = {
-      errorMessage: errorObj.message,
       errorName: errorObj.name,
-      errorStack: errorObj.stack?.substring(0, 500), // Limit stack trace length
-      timestamp: new Date().toISOString(),
+      ...(errorCode === undefined ? {} : { errorCode }),
       ...additionalProperties,
     };
 
@@ -326,7 +335,7 @@ export const handleError = async (error: unknown, options: ErrorOptions = {}): P
     }
 
     if (opts.trackAnalytics) {
-      await trackErrorAnalytics(errorObj, opts.analyticsEventName, opts.analyticsProperties);
+      await trackErrorAnalytics(error, errorObj, opts.analyticsEventName, opts.analyticsProperties);
     }
 
     if (opts.showToast) {

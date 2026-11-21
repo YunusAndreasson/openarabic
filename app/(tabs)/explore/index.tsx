@@ -99,7 +99,7 @@ export default function ExploreScreen(): JSX.Element {
   // Every article rail on the tab, chosen together so no text appears twice
   const rails = useExploreRails(articlesData, refreshKey, checklist.isChecklistVisible);
 
-  const handleOpenFirstText = useOpenStarterArticle(articlesData);
+  const handleOpenFirstText = useOpenStarterArticle(articlesData, 'intro_cta');
 
   // Build category counts from articles
   const categoryCounts = useMemo(() => {

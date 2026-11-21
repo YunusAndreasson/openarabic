@@ -298,7 +298,8 @@ export class StudySessionStreakService {
           .order('root_id')
           .range(from, to)
           .abortSignal(signal),
-      { errorConfig: { ...errorConfig.activity, analyticsProperties: { userId } }, request },
+      // No `analyticsProperties: { userId }`: Mixpanel never gets the account id.
+      { errorConfig: errorConfig.activity, request },
     );
 
     const dayKeys = new Set<string>();

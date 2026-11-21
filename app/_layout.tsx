@@ -50,7 +50,10 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
 import { ROUTE_PATHS, SHEET_ROUTES } from '@/constants/routes';
+import { useAnalyticsSuperProperties } from '@/hooks/app/useAnalyticsSuperProperties';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
+import { useAppOpenTracking } from '@/hooks/app/useAppOpenTracking';
+import { useScreenViewTracking } from '@/hooks/app/useScreenViewTracking';
 import { useUpdateReady } from '@/hooks/app/useUpdateReady';
 import { useNotificationResponseRouting } from '@/hooks/notifications/useNotificationResponseRouting';
 import { useSmartNotifications } from '@/hooks/notifications/useSmartNotifications';
@@ -422,20 +425,28 @@ function AppContent() {
     // Once ready, never set back to false (prevents unmounting during refresh)
     if (fontsAreReady && authIsReady && contentIsReady && !appReady) {
       // Latching transition tied to async resource readiness (fonts/auth/content)
-      // and bundled side effects (splash hide, analytics). Derived state can't
-      // express the one-shot side-effect chain without re-firing.
+      // and bundled side effects (splash hide). Derived state can't express the
+      // one-shot side-effect chain without re-firing. App Opened follows the
+      // latch in useAppOpenTracking, which knows a background launch from a
+      // real open.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setAppReady(true);
 
       // Hide splash screen when app is ready
       SplashScreen.hide();
-
-      // Track app opened event
-      void analytics.track(ANALYTICS_EVENTS.APP_OPENED, {
-        timestamp: new Date().toISOString(),
-      });
     }
   }, [fontsLoaded, fontError, isAuthLoading, isLoaded, appReady]);
+
+  // Every event carries these; registered before App Opened goes out below.
+  useAnalyticsSuperProperties({ appReady, signedIn: !!session });
+
+  // App Opened (and First Open) once the learner can see the app. After a
+  // background launch, the session starts at that open, not at the launch.
+  useAppOpenTracking(appReady, () => {
+    activeSessionStartedAt.current = Date.now();
+  });
+
+  useScreenViewTracking(appReady);
 
   // Initialize notifications when app is ready (Expo best practice)
   useEffect(() => {

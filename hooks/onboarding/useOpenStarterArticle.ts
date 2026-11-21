@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 import { pickStarterArticle } from '@/utils/articleUtils';
-import { getArticleRoute } from '@/utils/routeBuilders';
+import { getArticleRoute, type ArticleOpenSource } from '@/utils/routeBuilders';
 
 /**
  * Open the text a first-run learner should read first — the welcome intro's
@@ -13,16 +13,20 @@ import { getArticleRoute } from '@/utils/routeBuilders';
  * `pickStarterArticle` (the easiest unread text, falling back to the least
  * read), push it from its first sentence. Nothing happens on an empty catalogue.
  *
+ * @param source - Which of the two it is, for Article Viewed
  * @returns the handler to call; it reads progress at call time
  */
-export function useOpenStarterArticle(articles: Article[]): () => void {
+export function useOpenStarterArticle(
+  articles: Article[],
+  source: Extract<ArticleOpenSource, 'intro_cta' | 'checklist'>,
+): () => void {
   const router = useRouter();
   const { data: progressMap } = useBulkReadingProgress(articles.map(article => article.id));
 
   return () => {
     const starter = pickStarterArticle(articles, progressMap);
     if (starter) {
-      router.push(getArticleRoute(starter.id, { disableAutoScroll: true }));
+      router.push(getArticleRoute(starter.id, { disableAutoScroll: true, source }));
     }
   };
 }

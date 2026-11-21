@@ -37,6 +37,8 @@ jest.mock('@/utils/audioUtils');
 jest.mock('@/utils/errorHandling');
 jest.mock('@/utils/haptics');
 // The hook reads the word-tap preference from Redux; stub the selector so the
+jest.mock('@/services/analytics', () => ({ analytics: { track: jest.fn() } }));
+
 // test doesn't need a store Provider (default: tooltip-first off).
 jest.mock('@/store/hooks', () => ({
   useAppSelectorShallow: jest.fn((..._args: unknown[]) => false),
@@ -46,7 +48,9 @@ import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { AppState } from 'react-native';
 
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
+import { analytics } from '@/services/analytics';
 import type { ArticleId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import type { Tables } from '@/types/database.types';
@@ -247,6 +251,37 @@ describe('useArticleScreen Hook', () => {
       expect(result.current.article).toBe(mockArticle);
       expect(result.current.isInReadingList).toBeTruthy();
       expect(result.current.sortedSentences).toHaveLength(5);
+    });
+
+    test('Article Viewed says what opened the reader; saves are counted as from the article', () => {
+      const mockArticle = createMockArticle({ id: 123 as ArticleId, title: 'My Article' });
+      jest.mocked(useArticleData).mockReturnValue({
+        article: mockArticle,
+        isLoadingArticle: false,
+        sortedSentences: createMockSentences(1),
+        sentenceWordsMap: new Map(),
+        refetchStudyWords: mockRefetchStudyWords,
+        isInReadingList: false,
+      } as any);
+      const onFirstWordSaved = jest.fn();
+
+      renderHook(() =>
+        useArticleScreen({
+          id: '123',
+          showToast: mockShowToast,
+          source: 'intro_cta',
+          onFirstWordSaved,
+        }),
+      );
+
+      expect(analytics.track).toHaveBeenCalledWith(
+        ANALYTICS_EVENTS.ARTICLE_VIEWED,
+        expect.objectContaining({ article_id: 123, source: 'intro_cta' }),
+      );
+      expect(useStudyWordMutations).toHaveBeenCalledWith(expect.any(Function), {
+        source: 'article',
+        onFirstWordSaved,
+      });
     });
 
     test('handles undefined user', () => {

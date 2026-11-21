@@ -14,7 +14,7 @@ import { useAuthForm } from '@/hooks/auth/useAuthForm';
 import { PASSWORD_REQUIREMENTS } from '@/utils/authUtils';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient, UserIdentity } from '@supabase/supabase-js';
 import {
   createAuthErrorMock,
   createNetInfoStateMock,
@@ -63,8 +63,28 @@ jest.mock('@/services/analytics', () => ({
   analytics: {
     trackSignUp: jest.fn(async (..._args: unknown[]) => undefined),
     trackSignIn: jest.fn(async (..._args: unknown[]) => undefined),
+    trackAuthFailed: jest.fn(async (..._args: unknown[]) => undefined),
   },
 }));
+
+jest.mock('@/services/metaEvents', () => ({
+  metaEvents: { logSignUp: jest.fn() },
+}));
+
+/**
+ * A real sign-up's user has an identity. Supabase answers an address that is
+ * already registered (with confirmation on) with a user that has none.
+ */
+const emailIdentity = (userId: string): UserIdentity => ({
+  id: userId,
+  identity_id: `identity-${userId}`,
+  user_id: userId,
+  identity_data: {},
+  provider: 'email',
+  created_at: '2024-01-15T12:00:00Z',
+  last_sign_in_at: '2024-01-15T12:00:00Z',
+  updated_at: '2024-01-15T12:00:00Z',
+});
 
 // Mock Sentry
 jest.mock('@sentry/react-native', () => ({
@@ -80,8 +100,10 @@ describe('useAuthForm', () => {
   let mockShowSuccessToast: jest.Mock;
   let mockHandleError: jest.Mock;
   let mockSuccessFeedback: jest.Mock;
-  let mockAnalyticsTrackSignUp: jest.Mock;
-  let mockAnalyticsTrackSignIn: jest.Mock;
+  let mockAnalyticsTrackSignUp: jest.Mock<(...args: unknown[]) => Promise<void>>;
+  let mockAnalyticsTrackSignIn: jest.Mock<(...args: unknown[]) => Promise<void>>;
+  let mockAnalyticsTrackAuthFailed: jest.Mock<(...args: unknown[]) => Promise<void>>;
+  let mockLogSignUp: jest.Mock;
 
   beforeEach(() => {
     // Get references to the mocked functions
@@ -100,12 +122,20 @@ describe('useAuthForm', () => {
     mockSuccessFeedback = haptics.successFeedback as jest.Mock;
 
     const analytics = require('@/services/analytics');
-    mockAnalyticsTrackSignUp = analytics.analytics.trackSignUp as jest.Mock;
-    mockAnalyticsTrackSignIn = analytics.analytics.trackSignIn as jest.Mock;
+    mockAnalyticsTrackSignUp = analytics.analytics.trackSignUp;
+    mockAnalyticsTrackSignIn = analytics.analytics.trackSignIn;
+    mockAnalyticsTrackAuthFailed = analytics.analytics.trackAuthFailed;
+    mockLogSignUp = require('@/services/metaEvents').metaEvents.logSignUp as jest.Mock;
 
     // Clear all mock calls and timers before each test
     jest.clearAllMocks();
     jest.useFakeTimers();
+
+    // resetMocks empties the factory implementations; the hook chains on the
+    // promise trackSignUp returns, so a bare undefined would throw there.
+    mockAnalyticsTrackSignUp.mockResolvedValue(undefined);
+    mockAnalyticsTrackSignIn.mockResolvedValue(undefined);
+    mockAnalyticsTrackAuthFailed.mockResolvedValue(undefined);
 
     // Set default mock implementations
     const user = createUserMock({ id: '1', email: 'test@example.com' });
@@ -182,7 +212,11 @@ describe('useAuthForm', () => {
         // Mock Supabase to return session immediately
         mockSignUp.mockResolvedValue({
           data: {
-            user: createUserMock({ id: 'user-123', email: 'newuser@example.com' }),
+            user: createUserMock({
+              id: 'user-123',
+              email: 'newuser@example.com',
+              identities: [emailIdentity('user-123')],
+            }),
             session: createSessionMock({
               access_token: 'token-abc',
               user: createUserMock({ id: 'user-123' }),
@@ -285,7 +319,11 @@ describe('useAuthForm', () => {
         // Mock Supabase to return user but NO session
         mockSignUp.mockResolvedValue({
           data: {
-            user: createUserMock({ id: 'user-456', email: 'confirmemail@example.com' }),
+            user: createUserMock({
+              id: 'user-456',
+              email: 'confirmemail@example.com',
+              identities: [emailIdentity('user-456')],
+            }),
             session: null,
           },
           error: null,
@@ -355,6 +393,38 @@ describe('useAuthForm', () => {
         });
 
         expect(mockAnalyticsTrackSignUp).toHaveBeenCalledWith('email');
+        expect(mockLogSignUp).toHaveBeenCalledWith('email');
+      });
+    });
+
+    // Supabase's stand-in for an address that already has an account: no
+    // error, a user, no identities. Nothing was created, so nothing is a sign-up.
+    describe('an address that is already registered', () => {
+      beforeEach(() => {
+        mockSignUp.mockResolvedValue({
+          data: {
+            user: createUserMock({ id: 'fake-user', identities: [] }),
+            session: null,
+          },
+          error: null,
+        });
+      });
+
+      test('is not a Sign Up, for Mixpanel or for Meta, but an Auth Failed', async () => {
+        const { result } = renderHook(() => useAuthForm());
+
+        act(() => {
+          result.current.setEmail('existing@example.com');
+          result.current.setPassword('Password123');
+        });
+
+        await act(async () => {
+          await result.current.signUpWithEmail();
+        });
+
+        expect(mockAnalyticsTrackSignUp).not.toHaveBeenCalled();
+        expect(mockLogSignUp).not.toHaveBeenCalled();
+        expect(mockAnalyticsTrackAuthFailed).toHaveBeenCalledWith('email', 'user_already_exists');
       });
     });
 
@@ -419,6 +489,9 @@ describe('useAuthForm', () => {
             sentrySeverity: 'error',
           }),
         );
+        // The machine code, never the message
+        expect(mockAnalyticsTrackAuthFailed).toHaveBeenCalledWith('email', 'unknown');
+        expect(mockAnalyticsTrackSignUp).not.toHaveBeenCalled();
       });
     });
   });
@@ -443,6 +516,7 @@ describe('useAuthForm', () => {
 
       expect(mockSignInWithPassword).not.toHaveBeenCalled();
       expect(result.current.passwordError).toBe(STRINGS.NO_INTERNET_CONNECTION);
+      expect(mockAnalyticsTrackAuthFailed).toHaveBeenCalledWith('email', 'offline');
     });
 
     // The pre-flight exists only to turn a guaranteed hang into a fast error.
@@ -587,6 +661,28 @@ describe('useAuthForm', () => {
       });
 
       expect(mockSuccessFeedback).toHaveBeenCalledTimes(1);
+    });
+
+    test("a refused sign-in is an Auth Failed with Supabase's code, not its message", async () => {
+      mockSignInWithPassword.mockResolvedValue({
+        data: { user: null, session: null },
+        error: Object.assign(createAuthErrorMock('Invalid login credentials', 400), {
+          code: 'invalid_credentials',
+        }),
+      });
+      const { result } = renderHook(() => useAuthForm());
+
+      act(() => {
+        result.current.setEmail('user@example.com');
+        result.current.setPassword('Password1');
+      });
+
+      await act(async () => {
+        await result.current.signInWithEmail();
+      });
+
+      expect(mockAnalyticsTrackAuthFailed).toHaveBeenCalledWith('email', 'invalid_credentials');
+      expect(mockAnalyticsTrackSignIn).not.toHaveBeenCalled();
     });
   });
 });

@@ -24,7 +24,7 @@ const ContinueReadingSectionComponent = ({ rail }: ContinueReadingSectionProps) 
   const handleArticlePress = useCallback(
     (article: Article) => {
       // `disableAutoScroll` is the inverse of resuming
-      router.push(getArticleRoute(article.id, { disableAutoScroll: !resumes }));
+      router.push(getArticleRoute(article.id, { disableAutoScroll: !resumes, source: 'continue' }));
     },
     [router, resumes],
   );

@@ -52,7 +52,9 @@ jest.mock('@/services/analytics', () => ({
   analytics: { track: jest.fn() },
 }));
 
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { useOnboardingChecklist } from '@/hooks/onboarding/useOnboardingChecklist';
+import { analytics } from '@/services/analytics';
 import {
   loadOnboardingState,
   markOnboardingStep,
@@ -78,6 +80,30 @@ describe('useOnboardingChecklist', () => {
     mockFSRSError = null;
     mockProgressMap = new Map();
     mockProgressLoading = false;
+  });
+
+  describe('Onboarding Checklist Shown', () => {
+    // The card reports itself once it is on screen (GetStartedChecklist): an
+    // eligible card can still be waiting behind the welcome intro.
+    it('is not sent for being eligible, and only once however often the card reports', async () => {
+      const { result } = renderHook(() => useOnboardingChecklist(ARTICLES));
+      await waitFor(() => expect(result.current.isChecklistVisible).toBe(true));
+
+      const shownEvents = () =>
+        jest
+          .mocked(analytics.track)
+          .mock.calls.filter(([event]) => event === ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_SHOWN);
+      expect(shownEvents()).toHaveLength(0);
+
+      act(() => {
+        result.current.trackShown(1);
+        result.current.trackShown(2);
+      });
+
+      expect(shownEvents()).toEqual([
+        [ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_SHOWN, { done_count: 1 }],
+      ]);
+    });
   });
 
   describe('eligibility', () => {

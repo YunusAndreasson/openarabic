@@ -14,7 +14,9 @@ import { QueryClient } from '@tanstack/react-query';
 import React from 'react';
 
 import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { useAddCommonWords } from '@/hooks/practice/useAddCommonWords';
+import { analytics } from '@/services/analytics';
 
 const mockShowToast = jest.fn();
 const mockGetCommonRoots = jest.fn<(...args: unknown[]) => Promise<unknown[]>>();
@@ -95,6 +97,26 @@ describe('useAddCommonWords', () => {
     expect(mockIncrementDailyWordCount).toHaveBeenCalledTimes(4);
   });
 
+  // The starter deck is a way of saving words too, so the save funnel's one
+  // event counts it, by its own method; Common Words Added keeps its history.
+  test('counts in the save funnel as Word Added to Study by common_words', async () => {
+    mockAddMultipleRoots.mockResolvedValue(4);
+
+    const { result } = renderHook(() => useAddCommonWords(), { wrapper });
+    await waitFor(() => expect(result.current.hasWordsAvailable).toBe(true));
+    act(() => {
+      result.current.addWords();
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.COMMON_WORDS_ADDED, { count: 4 });
+    expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
+      method: 'common_words',
+      source: 'practice',
+      count: 4,
+    });
+  });
+
   test('reserves nothing when every common word is already in study (addedCount 0)', async () => {
     mockAddMultipleRoots.mockResolvedValue(0);
 
@@ -109,6 +131,11 @@ describe('useAddCommonWords', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(mockIncrementDailyWordCount).not.toHaveBeenCalled();
+    // Nothing was saved, so nothing joins the save funnel
+    expect(analytics.track).not.toHaveBeenCalledWith(
+      ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY,
+      expect.anything(),
+    );
   });
 
   test('reserves a full 10 slots when the whole starter set is new', async () => {

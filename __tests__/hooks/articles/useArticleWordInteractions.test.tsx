@@ -12,6 +12,7 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { describe, expect, it, jest } from '@jest/globals';
 
 import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { fsrsQueries } from '@/constants/queries';
 import {
   useArticleWordInteractions,
@@ -19,8 +20,13 @@ import {
 } from '@/hooks/articles/useArticleWordInteractions';
 import type { RootId } from '@/types/branded.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
+import { analytics } from '@/services/analytics';
 import * as haptics from '@/utils/haptics';
 import { rootId } from '@/__tests__/helpers/ids';
+
+jest.mock('@/services/analytics', () => ({
+  analytics: { track: jest.fn() },
+}));
 
 // Mock auth hook
 jest.mock('@/hooks/auth/useAuth', () => ({
@@ -920,9 +926,80 @@ describe('useArticleWordInteractions', () => {
         await result.current.handleWordLongPress(createMockWord(1, rootId(10)));
       });
 
-      expect(replacementHandleRootPress).toHaveBeenCalledWith(rootId(10), 'add', undefined);
+      expect(replacementHandleRootPress).toHaveBeenCalledWith(rootId(10), 'add', {
+        method: 'long_press',
+      });
       expect(replacementRefetch).toHaveBeenCalledTimes(1);
       expect(mockHandleRootPress).not.toHaveBeenCalled();
+    });
+  });
+
+  // The step before a save: does the reader open the card at all, and was the
+  // word already saved when they did.
+  describe('Word Card Opened', () => {
+    const cardOpenedEvents = () =>
+      jest
+        .mocked(analytics.track)
+        .mock.calls.filter(([event]) => event === ANALYTICS_EVENTS.WORD_CARD_OPENED)
+        .map(([, properties]) => properties);
+
+    test('a tap that opens the card, with whether the word was already saved', async () => {
+      queryClient.setQueryData(fsrsQueries.all('test-user-id').queryKey, [
+        { root_id: rootId(10) } as StudyWord,
+      ]);
+      const { result } = renderHook(
+        () => useArticleWordInteractions({ handleRootPress: mockHandleRootPress }),
+        { wrapper },
+      );
+      await waitFor(() => expect(result.current.wordDetailsModal).toBeDefined());
+
+      act(() => {
+        result.current.handleWordPress(createMockWord(1, rootId(10)), createMockLayout());
+      });
+      act(() => {
+        result.current.handleWordPress(createMockWord(2, rootId(20)), createMockLayout());
+      });
+
+      expect(cardOpenedEvents()).toEqual([
+        { via: 'tap', in_study: true },
+        { via: 'tap', in_study: false },
+      ]);
+    });
+
+    test("the tooltip's follow-up opens it via the tooltip; the tooltip alone does not", () => {
+      const { result } = renderHook(
+        () =>
+          useArticleWordInteractions({
+            handleRootPress: mockHandleRootPress,
+            showTooltipFirst: true,
+          }),
+        { wrapper },
+      );
+
+      act(() => {
+        result.current.handleWordPress(createMockWord(1, rootId(10)), createMockLayout());
+      });
+      expect(cardOpenedEvents()).toEqual([]);
+
+      act(() => {
+        result.current.handleOpenWordDetails();
+      });
+      expect(cardOpenedEvents()).toEqual([{ via: 'tooltip', in_study: false }]);
+    });
+
+    // A long-press save used to send its own event as well as Word Added.
+    test('a long-press save sends no event of its own', async () => {
+      const { result } = renderHook(
+        () => useArticleWordInteractions({ handleRootPress: mockHandleRootPress }),
+        { wrapper },
+      );
+
+      await act(async () => {
+        await result.current.handleWordLongPress(createMockWord(1, rootId(10)));
+      });
+
+      expect(analytics.track).not.toHaveBeenCalled();
+      expect(mockHandleRootPress).toHaveBeenCalledWith(rootId(10), 'add', { method: 'long_press' });
     });
   });
 });

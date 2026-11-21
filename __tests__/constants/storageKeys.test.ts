@@ -90,6 +90,8 @@ describe('storageKeys', () => {
 
       expect(keys).not.toContain(STORAGE_KEYS.AUDIO_CACHE_LEGACY_SWEEP);
       expect(keys).not.toContain(STORAGE_KEYS.REDUX_PERSIST_ROOT);
+      // A deleted account must not make the install new again in analytics.
+      expect(keys).not.toContain(STORAGE_KEYS.ANALYTICS_INSTALL);
     });
 
     test('returns no duplicates', () => {
@@ -104,6 +106,7 @@ describe('storageKeys', () => {
       const deviceKeys = [
         STORAGE_KEYS.AUDIO_CACHE_LEGACY_SWEEP,
         STORAGE_KEYS.LAST_SIGNED_IN_USER,
+        STORAGE_KEYS.ANALYTICS_INSTALL,
         STORAGE_KEYS.REDUX_PERSIST_ROOT,
       ];
       const expectedStatic = Object.values(STORAGE_KEYS).length - deviceKeys.length;

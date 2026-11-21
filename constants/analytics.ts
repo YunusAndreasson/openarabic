@@ -14,11 +14,17 @@ export const ANALYTICS_EVENTS = {
   SIGN_IN: 'Sign In',
   SIGN_UP: 'Sign Up',
   SIGN_OUT: 'Sign Out',
+  /** A sign-in or sign-up that did not end signed in. `code` is a machine code, never the message. */
+  AUTH_FAILED: 'Auth Failed',
 
   // App lifecycle events
+  /** A launch the learner sees: never sent while the app runs in the background. */
   APP_OPENED: 'App Opened',
+  /** Once per install, at the first App Opened. */
+  FIRST_OPEN: 'First Open',
   APP_BACKGROUNDED: 'App Backgrounded',
   APP_RESUMED: 'App Resumed',
+  SCREEN_VIEWED: 'Screen Viewed',
 
   // Review/Practice session events
   REVIEW_SESSION_STARTED: 'Review Session Started',
@@ -36,9 +42,13 @@ export const ANALYTICS_EVENTS = {
   ARTICLE_BOOKMARKED: 'Article Bookmarked',
 
   // Vocabulary/Study events
+  /** The word card opened in the reader: the step before a save. */
+  WORD_CARD_OPENED: 'Word Card Opened',
+  /** One event however the word was saved; `method` says how. */
   WORD_ADDED_TO_STUDY: 'Word Added to Study',
+  /** A save the daily limit or the due backlog turned down. */
+  WORD_ADD_REFUSED: 'Word Add Refused',
   WORD_REMOVED_FROM_STUDY: 'Word Removed from Study',
-  WORD_LONG_PRESS_SAVE: 'Word Long Press Save',
   COMMON_WORDS_ADDED: 'Common Words Added',
   BEGINNER_ARTICLES_ADDED: 'Beginner Articles Added',
 
@@ -64,7 +74,8 @@ export const ANALYTICS_EVENTS = {
   NOTIFICATION_SCHEDULING_FAILED: 'Notification Scheduling Failed',
   NOTIFICATIONS_DROPPED: 'Notifications Dropped',
   SMART_REMINDERS_SYNCED: 'Smart Reminders Synced',
-  SMART_REMINDER_OPENED: 'Smart Reminder Opened',
+  /** A tap on any notification the app sent. Was 'Smart Reminder Opened', for two of the types. */
+  NOTIFICATION_OPENED: 'Notification Opened',
   SMART_REMINDERS_TOGGLED: 'Smart Reminders Toggled',
   NOTIFICATION_PRIMING_SHOWN: 'Notification Priming Shown',
   NOTIFICATION_PRIMING_ACCEPTED: 'Notification Priming Accepted',
@@ -72,20 +83,16 @@ export const ANALYTICS_EVENTS = {
   VOICE_PRIMING_SHOWN: 'Voice Priming Shown',
   VOICE_PRIMING_ACCEPTED: 'Voice Priming Accepted',
   VOICE_PRIMING_DECLINED: 'Voice Priming Declined',
-  NOTIFICATION_PERMISSION_RESULT: 'Notification Permission Result',
-  BADGE_WRITE_REJECTED: 'Badge Write Rejected',
+  /** The OS permission dialog is about to appear: sent only when it really will. */
+  PERMISSION_PROMPT_SHOWN: 'Permission Prompt Shown',
+  /** Every permission ask, answered by the dialog or by an earlier answer. */
+  PERMISSION_RESULT: 'Permission Result',
   REMINDER_SCHEDULING_ERROR: 'Reminder_Scheduling_Error',
   BACKGROUND_TASK_ERROR: 'Background_Task_Error',
 
-  // Voice grading (Parakeet ASR) events
-  VOICE_MODEL_LOAD_STARTED: 'Voice Model Load Started',
-  VOICE_MODEL_READY: 'Voice Model Ready',
+  // Voice grading (Parakeet ASR) events. The model's load and prefetch steps
+  // are Sentry breadcrumbs (voiceBreadcrumb), not events: only the failure is.
   VOICE_MODEL_FAILED: 'Voice Model Failed',
-  /** The prefetch actually started moving bytes. `trigger` says what woke it. */
-  VOICE_MODEL_PREFETCH_STARTED: 'Voice Model Prefetch Started',
-  /** The prefetch declined to start, and why. Distinguishes "never tried"
-   *  from "tried and failed" — the two look identical without it. */
-  VOICE_MODEL_PREFETCH_DEFERRED: 'Voice Model Prefetch Deferred',
   /** The headline metric for whether the prefetch works: a review session that
    *  opened with no usable recognizer. Ideally this trends to zero. */
   VOICE_SESSION_STARTED_WITHOUT_MODEL: 'Voice Session Started Without Model',
@@ -108,6 +115,34 @@ export const ANALYTICS_EVENTS = {
  * Error taxonomy is deliberately NOT in here — see `analytics.trackError`.
  */
 export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];
+
+/**
+ * The core actions that carry `first_time: true` the first time this install
+ * sends them. Mixpanel's own "first time" filter is refused on the Free plan, so
+ * the event has to say it. Remembered per install (services/analyticsInstall),
+ * so a sign-out and its new anonymous id do not make them first again.
+ */
+export const FIRST_TIME_EVENTS: ReadonlySet<string> = new Set<AnalyticsEventName>([
+  ANALYTICS_EVENTS.ARTICLE_VIEWED,
+  ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY,
+  ANALYTICS_EVENTS.AUDIO_PLAYBACK_STARTED,
+  ANALYTICS_EVENTS.REVIEW_SESSION_STARTED,
+  ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE,
+]);
+
+/**
+ * Super properties: on every event once registered (`analytics.registerSuperProperties`).
+ * None identifies anyone; each splits the anonymous ids into groups.
+ */
+export const SUPER_PROPERTIES = {
+  /** YYYY-MM-DD the app was installed, for cohorts by install week */
+  INSTALL_DATE: 'install_date',
+  /** The OS lets the app notify */
+  NOTIFICATIONS_ENABLED: 'notifications_enabled',
+  /** The review reminders setting is on */
+  REMINDERS_ENABLED: 'reminders_enabled',
+  SIGNED_IN: 'signed_in',
+} as const;
 
 /**
  * Meta (Facebook) app event names, used only for ad attribution in Ads Manager.

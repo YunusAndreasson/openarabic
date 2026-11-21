@@ -1,8 +1,14 @@
 import { useCallback, useState } from 'react';
 
 import { analytics } from '@/services/analytics';
+import { metaEvents } from '@/services/metaEvents';
 import { supabase } from '@/services/supabase';
-import { getErrorCode, isCancellationError } from '@/utils/authUtils';
+import {
+  getAnalyticsErrorCode,
+  getErrorCode,
+  isCancellationError,
+  isNewAccount,
+} from '@/utils/authUtils';
 import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 import { toError } from '@/utils/toError';
@@ -171,6 +177,7 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
 
       if (signInResult === null) {
         authBreadcrumb(`${providerName} sign-in cancelled by the user`);
+        void analytics.trackAuthFailed(config.provider, 'cancelled');
         return;
       }
 
@@ -232,8 +239,15 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
           });
       }
 
-      // Track analytics
-      await analytics.trackSignIn(config.provider);
+      // Apple and Google create the account on the first sign-in, so the same
+      // call is a sign-up once and a sign-in after that. Meta's registration
+      // event goes with the sign-up, as it does for email.
+      if (isNewAccount(data.user)) {
+        await analytics.trackSignUp(config.provider);
+        metaEvents.logSignUp(config.provider);
+      } else {
+        await analytics.trackSignIn(config.provider);
+      }
 
       // Success handling - haptic feedback only
       // Navigation is handled by root layout when session state updates
@@ -257,8 +271,20 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
 
       // Handle user cancellation silently
       if (isCancellation) {
+        void analytics.trackAuthFailed(config.provider, 'cancelled');
         return;
       }
+
+      // The Supabase error rides along on the one thrown at the exchange step.
+      // Without any code, the step it failed at is the code.
+      const originalError =
+        typeof error === 'object' && error !== null && 'originalError' in error
+          ? error.originalError
+          : undefined;
+      void analytics.trackAuthFailed(
+        config.provider,
+        getAnalyticsErrorCode(originalError) ?? getAnalyticsErrorCode(error) ?? step,
+      );
 
       const detailedErrorMessage = [
         `❌ ${providerName} Sign In Failed`,

@@ -10,6 +10,7 @@ import { useSharedValue } from 'react-native-reanimated';
 
 import {
   ArticleSentence,
+  FirstWordPrimingCard,
   FloatingActionButtons,
   ReaderCloseButton,
   WordDetailsBottomSheet,
@@ -25,9 +26,11 @@ import { TutorialId } from '@/constants/tutorials';
 import { useArticleListen } from '@/hooks/articles/useArticleListen';
 import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
 import { useReaderKeepAwake } from '@/hooks/articles/useReaderKeepAwake';
+import { useFirstWordNotificationPriming } from '@/hooks/review/useNotificationPriming';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import { readArticleOpenSource } from '@/utils/routeBuilders';
 
 // Static constants to prevent recreation
 const FLEX_ONE_STYLE = { flex: 1 } as const;
@@ -44,13 +47,21 @@ const ArticleScreenContentComparison = (
 const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const colors = useColors();
   const { showToast } = useToast();
-  const params = useLocalSearchParams<{ disableAutoScroll?: string; sentenceId?: string }>();
+  const params = useLocalSearchParams<{
+    disableAutoScroll?: string;
+    sentenceId?: string;
+    source?: string;
+  }>();
   const disableAutoScroll = params.disableAutoScroll === 'true';
+  const source = readArticleOpenSource(params.source);
   const requestedSentenceId = Number(params.sentenceId);
   const targetSentenceId =
     Number.isSafeInteger(requestedSentenceId) && requestedSentenceId > 0
       ? requestedSentenceId
       : undefined;
+
+  // The reminders ask that follows the learner's first saved word
+  const firstWordPriming = useFirstWordNotificationPriming();
 
   // Extract all business logic into hook
   const {
@@ -80,7 +91,14 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleOpenWordDetails,
     handleAddWordToStudy,
     handleFlashListLoad,
-  } = useArticleScreen({ id, showToast, disableAutoScroll, targetSentenceId });
+  } = useArticleScreen({
+    id,
+    showToast,
+    disableAutoScroll,
+    targetSentenceId,
+    source,
+    onFirstWordSaved: firstWordPriming.offer,
+  });
 
   // In-article Listen control (podcast-style playback via the global MiniPlayer)
   const { isListeningToThisArticle, isListenLoading, handleToggleListen } = useArticleListen(
@@ -334,6 +352,14 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       </AudioErrorBoundary>
 
       <WordTooltip {...tooltipProps} />
+
+      {/* Before the word sheet, so a card opened while it waits draws above it */}
+      {firstWordPriming.showPrimingCard && (
+        <FirstWordPrimingCard
+          onAccept={() => void firstWordPriming.accept()}
+          onDecline={firstWordPriming.decline}
+        />
+      )}
 
       <WordDetailsBottomSheet
         isVisible={wordDetailsModal.isVisible}

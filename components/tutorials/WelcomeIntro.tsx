@@ -100,11 +100,19 @@ export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeInt
     }
   }, [visible, currentStep, step]);
 
-  // Skip (visible affordance or backdrop tap) still completes the tutorial (one-shot)
-  const handleSkip = useCallback(() => {
-    void analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_SKIPPED, { step_index: currentStep });
-    onDismiss();
-  }, [currentStep, onDismiss]);
+  // Skip (visible affordance or backdrop tap) still completes the tutorial (one-shot).
+  // `method` tells the Skip button from the backdrop, which also takes the
+  // Android back gesture and the accessibility escape, and can be hit by accident.
+  const handleSkip = useCallback(
+    (method: 'button' | 'backdrop') => {
+      void analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_SKIPPED, {
+        step_index: currentStep,
+        method,
+      });
+      onDismiss();
+    },
+    [currentStep, onDismiss],
+  );
 
   const handleNext = useCallback(() => {
     if (!isLastStep) {
@@ -124,12 +132,12 @@ export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeInt
   if (!step) return null;
 
   return (
-    <TutorialOverlay visible={visible} onDismiss={handleSkip}>
+    <TutorialOverlay visible={visible} onDismiss={() => handleSkip('backdrop')}>
       <TutorialCard
         dismissText={isLastStep ? STRINGS.ONBOARDING_CTA : STRINGS.ONBOARDING_NEXT}
         onDismiss={handleNext}
         // On the last step the CTA is the way out, so a Skip beside it is noise.
-        onSkip={isLastStep ? undefined : handleSkip}
+        onSkip={isLastStep ? undefined : () => handleSkip('button')}
       >
         <TutorialStepLayout
           icon={step.icon}

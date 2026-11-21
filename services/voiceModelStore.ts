@@ -258,7 +258,9 @@ export function requestVoiceModel(opts: {
     const net = await NetInfo.fetch();
     if (!meteredAllowed && !isUnmetered(net)) {
       emit({ state: 'waiting-wifi', error: null, errorKind: null });
-      void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_PREFETCH_DEFERRED, {
+      // Says "never tried" apart from "tried and failed". A breadcrumb, like the
+      // start below: only the failure is a Mixpanel event.
+      voiceBreadcrumb('voice.model.fetch.deferred', {
         reason: net.isConnected ? 'metered' : 'offline',
         networkType: net.type,
         trigger: opts.reason,
@@ -272,12 +274,11 @@ export function requestVoiceModel(opts: {
     await excludeModelDirFromBackup();
 
     emit({ state: 'downloading', progress: 0, error: null, errorKind: null });
-    void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_PREFETCH_STARTED, {
+    voiceBreadcrumb('voice.model.fetch.start', {
       trigger: opts.reason,
       networkType: net.type,
       overMetered: meteredAllowed && !isUnmetered(net),
     });
-    voiceBreadcrumb('voice.model.fetch.start', { trigger: opts.reason, networkType: net.type });
 
     const startedAt = Date.now();
     const onProgress = (progress: DownloadProgress): void => {
@@ -338,9 +339,9 @@ export function requestVoiceModel(opts: {
       // and can never succeed, so it waits for a deliberate tap.
       blockedUntilExplicitRetry = errorKind === 'disk-space';
       emit({ state: 'failed', error: message, errorKind });
+      // `errorKind`, not the message: free text stays out of Mixpanel.
       void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_FAILED, {
         modelId: PARAKEET_MODEL_ID,
-        message,
         errorKind,
         trigger: opts.reason,
       });

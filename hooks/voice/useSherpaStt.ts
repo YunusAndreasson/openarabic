@@ -181,13 +181,10 @@ function useSherpaStt({
       const loadStartedAt = Date.now();
       // A new vocabulary rebuilds the engine through this same path. Without
       // the flag every such rebuild counted as a model load, and cold-load time
-      // on a dashboard became an average of two different things.
+      // became an average of two different things. The load is a Sentry
+      // breadcrumb, not a Mixpanel event: only its failure is a product event.
       const rebuild = hasBuiltRef.current;
-      void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_LOAD_STARTED, {
-        modelId: PARAKEET_MODEL_ID,
-        rebuild,
-      });
-      voiceBreadcrumb('voice.engine.load.start', { modelId: PARAKEET_MODEL_ID });
+      voiceBreadcrumb('voice.engine.load.start', { modelId: PARAKEET_MODEL_ID, rebuild });
 
       try {
         // Queued behind the previous engine's destroy. A load superseded while
@@ -227,15 +224,11 @@ function useSherpaStt({
         setWarming(false);
         setReady(true);
         hasBuiltRef.current = true;
-        void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_READY, {
-          modelId: PARAKEET_MODEL_ID,
-          durationMs: Date.now() - loadStartedAt,
-          rebuild,
-        });
         voiceBreadcrumb('voice.engine.ready', {
           modelId: PARAKEET_MODEL_ID,
           durationMs: Date.now() - loadStartedAt,
           hotwordCount: built.hotwordCount,
+          rebuild,
         });
       } catch (err) {
         if (!cancelled) {
@@ -243,9 +236,9 @@ function useSherpaStt({
           setWarming(false);
           const error = toError(err);
           setError(error);
+          // No message: free text stays in Sentry, which gets the whole error.
           void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_FAILED, {
             modelId: PARAKEET_MODEL_ID,
-            message: error.message,
             stage: 'engine',
           });
           Sentry.captureException(error, {

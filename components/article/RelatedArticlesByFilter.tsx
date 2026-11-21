@@ -58,7 +58,7 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     // pop animation, with an uncancelled timer left to fire after unmount.
     const handleArticlePress = useCallback(
       (article: Article) => {
-        router.push(getArticleRoute(article.id));
+        router.push(getArticleRoute(article.id, { source: 'related' }));
       },
       [router],
     );

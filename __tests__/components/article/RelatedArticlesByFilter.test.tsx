@@ -113,7 +113,10 @@ describe('RelatedArticlesByFilter', () => {
 
     expect(mockBack).not.toHaveBeenCalled();
     expect(mockPush).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/article/[id]', params: { id: 42 } });
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/article/[id]',
+      params: { id: 42, source: 'related' },
+    });
   });
 
   // The one list a learner goes from one text straight to the next was the one

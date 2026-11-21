@@ -2,12 +2,14 @@ import { describe, expect, test } from '@jest/globals';
 
 import { STRINGS } from '@/constants/strings';
 import {
-  NEW_PASSWORD_ACCESSIBILITY_HINT,
-  PASSWORD_REQUIREMENTS,
+  getAnalyticsErrorCode,
   getEmailError,
   getErrorCode,
   getPasswordError,
   isCancellationError,
+  isNewAccount,
+  NEW_PASSWORD_ACCESSIBILITY_HINT,
+  PASSWORD_REQUIREMENTS,
 } from '@/utils/authUtils';
 
 describe('field rules', () => {
@@ -72,5 +74,40 @@ describe('isCancellationError', () => {
   test('falls back to the message only when there is no code', () => {
     expect(isCancellationError(new Error('User dismissed the sheet'))).toBe(true);
     expect(isCancellationError(new Error('Network request failed'))).toBe(false);
+  });
+});
+
+describe('getAnalyticsErrorCode', () => {
+  test("the error's own code first, then its HTTP status, never the message", () => {
+    expect(getAnalyticsErrorCode({ code: 'invalid_credentials', status: 400 })).toBe(
+      'invalid_credentials',
+    );
+    expect(getAnalyticsErrorCode({ message: 'Service unavailable', status: 503 })).toBe('503');
+    expect(getAnalyticsErrorCode(new Error('No code at all'))).toBeUndefined();
+    expect(getAnalyticsErrorCode(null)).toBeUndefined();
+  });
+});
+
+describe('isNewAccount', () => {
+  test('signed in within a minute of being created: this sign-in made the account', () => {
+    expect(
+      isNewAccount({
+        created_at: '2026-11-21T10:00:00.000000Z',
+        last_sign_in_at: '2026-11-21T10:00:01.512Z',
+      }),
+    ).toBe(true);
+  });
+
+  test('an older account is a returning one', () => {
+    expect(
+      isNewAccount({ created_at: '2026-10-01T08:00:00Z', last_sign_in_at: '2026-11-21T10:00:00Z' }),
+    ).toBe(false);
+  });
+
+  test('a missing or unreadable stamp reads as returning, never as a sign-up', () => {
+    expect(isNewAccount({ created_at: '2026-11-21T10:00:00Z' })).toBe(false);
+    expect(
+      isNewAccount({ created_at: 'not a date', last_sign_in_at: '2026-11-21T10:00:00Z' }),
+    ).toBe(false);
   });
 });

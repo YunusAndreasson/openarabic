@@ -16,7 +16,9 @@ import { Provider } from 'react-redux';
 
 import { setupTestStore } from '@/__tests__/helpers/testStore';
 import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
+import { analytics } from '@/services/analytics';
 import { REFUSAL_TOAST_DURATION } from '@/constants/animation';
 import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
@@ -89,6 +91,10 @@ jest.mock('@/utils/haptics', () => ({
 
 jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),
+}));
+
+jest.mock('@/services/analytics', () => ({
+  analytics: { track: jest.fn() },
 }));
 
 describe('useStudyWordMutations', () => {
@@ -616,6 +622,120 @@ describe('useStudyWordMutations', () => {
       });
       const invalidatedKeys = invalidate.mock.calls.map(([filters]) => filters?.queryKey?.[0]);
       expect(invalidatedKeys).not.toContain('enhancedAudioTracks');
+    });
+  });
+
+  // The save-a-word funnel: one Word Added to Study however the word was saved,
+  // and the refusals that used to leave no trace at all.
+  describe('analytics', () => {
+    const eventsNamed = (name: string) =>
+      jest.mocked(analytics.track).mock.calls.filter(([event]) => event === name);
+
+    test('an add is one Word Added to Study, with how and where it was made', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], [{ root_id: 5 }]);
+      const { result } = renderHook(() => useStudyWordMutations(undefined, { source: 'article' }), {
+        wrapper,
+      });
+
+      await act(async () => {
+        await result.current.handleRootPress(rootId(1), 'add', { method: 'long_press' });
+      });
+
+      expect(eventsNamed(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY)).toEqual([
+        [
+          ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY,
+          { root_id: rootId(1), method: 'long_press', source: 'article' },
+        ],
+      ]);
+    });
+
+    test("the word card's Save is the method when none is given", async () => {
+      const { result } = renderHook(() => useStudyWordMutations(undefined, { source: 'article' }), {
+        wrapper,
+      });
+
+      await act(async () => {
+        await result.current.handleRootPress(rootId(1), 'add');
+      });
+
+      expect(eventsNamed(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY)[0]?.[1]).toEqual(
+        expect.objectContaining({ method: 'sheet' }),
+      );
+    });
+
+    test('a removal is not a Word Added', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], [{ root_id: 1 }]);
+      mockToggleFSRSStudyRoot.mockResolvedValue(false);
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(rootId(1), 'remove');
+      });
+
+      expect(eventsNamed(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY)).toHaveLength(0);
+    });
+
+    test('the daily limit refusing a save is a Word Add Refused', async () => {
+      mockCanAddWord.mockResolvedValue(false);
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(rootId(1), 'add');
+      });
+
+      expect(eventsNamed(ANALYTICS_EVENTS.WORD_ADD_REFUSED)).toEqual([
+        [ANALYTICS_EVENTS.WORD_ADD_REFUSED, { reason: 'daily_limit' }],
+      ]);
+      expect(eventsNamed(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY)).toHaveLength(0);
+    });
+
+    test('the due backlog refusing a save is a Word Add Refused', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      queryClient.setQueryData(
+        ['fsrs-words', 'test-user-id', 'due'],
+        Array.from({ length: 20 }, (_, i) => ({ root_id: i + 1 })),
+      );
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(rootId(999), 'add');
+      });
+
+      expect(eventsNamed(ANALYTICS_EVENTS.WORD_ADD_REFUSED)).toEqual([
+        [ANALYTICS_EVENTS.WORD_ADD_REFUSED, { reason: 'due_backlog' }],
+      ]);
+    });
+
+    test('a save into an empty study list is the first saved word', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      const onFirstWordSaved = jest.fn();
+      const { result } = renderHook(() => useStudyWordMutations(undefined, { onFirstWordSaved }), {
+        wrapper,
+      });
+
+      await act(async () => {
+        await result.current.handleRootPress(rootId(1), 'add');
+      });
+
+      expect(onFirstWordSaved).toHaveBeenCalledTimes(1);
+    });
+
+    test('a save next to other words, or with the list not loaded, is not', async () => {
+      const onFirstWordSaved = jest.fn();
+      const { result } = renderHook(() => useStudyWordMutations(undefined, { onFirstWordSaved }), {
+        wrapper,
+      });
+
+      // Not loaded: unknown, so not claimed as the first
+      await act(async () => {
+        await result.current.handleRootPress(rootId(1), 'add');
+      });
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], [{ root_id: 1 }]);
+      await act(async () => {
+        await result.current.handleRootPress(rootId(2), 'add');
+      });
+
+      expect(onFirstWordSaved).not.toHaveBeenCalled();
     });
   });
 });

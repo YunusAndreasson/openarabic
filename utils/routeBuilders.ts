@@ -10,6 +10,27 @@ import type { ArticleId, CategoryId, RootId } from '@/types/branded.types';
  * `satisfies Href` checks each pathname against the generated route list.
  */
 
+/** Where the reader was opened from, as Article Viewed reports it. */
+const ARTICLE_OPEN_SOURCES = [
+  'intro_cta',
+  'checklist',
+  'continue',
+  'featured',
+  'discovery',
+  'category',
+  'search',
+  'related',
+  'playlist',
+  'mini_player',
+  'word',
+] as const;
+
+export type ArticleOpenSource = (typeof ARTICLE_OPEN_SOURCES)[number];
+
+/** The reader's `source` param, or 'other' for none (a deep link) or one this build doesn't know. */
+export const readArticleOpenSource = (param: string | undefined): ArticleOpenSource | 'other' =>
+  ARTICLE_OPEN_SOURCES.find(source => source === param) ?? 'other';
+
 interface ArticleRouteOptions {
   /**
    * Open at the top. The reader otherwise resumes at the learner's last-read
@@ -19,11 +40,13 @@ interface ArticleRouteOptions {
   readonly disableAutoScroll?: boolean;
   /** The sentence to bring into view. */
   readonly sentenceId?: number;
+  /** What opened the reader, for analytics only. */
+  readonly source?: ArticleOpenSource;
 }
 
 export const getArticleRoute = (
   id: ArticleId,
-  { disableAutoScroll, sentenceId }: ArticleRouteOptions = {},
+  { disableAutoScroll, sentenceId, source }: ArticleRouteOptions = {},
 ) =>
   ({
     pathname: ROUTE_PATHS.ARTICLE,
@@ -32,6 +55,7 @@ export const getArticleRoute = (
       // The reader tests `=== 'true'`; left out rather than 'false'.
       disableAutoScroll: disableAutoScroll ? 'true' : undefined,
       sentenceId,
+      source,
     },
   }) satisfies Href;
 

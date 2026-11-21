@@ -14,6 +14,7 @@ import type { AuthResponse } from '@supabase/supabase-js';
 // Mock dependencies BEFORE imports
 jest.mock('@/services/supabase');
 jest.mock('@/services/analytics');
+jest.mock('@/services/metaEvents');
 jest.mock('@/utils/haptics');
 jest.mock('@/utils/errorHandling');
 jest.mock('@sentry/react-native', () => ({
@@ -29,6 +30,7 @@ import {
 
 import { supabase } from '@/services/supabase';
 import { analytics } from '@/services/analytics';
+import { metaEvents } from '@/services/metaEvents';
 import { successFeedback } from '@/utils/haptics';
 import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 import { captureException } from '@sentry/react-native';
@@ -531,6 +533,108 @@ describe('useOAuthProvider', () => {
       await result.current.signIn();
 
       expect(mockAnalytics.trackSignIn).toHaveBeenCalledWith('apple');
+    });
+  });
+
+  // Apple and Google create the account on the first sign-in, through the same
+  // call as every later one, so every new account used to be filed as Sign In.
+  describe('Sign Up or Sign In, and Auth Failed', () => {
+    const googleConfig = (
+      executeSignIn: OAuthProviderConfig['executeSignIn'] = jest.fn(async () => ({
+        idToken: 'google-token',
+      })),
+    ): OAuthProviderConfig => ({
+      provider: 'google',
+      loadModule: jest.fn(async (..._args: unknown[]) => ({})),
+      executeSignIn,
+    });
+
+    const signInReturning = (user: ReturnType<typeof createUserMock>) => {
+      mockSupabase.auth.signInWithIdToken = jest.fn(async () => ({
+        data: { user, session: { ...mockSession, user } },
+        error: null,
+      })) as unknown as typeof mockSupabase.auth.signInWithIdToken;
+    };
+
+    test('an account the sign-in just created is a Sign Up, for Mixpanel and for Meta', async () => {
+      signInReturning(
+        createUserMock({
+          created_at: '2026-11-21T10:00:00.000000Z',
+          last_sign_in_at: '2026-11-21T10:00:00.804117Z',
+        }),
+      );
+
+      const { result } = renderHook(() => useOAuthProvider(googleConfig()));
+      await result.current.signIn();
+
+      expect(mockAnalytics.trackSignUp).toHaveBeenCalledWith('google');
+      expect(metaEvents.logSignUp).toHaveBeenCalledWith('google');
+      expect(mockAnalytics.trackSignIn).not.toHaveBeenCalled();
+    });
+
+    test('an account from before is a Sign In, and Meta hears nothing', async () => {
+      signInReturning(
+        createUserMock({
+          created_at: '2026-10-01T08:00:00Z',
+          last_sign_in_at: '2026-11-21T10:00:00Z',
+        }),
+      );
+
+      const { result } = renderHook(() => useOAuthProvider(googleConfig()));
+      await result.current.signIn();
+
+      expect(mockAnalytics.trackSignIn).toHaveBeenCalledWith('google');
+      expect(mockAnalytics.trackSignUp).not.toHaveBeenCalled();
+      expect(metaEvents.logSignUp).not.toHaveBeenCalled();
+    });
+
+    test('backing out of the provider sheet is an Auth Failed, code cancelled', async () => {
+      const { result } = renderHook(() =>
+        useOAuthProvider(googleConfig(jest.fn(async () => null))),
+      );
+      await result.current.signIn();
+
+      expect(mockAnalytics.trackAuthFailed).toHaveBeenCalledWith('google', 'cancelled');
+    });
+
+    test("Apple's cancel error is code cancelled too", async () => {
+      const appleCancel = Object.assign(new Error('The user canceled'), { code: '1001' });
+      const { result } = renderHook(() =>
+        useOAuthProvider({
+          ...googleConfig(
+            jest.fn(async () => {
+              throw appleCancel;
+            }),
+          ),
+          provider: 'apple',
+        }),
+      );
+      await result.current.signIn();
+
+      expect(mockAnalytics.trackAuthFailed).toHaveBeenCalledWith('apple', 'cancelled');
+    });
+
+    test("a refused exchange carries Supabase's code, never its message", async () => {
+      mockSupabase.auth.signInWithIdToken = jest.fn(async () => ({
+        data: { user: null, session: null },
+        error: Object.assign(createAuthErrorMock('Provider is disabled', 400), {
+          code: 'provider_disabled',
+        }),
+      })) as unknown as typeof mockSupabase.auth.signInWithIdToken;
+
+      const { result } = renderHook(() => useOAuthProvider(googleConfig()));
+      await result.current.signIn();
+
+      expect(mockAnalytics.trackAuthFailed).toHaveBeenCalledWith('google', 'provider_disabled');
+    });
+
+    test('a failure with no code at all is coded by the step it failed at', async () => {
+      const { result } = renderHook(() =>
+        useOAuthProvider(googleConfig(jest.fn(async () => ({ idToken: '' })))),
+      );
+      await result.current.signIn();
+
+      expect(mockAnalytics.trackAuthFailed).toHaveBeenCalledWith('google', 'token_validation');
     });
   });
 });

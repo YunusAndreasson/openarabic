@@ -20,6 +20,8 @@ import {
   retryVoiceModel,
   subscribeVoiceModel,
 } from '@/services/voiceModelStore';
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { analytics } from '@/services/analytics';
 
 jest.mock('@/services/analytics', () => ({
   analytics: { track: jest.fn().mockResolvedValue(undefined) },
@@ -329,6 +331,34 @@ describe('voiceModelStore', () => {
 
       expect(sherpa.download.deleteModelByCategory).toHaveBeenCalledTimes(1);
       expect(getVoiceModelSnapshot()).toMatchObject({ state: 'absent', localPath: null });
+    });
+  });
+
+  // The fetch's start and its deferrals are Sentry breadcrumbs; only the
+  // failure reaches Mixpanel, and without the error's free text.
+  describe('analytics', () => {
+    it('sends nothing for a deferral or a successful fetch', async () => {
+      net = installNetInfoMock(createNetInfoStateMock(true, { type: 'cellular' }));
+      await requestVoiceModel({ reason: 'prefetch' });
+      net = installNetInfoMock(createNetInfoStateMock(true));
+      await retryVoiceModel();
+
+      expect(getVoiceModelSnapshot().state).toBe('ready');
+      expect(analytics.track).not.toHaveBeenCalled();
+    });
+
+    it('a failure is Voice Model Failed with its kind, never the message', async () => {
+      sherpa.download.ensureModelByCategory.mockRejectedValue(
+        new Error('Insufficient disk space. Available: 0.05GB, Required: 0.12GB'),
+      );
+
+      await requestVoiceModel({ reason: 'prefetch' });
+
+      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.VOICE_MODEL_FAILED, {
+        modelId: expect.any(String),
+        errorKind: 'disk-space',
+        trigger: 'prefetch',
+      });
     });
   });
 });

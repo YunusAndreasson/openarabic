@@ -36,13 +36,25 @@
 import type * as MixpanelModule from 'mixpanel-react-native';
 
 import type { AnalyticsEventName } from '@/constants/analytics';
-import { ANALYTICS_EVENTS, MIXPANEL_TOKEN } from '@/constants/analytics';
+import { ANALYTICS_EVENTS, FIRST_TIME_EVENTS, MIXPANEL_TOKEN } from '@/constants/analytics';
+import { claimFirstTime } from '@/services/analyticsInstall';
 
 // Keep app properties narrower than the SDK's permissive property values.
 type AnalyticsProperties = Record<string, string | number | boolean | null | undefined>;
 
 // Analytics instance and initialization state
 let mixpanelInstance: MixpanelModule.Mixpanel | null = null;
+
+/**
+ * Kept here as well as on the instance because Mixpanel forgets them: `reset()`
+ * clears the super properties, and the instance may not exist yet when they
+ * arrive. Applied at init and again after every reset.
+ */
+let superProperties: AnalyticsProperties = {};
+
+const applySuperProperties = (instance: MixpanelModule.Mixpanel): void => {
+  if (Object.keys(superProperties).length > 0) instance.registerSuperProperties(superProperties);
+};
 
 // React Native global for development mode detection
 declare const __DEV__: boolean;
@@ -54,6 +66,7 @@ const startMixpanel = async (token: string): Promise<void> => {
   const trackAutomaticEvents = false;
   const instance = new Mixpanel(token.trim(), trackAutomaticEvents);
   await instance.init();
+  applySuperProperties(instance);
   mixpanelInstance = instance;
 };
 
@@ -79,6 +92,18 @@ const initializeMixpanel = (): Promise<void> => {
 };
 
 /**
+ * `first_time: true` on the first of each core action this install sends
+ * (FIRST_TIME_EVENTS). Claimed only once an instance exists to send it.
+ */
+const withFirstTime = async (
+  event: string,
+  properties?: AnalyticsProperties,
+): Promise<AnalyticsProperties | undefined> => {
+  if (!FIRST_TIME_EVENTS.has(event) || !(await claimFirstTime(event))) return properties;
+  return { ...properties, first_time: true };
+};
+
+/**
  * The one place an event reaches Mixpanel. Both public doors funnel through it
  * so the lazy-init and silent-failure contract is written once.
  */
@@ -86,8 +111,9 @@ const sendToMixpanel = async (event: string, properties?: AnalyticsProperties): 
   try {
     await initializeMixpanel();
 
-    if (mixpanelInstance) {
-      mixpanelInstance.track(event, properties);
+    const instance = mixpanelInstance;
+    if (instance) {
+      instance.track(event, await withFirstTime(event, properties));
     }
     // Silent success - no logging needed for normal operation
   } catch {
@@ -133,10 +159,28 @@ export const analytics = {
 
       if (mixpanelInstance) {
         mixpanelInstance.reset();
+        // reset() clears the super properties; install_date and the rest outlive a sign-out.
+        applySuperProperties(mixpanelInstance);
       }
       // Silent success - no logging needed for normal operation
     } catch {
       // Analytics failed silently - this is expected behavior when MIXPANEL_TOKEN is not configured
+    }
+  },
+
+  /**
+   * Put these properties on every event from now on (SUPER_PROPERTIES). Merged
+   * into the ones already registered, and applied again at init and after every
+   * `reset()`.
+   */
+  registerSuperProperties: async (properties: AnalyticsProperties): Promise<void> => {
+    superProperties = { ...superProperties, ...properties };
+
+    try {
+      await initializeMixpanel();
+      mixpanelInstance?.registerSuperProperties(properties);
+    } catch {
+      // Analytics failed silently
     }
   },
 
@@ -151,5 +195,10 @@ export const analytics = {
 
   trackSignOut: async (): Promise<void> => {
     await analytics.track(ANALYTICS_EVENTS.SIGN_OUT);
+  },
+
+  /** `code` is a machine code ('cancelled', a Supabase or native code, a status), never a message. */
+  trackAuthFailed: async (method: string, code: string): Promise<void> => {
+    await analytics.track(ANALYTICS_EVENTS.AUTH_FAILED, { method, code });
   },
 };

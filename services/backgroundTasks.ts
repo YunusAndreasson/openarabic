@@ -40,7 +40,11 @@ import * as BackgroundTask from 'expo-background-task';
 import * as TaskManager from 'expo-task-manager';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { setAppBadgeCount, syncReminderPlan } from '@/services/notificationService';
+import {
+  BACKGROUND_SYNC_TRIGGER,
+  setAppBadgeCount,
+  syncReminderPlan,
+} from '@/services/notificationService';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
@@ -98,7 +102,7 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
     // is the primary scheduler; this run corrects multi-device staleness.
     const prefs = await readSmartReminderPrefs();
     if (prefs?.enabled) {
-      await syncReminderPlan(words, prefs, 'background-task');
+      await syncReminderPlan(words, prefs, BACKGROUND_SYNC_TRIGGER);
     }
 
     return BackgroundTask.BackgroundTaskResult.Success;

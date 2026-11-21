@@ -84,7 +84,7 @@ export default function SearchScreen(): JSX.Element {
    */
   const handleArticlePress = useCallback((article: Article) => {
     searchBarRef.current?.blur();
-    router.push(getArticleRoute(article.id));
+    router.push(getArticleRoute(article.id, { source: 'search' }));
   }, []);
 
   return (

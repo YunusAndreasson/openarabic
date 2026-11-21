@@ -153,6 +153,8 @@ describe('useAccountScreen', () => {
 
     expect(mockRecordAccepted).toHaveBeenCalledTimes(1);
     expect(mockDispatch).toHaveBeenCalledWith(remindersToggled(true));
+    // The settings toggle is an unprimed ask, counted under its own source
+    expect(mockEnsurePermissions).toHaveBeenCalledWith({ source: 'settings', primed: false });
   });
 
   test('turns reminders off without asking for permission', async () => {
@@ -193,6 +195,28 @@ describe('useAccountScreen', () => {
     expect(mockSignOut).toHaveBeenCalledTimes(1);
     expect(mockAnalyticsReset).toHaveBeenCalledTimes(1);
     expect(mockRouterReplace).toHaveBeenCalledWith('/auth');
+    // Sign Out counts a sign-out that happened, on the id it belongs to: after
+    // the sign-out, before reset() makes a new one.
+    const [signOutOrder] = mockSignOut.mock.invocationCallOrder;
+    const [trackOrder] = mockTrackSignOut.mock.invocationCallOrder;
+    const [resetOrder] = mockAnalyticsReset.mock.invocationCallOrder;
+    expect(trackOrder).toBeGreaterThan(signOutOrder ?? Infinity);
+    expect(resetOrder).toBeGreaterThan(trackOrder ?? Infinity);
+  });
+
+  test('a sign-out Supabase refuses is no Sign Out', async () => {
+    mockSignOut.mockResolvedValue({ error: { message: 'Network down' } } as never);
+    const { result } = renderHook(() => useAccountScreen());
+
+    act(() => result.current.handleSignOut());
+    const confirmationButtons = alertSpy.mock.calls[0]?.[2];
+    const signOutButton = confirmationButtons?.find(button => button.style === 'destructive');
+    await act(async () => {
+      await signOutButton?.onPress?.();
+    });
+
+    expect(mockTrackSignOut).not.toHaveBeenCalled();
+    expect(mockAnalyticsReset).not.toHaveBeenCalled();
   });
 
   test('resets reading progress and refreshes its query after confirmation', async () => {

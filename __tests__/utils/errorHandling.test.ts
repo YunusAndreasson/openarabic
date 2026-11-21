@@ -102,12 +102,7 @@ describe('errorHandling utility', () => {
       await handleError(error);
 
       expect(Sentry.captureException).toHaveBeenCalled();
-      expect(analytics.trackError).toHaveBeenCalledWith(
-        'Error Occurred',
-        expect.objectContaining({
-          errorMessage: 'Test error',
-        }),
-      );
+      expect(analytics.trackError).toHaveBeenCalledWith('Error Occurred', { errorName: 'Error' });
       expect(mockToastHandler).toHaveBeenCalledWith('Test error', undefined, ToastType.ERROR);
     });
 
@@ -115,12 +110,7 @@ describe('errorHandling utility', () => {
       await handleError('String error');
 
       expect(Sentry.captureException).toHaveBeenCalled();
-      expect(analytics.trackError).toHaveBeenCalledWith(
-        'Error Occurred',
-        expect.objectContaining({
-          errorMessage: 'String error',
-        }),
-      );
+      expect(analytics.trackError).toHaveBeenCalledWith('Error Occurred', { errorName: 'Error' });
       expect(mockToastHandler).toHaveBeenCalledWith('String error', undefined, ToastType.ERROR);
     });
   });
@@ -246,12 +236,7 @@ describe('errorHandling utility', () => {
         analyticsEventName: 'Login Failed',
       });
 
-      expect(analytics.trackError).toHaveBeenCalledWith(
-        'Login Failed',
-        expect.objectContaining({
-          errorMessage: 'Test',
-        }),
-      );
+      expect(analytics.trackError).toHaveBeenCalledWith('Login Failed', expect.any(Object));
     });
 
     test('includes additional analytics properties', async () => {
@@ -266,7 +251,6 @@ describe('errorHandling utility', () => {
       expect(analytics.trackError).toHaveBeenCalledWith(
         'Error Occurred',
         expect.objectContaining({
-          errorMessage: 'Test',
           screen: 'login',
           attemptNumber: 3,
           hasNetwork: true,
@@ -274,32 +258,32 @@ describe('errorHandling utility', () => {
       );
     });
 
-    test('includes error name and stack in analytics', async () => {
-      const error = new Error('Test error');
+    // Free text never reaches Mixpanel: a message or a stack can hold what the
+    // learner typed or studied. Sentry gets the whole error.
+    test('sends the error name and never the message or the stack', async () => {
+      const error = new Error('Test error with someone@example.com');
       error.name = 'CustomError';
 
       await handleError(error);
 
-      expect(analytics.trackError).toHaveBeenCalledWith(
-        'Error Occurred',
-        expect.objectContaining({
-          errorMessage: 'Test error',
-          errorName: 'CustomError',
-          errorStack: expect.any(String),
-          timestamp: expect.any(String),
-        }),
-      );
+      expect(analytics.trackError).toHaveBeenCalledWith('Error Occurred', {
+        errorName: 'CustomError',
+      });
     });
 
-    test('limits stack trace length to 500 characters', async () => {
-      const error = new Error('Test');
-      error.stack = 'a'.repeat(1000);
+    test("sends the error's machine code: its own code, else its HTTP status", async () => {
+      await handleError(Object.assign(new Error('Invalid login'), { code: 'invalid_credentials' }));
+      await handleError(Object.assign(new Error('Server error'), { status: 503 }));
+      await handleError({ message: 'Row not found', code: 'PGRST116' });
 
-      await handleError(error);
-
-      const analyticsCall = jest.mocked(analytics.trackError).mock.calls[0];
-      const properties = analyticsCall[1] as any;
-      expect(properties.errorStack.length).toBeLessThanOrEqual(500);
+      const properties = jest
+        .mocked(analytics.trackError)
+        .mock.calls.map((call: unknown[]) => call[1]);
+      expect(properties).toEqual([
+        { errorName: 'Error', errorCode: 'invalid_credentials' },
+        { errorName: 'Error', errorCode: '503' },
+        { errorName: 'Error', errorCode: 'PGRST116' },
+      ]);
     });
 
     test('handles analytics failure gracefully', async () => {
@@ -364,12 +348,7 @@ describe('errorHandling utility', () => {
       await handleError(error);
 
       expect(mockToastHandler).toHaveBeenCalledWith('', undefined, ToastType.ERROR);
-      expect(analytics.trackError).toHaveBeenCalledWith(
-        'Error Occurred',
-        expect.objectContaining({
-          errorMessage: '',
-        }),
-      );
+      expect(analytics.trackError).toHaveBeenCalledWith('Error Occurred', { errorName: 'Error' });
     });
 
     test('handles error without stack', async () => {
@@ -378,13 +357,7 @@ describe('errorHandling utility', () => {
 
       await handleError(error);
 
-      expect(analytics.trackError).toHaveBeenCalledWith(
-        'Error Occurred',
-        expect.objectContaining({
-          errorMessage: 'Test',
-          errorStack: undefined,
-        }),
-      );
+      expect(analytics.trackError).toHaveBeenCalledWith('Error Occurred', { errorName: 'Error' });
     });
 
     test('handles empty string error', async () => {

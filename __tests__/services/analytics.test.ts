@@ -23,6 +23,7 @@ const mockInit = jest.fn<Mixpanel['init']>(async () => undefined);
 const mockIdentify = jest.fn<Mixpanel['identify']>(async () => undefined);
 const mockTrack = jest.fn<Mixpanel['track']>();
 const mockReset = jest.fn<Mixpanel['reset']>();
+const mockRegisterSuperProperties = jest.fn<Mixpanel['registerSuperProperties']>();
 const mockSetPeople = jest.fn((..._args: unknown[]): ReturnType<People['set']> => undefined);
 const mockGetPeople = jest.fn((): Pick<ReturnType<Mixpanel['getPeople']>, 'set'> => ({
   set: mockSetPeople,
@@ -37,6 +38,7 @@ class MockMixpanel {
   track = mockTrack;
   reset = mockReset;
   getPeople = mockGetPeople;
+  registerSuperProperties = mockRegisterSuperProperties;
 }
 
 jest.mock('mixpanel-react-native', () => ({
@@ -78,6 +80,49 @@ describe('analytics service', () => {
     });
   });
 
+  describe('API surface', () => {
+    // Pinned: a new door here is a new kind of data leaving the device.
+    test('is exactly these methods', () => {
+      expect(Object.keys(analytics).sort()).toEqual([
+        'registerSuperProperties',
+        'reset',
+        'track',
+        'trackAuthFailed',
+        'trackError',
+        'trackSignIn',
+        'trackSignOut',
+        'trackSignUp',
+      ]);
+    });
+  });
+
+  describe('Super properties', () => {
+    test('are registered on the instance', async () => {
+      await analytics.registerSuperProperties({ signed_in: true });
+
+      expect(mockRegisterSuperProperties).toHaveBeenCalledWith({ signed_in: true });
+    });
+
+    // reset() makes a new anonymous id and clears Mixpanel's super properties;
+    // the install date and the rest belong to the device and must survive it.
+    test('are applied again after reset, merged', async () => {
+      await analytics.registerSuperProperties({ install_date: '2026-11-21' });
+      await analytics.registerSuperProperties({ notifications_enabled: false });
+      mockRegisterSuperProperties.mockClear();
+
+      await analytics.reset();
+
+      expect(mockReset).toHaveBeenCalledTimes(1);
+      expect(mockRegisterSuperProperties).toHaveBeenCalledTimes(1);
+      expect(mockRegisterSuperProperties).toHaveBeenCalledWith(
+        expect.objectContaining({ install_date: '2026-11-21', notifications_enabled: false }),
+      );
+      const resetOrder = mockReset.mock.invocationCallOrder[0] ?? 0;
+      const reapplyOrder = mockRegisterSuperProperties.mock.invocationCallOrder[0] ?? 0;
+      expect(reapplyOrder).toBeGreaterThan(resetOrder);
+    });
+  });
+
   describe('Anonymity', () => {
     test('exposes no identify or people-profile method', () => {
       expect(analytics).not.toHaveProperty('identify');
@@ -106,6 +151,15 @@ describe('analytics service', () => {
       expect(mockTrack).toHaveBeenCalledWith(ANALYTICS_EVENTS.SIGN_IN, { method: 'apple' });
       expect(mockTrack).toHaveBeenCalledWith(ANALYTICS_EVENTS.SIGN_UP, { method: 'email' });
       expect(mockTrack).toHaveBeenCalledWith(ANALYTICS_EVENTS.SIGN_OUT, undefined);
+    });
+
+    test('Auth Failed carries the method and a machine code, nothing else', async () => {
+      await analytics.trackAuthFailed('google', 'cancelled');
+
+      expect(mockTrack).toHaveBeenCalledWith(ANALYTICS_EVENTS.AUTH_FAILED, {
+        method: 'google',
+        code: 'cancelled',
+      });
     });
 
     test('reset starts a fresh anonymous id', async () => {

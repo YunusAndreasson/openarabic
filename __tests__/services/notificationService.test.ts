@@ -26,6 +26,7 @@ import type { PlannedNotification } from '@/utils/notificationPlanner';
 jest.mock('@/services/analytics', () => ({
   analytics: {
     track: jest.fn(),
+    registerSuperProperties: jest.fn(),
   },
 }));
 
@@ -170,10 +171,12 @@ describe('notificationService', () => {
   });
 
   describe('Permission Handling', () => {
+    const SETTINGS_ASK = { source: 'settings', primed: false } as const;
+
     test('should return true if permissions already granted', async () => {
       mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('granted'));
 
-      const granted = await notificationService.ensurePermissions();
+      const granted = await notificationService.ensurePermissions(SETTINGS_ASK);
 
       expect(granted).toBeTruthy();
       expect(mockRequestPermissionsAsync).not.toHaveBeenCalled();
@@ -183,7 +186,7 @@ describe('notificationService', () => {
       mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('undetermined'));
       mockRequestPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('granted'));
 
-      const granted = await notificationService.ensurePermissions();
+      const granted = await notificationService.ensurePermissions(SETTINGS_ASK);
 
       expect(granted).toBeTruthy();
       expect(mockRequestPermissionsAsync).toHaveBeenCalledWith({
@@ -201,7 +204,7 @@ describe('notificationService', () => {
       mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('undetermined'));
       mockRequestPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('denied'));
 
-      const granted = await notificationService.ensurePermissions();
+      const granted = await notificationService.ensurePermissions(SETTINGS_ASK);
 
       expect(granted).toBeFalsy();
     });
@@ -214,7 +217,7 @@ describe('notificationService', () => {
         }),
       );
 
-      const granted = await notificationService.ensurePermissions();
+      const granted = await notificationService.ensurePermissions(SETTINGS_ASK);
 
       expect(granted).toBeTruthy();
     });
@@ -225,7 +228,7 @@ describe('notificationService', () => {
         createPermissionsMock('denied', { iosStatus: Notifications.IosAuthorizationStatus.DENIED }),
       );
 
-      const granted = await notificationService.ensurePermissions();
+      const granted = await notificationService.ensurePermissions(SETTINGS_ASK);
 
       expect(granted).toBeFalsy();
       expect(mockRequestPermissionsAsync).not.toHaveBeenCalled();
@@ -237,7 +240,7 @@ describe('notificationService', () => {
         createPermissionsMock('denied', { canAskAgain: false }),
       );
 
-      const granted = await notificationService.ensurePermissions();
+      const granted = await notificationService.ensurePermissions(SETTINGS_ASK);
 
       expect(granted).toBe(false);
       expect(mockRequestPermissionsAsync).not.toHaveBeenCalled();
@@ -250,7 +253,7 @@ describe('notificationService', () => {
       );
       mockRequestPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('granted'));
 
-      const granted = await notificationService.ensurePermissions();
+      const granted = await notificationService.ensurePermissions(SETTINGS_ASK);
 
       expect(granted).toBe(true);
       expect(mockRequestPermissionsAsync).toHaveBeenCalledTimes(1);
@@ -264,10 +267,67 @@ describe('notificationService', () => {
         }),
       );
 
-      const granted = await notificationService.ensurePermissions();
+      const granted = await notificationService.ensurePermissions(SETTINGS_ASK);
 
       // Ephemeral is treated as not granted
       expect(typeof granted).toBe('boolean');
+    });
+
+    test('an answer already given is a Permission Result with no dialog, and no Prompt Shown', async () => {
+      mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('granted'));
+
+      await notificationService.ensurePermissions(SETTINGS_ASK);
+
+      expect(analytics.track).toHaveBeenCalledTimes(1);
+      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.PERMISSION_RESULT, {
+        permission: 'notifications',
+        granted: true,
+        primed: false,
+        prompted: false,
+        source: 'settings',
+      });
+      expect(analytics.registerSuperProperties).toHaveBeenCalledWith({
+        notifications_enabled: true,
+      });
+    });
+
+    test('Prompt Shown goes out only when the OS dialog really appears, then its result', async () => {
+      mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('undetermined'));
+      mockRequestPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('denied'));
+
+      await notificationService.ensurePermissions({ source: 'first_word_saved', primed: true });
+
+      expect(jest.mocked(analytics.track).mock.calls).toEqual([
+        [
+          ANALYTICS_EVENTS.PERMISSION_PROMPT_SHOWN,
+          { permission: 'notifications', primed: true, source: 'first_word_saved' },
+        ],
+        [
+          ANALYTICS_EVENTS.PERMISSION_RESULT,
+          {
+            permission: 'notifications',
+            granted: false,
+            primed: true,
+            prompted: true,
+            source: 'first_word_saved',
+          },
+        ],
+      ]);
+      expect(analytics.registerSuperProperties).toHaveBeenCalledWith({
+        notifications_enabled: false,
+      });
+    });
+
+    test('refreshNotificationsEnabled puts the OS grant on every event, check-only', async () => {
+      mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('granted'));
+
+      await notificationService.refreshNotificationsEnabled();
+
+      expect(analytics.registerSuperProperties).toHaveBeenCalledWith({
+        notifications_enabled: true,
+      });
+      expect(mockRequestPermissionsAsync).not.toHaveBeenCalled();
+      expect(analytics.track).not.toHaveBeenCalled();
     });
   });
 
@@ -338,6 +398,29 @@ describe('notificationService', () => {
       expect(count).toBe(0);
       expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
       expect(mockRequestPermissionsAsync).not.toHaveBeenCalled();
+    });
+
+    test('Smart Reminders Synced: never from the background task, and only for a changed count', async () => {
+      const syncedEvents = () =>
+        jest
+          .mocked(analytics.track)
+          .mock.calls.filter(([event]) => event === ANALYTICS_EVENTS.SMART_REMINDERS_SYNCED);
+      const threePlans = [
+        makePlan({ identifier: 'srs-due-a' }),
+        makePlan({ identifier: 'srs-due-b' }),
+        makePlan({ identifier: 'srs-due-c' }),
+      ];
+
+      await notificationService.syncSmartNotifications(
+        threePlans,
+        notificationService.BACKGROUND_SYNC_TRIGGER,
+      );
+      expect(syncedEvents()).toHaveLength(0);
+
+      await notificationService.syncSmartNotifications(threePlans, 'test');
+      await notificationService.syncSmartNotifications(threePlans, 'test');
+      expect(syncedEvents()).toHaveLength(1);
+      expect(syncedEvents()[0]?.[1]).toEqual(expect.objectContaining({ scheduledCount: 3 }));
     });
 
     test('empty plan cancels stale notifications without scheduling', async () => {
@@ -458,6 +541,15 @@ describe('notificationService', () => {
       expect(mockSetBadgeCountAsync).toHaveBeenCalledWith(0);
     });
 
+    test('a write the OS refuses is no analytics event', async () => {
+      mockSetBadgeCountAsync.mockResolvedValueOnce(false);
+
+      const success = await notificationService.setAppBadgeCount(5);
+
+      expect(success).toBe(false);
+      expect(analytics.track).not.toHaveBeenCalled();
+    });
+
     test('should handle badge set errors', async () => {
       mockSetBadgeCountAsync.mockRejectedValueOnce(new Error('Badge set failed'));
 
@@ -517,8 +609,9 @@ describe('notificationService', () => {
 
       expect(routed).toBe(true);
       expect(navigate).toHaveBeenCalledWith('/practice');
-      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, {
+      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.NOTIFICATION_OPENED, {
         type: 'srs-due',
+        cold_start: false,
       });
     });
 
@@ -570,6 +663,11 @@ describe('notificationService', () => {
       );
 
       expect(navigate).toHaveBeenCalledTimes(2);
+      // Every type counts as opened, the legacy daily reminder included
+      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.NOTIFICATION_OPENED, {
+        type: 'study-reminder',
+        cold_start: false,
+      });
     });
 
     test('a response is not consumed while nothing can navigate yet', () => {
@@ -581,9 +679,9 @@ describe('notificationService', () => {
       notificationService.handleNotificationResponse(response, navigate, { coldStart: true });
 
       expect(navigate).toHaveBeenCalledWith('/practice');
-      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, {
+      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.NOTIFICATION_OPENED, {
         type: 'srs-due',
-        coldStart: true,
+        cold_start: true,
       });
     });
 
@@ -598,9 +696,9 @@ describe('notificationService', () => {
       const unsubscribe = notificationService.observeNotificationResponses(navigate);
 
       expect(navigate).toHaveBeenCalledWith('/practice');
-      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, {
+      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.NOTIFICATION_OPENED, {
         type: 'srs-due',
-        coldStart: true,
+        cold_start: true,
       });
       expect(mockClearLastNotificationResponse).toHaveBeenCalledTimes(1);
 

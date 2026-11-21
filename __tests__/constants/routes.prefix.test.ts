@@ -7,6 +7,7 @@ import { articleId, categoryId, rootId } from '@/__tests__/helpers/ids';
 import {
   getArticleRoute,
   getCategoryFilterRoute,
+  readArticleOpenSource,
   getPracticeWordRoute,
   getWordDetailRoute,
 } from '@/utils/routeBuilders';
@@ -59,6 +60,16 @@ describe('route builders', () => {
     expect(
       resolveHref(getArticleRoute(articleId(5), { disableAutoScroll: true, sentenceId: 12 })),
     ).toBe('/article/5?disableAutoScroll=true&sentenceId=12');
+  });
+
+  test('the reader route carries what opened it, and the reader reads it back', () => {
+    expect(resolveHref(getArticleRoute(articleId(5), { source: 'continue' }))).toBe(
+      '/article/5?source=continue',
+    );
+    expect(readArticleOpenSource('continue')).toBe('continue');
+    // A deep link has none; a value a newer build sent is not trusted either
+    expect(readArticleOpenSource(undefined)).toBe('other');
+    expect(readArticleOpenSource('something-new')).toBe('other');
   });
 
   test('a category name is encoded exactly once', () => {

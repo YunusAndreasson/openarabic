@@ -56,6 +56,7 @@ const buildChecklist = (overrides: Partial<ChecklistProp> = {}): ChecklistProp =
     allDone: false,
     finalizeCompletion: jest.fn(),
     dismiss: jest.fn(),
+    trackShown: jest.fn(),
     items: [
       { step: OnboardingStep.READ_TEXT, label: 'Read your first text', done: false },
       { step: OnboardingStep.SAVE_WORD, label: 'Save a word to practice', done: false },
@@ -99,8 +100,24 @@ describe('GetStartedChecklist', () => {
 
     expect(mockPush).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith(
-      expect.objectContaining({ params: expect.objectContaining({ id: 7 }) }),
+      expect.objectContaining({ params: expect.objectContaining({ id: 7, source: 'checklist' }) }),
     );
+  });
+
+  // Eligible is not on screen: the card waits behind the welcome intro, and
+  // Onboarding Checklist Shown used to fire while it did.
+  it('reports itself shown only once it is actually on screen', () => {
+    const trackShown = jest.fn();
+    const checklist = buildChecklist({ doneCount: 2, trackShown });
+    const { rerender } = render(
+      <GetStartedChecklist articlesData={ARTICLES} checklist={checklist} isSuppressedByIntro />,
+    );
+
+    expect(trackShown).not.toHaveBeenCalled();
+
+    rerender(<GetStartedChecklist articlesData={ARTICLES} checklist={checklist} />);
+
+    expect(trackShown).toHaveBeenCalledWith(2);
   });
 
   it('puts the card away from the close glyph in its header, without opening anything', () => {

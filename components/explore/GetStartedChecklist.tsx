@@ -65,9 +65,15 @@ const GetStartedChecklistComponent = ({
   isSuppressedByIntro = false,
 }: GetStartedChecklistProps) => {
   const router = useRouter();
-  const { isChecklistVisible, items, doneCount, allDone, finalizeCompletion, dismiss } = checklist;
+  const { isChecklistVisible, items, doneCount, allDone, finalizeCompletion, dismiss, trackShown } =
+    checklist;
+  const isOnScreen = isChecklistVisible && !isSuppressedByIntro;
 
-  const openStarterArticle = useOpenStarterArticle(articlesData);
+  useEffect(() => {
+    if (isOnScreen) trackShown(doneCount);
+  }, [isOnScreen, doneCount, trackShown]);
+
+  const openStarterArticle = useOpenStarterArticle(articlesData, 'checklist');
 
   // Collapse animation: measured height + opacity → 0, then persist completion.
   // Height-based (not reanimated `exiting`) because the card lives inside a
@@ -128,7 +134,7 @@ const GetStartedChecklistComponent = ({
     [openStarterArticle, router],
   );
 
-  if (!isChecklistVisible || isSuppressedByIntro) {
+  if (!isOnScreen) {
     return null;
   }
 
