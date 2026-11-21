@@ -31,7 +31,7 @@ export const STORAGE_KEYS = {
   AUDIO_CACHE_LEGACY_SWEEP: '@openarabic/audioCache/legacySweepV1',
   /** Id of the account that last signed in here — see utils/accountSwitch. */
   LAST_SIGNED_IN_USER: '@openarabic/auth/lastSignedInUser',
-  /** Install date, First Open and first actions for analytics — see services/analyticsInstall. */
+  /** Install date, install_id and once-per-install flags for analytics — see services/analyticsInstall. */
   ANALYTICS_INSTALL: '@openarabic/analytics/install',
 
   TUTORIAL_WELCOME_INTRO: '@openarabic/tutorials/welcomeIntroSeen',

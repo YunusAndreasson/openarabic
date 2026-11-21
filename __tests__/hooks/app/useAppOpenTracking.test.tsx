@@ -1,5 +1,6 @@
 /**
- * App Opened once per launch the learner sees; First Open once per install.
+ * App Opened once per launch the learner sees; First Open once per install, and
+ * Install Attribution after them (services/installAttribution has the rules).
  *
  * iOS launches the app into the background, where it becomes ready with nobody
  * looking. That used to count as an open, and the real open after it was never
@@ -19,10 +20,21 @@ jest.mock('@/services/analytics', () => ({
 const mockInstall = { firstOpen: true };
 jest.mock('@/services/analyticsInstall', () => ({
   loadInstallRecord: async () => ({ installDate: '2026-11-21', installKind: 'new' }),
-  claimFirstOpen: async () => {
-    if (!mockInstall.firstOpen) return null;
+}));
+
+// Through the mocked analytics, so the order of all three can be read off one list.
+jest.mock('@/services/installAttribution', () => ({
+  trackFirstOpen: async () => {
+    if (!mockInstall.firstOpen) return;
     mockInstall.firstOpen = false;
-    return { installDate: '2026-11-21', installKind: 'new' };
+    const { analytics } =
+      jest.requireMock<typeof import('@/services/analytics')>('@/services/analytics');
+    await analytics.track('First Open', { install_kind: 'new' });
+  },
+  startInstallAttribution: async () => {
+    const { analytics } =
+      jest.requireMock<typeof import('@/services/analytics')>('@/services/analytics');
+    await analytics.track('Install Attribution', { referrer_0: 'utm_source=meta' });
   },
 }));
 
@@ -56,15 +68,19 @@ describe('useAppOpenTracking', () => {
   test('a foreground launch is App Opened, after First Open and the install date', async () => {
     renderHook(() => useAppOpenTracking(true, jest.fn()));
 
-    await waitFor(() =>
-      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.APP_OPENED, {
-        launch: 'foreground',
-      }),
-    );
+    await waitFor(() => expect(trackedEvents()).toContain(ANALYTICS_EVENTS.INSTALL_ATTRIBUTION));
+    expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.APP_OPENED, {
+      launch: 'foreground',
+    });
     expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.FIRST_OPEN, {
       install_kind: 'new',
     });
-    expect(trackedEvents()).toEqual([ANALYTICS_EVENTS.FIRST_OPEN, ANALYTICS_EVENTS.APP_OPENED]);
+    // Install Attribution waits on the Play Store, so it never holds up App Opened.
+    expect(trackedEvents()).toEqual([
+      ANALYTICS_EVENTS.FIRST_OPEN,
+      ANALYTICS_EVENTS.APP_OPENED,
+      ANALYTICS_EVENTS.INSTALL_ATTRIBUTION,
+    ]);
     expect(analytics.registerSuperProperties).toHaveBeenCalledWith({ install_date: '2026-11-21' });
   });
 
@@ -111,7 +127,13 @@ describe('useAppOpenTracking', () => {
     );
     expect(onOpen).toHaveBeenCalledTimes(1);
     // The install's first open is this one, not the background launch
-    expect(trackedEvents()).toEqual([ANALYTICS_EVENTS.FIRST_OPEN, ANALYTICS_EVENTS.APP_OPENED]);
+    await waitFor(() =>
+      expect(trackedEvents()).toEqual([
+        ANALYTICS_EVENTS.FIRST_OPEN,
+        ANALYTICS_EVENTS.APP_OPENED,
+        ANALYTICS_EVENTS.INSTALL_ATTRIBUTION,
+      ]),
+    );
   });
 
   test('App Opened goes out once per launch; later returns are App Resumed, not this', async () => {

@@ -108,6 +108,10 @@ describe('analytics: first_time and super properties', () => {
     // applies the store and the call then applies its own properties.
     await analytics.registerSuperProperties({ install_date: '2026-11-21', signed_in: false });
 
-    expect(mockMixpanel.registered[0]).toEqual({ install_date: '2026-11-21', signed_in: false });
+    expect(mockMixpanel.registered[0]).toEqual({
+      install_date: '2026-11-21',
+      signed_in: false,
+      install_id: expect.any(String),
+    });
   });
 });

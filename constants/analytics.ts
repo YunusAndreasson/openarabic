@@ -20,11 +20,21 @@ export const ANALYTICS_EVENTS = {
   // App lifecycle events
   /** A launch the learner sees: never sent while the app runs in the background. */
   APP_OPENED: 'App Opened',
-  /** Once per install, at the first App Opened. */
+  /**
+   * Once per install, at the first App Opened; `install_kind` is new or existing.
+   * A contract with the system that reads it (services/installAttribution): never rename it.
+   */
   FIRST_OPEN: 'First Open',
   APP_BACKGROUNDED: 'App Backgrounded',
   APP_RESUMED: 'App Resumed',
   SCREEN_VIEWED: 'Screen Viewed',
+
+  // Install attribution (services/installAttribution). These names are a
+  // contract with the system that reads them, as First Open is: never rename one.
+  /** Android, once per new install: the Play install referrer, in `referrer_0`, `referrer_1`, ... */
+  INSTALL_ATTRIBUTION: 'Install Attribution',
+  /** Once per new install, at its first completed practice session. */
+  ACTIVATED: 'Activated',
 
   // Review/Practice session events
   REVIEW_SESSION_STARTED: 'Review Session Started',
@@ -132,9 +142,16 @@ export const FIRST_TIME_EVENTS: ReadonlySet<string> = new Set<AnalyticsEventName
 
 /**
  * Super properties: on every event once registered (`analytics.registerSuperProperties`).
- * None identifies anyone; each splits the anonymous ids into groups.
+ * None identifies anyone; all but `install_id` split the anonymous ids into groups.
  */
 export const SUPER_PROPERTIES = {
+  /**
+   * A random ID for this install, kept until the app is uninstalled, that joins
+   * its events across sign-outs for the system that reads them (the name is a
+   * contract with it). Identifies no one. Mixpanel only: never Meta, Sentry or
+   * our backend.
+   */
+  INSTALL_ID: 'install_id',
   /** YYYY-MM-DD the app was installed, for cohorts by install week */
   INSTALL_DATE: 'install_date',
   /** The OS lets the app notify */

@@ -612,7 +612,7 @@ export const STRINGS = {
     'We store your reading progress, vocabulary lists, practice session history, review performance, and app preferences (theme, audio settings, notifications).',
   PRIVACY_COLLECTION_ANALYTICS: 'Usage Analytics',
   PRIVACY_COLLECTION_ANALYTICS_DESC:
-    'We use Mixpanel to record how the app is used: which screens are opened, actions such as reading articles, studying words and practice sessions, and errors. These events are linked to a random identifier created on your device, not to your account, and do not include your name, email address or account ID. A new identifier is created when you sign out or delete your account.',
+    'We use Mixpanel to record how the app is used: which screens are opened, actions such as reading articles, studying words and practice sessions, and errors. These events are linked to a random identifier created on your device, not to your account, and do not include your name, email address or account ID. A new identifier is created when you sign out or delete your account. Each event also carries a random installation ID that stays the same until you uninstall the app, and on Android we record which link or ad the Play Store says brought you to the app.',
   PRIVACY_USE_TITLE: '2. How We Use Your Information',
   PRIVACY_USE:
     'We use your data to: provide the learning service, sync your progress across devices, personalize your learning experience, send practice reminders (if enabled), and improve the app.',

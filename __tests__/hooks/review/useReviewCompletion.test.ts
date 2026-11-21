@@ -27,6 +27,10 @@ jest.mock('@/services/analytics', () => ({
   },
 }));
 
+jest.mock('@/services/installAttribution', () => ({
+  trackActivated: jest.fn(),
+}));
+
 jest.mock('@/services/metaEvents', () => ({
   metaEvents: {
     logPracticeSessionComplete: jest.fn(),
@@ -60,6 +64,7 @@ jest.mock('@/utils/haptics', () => ({
 import { useReviewCompletion } from '@/hooks/review/useReviewCompletion';
 import type { SessionMetrics } from '@/types/review.types';
 import { analytics } from '@/services/analytics';
+import { trackActivated } from '@/services/installAttribution';
 import { metaEvents } from '@/services/metaEvents';
 import { recordSessionCompleted } from '@/utils/notificationPromptStorage';
 import { appendSession } from '@/utils/recallSignalStorage';
@@ -114,6 +119,7 @@ describe('useReviewCompletion', () => {
       expect(recordStudyDay).not.toHaveBeenCalled();
       expect(recordSessionCompleted).not.toHaveBeenCalled();
       expect(metaEvents.logPracticeSessionComplete).not.toHaveBeenCalled();
+      expect(trackActivated).not.toHaveBeenCalled();
     });
 
     test('records every completion effect for a real session', async () => {
@@ -128,6 +134,23 @@ describe('useReviewCompletion', () => {
       expect(recordStudyDay).toHaveBeenCalledTimes(1);
       expect(recordSessionCompleted).toHaveBeenCalledTimes(1);
       expect(metaEvents.logPracticeSessionComplete).toHaveBeenCalledWith(10);
+      // Once per install is the service's to enforce; every completion offers it.
+      expect(trackActivated).toHaveBeenCalledTimes(1);
+    });
+
+    // Activated is the activation moment of an ad-measured install, and must not
+    // sit behind the ad SDK that has thrown out of this callback before.
+    test('Activated still goes out when the Meta SDK throws', async () => {
+      jest.mocked(metaEvents.logPracticeSessionComplete).mockImplementation(() => {
+        throw new Error('The SDK has not been initialized');
+      });
+      renderHook(() => useReviewCompletion(mockSessionMetrics));
+
+      await act(async () => {
+        await jest.runAllTimersAsync();
+      });
+
+      expect(trackActivated).toHaveBeenCalledTimes(1);
     });
 
     // The caches belong to useReview's finalizeSession, which refreshes them

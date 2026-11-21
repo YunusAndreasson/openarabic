@@ -3,7 +3,10 @@
  *
  * - the day the app was installed, sent on every event as the `install_date`
  *   super property so retention can be cut by install week;
- * - whether `First Open` has gone out, which happens once per install;
+ * - `install_id`, a random ID sent on every event as a super property, which
+ *   joins an install's events (services/installAttribution);
+ * - whether `First Open`, `Install Attribution` and `Activated` have gone out,
+ *   each once per install, and how often the install referrer has been asked for;
  * - which core actions have already been sent once, for `first_time`
  *   (FIRST_TIME_EVENTS).
  *
@@ -16,7 +19,9 @@
  * The first launch that finds no record decides whether this is a new install
  * or an existing user who updated into this code, from how long ago the app was
  * installed and, on Android, whether it has been updated since. An existing
- * user's first actions were long ago, so all of them start out already sent.
+ * user's first actions were long ago, so all of them start out already sent, and
+ * so do `Install Attribution` and `Activated`: there is no install to attribute
+ * and no first session left to count.
  *
  * A flag is written before its event goes out, so a crash between the two loses
  * one event and never sends one twice. When storage can't be read nothing is
@@ -28,6 +33,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Application from 'expo-application';
+import * as Crypto from 'expo-crypto';
 import { Platform } from 'react-native';
 
 import { FIRST_TIME_EVENTS } from '@/constants/analytics';
@@ -40,10 +46,20 @@ export interface InstallRecord {
   /** YYYY-MM-DD, on the device's calendar */
   installDate: string;
   installKind: InstallKind;
+  /** `install_id`, a UUID v4; empty until analytics first starts on this code */
+  installId: string;
   firstOpenSent: boolean;
+  /** Sent, or settled with nothing to send (no referrer after the last read, an existing install) */
+  installAttributionSent: boolean;
+  /** Reads of the install referrer started so far, answered or not */
+  referrerReads: number;
+  activatedSent: boolean;
   /** The FIRST_TIME_EVENTS already sent once */
   firstEvents: string[];
 }
+
+/** The events that go out once per install, by the flag that remembers each. */
+export type OncePerInstall = 'firstOpenSent' | 'installAttributionSent' | 'activatedSent';
 
 /** Installed longer ago than this, and updated since: an existing user's first launch of this code. */
 const NEW_INSTALL_WINDOW_MS = MILLISECONDS_PER_DAY;
@@ -84,7 +100,11 @@ const classifyInstall = async (): Promise<InstallRecord> => {
   return {
     installDate: toLocalDateString(installedAt ?? new Date()),
     installKind: isExisting ? 'existing' : 'new',
+    installId: '',
     firstOpenSent: false,
+    installAttributionSent: isExisting,
+    referrerReads: 0,
+    activatedSent: isExisting,
     firstEvents: isExisting ? [...FIRST_TIME_EVENTS] : [],
   };
 };
@@ -95,10 +115,16 @@ const decodeRecord = (raw: string | null): InstallRecord | null => {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== 'object' || parsed === null) return null;
-    const { installDate, installKind, firstOpenSent, firstEvents } = parsed as Record<
-      string,
-      unknown
-    >;
+    const {
+      installDate,
+      installKind,
+      installId,
+      firstOpenSent,
+      installAttributionSent,
+      referrerReads,
+      activatedSent,
+      firstEvents,
+    } = parsed as Record<string, unknown>;
     if (
       typeof installDate !== 'string' ||
       (installKind !== 'new' && installKind !== 'existing') ||
@@ -107,10 +133,19 @@ const decodeRecord = (raw: string | null): InstallRecord | null => {
     ) {
       return null;
     }
+    // Absent from a record written before they existed. Owed only to a new
+    // install whose First Open is still to come: one that already went out did
+    // so without install_id, so nothing sent now could be joined to it.
+    const settled = installKind === 'existing' || firstOpenSent;
     return {
       installDate,
       installKind,
+      installId: typeof installId === 'string' ? installId : '',
       firstOpenSent,
+      installAttributionSent:
+        typeof installAttributionSent === 'boolean' ? installAttributionSent : settled,
+      referrerReads: typeof referrerReads === 'number' ? referrerReads : 0,
+      activatedSent: typeof activatedSent === 'boolean' ? activatedSent : settled,
       firstEvents: firstEvents.filter((event): event is string => typeof event === 'string'),
     };
   } catch {
@@ -143,10 +178,14 @@ const readOrCreateRecord = async (): Promise<InstallRecord | null> => {
   return record;
 };
 
-/** This install's record, read once per launch and made on the first. Null when storage can't be read. */
-export const loadInstallRecord = (): Promise<InstallRecord | null> => {
+/**
+ * This install's record as it stands now, read once per launch and made on the
+ * first. Null when storage can't be read.
+ */
+export const loadInstallRecord = async (): Promise<InstallRecord | null> => {
   loading ??= readOrCreateRecord();
-  return loading;
+  await loading;
+  return record;
 };
 
 /** True exactly once per install for each event, the first time it is sent. */
@@ -160,12 +199,41 @@ export const claimFirstTime = async (event: string): Promise<boolean> => {
   return true;
 };
 
-/** The record, the one time First Open is due; null every other time. */
-export const claimFirstOpen = async (): Promise<InstallRecord | null> => {
+/** The record, the one time that event is due; null every other time. */
+export const claimOnce = async (flag: OncePerInstall): Promise<InstallRecord | null> => {
   await loadInstallRecord();
-  if (!record || record.firstOpenSent) return null;
+  if (!record || record[flag]) return null;
 
-  record = { ...record, firstOpenSent: true };
+  record = { ...record, [flag]: true };
   await persist();
   return record;
+};
+
+/**
+ * Counts a read of the install referrer before it starts, so a read that hangs
+ * or crashes the app still counts. Returns how many there have been, this one
+ * included; null when storage can't be read.
+ */
+export const countReferrerRead = async (): Promise<number | null> => {
+  await loadInstallRecord();
+  if (!record) return null;
+
+  record = { ...record, referrerReads: record.referrerReads + 1 };
+  await persist();
+  return record.referrerReads;
+};
+
+/**
+ * This install's `install_id`, made and kept the first time it is asked for.
+ * Only services/analytics asks, as Mixpanel starts. Null when storage can't be
+ * read: a new ID then could replace the one that joins everything.
+ */
+export const ensureInstallId = async (): Promise<string | null> => {
+  await loadInstallRecord();
+  if (!record) return null;
+  if (record.installId) return record.installId;
+
+  record = { ...record, installId: Crypto.randomUUID() };
+  await persist();
+  return record.installId;
 };

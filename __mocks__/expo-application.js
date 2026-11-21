@@ -1,9 +1,14 @@
 // Mock expo-application native module for tests (no ExpoApplication native
 // module under jest). Provides the fields the app reads (voice telemetry uses
-// nativeApplicationVersion; auth uses applicationId / nativeBuildVersion).
+// nativeApplicationVersion; auth uses applicationId / nativeBuildVersion; the
+// install record and install attribution use the three calls, and a suite
+// testing them brings its own factory).
 module.exports = {
   __esModule: true,
   nativeApplicationVersion: '1447.12.10',
   nativeBuildVersion: '235',
   applicationId: 'com.edenmind.openarabic',
+  getInstallationTimeAsync: async () => new Date(0),
+  getLastUpdateTimeAsync: async () => new Date(0),
+  getInstallReferrerAsync: async () => '',
 };

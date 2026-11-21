@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { analytics } from '@/services/analytics';
+import { trackActivated } from '@/services/installAttribution';
 import { metaEvents } from '@/services/metaEvents';
 import type { SessionMetrics } from '@/types/review.types';
 import { recordSessionCompleted } from '@/utils/notificationPromptStorage';
@@ -45,6 +46,8 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
         longestStreak: sessionMetrics.longestStreak,
         masteredWords: sessionMetrics.masteredWords,
       });
+      // The install's activation moment, once (services/installAttribution).
+      void trackActivated();
 
       // Record this session's first-attempt recall for adaptive new-word pacing.
       // Fire-and-forget (best-effort, local storage).

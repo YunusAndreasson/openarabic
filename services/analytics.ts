@@ -36,8 +36,13 @@
 import type * as MixpanelModule from 'mixpanel-react-native';
 
 import type { AnalyticsEventName } from '@/constants/analytics';
-import { ANALYTICS_EVENTS, FIRST_TIME_EVENTS, MIXPANEL_TOKEN } from '@/constants/analytics';
-import { claimFirstTime } from '@/services/analyticsInstall';
+import {
+  ANALYTICS_EVENTS,
+  FIRST_TIME_EVENTS,
+  MIXPANEL_TOKEN,
+  SUPER_PROPERTIES,
+} from '@/constants/analytics';
+import { claimFirstTime, ensureInstallId } from '@/services/analyticsInstall';
 
 // Keep app properties narrower than the SDK's permissive property values.
 type AnalyticsProperties = Record<string, string | number | boolean | null | undefined>;
@@ -66,6 +71,14 @@ const startMixpanel = async (token: string): Promise<void> => {
   const trackAutomaticEvents = false;
   const instance = new Mixpanel(token.trim(), trackAutomaticEvents);
   await instance.init();
+
+  // `install_id` joins an install's events for the system that reads them
+  // (services/installAttribution), so it is in place before the instance is
+  // published and the launch's first event can go out. Mixpanel only: it must
+  // never reach Meta, Sentry or our backend.
+  const installId = await ensureInstallId();
+  if (installId) superProperties = { ...superProperties, [SUPER_PROPERTIES.INSTALL_ID]: installId };
+
   applySuperProperties(instance);
   mixpanelInstance = instance;
 };
@@ -159,7 +172,8 @@ export const analytics = {
 
       if (mixpanelInstance) {
         mixpanelInstance.reset();
-        // reset() clears the super properties; install_date and the rest outlive a sign-out.
+        // reset() clears the super properties; install_id, install_date and the
+        // rest outlive a sign-out.
         applySuperProperties(mixpanelInstance);
       }
       // Silent success - no logging needed for normal operation

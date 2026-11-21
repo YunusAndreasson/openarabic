@@ -3,7 +3,8 @@ import { AppState, type AppStateStatus } from 'react-native';
 
 import { ANALYTICS_EVENTS, SUPER_PROPERTIES } from '@/constants/analytics';
 import { analytics } from '@/services/analytics';
-import { claimFirstOpen, loadInstallRecord } from '@/services/analyticsInstall';
+import { loadInstallRecord } from '@/services/analyticsInstall';
+import { startInstallAttribution, trackFirstOpen } from '@/services/installAttribution';
 
 /**
  * - `foreground`: the app was on screen when it became ready.
@@ -29,18 +30,19 @@ const registerInstallDate = (): Promise<void> =>
       // Silent, like the rest of analytics: App Opened still goes out.
     });
 
-/** First Open the first time this install is opened, then App Opened; both after the install date. */
+/**
+ * First Open the first time this install is opened, then App Opened; both after
+ * the install date. Install Attribution follows, once the Play Store answers.
+ */
 const trackAppOpened = async (
   launch: AppOpenLaunch,
   installDateRegistered: Promise<void>,
 ): Promise<void> => {
   await installDateRegistered;
 
-  const firstOpen = await claimFirstOpen();
-  if (firstOpen) {
-    await analytics.track(ANALYTICS_EVENTS.FIRST_OPEN, { install_kind: firstOpen.installKind });
-  }
+  await trackFirstOpen();
   await analytics.track(ANALYTICS_EVENTS.APP_OPENED, { launch });
+  await startInstallAttribution();
 };
 
 /**

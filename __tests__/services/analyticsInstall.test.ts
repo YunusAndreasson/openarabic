@@ -1,6 +1,8 @@
 /**
  * The install record analytics keeps apart from any account: the install date,
- * the one First Open, and which core actions have already had their first.
+ * install_id, the once-per-install events, and which core actions have already
+ * had their first. What the once-per-install events send is in
+ * installAttribution.test.ts.
  *
  * Fresh module per test (isolateModules) over an in-memory AsyncStorage, so a
  * reload reads what the previous "launch" wrote.
@@ -28,6 +30,10 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 const mockInstall = { installedAt: new Date(), updatedAt: new Date() };
+
+jest.mock('expo-crypto', () => ({
+  randomUUID: () => require('node:crypto').randomUUID(),
+}));
 
 jest.mock('expo-application', () => ({
   getInstallationTimeAsync: async () => mockInstall.installedAt,
@@ -64,11 +70,11 @@ describe('analyticsInstall', () => {
   test('a new install claims First Open once, across launches', async () => {
     const first = launch();
 
-    const record = await first.claimFirstOpen();
+    const record = await first.claimOnce('firstOpenSent');
     expect(record).toEqual(expect.objectContaining({ installKind: 'new', firstOpenSent: true }));
-    expect(await first.claimFirstOpen()).toBeNull();
+    expect(await first.claimOnce('firstOpenSent')).toBeNull();
 
-    expect(await launch().claimFirstOpen()).toBeNull();
+    expect(await launch().claimOnce('firstOpenSent')).toBeNull();
   });
 
   test('the install date is the day the app was installed, on the device calendar', async () => {
@@ -105,16 +111,20 @@ describe('analyticsInstall', () => {
   });
 
   // An existing user's first launch of this code: their first actions were
-  // long ago, so none of them may be counted as first now.
+  // long ago, so none of them may be counted as first now, and neither may
+  // Install Attribution or Activated.
   test('an install from long ago that has been updated is existing, with every first spent', async () => {
     Platform.OS = 'android';
     mockInstall.installedAt = new Date(Date.now() - 90 * DAY_MS);
     mockInstall.updatedAt = new Date(Date.now() - 2 * DAY_MS);
     const install = launch();
 
-    expect(await install.claimFirstOpen()).toEqual(
+    expect(await install.claimOnce('firstOpenSent')).toEqual(
       expect.objectContaining({ installKind: 'existing' }),
     );
+    // No install to attribute and no first session left to count: spent unsent.
+    expect(await install.claimOnce('installAttributionSent')).toBeNull();
+    expect(await install.claimOnce('activatedSent')).toBeNull();
     for (const event of FIRST_TIME_EVENTS) {
       expect(await install.claimFirstTime(event)).toBe(false);
     }
@@ -125,7 +135,7 @@ describe('analyticsInstall', () => {
     mockInstall.installedAt = new Date(Date.now() - 3 * DAY_MS);
     mockInstall.updatedAt = mockInstall.installedAt;
 
-    const record = await launch().claimFirstOpen();
+    const record = await launch().claimOnce('firstOpenSent');
 
     expect(record?.installKind).toBe('new');
   });
@@ -140,8 +150,48 @@ describe('analyticsInstall', () => {
     mockFailReads = true;
     const install = launch();
 
-    expect(await install.claimFirstOpen()).toBeNull();
+    expect(await install.claimOnce('firstOpenSent')).toBeNull();
     expect(await install.claimFirstTime(ANALYTICS_EVENTS.ARTICLE_VIEWED)).toBe(false);
+    expect(mockMemoryStore.has(STORAGE_KEYS.ANALYTICS_INSTALL)).toBe(false);
+  });
+
+  test('install_id is a UUID v4, made once and kept across launches', async () => {
+    const first = launch();
+    const [id, again] = await Promise.all([first.ensureInstallId(), first.ensureInstallId()]);
+
+    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    expect(again).toBe(id);
+    expect(await launch().ensureInstallId()).toBe(id);
+  });
+
+  test('a record from before install_id gets one, and keeps the rest', async () => {
+    mockMemoryStore.set(
+      STORAGE_KEYS.ANALYTICS_INSTALL,
+      JSON.stringify({
+        installDate: '2026-11-20',
+        installKind: 'new',
+        firstOpenSent: true,
+        firstEvents: [ANALYTICS_EVENTS.ARTICLE_VIEWED],
+      }),
+    );
+    const install = launch();
+
+    const id = await install.ensureInstallId();
+
+    expect(id).toEqual(expect.any(String));
+    expect(await install.loadInstallRecord()).toEqual(
+      expect.objectContaining({
+        installDate: '2026-11-20',
+        installId: id,
+        firstEvents: [ANALYTICS_EVENTS.ARTICLE_VIEWED],
+      }),
+    );
+  });
+
+  test('unreadable storage makes no install_id, so a later launch cannot get a second', async () => {
+    mockFailReads = true;
+
+    expect(await launch().ensureInstallId()).toBeNull();
     expect(mockMemoryStore.has(STORAGE_KEYS.ANALYTICS_INSTALL)).toBe(false);
   });
 
