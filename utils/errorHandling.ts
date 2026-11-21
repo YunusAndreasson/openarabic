@@ -222,7 +222,13 @@ const isExpectedAuthError = (error: Error | string): boolean => {
     (errorMessage.includes('invalid login credentials') ||
       errorMessage.includes('invalid credentials'));
 
-  return isUserMistake || isInvalidCredentialsAuthError;
+  // Supabase refused the password itself (`weak_password`: too short, missing a
+  // kind of character, or found in a breach list), at sign-up or on a reset. A
+  // form validation result, which the form tells the learner; Auth Failed counts
+  // it by its code (OPENARABIC-TA).
+  const isWeakPassword = errorName === 'AuthWeakPasswordError';
+
+  return isUserMistake || isInvalidCredentialsAuthError || isWeakPassword;
 };
 
 /** Longest message a breadcrumb keeps; a network failure's text is a host name and a reason. */

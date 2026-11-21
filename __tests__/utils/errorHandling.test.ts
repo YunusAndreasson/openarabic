@@ -211,6 +211,24 @@ describe('errorHandling utility', () => {
       expect(mockScope.setExtra).toHaveBeenCalledWith('attemptCount', 3);
     });
 
+    // OPENARABIC-TA: supabase-js's AuthWeakPasswordError, at sign-up. The form
+    // says why under the field; Auth Failed counts it by its code.
+    test('keeps a password Supabase refused as weak out of Sentry, and still says why', async () => {
+      const weak = Object.assign(
+        new Error('Password is known to be weak and easy to guess, please choose a different one.'),
+        { name: 'AuthWeakPasswordError', code: 'weak_password', status: 422, reasons: ['pwned'] },
+      );
+
+      await handleError(weak, { toastMessage: 'Account creation failed. ' + weak.message });
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(mockToastHandler).toHaveBeenCalledWith(
+        'Account creation failed. ' + weak.message,
+        undefined,
+        ToastType.ERROR,
+      );
+    });
+
     test('handles Sentry failure gracefully', async () => {
       jest.mocked(Sentry.captureException).mockImplementation(() => {
         throw new Error('Sentry failed');
