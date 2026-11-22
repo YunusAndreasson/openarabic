@@ -321,29 +321,26 @@ export const installNetInfoMock = (
  */
 export const installSherpaMocks = (): {
   download: {
-    ensureModelByCategory: jest.Mock;
-    refreshModelsByCategory: jest.Mock;
-    isModelDownloadedByCategory: jest.Mock;
-    getLocalModelPathByCategory: jest.Mock;
-    deleteModelByCategory: jest.Mock;
+    ensureModel: jest.Mock;
+    refreshModels: jest.Mock;
+    getModelPath: jest.Mock;
+    deleteModel: jest.Mock;
   };
   stt: { createSTT: jest.Mock };
   engine: { transcribeSamples: jest.Mock; destroy: jest.Mock };
 } => {
   // Real imports for the same reason as NetInfo above.
   const download = {
-    ensureModelByCategory: sherpaDownload.ensureModelByCategory as unknown as jest.Mock,
-    refreshModelsByCategory: sherpaDownload.refreshModelsByCategory as unknown as jest.Mock,
-    isModelDownloadedByCategory: sherpaDownload.isModelDownloadedByCategory as unknown as jest.Mock,
-    getLocalModelPathByCategory: sherpaDownload.getLocalModelPathByCategory as unknown as jest.Mock,
-    deleteModelByCategory: sherpaDownload.deleteModelByCategory as unknown as jest.Mock,
+    ensureModel: sherpaDownload.ensureModel as unknown as jest.Mock,
+    refreshModels: sherpaDownload.refreshModels as unknown as jest.Mock,
+    getModelPath: sherpaDownload.getModelPath as unknown as jest.Mock,
+    deleteModel: sherpaDownload.deleteModel as unknown as jest.Mock,
   };
 
-  download.ensureModelByCategory.mockResolvedValue({ localPath: '/mock/model/path' });
-  download.refreshModelsByCategory.mockResolvedValue(undefined);
-  download.isModelDownloadedByCategory.mockResolvedValue(false);
-  download.getLocalModelPathByCategory.mockResolvedValue('/mock/model/path');
-  download.deleteModelByCategory.mockResolvedValue(undefined);
+  download.ensureModel.mockResolvedValue({ localPath: '/mock/model/path' });
+  download.refreshModels.mockResolvedValue(undefined);
+  download.getModelPath.mockResolvedValue(null);
+  download.deleteModel.mockResolvedValue(undefined);
 
   const engine = {
     transcribeSamples: jest.fn().mockResolvedValue({ text: '' }),

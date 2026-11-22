@@ -1,23 +1,18 @@
 diff --git a/android/src/main/java/com/sherpaonnx/SherpaOnnxSttHelper.kt b/android/src/main/java/com/sherpaonnx/SherpaOnnxSttHelper.kt
-index 5df6a93c8f0dfb02150568a917b578302c2a7adb..13208b96d585d81f663802beacdde26f25b25ea8 100644
 --- a/android/src/main/java/com/sherpaonnx/SherpaOnnxSttHelper.kt
 +++ b/android/src/main/java/com/sherpaonnx/SherpaOnnxSttHelper.kt
-@@ -170,7 +170,13 @@ internal class SherpaOnnxSttHelper(
+@@ -184,7 +184,9 @@
      bpeVocab: String?,
      promise: Promise
    ) {
 -    try {
-+    // TurboModules may invoke this method synchronously through JSI. Model
-+    // detection and config construction both touch the model files and can be
-+    // expensive, so moving only OfflineRecognizer construction off-thread is
-+    // too late: JavaScript timers and navigation can remain blocked before this
-+    // method returns. Queue the complete initialization pipeline instead.
++    // Model detection and config construction also touch disk before the recognizer is created.
 +    fun initializeOnBackgroundThread() {
 +      try {
        val modelDirFile = File(modelDir)
        if (!modelDirFile.exists()) {
          val errorMsg = "Model directory does not exist: $modelDir"
-@@ -309,9 +315,11 @@ internal class SherpaOnnxSttHelper(
+@@ -326,11 +328,13 @@
            promise.reject("INIT_ERROR", errorMsg, e)
          }
        }
@@ -25,23 +20,26 @@ index 5df6a93c8f0dfb02150568a917b578302c2a7adb..13208b96d585d81f663802beacdde26f
 -      val errorMsg = "Exception during initialization: ${e.message ?: e.javaClass.simpleName}"
 -      Log.e(logTag, errorMsg, e)
 -      promise.reject("INIT_ERROR", errorMsg, e)
+-    }
 +      } catch (e: Exception) {
 +        val errorMsg = "Exception during initialization: ${e.message ?: e.javaClass.simpleName}"
 +        Log.e(logTag, errorMsg, e)
 +        promise.reject("INIT_ERROR", errorMsg, e)
 +      }
-     }
++    }
 +    initHandler.post(::initializeOnBackgroundThread)
    }
+ 
+   fun transcribeFile(instanceId: String, filePath: String, promise: Promise) {
 diff --git a/ios/SherpaOnnx+STT.mm b/ios/SherpaOnnx+STT.mm
 --- a/ios/SherpaOnnx+STT.mm
 +++ b/ios/SherpaOnnx+STT.mm
-@@ -225,7 +225,9 @@
-         sherpaonnx::SttInitializeResult result = inst->wrapper->initialize(
+@@ -237,7 +237,9 @@
              modelDirStr, preferInt8Opt, modelTypeOpt, debugVal, hotwordsFileOpt, hotwordsScoreOpt,
              numThreadsOpt, providerOpt, ruleFstsOpt, ruleFarsOpt, ditherOpt,
--            whisperOptsPtr, senseVoiceOptsPtr, canaryOptsPtr, funasrNanoOptsPtr, qwen3AsrOptsPtr);
-+            whisperOptsPtr, senseVoiceOptsPtr, canaryOptsPtr, funasrNanoOptsPtr, qwen3AsrOptsPtr,
+             whisperOptsPtr, senseVoiceOptsPtr, canaryOptsPtr, funasrNanoOptsPtr, qwen3AsrOptsPtr,
+-            cohereTranscribeOptsPtr);
++            cohereTranscribeOptsPtr,
 +            modelingUnit != nil ? std::string([modelingUnit UTF8String]) : std::string(),
 +            bpeVocab != nil ? std::string([bpeVocab UTF8String]) : std::string());
  
@@ -50,12 +48,12 @@ diff --git a/ios/SherpaOnnx+STT.mm b/ios/SherpaOnnx+STT.mm
 diff --git a/ios/stt/sherpa-onnx-stt-wrapper.h b/ios/stt/sherpa-onnx-stt-wrapper.h
 --- a/ios/stt/sherpa-onnx-stt-wrapper.h
 +++ b/ios/stt/sherpa-onnx-stt-wrapper.h
-@@ -118,7 +118,9 @@
-         const SttSenseVoiceOptions* senseVoiceOpts = nullptr,
+@@ -128,7 +128,9 @@
          const SttCanaryOptions* canaryOpts = nullptr,
          const SttFunAsrNanoOptions* funasrNanoOpts = nullptr,
--        const SttQwen3AsrOptions* qwen3AsrOpts = nullptr
-+        const SttQwen3AsrOptions* qwen3AsrOpts = nullptr,
+         const SttQwen3AsrOptions* qwen3AsrOpts = nullptr,
+-        const SttCohereTranscribeOptions* cohereTranscribeOpts = nullptr
++        const SttCohereTranscribeOptions* cohereTranscribeOpts = nullptr,
 +        const std::string& modelingUnit = "",
 +        const std::string& bpeVocab = ""
      );
@@ -64,25 +62,21 @@ diff --git a/ios/stt/sherpa-onnx-stt-wrapper.h b/ios/stt/sherpa-onnx-stt-wrapper
 diff --git a/ios/stt/sherpa-onnx-stt-wrapper.mm b/ios/stt/sherpa-onnx-stt-wrapper.mm
 --- a/ios/stt/sherpa-onnx-stt-wrapper.mm
 +++ b/ios/stt/sherpa-onnx-stt-wrapper.mm
-@@ -139,7 +139,9 @@
-     const SttSenseVoiceOptions* senseVoiceOpts,
+@@ -173,7 +173,9 @@
      const SttCanaryOptions* canaryOpts,
      const SttFunAsrNanoOptions* funasrNanoOpts,
--    const SttQwen3AsrOptions* qwen3AsrOpts
-+    const SttQwen3AsrOptions* qwen3AsrOpts,
+     const SttQwen3AsrOptions* qwen3AsrOpts,
+-    const SttCohereTranscribeOptions* cohereTranscribeOpts
++    const SttCohereTranscribeOptions* cohereTranscribeOpts,
 +    const std::string& modelingUnit,
 +    const std::string& bpeVocab
  ) {
      SttInitializeResult result;
      result.success = false;
-@@ -158,6 +160,12 @@
+@@ -192,6 +194,8 @@
          sherpa_onnx::cxx::OfflineRecognizerConfig config;
          config.feat_config.sample_rate = 16000;
          config.feat_config.feature_dim = 80;
-+        // The hotword tokenizer needs both of these, and the bridge above this
-+        // call received them from JavaScript and dropped them. Without them a
-+        // hotwords file is encoded against the default `cjkchar` unit, which
-+        // splits an English phrase into single characters the model never emits.
 +        if (!modelingUnit.empty()) config.model_config.modeling_unit = modelingUnit;
 +        if (!bpeVocab.empty()) config.model_config.bpe_vocab = bpeVocab;
  

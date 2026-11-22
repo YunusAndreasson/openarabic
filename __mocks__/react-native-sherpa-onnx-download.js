@@ -13,9 +13,8 @@
 module.exports = {
   __esModule: true,
   ModelCategory: { Stt: 'stt' },
-  ensureModelByCategory: jest.fn(),
-  refreshModelsByCategory: jest.fn(),
-  isModelDownloadedByCategory: jest.fn(),
-  getLocalModelPathByCategory: jest.fn(),
-  deleteModelByCategory: jest.fn(),
+  ensureModel: jest.fn(),
+  refreshModels: jest.fn(),
+  getModelPath: jest.fn(),
+  deleteModel: jest.fn(),
 };

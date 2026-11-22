@@ -41,12 +41,12 @@ describe('voiceModelStore', () => {
 
   describe('deduping concurrent requests', () => {
     it('runs one fetch for two concurrent callers', async () => {
-      // The library does NOT dedupe: two ensureModelByCategory calls for the
+      // The library does NOT dedupe: two ensureModel calls for the
       // same id both write the same state file and both create a download task
       // with the same id, where the second silently overwrites the first.
       // Prefetch and session-start race easily, so the service has to.
       let release: (value: { localPath: string }) => void = () => {};
-      sherpa.download.ensureModelByCategory.mockReturnValue(
+      sherpa.download.ensureModel.mockReturnValue(
         new Promise<{ localPath: string }>(resolve => {
           release = resolve;
         }),
@@ -59,18 +59,18 @@ describe('voiceModelStore', () => {
       release({ localPath: '/mock/model/path' });
       const [a, b] = await Promise.all([first, second]);
 
-      expect(sherpa.download.ensureModelByCategory).toHaveBeenCalledTimes(1);
+      expect(sherpa.download.ensureModel).toHaveBeenCalledTimes(1);
       expect(a.state).toBe('ready');
       expect(b.state).toBe('ready');
     });
 
     it('short-circuits once the model is ready', async () => {
-      sherpa.download.isModelDownloadedByCategory.mockResolvedValue(true);
+      sherpa.download.getModelPath.mockResolvedValue('/mock/model/path');
       await requestVoiceModel({ reason: 'prefetch' });
-      sherpa.download.ensureModelByCategory.mockClear();
+      sherpa.download.ensureModel.mockClear();
 
       await requestVoiceModel({ reason: 'session' });
-      expect(sherpa.download.ensureModelByCategory).not.toHaveBeenCalled();
+      expect(sherpa.download.ensureModel).not.toHaveBeenCalled();
     });
   });
 
@@ -83,7 +83,7 @@ describe('voiceModelStore', () => {
       // someone reintroducing it.
       await requestVoiceModel({ reason: 'prefetch' });
 
-      const options = sherpa.download.ensureModelByCategory.mock.calls[0]?.[2] as
+      const options = sherpa.download.ensureModel.mock.calls[0]?.[2] as
         Record<string, unknown> | undefined;
       expect(options).toBeDefined();
       expect(options).not.toHaveProperty('signal');
@@ -97,7 +97,7 @@ describe('voiceModelStore', () => {
       const snapshot = await requestVoiceModel({ reason: 'prefetch' });
 
       expect(snapshot.state).toBe('waiting-wifi');
-      expect(sherpa.download.ensureModelByCategory).not.toHaveBeenCalled();
+      expect(sherpa.download.ensureModel).not.toHaveBeenCalled();
     });
 
     it('treats a metered Wi-Fi hotspot as cellular', async () => {
@@ -108,7 +108,7 @@ describe('voiceModelStore', () => {
       const snapshot = await requestVoiceModel({ reason: 'prefetch' });
 
       expect(snapshot.state).toBe('waiting-wifi');
-      expect(sherpa.download.ensureModelByCategory).not.toHaveBeenCalled();
+      expect(sherpa.download.ensureModel).not.toHaveBeenCalled();
     });
 
     it('defers when offline', async () => {
@@ -122,12 +122,12 @@ describe('voiceModelStore', () => {
     it('starts as soon as Wi-Fi appears, without waiting for a relaunch', async () => {
       net = installNetInfoMock(createNetInfoStateMock(true, { type: 'cellular' }));
       await requestVoiceModel({ reason: 'prefetch' });
-      expect(sherpa.download.ensureModelByCategory).not.toHaveBeenCalled();
+      expect(sherpa.download.ensureModel).not.toHaveBeenCalled();
 
       net.transitionTo(createNetInfoStateMock(true));
       await new Promise(process.nextTick);
 
-      expect(sherpa.download.ensureModelByCategory).toHaveBeenCalledTimes(1);
+      expect(sherpa.download.ensureModel).toHaveBeenCalledTimes(1);
       expect(getVoiceModelSnapshot().state).toBe('ready');
     });
 
@@ -137,7 +137,7 @@ describe('voiceModelStore', () => {
 
       const snapshot = await allowMeteredVoiceModelDownload();
 
-      expect(sherpa.download.ensureModelByCategory).toHaveBeenCalledTimes(1);
+      expect(sherpa.download.ensureModel).toHaveBeenCalledTimes(1);
       expect(snapshot.state).toBe('ready');
     });
   });
@@ -147,7 +147,7 @@ describe('voiceModelStore', () => {
       // "Try again later" was the old message, and it is advice that can never
       // work: waiting frees nothing. Retrying on every connection change would
       // also burn battery against a failure that cannot succeed.
-      sherpa.download.ensureModelByCategory.mockRejectedValue(
+      sherpa.download.ensureModel.mockRejectedValue(
         new Error('Insufficient disk space. Available: 0.05GB, Required: 0.12GB'),
       );
 
@@ -155,22 +155,20 @@ describe('voiceModelStore', () => {
       expect(snapshot.state).toBe('failed');
       expect(snapshot.errorKind).toBe('disk-space');
 
-      sherpa.download.ensureModelByCategory.mockClear();
+      sherpa.download.ensureModel.mockClear();
       net.emit(createNetInfoStateMock(true));
       await new Promise(process.nextTick);
-      expect(sherpa.download.ensureModelByCategory).not.toHaveBeenCalled();
+      expect(sherpa.download.ensureModel).not.toHaveBeenCalled();
     });
 
     it('classifies a transport failure as network and retries when Wi-Fi returns', async () => {
-      sherpa.download.ensureModelByCategory.mockRejectedValueOnce(
-        new Error('Network request failed'),
-      );
+      sherpa.download.ensureModel.mockRejectedValueOnce(new Error('Network request failed'));
 
       const snapshot = await requestVoiceModel({ reason: 'prefetch' });
       expect(snapshot.state).toBe('failed');
       expect(snapshot.errorKind).toBe('network');
 
-      sherpa.download.ensureModelByCategory.mockResolvedValue({ localPath: '/mock/model/path' });
+      sherpa.download.ensureModel.mockResolvedValue({ localPath: '/mock/model/path' });
       net.emit(createNetInfoStateMock(true));
       await new Promise(process.nextTick);
 
@@ -178,12 +176,12 @@ describe('voiceModelStore', () => {
     });
 
     it('retries after an explicit retry even when a full disk blocked it', async () => {
-      sherpa.download.ensureModelByCategory.mockRejectedValueOnce(
+      sherpa.download.ensureModel.mockRejectedValueOnce(
         new Error('Insufficient disk space. Available: 0.05GB, Required: 0.12GB'),
       );
       await requestVoiceModel({ reason: 'prefetch' });
 
-      sherpa.download.ensureModelByCategory.mockResolvedValue({ localPath: '/mock/model/path' });
+      sherpa.download.ensureModel.mockResolvedValue({ localPath: '/mock/model/path' });
       const snapshot = await retryVoiceModel();
 
       expect(snapshot.state).toBe('ready');
@@ -194,23 +192,23 @@ describe('voiceModelStore', () => {
     it('refreshes the registry and retries once on "Unknown model id"', async () => {
       // The registry is read from an on-disk cache that a fresh install has
       // never populated, so the FIRST fetch always reads a valid id as unknown.
-      sherpa.download.ensureModelByCategory
+      sherpa.download.ensureModel
         .mockRejectedValueOnce(new Error('Unknown model id: sherpa-onnx-nemo-parakeet'))
         .mockResolvedValueOnce({ localPath: '/mock/model/path' });
 
       const snapshot = await requestVoiceModel({ reason: 'prefetch' });
 
-      expect(sherpa.download.refreshModelsByCategory).toHaveBeenCalledTimes(1);
-      expect(sherpa.download.ensureModelByCategory).toHaveBeenCalledTimes(2);
+      expect(sherpa.download.refreshModels).toHaveBeenCalledTimes(1);
+      expect(sherpa.download.ensureModel).toHaveBeenCalledTimes(2);
       expect(snapshot.state).toBe('ready');
     });
 
     it('does not refresh the registry for an unrelated failure', async () => {
-      sherpa.download.ensureModelByCategory.mockRejectedValue(new Error('Network request failed'));
+      sherpa.download.ensureModel.mockRejectedValue(new Error('Network request failed'));
 
       await requestVoiceModel({ reason: 'prefetch' });
 
-      expect(sherpa.download.refreshModelsByCategory).not.toHaveBeenCalled();
+      expect(sherpa.download.refreshModels).not.toHaveBeenCalled();
     });
   });
 
@@ -219,7 +217,7 @@ describe('voiceModelStore', () => {
       const listener = jest.fn();
       subscribeVoiceModel(listener);
 
-      sherpa.download.ensureModelByCategory.mockImplementation(
+      sherpa.download.ensureModel.mockImplementation(
         async (
           _category: string,
           _id: string,
@@ -248,7 +246,7 @@ describe('voiceModelStore', () => {
         seen.push(getVoiceModelSnapshot().progress);
       });
 
-      sherpa.download.ensureModelByCategory.mockImplementation(
+      sherpa.download.ensureModel.mockImplementation(
         async (
           _category: string,
           _id: string,
@@ -270,7 +268,7 @@ describe('voiceModelStore', () => {
     });
 
     it('puts the extract phase above the download phase', async () => {
-      sherpa.download.ensureModelByCategory.mockImplementation(
+      sherpa.download.ensureModel.mockImplementation(
         async (
           _category: string,
           _id: string,
@@ -278,6 +276,8 @@ describe('voiceModelStore', () => {
         ) => {
           options.onProgress?.({ percent: 100, phase: 'downloading' });
           const afterDownload = getVoiceModelSnapshot().progress;
+          options.onProgress?.({ percent: 1, phase: 'extracting_resume_skipping' });
+          expect(getVoiceModelSnapshot().state).toBe('extracting');
           options.onProgress?.({ percent: 1, phase: 'extracting' });
           expect(getVoiceModelSnapshot().progress).toBeGreaterThanOrEqual(afterDownload);
           return { localPath: '/mock/model/path' };
@@ -303,19 +303,19 @@ describe('voiceModelStore', () => {
 
   describe('probe and delete', () => {
     it('reports ready from disk without downloading anything', async () => {
-      sherpa.download.isModelDownloadedByCategory.mockResolvedValue(true);
+      sherpa.download.getModelPath.mockResolvedValue('/mock/model/path');
 
       const snapshot = await probeVoiceModel();
 
       expect(snapshot.state).toBe('ready');
       expect(snapshot.localPath).toBe('/mock/model/path');
-      expect(sherpa.download.ensureModelByCategory).not.toHaveBeenCalled();
+      expect(sherpa.download.ensureModel).not.toHaveBeenCalled();
     });
 
     it('leaves the state unknown when the probe itself throws', async () => {
       // A failed probe means "still unknown", not "failed" — only the fetch path
       // may declare a failure, because only it has a reason worth showing.
-      sherpa.download.isModelDownloadedByCategory.mockRejectedValue(new Error('fs exploded'));
+      sherpa.download.getModelPath.mockRejectedValue(new Error('fs exploded'));
 
       const snapshot = await probeVoiceModel();
 
@@ -323,13 +323,13 @@ describe('voiceModelStore', () => {
     });
 
     it('drops back to absent after a delete', async () => {
-      sherpa.download.isModelDownloadedByCategory.mockResolvedValue(true);
+      sherpa.download.getModelPath.mockResolvedValue('/mock/model/path');
       await probeVoiceModel();
       expect(getVoiceModelSnapshot().state).toBe('ready');
 
       await deleteVoiceModel();
 
-      expect(sherpa.download.deleteModelByCategory).toHaveBeenCalledTimes(1);
+      expect(sherpa.download.deleteModel).toHaveBeenCalledTimes(1);
       expect(getVoiceModelSnapshot()).toMatchObject({ state: 'absent', localPath: null });
     });
   });
@@ -348,7 +348,7 @@ describe('voiceModelStore', () => {
     });
 
     it('a failure is Voice Model Failed with its kind, never the message', async () => {
-      sherpa.download.ensureModelByCategory.mockRejectedValue(
+      sherpa.download.ensureModel.mockRejectedValue(
         new Error('Insufficient disk space. Available: 0.05GB, Required: 0.12GB'),
       );
 

@@ -1,6 +1,6 @@
-import type { FlashListProps, FlashListRef, ViewToken } from '@shopify/flash-list';
+import type { FlashListRef, ViewToken } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
-import { memo, type ComponentType, type ReactElement, type RefObject } from 'react';
+import { memo, type ReactElement, type RefObject } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -29,9 +29,7 @@ import { getArticleMetadata } from '@/utils/stringUtils';
 import { fillTemplate } from '@/utils/fillTemplate';
 
 // Animated version of FlashList for UI-thread scroll handling
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList as ComponentType<FlashListProps<Tables<'article_sentences'>>>,
-);
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList<Tables<'article_sentences'>>);
 
 // Mount fade-in — CSS @keyframes, module-level so no per-render allocation
 const MOUNT_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.FAST.duration, 'forwards');
@@ -129,7 +127,7 @@ interface ArticleContentProps {
   handleViewableItemsChanged: (info: { viewableItems: ViewToken<unknown>[] }) => void;
   handleScrollEnd: () => void;
   colors: ThemeColors;
-  scrollViewRef: RefObject<FlashListRef<Tables<'article_sentences'>>>;
+  scrollViewRef: RefObject<FlashListRef<Tables<'article_sentences'>> | null>;
   // FlashList ready callback for scroll-to-position
   onFlashListLoad: () => void;
   selectedRootIds: ReadonlySet<number>;
@@ -249,21 +247,6 @@ const ArticleContentInternal = function ArticleContent({
             {/* Sticky parallax hero, behind the list it scrolls under */}
             <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
             <AnimatedFlashList
-              /**
-               * TypeScript limitation with Reanimated's createAnimatedComponent:
-               * When FlashList is wrapped with Animated.createAnimatedComponent, the ref type
-               * becomes AnimatedRef<FlashListRef> instead of FlashListRef. However, at runtime,
-               * the ref works correctly and exposes all FlashList methods (scrollToOffset, etc.).
-               *
-               * This is a known issue: https://github.com/software-mansion/react-native-reanimated/issues/4995
-               * The workaround is to use @ts-expect-error since the runtime behavior is correct.
-               *
-               * Alternative solutions considered but rejected:
-               * - Using 'any' type for ref: Loses all type safety
-               * - Separate ref types: Requires maintaining two ref definitions
-               * - Not using Animated component: Loses UI-thread scroll performance
-               */
-              // @ts-expect-error - AnimatedFlashList ref type incompatible with FlashListRef (runtime behavior is correct)
               ref={scrollViewRef}
               data={sortedSentences}
               renderItem={renderSentenceItem}

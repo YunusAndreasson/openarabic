@@ -74,24 +74,24 @@ if (fs.existsSync('patches')) {
 // `^latest`, and the bundledNativeModules re-pin below cannot restore these
 // because none of them is Expo-managed — so they have to be held out of `up`.
 const pinned = {
-  jest: '~30.4.2',
-  '@jest/globals': '30.4.1',
+  jest: '~30.5.2',
+  '@jest/globals': '30.5.2',
   '@types/jest': '30.0.0',
-  eslint: '10.9.0',
+  eslint: '10.15.0',
 };
 
 // Ranges another package dictates, derived rather than typed in so they cannot
 // go stale (each was once restored by hand after this script). Expo pins react
-// but neither of its companions, which step 4 re-aligns; executorch's blob-util
-// peer range is the only valid one.
+// but neither of its companions, which step 4 re-aligns; sherpa still needs the downloader's 4.x API.
 const react = pkg.dependencies.react;
 pinned['react-test-renderer'] = react;
 pinned['@types/react'] = `~${react.split('.').slice(0, 2).join('.')}.0`;
-const executorch = 'node_modules/react-native-executorch/package.json';
-const blobUtilPeer = fs.existsSync(executorch)
-  ? JSON.parse(fs.readFileSync(executorch, 'utf8')).peerDependencies?.['react-native-blob-util']
+const sherpa = 'node_modules/react-native-sherpa-onnx/package.json';
+const downloader = '@kesha-antonov/react-native-background-downloader';
+const downloaderPeer = fs.existsSync(sherpa)
+  ? JSON.parse(fs.readFileSync(sherpa, 'utf8')).peerDependencies?.[downloader]
   : undefined;
-if (blobUtilPeer) pinned['react-native-blob-util'] = blobUtilPeer;
+if (downloaderPeer) pinned[downloader] = downloaderPeer;
 
 // Versions this repo holds deliberately. Each one has broken the build or the
 // test suite before; `yarn up --latest` walks straight back into them.
@@ -100,10 +100,9 @@ const held = {
     'babel-preset-expo peers on ^7.20.0. On 8.x Yarn cannot hoist babel-preset-expo ' +
     'to the root, babel.config.js stops resolving it, and every jest suite fails.',
   '@testing-library/react-native':
-    'RNTL 14 requires a `test-renderer` peer that is not installed; ~63 suites fail ' +
-    'with "Cannot find module \'test-renderer\'".',
+    'RNTL 14 makes render, renderHook, and fireEvent async; test helpers and callers must migrate together.',
   '@react-native/jest-preset':
-    'Must track the react-native version (jest-expo requests it exactly); letting it ' +
+    'Must satisfy jest-expo and track the React Native version; letting it ' +
     'drift ahead of RN breaks the preset.',
 };
 

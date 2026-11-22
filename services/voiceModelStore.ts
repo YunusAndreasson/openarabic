@@ -27,7 +27,7 @@
  * being backgrounded and, on iOS, the app being terminated while suspended. In
  * that last case the JS `done` handler never runs in that process; the next
  * launch reattaches via the library's `getIncompleteDownloads`/`resumeDownload`
- * path inside `ensureModelByCategory`. That is why `probeVoiceModel()` runs at
+ * path inside `ensureModel`. That is why `probeVoiceModel()` runs at
  * startup and on resume, and why `requestVoiceModel()` is safe to call again.
  *
  * The snapshot reaches React through `useSyncExternalStore` (see
@@ -41,12 +41,11 @@ import { DocumentDirectoryPath, mkdir } from '@dr.pogodin/react-native-fs';
 import { Platform } from 'react-native';
 import {
   ModelCategory,
-  deleteModelByCategory,
-  ensureModelByCategory,
-  isModelDownloadedByCategory,
-  getLocalModelPathByCategory,
-  refreshModelsByCategory,
-  type DownloadProgress,
+  deleteModel,
+  ensureModel,
+  getModelPath,
+  refreshModels,
+  type Progress,
 } from 'react-native-sherpa-onnx/download';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
@@ -119,7 +118,7 @@ let store = createExternalStore(INITIAL_SNAPSHOT);
 
 /**
  * The dedupe. The sherpa library does NOT dedupe: two concurrent
- * `ensureModelByCategory` calls for the same id both write the same state file
+ * `ensureModel` calls for the same id both write the same state file
  * and both create a download task with the same id against the same
  * destination, where the second silently overwrites the first in the native
  * task map. Prefetch and session-start can easily race, so every caller joins
@@ -221,14 +220,11 @@ function waitForWifi(reason: VoiceModelRequestReason): void {
  */
 export async function probeVoiceModel(): Promise<VoiceModelSnapshot> {
   try {
-    const downloaded = await isModelDownloadedByCategory(ModelCategory.Stt, PARAKEET_MODEL_ID);
-    if (!downloaded) {
-      if (store.get().state === 'unknown') emit({ state: 'absent' });
-      return store.get();
-    }
-    const localPath = await getLocalModelPathByCategory(ModelCategory.Stt, PARAKEET_MODEL_ID);
+    const localPath = await getModelPath(ModelCategory.Stt, PARAKEET_MODEL_ID);
     if (localPath) {
       emit({ state: 'ready', progress: 1, localPath, error: null, errorKind: null });
+    } else if (store.get().state === 'unknown') {
+      emit({ state: 'absent' });
     }
   } catch {
     // A failed probe means "still unknown", not "failed" — the fetch path is
@@ -281,15 +277,15 @@ export function requestVoiceModel(opts: {
     });
 
     const startedAt = Date.now();
-    const onProgress = (progress: DownloadProgress): void => {
+    const onProgress = (progress: Progress): void => {
       const fraction = Math.max(0, Math.min(1, progress.percent / 100));
-      const banded =
-        progress.phase === 'extracting'
-          ? PROGRESS_BANDS.downloadEnd +
-            fraction * (PROGRESS_BANDS.extractEnd - PROGRESS_BANDS.downloadEnd)
-          : PROGRESS_BANDS.downloadStart +
-            fraction * (PROGRESS_BANDS.downloadEnd - PROGRESS_BANDS.downloadStart);
-      const state = progress.phase === 'extracting' ? 'extracting' : 'downloading';
+      const extracting = progress.phase !== 'downloading';
+      const banded = extracting
+        ? PROGRESS_BANDS.downloadEnd +
+          fraction * (PROGRESS_BANDS.extractEnd - PROGRESS_BANDS.downloadEnd)
+        : PROGRESS_BANDS.downloadStart +
+          fraction * (PROGRESS_BANDS.downloadEnd - PROGRESS_BANDS.downloadStart);
+      const state = extracting ? 'extracting' : 'downloading';
       // Every consumer renders a whole percentage. Native downloaders can emit
       // many callbacks inside that same visible percent; publishing each one
       // invalidates every useSyncExternalStore subscriber for no UI change.
@@ -312,15 +308,15 @@ export function requestVoiceModel(opts: {
     try {
       let model;
       try {
-        model = await ensureModelByCategory(ModelCategory.Stt, PARAKEET_MODEL_ID, ensureOpts);
+        model = await ensureModel(ModelCategory.Stt, PARAKEET_MODEL_ID, ensureOpts);
       } catch (first) {
         // The registry is read from an on-disk cache that is never populated on
         // a fresh install, so the FIRST ever fetch always reads a valid id as
         // "Unknown model id". Refresh from the GitHub release listing and retry
         // once. This is also the app's one hard external dependency.
         if (classifyError(first) !== 'unknown-model') throw first;
-        await refreshModelsByCategory(ModelCategory.Stt);
-        model = await ensureModelByCategory(ModelCategory.Stt, PARAKEET_MODEL_ID, ensureOpts);
+        await refreshModels(ModelCategory.Stt);
+        model = await ensureModel(ModelCategory.Stt, PARAKEET_MODEL_ID, ensureOpts);
       }
 
       emit({
@@ -384,7 +380,7 @@ export function retryVoiceModel(): Promise<VoiceModelSnapshot> {
  */
 export async function deleteVoiceModel(): Promise<void> {
   stopWaitingForWifi();
-  await deleteModelByCategory(ModelCategory.Stt, PARAKEET_MODEL_ID);
+  await deleteModel(ModelCategory.Stt, PARAKEET_MODEL_ID);
   emit({ state: 'absent', progress: 0, localPath: null, error: null, errorKind: null });
 }
 

@@ -1,7 +1,6 @@
-import type { FlashListRef } from '@shopify/flash-list';
 import type { ErrorBoundaryProps } from 'expo-router';
 import { router, useLocalSearchParams } from 'expo-router';
-import type { JSX, RefObject } from 'react';
+import type { JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LayoutRectangle } from 'react-native';
 import { View } from 'react-native';
@@ -234,7 +233,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       handleViewableItemsChanged,
       handleScrollEnd,
       colors,
-      scrollViewRef: scrollViewRef as RefObject<FlashListRef<Tables<'article_sentences'>>>,
+      scrollViewRef,
       onFlashListLoad: handleFlashListLoad,
       selectedRootIds: selectedWordIds,
     };
