@@ -286,10 +286,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     );
   }
 
-  // A malformed/missing id never resolves to an article, and a well-formed id
-  // can point at nothing the catalogue lists (deleted, or never existed) —
-  // either way `article` stays undefined once loading settles. Its own "Go
-  // back" action is the way out.
+  // Invalid links and confirmed missing articles have their own way back.
   if (!article) {
     return (
       <EmptyState

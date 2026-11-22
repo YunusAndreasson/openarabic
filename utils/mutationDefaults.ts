@@ -1,6 +1,8 @@
 import { mutationOptions, type QueryClient } from '@tanstack/react-query';
 
 import { FSRS_BASE_KEY } from '@/constants/fsrs';
+import { readingProgressQueries } from '@/constants/queries';
+import { STRINGS } from '@/constants/strings';
 import { bookmarkService } from '@/services/bookmark';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { ArticleId, RootId } from '@/types/branded.types';
@@ -81,6 +83,22 @@ export const readingListAddMutation = mutationOptions({
     bookmarkService.addToReadingList(userId, articleId, managedRequest()),
 });
 
+export const readingListAddManyMutation = mutationOptions({
+  mutationKey: ['readingList', 'addMany'] as const,
+  scope: READING_LIST_SCOPE,
+  meta: { errorReport: { toastMessage: STRINGS.FAILED_TO_ADD_BEGINNER_ARTICLES } },
+  mutationFn: async (
+    { userId, articleIds }: { userId: string | undefined; articleIds: ArticleId[] },
+    { client },
+  ) => {
+    if (!userId) throw new Error('User not authenticated');
+    if (!articleIds.length) throw new Error('No beginner articles available');
+    await bookmarkService.addManyToReadingList(userId, articleIds, managedRequest());
+    // A restored write has no mounted hook to refresh the playlist.
+    void readingProgressQueries.onListChanged(client, userId);
+  },
+});
+
 export const readingListRemoveMutation = mutationOptions({
   mutationKey: ['readingList', 'remove'] as const,
   scope: READING_LIST_SCOPE,
@@ -106,5 +124,9 @@ export function registerMutationDefaults(queryClient: QueryClient): void {
   queryClient.setMutationDefaults(fsrsGradeMutation.mutationKey, fsrsGradeMutation);
   queryClient.setMutationDefaults(studyWordToggleMutation.mutationKey, studyWordToggleMutation);
   queryClient.setMutationDefaults(readingListAddMutation.mutationKey, readingListAddMutation);
+  queryClient.setMutationDefaults(
+    readingListAddManyMutation.mutationKey,
+    readingListAddManyMutation,
+  );
   queryClient.setMutationDefaults(readingListRemoveMutation.mutationKey, readingListRemoveMutation);
 }

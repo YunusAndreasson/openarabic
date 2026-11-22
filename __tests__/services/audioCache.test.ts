@@ -515,6 +515,26 @@ describe('audioCache', () => {
     expect(result).toBe('/cache/audio/queryhash.mp3');
   });
 
+  test('an upgrade can still play audio cached under a dotted query suffix offline', async () => {
+    mockDigestStringAsync.mockResolvedValue(hash);
+    const files = new Set([`/cache/audio/${hash}.123`]);
+    mockFileConstructor.mockImplementation(path => ({
+      ...makeFileMock({ cachedExists: files.has(path), cachedSize: files.has(path) ? 100 : 0 })(
+        path,
+      ),
+      rename: (name: string) => {
+        files.delete(path);
+        files.add(`/cache/audio/${name}`);
+      },
+    }));
+    audioCache = require('../../services/audioCache').audioCache;
+    const signedUrl = 'https://example.com/track.mp3?token=abc.123';
+
+    expect(await audioCache.getCachedPath(signedUrl)).toBe(cachedPath);
+    expect(files).toEqual(new Set([cachedPath]));
+    expect(mockDownloadFileAsync).not.toHaveBeenCalled();
+  });
+
   test('clearCache also clears memory cache', async () => {
     mockDigestStringAsync.mockResolvedValue(hash);
     mockDirectoryConstructor.mockClear();

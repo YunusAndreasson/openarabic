@@ -215,20 +215,22 @@ function waitForWifi(reason: VoiceModelRequestReason): void {
 }
 
 /**
- * Cheap presence check — a single `exists()` against the library's ready marker.
+ * Read the library's ready marker and resolve the local model directory.
  * Safe to call on every launch and every foreground resume.
  */
 export async function probeVoiceModel(): Promise<VoiceModelSnapshot> {
+  const before = store.get();
   try {
     const localPath = await getModelPath(ModelCategory.Stt, PARAKEET_MODEL_ID);
+    // A download or deletion can finish while the filesystem probe is pending.
+    if (store.get() !== before) return store.get();
     if (localPath) {
       emit({ state: 'ready', progress: 1, localPath, error: null, errorKind: null });
-    } else if (store.get().state === 'unknown') {
-      emit({ state: 'absent' });
+    } else if (before.state === 'unknown' || before.state === 'ready') {
+      emit({ ...INITIAL_SNAPSHOT, state: 'absent' });
     }
   } catch {
-    // A failed probe means "still unknown", not "failed" — the fetch path is
-    // what decides failure, and it reports a reason the UI can act on.
+    // A failed probe supplies no new information about the files on disk.
   }
   return store.get();
 }

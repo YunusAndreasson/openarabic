@@ -153,6 +153,20 @@ class AudioCacheManager {
     const pathname = new URL(url).pathname;
     const extension = /\.([a-z0-9]{1,10})$/i.exec(pathname)?.[1] ?? 'mp3';
     const cacheKey = `${hash}.${extension}`;
+    // Older builds used the last dot in the entire URL. A signed URL could
+    // therefore leave a complete offline download under its signature suffix.
+    const legacyExtension = url.slice(url.lastIndexOf('.') + 1).split('?', 1)[0];
+    if (
+      legacyExtension &&
+      legacyExtension !== extension &&
+      /^[a-z0-9_=&-]+$/i.test(legacyExtension)
+    ) {
+      const legacyFile = new File(this.cacheDir, `${hash}.${legacyExtension}`);
+      const destination = new File(this.cacheDir, cacheKey);
+      if (legacyFile.exists && legacyFile.size > 0 && !destination.exists) {
+        legacyFile.rename(cacheKey);
+      }
+    }
     this.cacheKeys.set(url, cacheKey);
     if (this.cacheKeys.size > this.MAX_MEMORY_CACHE_SIZE) {
       const oldest = this.cacheKeys.keys().next();

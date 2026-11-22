@@ -1,20 +1,18 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { articleQueries, readingProgressQueries } from '@/constants/queries';
+import { articleQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
-import { bookmarkService } from '@/services/bookmark';
 import { useAppDispatch } from '@/store/hooks';
 import { resetEditMode } from '@/store/editModeSlice';
 import { ToastType } from '@/types/enums';
 import { getBeginnerArticles } from '@/utils/articleUtils';
-import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
-import { managedRequest } from '@/utils/supabaseHelpers';
+import { readingListAddManyMutation } from '@/utils/mutationDefaults';
 
 /** Number of beginner articles to add */
 const BEGINNER_ARTICLE_COUNT = 10;
@@ -41,7 +39,6 @@ export function useAddBeginnerArticles(
   options?: UseAddBeginnerArticlesOptions,
 ): UseAddBeginnerArticlesResult {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const { showToast } = useToast();
   const dispatch = useAppDispatch();
 
@@ -55,24 +52,9 @@ export function useAddBeginnerArticles(
   );
 
   const mutation = useMutation({
-    mutationFn: async () => {
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      if (beginnerArticleIds.length === 0) {
-        throw new Error('No beginner articles available');
-      }
-
-      // One upsert for the whole set: it succeeds or fails as one, so a failure
-      // is one report and one toast — ten parallel requests could fail as ten.
-      // Articles already in the list are left as they are, so a retry is safe.
-      await bookmarkService.addManyToReadingList(user.id, beginnerArticleIds, managedRequest());
-
-      return { addedCount: beginnerArticleIds.length };
-    },
-    onSuccess: ({ addedCount }) => {
-      if (!user?.id) return;
+    ...readingListAddManyMutation,
+    onSuccess: (_data, { userId, articleIds }) => {
+      if (!userId || user?.id !== userId) return;
 
       // Show toast with haptic immediately (don't wait for cache invalidation)
       successFeedback();
@@ -80,25 +62,19 @@ export function useAddBeginnerArticles(
 
       // Track analytics
       void analytics.track(ANALYTICS_EVENTS.BEGINNER_ARTICLES_ADDED, {
-        count: addedCount,
+        count: articleIds.length,
       });
 
       // Reset edit mode in case it was persisted from previous session
       dispatch(resetEditMode('playlist'));
 
-      // Invalidate queries in background (UI updates when ready)
-      void readingProgressQueries.onListChanged(queryClient, user.id);
-
       // Call onSuccess callback
       options?.onSuccess?.();
-    },
-    onError: (error: Error) => {
-      void handleError(error, { toastMessage: STRINGS.FAILED_TO_ADD_BEGINNER_ARTICLES });
     },
   });
 
   return {
-    addArticles: () => mutation.mutate(),
+    addArticles: () => mutation.mutate({ userId: user?.id, articleIds: beginnerArticleIds }),
     isLoading: mutation.isPending,
     isSuccess: mutation.isSuccess,
     isError: mutation.isError,

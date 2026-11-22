@@ -2,6 +2,15 @@ import type { ArticleId, AuthorId, CategoryId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
+/** A successful lookup found no published row for this ID. */
+export class ArticleNotFoundError extends Error {
+  readonly status = 404;
+
+  constructor(id: ArticleId) {
+    super(`Article not found: ${id}`);
+  }
+}
+
 /**
  * Category type used across multiple components
  */

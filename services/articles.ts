@@ -1,6 +1,11 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
-import type { Article, ArticleRow, SearchCorpusSentence } from '@/types/articles.types';
+import {
+  ArticleNotFoundError,
+  type Article,
+  type ArticleRow,
+  type SearchCorpusSentence,
+} from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeQuery, fetchAllPages, type RequestOptions } from '@/utils/supabaseHelpers';
@@ -188,7 +193,7 @@ export const articlesService = {
     );
 
     if (!data) {
-      throw new Error(`Article not found: ${id}`);
+      throw new ArticleNotFoundError(id);
     }
 
     return mapToArticle(data);

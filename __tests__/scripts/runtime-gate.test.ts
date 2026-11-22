@@ -90,6 +90,15 @@ describe('check-runtime.js', () => {
     expect(gate('--record').stderr).toContain('retired');
   });
 
+  it('keeps 1448.6.13 retired after two different fingerprint pairs were recorded', () => {
+    const ambiguousRuntime = '1448.6.13';
+    copyFileSync(join(repoScripts, '../native-runtimes.json'), join(root, 'native-runtimes.json'));
+    json('app.json', { expo: { runtimeVersion: ambiguousRuntime } });
+    const result = gate('--record');
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(`Runtime ${ambiguousRuntime} is retired`);
+  });
+
   it('refuses a runtime policy instead of a hand-set string', () => {
     json('app.json', { expo: { version: runtime, runtimeVersion: { policy: 'appVersion' } } });
     expect(gate().stderr).toContain('runtimeVersion string');

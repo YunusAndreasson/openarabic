@@ -312,6 +312,28 @@ describe('voiceModelStore', () => {
       expect(sherpa.download.ensureModel).not.toHaveBeenCalled();
     });
 
+    it('recovers when the ready marker disappears between foreground probes', async () => {
+      sherpa.download.getModelPath.mockResolvedValueOnce('/mock/model/path');
+      await probeVoiceModel();
+      expect(await probeVoiceModel()).toMatchObject({
+        state: 'absent',
+        progress: 0,
+        localPath: null,
+      });
+
+      await requestVoiceModel({ reason: 'session' });
+      expect(sherpa.download.ensureModel).toHaveBeenCalledTimes(1);
+    });
+
+    it('a probe started before deletion cannot resurrect the removed model', async () => {
+      const pending = Promise.withResolvers<string | null>();
+      sherpa.download.getModelPath.mockReturnValueOnce(pending.promise);
+      const probe = probeVoiceModel();
+      await deleteVoiceModel();
+      pending.resolve('/mock/model/path');
+      expect(await probe).toMatchObject({ state: 'absent', localPath: null });
+    });
+
     it('leaves the state unknown when the probe itself throws', async () => {
       // A failed probe means "still unknown", not "failed" — only the fetch path
       // may declare a failure, because only it has a reason worth showing.

@@ -7,7 +7,7 @@
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
 
-import type { QueryClient } from '@tanstack/react-query';
+import { onlineManager, type QueryClient } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
@@ -16,7 +16,7 @@ import { useArticleData } from '@/hooks/articles/useArticleData';
 import { articlesService } from '@/services/articles';
 import { bookmarkService } from '@/services/bookmark';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import type { Article } from '@/types/articles.types';
+import { ArticleNotFoundError, type Article } from '@/types/articles.types';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { articleId, authorId, categoryId, rootId, userId } from '@/__tests__/helpers/ids';
@@ -276,28 +276,51 @@ describe('useArticleData', () => {
     // This means 3 total attempts: 1 initial + 2 retries
     expect(mockArticlesService.getArticleById).toHaveBeenCalledTimes(3);
 
-    // No catalogue cached, so the failure cannot be told apart from a removed
-    // article — it is offered as retryable, not announced as "not found".
+    // The failed request cannot establish whether the article was removed.
     expect(result.current.isArticleError).toBe(true);
     expect(result.current.isArticleMissing).toBe(false);
   });
 
-  test('reports an article the published catalogue does not list as missing, not as a failure', async () => {
-    mockArticlesService.getArticleById.mockRejectedValue(new Error('Article not found: 99'));
-    mockBookmarkService.getReadingList.mockResolvedValue([]);
-    mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue([]);
-    // The catalogue lists article 1 only. Kept past the test client's gcTime 0,
-    // since nothing observes it here.
-    queryClient.setQueryDefaults(['articles'], { gcTime: Infinity });
-    queryClient.setQueryData(['articles'], [{ id: articleId(1) }]);
-
-    const { result } = renderHook(() => useArticleData(articleId(99), 'u1'), { wrapper });
-
-    await waitFor(() => expect(result.current.isLoadingArticle).toBe(false), { timeout: 5000 });
-
-    expect(result.current.isArticleMissing).toBe(true);
-    expect(result.current.isArticleError).toBe(false);
+  test('an uncached offline link can be retried without declaring the article missing', () => {
+    onlineManager.setOnline(false);
+    try {
+      const { result } = renderHook(() => useArticleData(articleId(2), undefined), { wrapper });
+      expect(result.current.isArticleError).toBe(true);
+      expect(result.current.isArticleMissing).toBe(false);
+      expect(mockArticlesService.getArticleById).not.toHaveBeenCalled();
+    } finally {
+      onlineManager.setOnline(true);
+    }
   });
+
+  test('a stale catalogue cannot turn a network failure into a missing article', async () => {
+    queryClient.setQueryDefaults(['article'], { retryDelay: 0 });
+    queryClient.setQueryData(['articles'], [{ id: articleId(1) }]);
+    mockArticlesService.getArticleById.mockRejectedValue(new Error('Network request failed'));
+    const { result } = renderHook(() => useArticleData(articleId(2), undefined), { wrapper });
+    await waitFor(() => expect(result.current.isLoadingArticle).toBe(false));
+    expect(result.current.isArticleError).toBe(true);
+    expect(result.current.isArticleMissing).toBe(false);
+  });
+
+  test.each([1, 99])(
+    'reports a confirmed missing article when the catalogue lists %i',
+    async listedId => {
+      mockArticlesService.getArticleById.mockRejectedValue(new ArticleNotFoundError(articleId(99)));
+      mockBookmarkService.getReadingList.mockResolvedValue([]);
+      mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue([]);
+      // Both an up-to-date and a stale catalogue must defer to the detail lookup.
+      queryClient.setQueryDefaults(['articles'], { gcTime: Infinity });
+      queryClient.setQueryData(['articles'], [{ id: articleId(listedId) }]);
+
+      const { result } = renderHook(() => useArticleData(articleId(99), 'u1'), { wrapper });
+
+      await waitFor(() => expect(result.current.isLoadingArticle).toBe(false), { timeout: 5000 });
+
+      expect(result.current.isArticleMissing).toBe(true);
+      expect(result.current.isArticleError).toBe(false);
+    },
+  );
 
   test('treats a failed fetch of a listed article as retryable, and a retry as loading', async () => {
     mockArticlesService.getArticleById.mockRejectedValue(new Error('Network request failed'));

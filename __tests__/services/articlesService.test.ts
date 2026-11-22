@@ -7,6 +7,7 @@
  */
 
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+import { ArticleNotFoundError } from '@/types/articles.types';
 import { articlesService } from '../../services/articles';
 import { supabase } from '../../services/supabase';
 import { handleError } from '../../utils/errorHandling';
@@ -272,6 +273,13 @@ describe('articlesService', () => {
         response.data as unknown as Parameters<typeof mapToArticle>[0],
       );
       expect(result).toBe('mapped');
+    });
+
+    test('distinguishes a successful empty lookup from a request failure', async () => {
+      fromMock.mockReturnValue(createFinalBuilder({ data: null, error: null }));
+      await expect(articlesService.getArticleById(articleId(3))).rejects.toBeInstanceOf(
+        ArticleNotFoundError,
+      );
     });
 
     test('handles errors', async () => {
