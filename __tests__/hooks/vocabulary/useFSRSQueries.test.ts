@@ -19,10 +19,12 @@ const mockQueryClient = {
 
 jest.mock('@tanstack/react-query', () => ({
   useQuery: jest.fn(),
-  useQueryClient: jest.fn((..._args: unknown[]) => mockQueryClient),
+  useQueryClient: () => mockQueryClient,
   QueryClient: jest.fn(),
   QueryClientProvider: ({ children }: { children: ReactNode }) => children,
-  queryOptions: jest.fn(options => options),
+  queryOptions:
+    jest.requireActual<typeof import('@tanstack/react-query')>('@tanstack/react-query')
+      .queryOptions,
   skipToken: Symbol.for('skipToken'),
 }));
 
@@ -232,27 +234,18 @@ describe('useFSRSQueries', () => {
       expect(result.current.isFetching).toBeTruthy();
     });
 
-    test('should return error if either query has an error', () => {
+    test.each(['all', 'due'])('returns the original error when the %s query fails', failedQuery => {
       const testError = new Error('Test error');
-      mockUseQuery
-        .mockReturnValueOnce({
-          data: undefined,
-          isLoading: false,
-          isFetching: false,
-          error: testError,
-        } as never)
-        .mockReturnValueOnce({
-          data: undefined,
-          isLoading: false,
-          isFetching: false,
-          error: null,
-        } as never)
-        .mockReturnValueOnce({
-          data: undefined,
-          isLoading: false,
-          isFetching: false,
-          error: null,
-        } as never);
+      mockUseQuery.mockImplementation(
+        ({ queryKey }) =>
+          ({
+            data: undefined,
+            isLoading: false,
+            isFetching: false,
+            isError: queryKey[1] === failedQuery,
+            error: queryKey[1] === failedQuery ? testError : null,
+          }) as never,
+      );
 
       const { result } = renderHook(() => useFSRSQueries({ userId: 'user-123' }));
 

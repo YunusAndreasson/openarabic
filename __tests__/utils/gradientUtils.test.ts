@@ -35,23 +35,21 @@ const mockLightThemeColors = createThemeColorsMock({
 
 describe('gradientUtils', () => {
   describe('calculateHeaderHeight', () => {
-    test('should calculate header height with safe area', () => {
-      const safeAreaTop = 50;
-      const result = calculateHeaderHeight(safeAreaTop, 375);
-
-      // Should be positive and include safe area
-      expect(result).toBeGreaterThan(safeAreaTop);
-      expect(typeof result).toBe('number');
+    test.each([
+      [320, 198],
+      [375, 232],
+      [430, 266],
+      [599, 370],
+    ])('preserves the phone header height at width %i', (width, height) => {
+      expect(calculateHeaderHeight(0, width)).toBe(height);
+      expect(calculateHeaderHeight(50, width)).toBe(height + 50);
     });
 
-    test('should handle zero safe area', () => {
-      const result = calculateHeaderHeight(0, 375);
-      expect(result).toBeGreaterThan(0);
-    });
-
-    test('follows the window width: the image is the width over the golden ratio', () => {
-      expect(calculateHeaderHeight(0, 375)).toBe(Math.round(375 / 1.618));
-      expect(calculateHeaderHeight(0, 800)).toBe(Math.round(800 / 1.618));
+    test('grows up to the 720-point reading column and stays capped on wider windows', () => {
+      expect(calculateHeaderHeight(0, 680)).toBe(420);
+      expect(calculateHeaderHeight(0, 720)).toBe(445);
+      expect(calculateHeaderHeight(0, 800)).toBe(445);
+      expect(calculateHeaderHeight(50, 1024)).toBe(495);
     });
   });
 

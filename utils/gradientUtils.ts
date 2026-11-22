@@ -4,7 +4,8 @@ import { withOpacity } from '@/utils/colorUtils';
 
 /**
  * Calculate header height including safe area for proper image display: the
- * image is the window's width over the golden ratio. Takes the live window
+ * image follows the window width up to the reading column cap, divided by
+ * the golden ratio. Takes the live window
  * width, because an Android 16 tablet or foldable resizes under a running app.
  */
 export function calculateHeaderHeight(safeAreaTop: number, windowWidth: number): number {

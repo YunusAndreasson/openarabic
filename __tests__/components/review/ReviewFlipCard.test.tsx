@@ -1,6 +1,7 @@
-import { act, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { createRef } from 'react';
+import { Text } from 'react-native';
 
 import type { ReviewCardHandle } from '@/components/review/ReviewFlipCard';
 import { ReviewFlipCard, faceStyle } from '@/components/review/ReviewFlipCard';
@@ -71,10 +72,8 @@ jest.mock('@/components/primitives/ThemedText', () => {
     ThemedText: ({ children }: { children?: unknown }) => createElement(Text, null, children),
   };
 });
-// The word itself is not under test, but the answer, the transcript and the
-// voice slot are all its children, so it has to hand them through.
-jest.mock('@/components/review/WordDisplay', () => ({
-  WordDisplay: ({ children }: { children?: unknown }) => children ?? null,
+jest.mock('@/hooks/theme/useDebouncedArabicFontSize', () => ({
+  useDebouncedArabicFontSize: () => 32,
 }));
 
 beforeEach(() => {
@@ -118,17 +117,24 @@ describe('ReviewFlipCard face synchronization', () => {
     const props = {
       word: 'كتاب',
       answer: 'book',
+      questionSlot: <Text>Listening</Text>,
+      onReplayAudio: jest.fn(),
       onReveal: jest.fn(),
       opacityStyle: {},
       wordKey: 'word-1',
     };
     const view = render(<ReviewFlipCard {...props} revealed={false} />);
     expect(view.queryByText('Book')).toBeNull();
-    expect(view.getByLabelText('Show answer')).toBeTruthy();
+    expect(view.getByText('Listening')).toBeTruthy();
+    fireEvent.press(view.getByRole('button', { name: props.word }));
+    expect(props.onReplayAudio).toHaveBeenCalledTimes(1);
+    expect(props.onReveal).not.toHaveBeenCalled();
 
     view.rerender(<ReviewFlipCard {...props} revealed />);
     expect(view.getByText('Book')).toBeTruthy();
-    expect(view.queryByLabelText('Show answer')).toBeNull();
+    expect(view.queryByText('Listening')).toBeNull();
+    fireEvent.press(view.getByRole('button', { name: props.word }));
+    expect(props.onReplayAudio).toHaveBeenCalledTimes(2);
   });
 
   test('keeps an already revealed card on its answer face after mounting', () => {
