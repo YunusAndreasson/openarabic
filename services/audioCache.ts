@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { delay, withTimeout } from '@/utils/async';
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
+import { toError } from '@/utils/toError';
 import { handleError } from '@/utils/errorHandling';
 import { isKnownOffline } from '@/utils/network';
 import { countDiag, isSessionActive, mark } from '@/utils/reviewDiagnostics';
@@ -148,11 +149,14 @@ class AudioCacheManager {
 
     const hash = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.MD5, url);
     // Extract file extension from URL if available
-    const urlParts = url.split('.');
-    const lastPart = urlParts.length > 1 ? urlParts.at(-1) : '';
-    const extension = lastPart ? lastPart.split('?')[0] : 'mp3';
+    const pathname = new URL(url).pathname;
+    const extension = /\.([a-z0-9]{1,10})$/i.exec(pathname)?.[1] ?? 'mp3';
     const cacheKey = `${hash}.${extension}`;
     this.cacheKeys.set(url, cacheKey);
+    if (this.cacheKeys.size > this.MAX_MEMORY_CACHE_SIZE) {
+      const oldest = this.cacheKeys.keys().next();
+      if (!oldest.done) this.cacheKeys.delete(oldest.value);
+    }
     return cacheKey;
   }
 
@@ -205,13 +209,13 @@ class AudioCacheManager {
       return;
     }
     await new Promise<void>(resolve => this.backgroundDownloadWaiters.push(resolve));
-    this.backgroundDownloadSlotsInUse++;
   }
 
   /** Hands the freed slot to the longest-waiting queued background download, if any. */
   private releaseBackgroundDownloadSlot(): void {
-    this.backgroundDownloadSlotsInUse--;
-    this.backgroundDownloadWaiters.shift()?.();
+    const next = this.backgroundDownloadWaiters.shift();
+    if (next) next();
+    else this.backgroundDownloadSlotsInUse--;
   }
 
   /**
@@ -292,7 +296,7 @@ class AudioCacheManager {
           // Best-effort temp cleanup — an orphaned .tmp file is never served
         }
 
-        lastError = error as Error;
+        lastError = toError(error);
         if (isSessionActive()) {
           countDiag({ networkFailures: 1 });
           mark('cache.download.fail', {
@@ -378,7 +382,7 @@ class AudioCacheManager {
         return result;
       } finally {
         // Clean up pending download tracking regardless of success/failure
-        this.pendingDownloads.delete(url);
+        if (this.pendingDownloads.get(url) === downloadPromise) this.pendingDownloads.delete(url);
       }
     } catch (error) {
       await handleError(error, { showToast: false });

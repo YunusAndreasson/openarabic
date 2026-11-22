@@ -322,7 +322,6 @@ export const articleQueries = {
       queryFn: ({ signal }) => articlesService.getArticles(managedRequest(signal)),
       ...CACHE_TIMES.ARTICLES, // Infinity staleTime
       retry: retryWhileOnline(3),
-      placeholderData: old => old,
     }),
 
   /**
@@ -334,11 +333,10 @@ export const articleQueries = {
     queryOptions({
       queryKey: ['article', articleId] as const,
       queryFn: articleId
-        ? () => articlesService.getArticleById(articleId, managedRequest())
+        ? ({ signal }) => articlesService.getArticleById(articleId, managedRequest(signal))
         : skipToken,
       ...CACHE_TIMES.ARTICLES, // Infinity staleTime
       retry: retryWhileOnline(2),
-      placeholderData: old => old,
     }),
 
   /**

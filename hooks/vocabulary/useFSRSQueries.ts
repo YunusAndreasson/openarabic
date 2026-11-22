@@ -9,14 +9,6 @@ interface UseFSRSQueriesOptions {
   limit?: number;
 }
 
-interface FSRSQueriesResult {
-  allWords: StudyWord[] | undefined;
-  dueWords: StudyWord[] | undefined;
-  isLoading: boolean;
-  isFetching: boolean;
-  error: unknown;
-}
-
 function getDueWordsPlaceholder(
   queryClient: QueryClient,
   userId: string | undefined,
@@ -30,7 +22,7 @@ function getDueWordsPlaceholder(
  * Centralized hook for managing FSRS word queries
  * This hook provides access to all FSRS word data with proper caching and deduplication
  */
-export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQueriesResult {
+export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions) {
   const queryClient = useQueryClient();
 
   // allWordsQuery: no initialData needed — useQuery automatically reads its own cache

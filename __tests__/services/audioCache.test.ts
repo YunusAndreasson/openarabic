@@ -493,7 +493,7 @@ describe('audioCache', () => {
     audioCache = require('../../services/audioCache').audioCache;
 
     // URL with query parameters after extension
-    const urlWithQuery = 'http://example.com/audio/test.mp3?token=abc123';
+    const urlWithQuery = 'http://example.com/audio/test.mp3?token=abc.123#part.one';
     const result = await audioCache.getAudio(urlWithQuery);
 
     // Should strip query params from extension

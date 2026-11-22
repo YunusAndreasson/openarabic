@@ -183,6 +183,24 @@ describe('Authentication Flow', () => {
   });
 
   describe('Auth State Changes', () => {
+    test('sign-out supersedes a pending startup session read', async () => {
+      let finishRead = () => {};
+      mockGetSession.mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            finishRead = () => resolve({ data: { session: mockSession }, error: null });
+          }),
+      );
+      const { result } = renderHook(() => useProvideAuth());
+      await act(async () => {
+        mockAuthStateCallback?.('SIGNED_OUT', null);
+        jest.runAllTimers();
+        finishRead();
+      });
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.session).toBeNull();
+    });
+
     test('updates session on SIGNED_IN event', async () => {
       mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
 

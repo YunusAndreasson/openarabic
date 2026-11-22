@@ -40,39 +40,43 @@ export function useProvideAuth(): AuthResult {
   );
 
   // Perform initial auth setup
-  const initAuth = useCallback(async () => {
-    try {
-      authBreadcrumb('Starting auth initialization');
+  const initAuth = useCallback(
+    async (isCurrent: () => boolean) => {
+      try {
+        authBreadcrumb('Starting auth initialization');
 
-      // Modern supabase-js v2 auto-initializes on first use
-      // Auto-refresh is enabled with autoRefreshToken: true in client config
-      const { data, error } = await supabase.auth.getSession();
+        // Modern supabase-js v2 auto-initializes on first use
+        // Auto-refresh is enabled with autoRefreshToken: true in client config
+        const { data, error } = await supabase.auth.getSession();
 
-      if (error) {
-        Sentry.captureException(error, {
-          tags: { location: 'auth_init_get_session' },
-          level: 'error',
+        if (!isCurrent()) return;
+        if (error) {
+          Sentry.captureException(error, {
+            tags: { location: 'auth_init_get_session' },
+            level: 'error',
+          });
+          setSession(null);
+        } else if (data.session) {
+          authBreadcrumb('Successfully initialized with valid session');
+          await claimDevice(data.session.user.id);
+          if (isCurrent()) setSession(data.session);
+        } else {
+          authBreadcrumb('Initialized but no valid session found');
+          setSession(null);
+        }
+      } catch (error) {
+        void handleError(error, {
+          analyticsEventName: 'Auth_Initialization_Failed',
+          sentrySeverity: 'error',
+          showToast: false,
         });
-        setSession(null);
-      } else if (data.session) {
-        authBreadcrumb('Successfully initialized with valid session');
-        await claimDevice(data.session.user.id);
-        setSession(data.session);
-      } else {
-        authBreadcrumb('Initialized but no valid session found');
-        setSession(null);
+        if (isCurrent()) setSession(null);
+      } finally {
+        if (isCurrent()) setIsLoading(false);
       }
-    } catch (error) {
-      void handleError(error, {
-        analyticsEventName: 'Auth_Initialization_Failed',
-        sentrySeverity: 'error',
-        showToast: false,
-      });
-      setSession(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [claimDevice]);
+    },
+    [claimDevice],
+  );
 
   useEffect(() => {
     // The supabase service's AppState listener starts/stops the auth-js
@@ -88,7 +92,7 @@ export function useProvideAuth(): AuthResult {
     // Initialize auth — async session fetch that must run once on mount; setState
     // happens after awaited supabase call resolves, not synchronously in effect body.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void initAuth();
+    void initAuth(() => isMounted && authEventSeq === 0);
 
     // Listen for auth state changes
     // CRITICAL: Callback must NOT be async and should defer all operations to prevent deadlocks
@@ -96,15 +100,26 @@ export function useProvideAuth(): AuthResult {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, newSession) => {
-      if (!isMounted) return;
+      if (
+        !isMounted ||
+        !(
+          event === 'SIGNED_OUT' ||
+          event === 'SIGNED_IN' ||
+          event === 'TOKEN_REFRESHED' ||
+          event === 'PASSWORD_RECOVERY' ||
+          event === 'USER_UPDATED'
+        )
+      )
+        return;
+      // A session-less refresh/update has nothing to publish. Leave the
+      // pending startup read or account claim in charge of loading state.
+      if (event !== 'SIGNED_OUT' && !newSession) return;
+      const eventSeq = ++authEventSeq;
 
       // Defer all operations (including Sentry) to avoid deadlock
       setTimeout(() => {
         // FIXED: Guard against race condition where component unmounts between setTimeout queue and execution
         if (!isMounted) return;
-
-        authEventSeq += 1;
-        const eventSeq = authEventSeq;
 
         authBreadcrumb(`Auth state change: ${event}`);
 
@@ -115,34 +130,16 @@ export function useProvideAuth(): AuthResult {
           });
           setSession(null);
           setIsLoading(false);
-        } else if (
-          event === 'SIGNED_IN' ||
-          event === 'TOKEN_REFRESHED' ||
-          // A recovery link's verifyOtp signs the user in with PASSWORD_RECOVERY,
-          // and updateUser (the new password itself) emits USER_UPDATED. Ignoring
-          // them left React's session behind the client's: after a cold-start
-          // reset the tabs stayed guarded, so "success" left the user stranded
-          // on the form, and requests ran as a user the UI did not show.
-          event === 'PASSWORD_RECOVERY' ||
-          event === 'USER_UPDATED'
-        ) {
-          if (newSession && event === 'SIGNED_IN') {
-            authBreadcrumb('New session received, updating state');
-            // Publish only once the claim has settled, and only if no later
-            // auth event overtook it while it ran — that one has already
-            // published the state this would now be overwriting.
-            void claimDevice(newSession.user.id).then(() => {
-              if (!isMounted || authEventSeq !== eventSeq) return;
-              setSession(newSession);
-              setIsLoading(false);
-            });
-            return;
-          }
-          if (newSession) {
-            authBreadcrumb('New session received, updating state');
+        } else if (newSession && authEventSeq === eventSeq) {
+          authBreadcrumb('New session received, updating state');
+          // Publish only once the claim has settled, and only if no later
+          // auth event overtook it while it ran — that one has already
+          // published the state this would now be overwriting.
+          void claimDevice(newSession.user.id).then(() => {
+            if (!isMounted || authEventSeq !== eventSeq) return;
             setSession(newSession);
-          }
-          setIsLoading(false);
+            setIsLoading(false);
+          });
         }
       }, 0);
     });

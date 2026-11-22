@@ -1,3 +1,4 @@
+import type { SignInWithIdTokenCredentials } from '@supabase/supabase-js';
 import { useCallback, useState } from 'react';
 
 import { REFUSAL_TOAST_DURATION } from '@/constants/animation';
@@ -24,17 +25,11 @@ export type OAuthProvider = 'google' | 'apple';
 /**
  * OAuth sign-in result returned by provider-specific implementation
  */
-export interface OAuthSignInResult {
+export interface OAuthSignInResult extends Pick<SignInWithIdTokenCredentials, 'nonce'> {
   /**
    * ID token from the OAuth provider
    */
-  idToken: string;
-
-  /**
-   * Optional nonce for providers that require it (e.g., Apple on iOS)
-   * Must be passed to Supabase if the ID token contains a nonce
-   */
-  nonce?: string;
+  idToken: SignInWithIdTokenCredentials['token'];
 
   /**
    * Optional user info for analytics

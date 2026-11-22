@@ -171,14 +171,15 @@ export const articlesService = {
 
   async getArticleById(id: ArticleId, request: RequestOptions = {}): Promise<Article> {
     const data = await executeQuery(
-      () =>
-        supabase
+      () => {
+        const query = supabase
           .from('articles')
           .select(DETAIL_VIEW_COLUMNS)
           .eq('id', id)
-          .eq('published', true)
-          .maybeSingle()
-          .overrideTypes<ArticleRow | null, { merge: false }>(),
+          .eq('published', true);
+        if (request.signal) query.abortSignal(request.signal);
+        return query.maybeSingle().overrideTypes<ArticleRow | null, { merge: false }>();
+      },
       {
         ...errorConfig.loadById,
         analyticsProperties: { id },

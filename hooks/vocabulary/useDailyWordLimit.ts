@@ -22,13 +22,14 @@ async function getDailyWordCountUnlocked(currentDate: string): Promise<number> {
   const lastResetDate = await AsyncStorage.getItem(DAILY_WORD_RESET_KEY);
 
   if (lastResetDate !== currentDate) {
-    await AsyncStorage.setItem(DAILY_WORD_RESET_KEY, currentDate);
     await AsyncStorage.setItem(DAILY_WORD_COUNT_KEY, '0');
+    await AsyncStorage.setItem(DAILY_WORD_RESET_KEY, currentDate);
     return 0;
   }
 
   const count = await AsyncStorage.getItem(DAILY_WORD_COUNT_KEY);
-  return parseInt(count || '0', 10);
+  const storedCount = Number(count);
+  return Number.isSafeInteger(storedCount) && storedCount >= 0 ? storedCount : 0;
 }
 
 export const useDailyWordLimit = () => {
@@ -156,7 +157,7 @@ export const useDailyWordLimit = () => {
     if (effective === Infinity) return false;
 
     const currentCount = await getDailyWordCount();
-    const threshold = Math.floor(effective * 0.8);
+    const threshold = Math.ceil(effective * 0.8);
     return currentCount >= threshold;
   }, [getEffectiveLimitInfo, getDailyWordCount]);
 

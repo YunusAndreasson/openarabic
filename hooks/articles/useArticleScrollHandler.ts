@@ -1,10 +1,5 @@
 import { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
-interface UseArticleScrollHandlerResult {
-  scrollY: ReturnType<typeof useSharedValue<number>>;
-  onScrollAnimated: ReturnType<typeof useAnimatedScrollHandler>;
-}
-
 /**
  * High-performance scroll handler for article content
  * Runs entirely on UI thread to eliminate cross-thread communication overhead
@@ -13,7 +8,7 @@ interface UseArticleScrollHandlerResult {
  * - Avoids cross-thread communication for smooth 60fps scrolling
  * - Best practice for Reanimated worklet-based animations
  */
-export function useArticleScrollHandler(): UseArticleScrollHandlerResult {
+export function useArticleScrollHandler() {
   // Shared scroll value for parallax header and other UI-thread animations
   const scrollY = useSharedValue(0);
 

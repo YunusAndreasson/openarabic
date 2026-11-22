@@ -51,6 +51,7 @@ const createFinalBuilder = (response: any) => {
   const builder: any = {
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
+    abortSignal: jest.fn().mockReturnThis(),
     single: jest.fn().mockReturnThis(),
     maybeSingle: jest.fn().mockReturnThis(),
     overrideTypes: jest.fn(async (..._args: unknown[]) => response),
@@ -259,7 +260,9 @@ describe('articlesService', () => {
       fromMock.mockReturnValue(builder);
       jest.mocked(mapToArticle).mockReturnValue('mapped' as never);
 
-      const result = await articlesService.getArticleById(articleId(7));
+      const { signal } = new AbortController();
+      const result = await articlesService.getArticleById(articleId(7), { signal });
+      expect(builder.abortSignal).toHaveBeenCalledWith(signal);
 
       expect(fromMock).toHaveBeenCalledWith('articles');
       const called = builder.select.mock.calls[0][0];

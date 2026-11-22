@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useMemo, type ReactNode } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
@@ -6,11 +6,10 @@ import { fsrsQueries, gated } from '@/constants/queries';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { createRequiredContext } from '@/utils/createRequiredContext';
 
-interface FSRSDataContextValue {
-  studyWords: StudyWord[] | undefined;
-  isLoading: boolean;
-  error: unknown;
-}
+type StudyWordsQuery = UseQueryResult<StudyWord[]>;
+type FSRSDataContextValue = Pick<StudyWordsQuery, 'isLoading' | 'error'> & {
+  studyWords: StudyWordsQuery['data'];
+};
 
 const [FSRSDataContext, useFSRSDataContext] = createRequiredContext<FSRSDataContextValue>(
   'FSRSDataContext',

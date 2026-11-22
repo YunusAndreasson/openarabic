@@ -13,6 +13,7 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 import { Provider } from 'react-redux';
 
+import { STORAGE_KEYS } from '@/constants/storageKeys';
 import { useDailyWordLimit } from '@/hooks/vocabulary/useDailyWordLimit';
 import { setupTestStore, type TestRootState } from '@/__tests__/helpers/testStore';
 
@@ -106,6 +107,14 @@ describe('useDailyWordLimit', () => {
 
       const count = await result.current.getDailyWordCount();
       expect(count).toBe(0);
+    });
+
+    test('recovers from a malformed stored count on the same day', async () => {
+      const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
+      await result.current.getDailyWordCount();
+      mockStorage[STORAGE_KEYS.DAILY_WORD_COUNT] = 'NaN';
+      expect(await result.current.incrementDailyWordCount()).toBe(true);
+      expect(await result.current.getDailyWordCount()).toBe(1);
     });
 
     test('returns 0 on storage errors', async () => {

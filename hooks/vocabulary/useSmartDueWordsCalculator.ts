@@ -26,7 +26,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
   const appStateRef = useRef(AppState.currentState);
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const lastRefreshRef = useRef<number>(0);
+  const lastRefreshRef = useRef<{ userId: string; time: number } | null>(null);
   const MIN_REFRESH_INTERVAL = CACHE_TIMES.CRITICAL.staleTime; // 30 seconds minimum between refreshes
 
   /**
@@ -38,7 +38,10 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
 
     // Debounce: Don't refresh if we just refreshed recently
     const now = Date.now();
-    if (now - lastRefreshRef.current < MIN_REFRESH_INTERVAL) {
+    if (
+      lastRefreshRef.current?.userId === user.id &&
+      now - lastRefreshRef.current.time < MIN_REFRESH_INTERVAL
+    ) {
       return;
     }
 
@@ -50,7 +53,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
         setIsRefreshing(false);
       }
 
-      lastRefreshRef.current = now;
+      lastRefreshRef.current = { userId: user.id, time: now };
 
       const userId = user.id;
 
@@ -90,6 +93,8 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
     }
   }, [user, isAuthenticated, queryClient]);
 
+  const refreshOnResume = useEffectEvent(refreshDueWordsData);
+
   /**
    * Handle app state changes — useEffectEvent keeps the handler stable so the
    * AppState listener is registered once and always sees the latest values.
@@ -108,7 +113,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
         refreshTimeoutRef.current = setTimeout(() => {
           refreshTimeoutRef.current = null;
           setIsRefreshing(false);
-          void refreshDueWordsData();
+          void refreshOnResume();
         }, refreshDelay);
       } else {
         void refreshDueWordsData();

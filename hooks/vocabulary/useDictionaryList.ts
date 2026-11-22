@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 
 import type { StudyWord } from '@/types/vocabulary.types';
 import { normalizeForSearch } from '@/utils/searchNormalization';
@@ -325,7 +325,8 @@ export const useDictionaryList = ({
       .map(entry => entry.word);
   }, [studyWords, sortField, sortDirection]);
 
-  const query = normalizeForSearch(searchQuery.trim());
+  const deferredSearch = useDeferredValue(searchQuery);
+  const query = normalizeForSearch(deferredSearch.trim());
   const hasSearch = query.length > 0;
   // Allocate the search index only while searching. Separate fields preserve
   // substring semantics; a query must not match across meaning/Arabic boundaries.

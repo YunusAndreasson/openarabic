@@ -53,7 +53,7 @@ describe('feedbackScreenshots', () => {
 
       expect(supabase.storage.from).toHaveBeenCalledWith(FEEDBACK_SCREENSHOTS_BUCKET);
       const [path, body, options] = mockBucket.upload.mock.calls[0];
-      expect(path).toMatch(/^user-123\/\d+\.jpg$/);
+      expect(path).toMatch(/^user-123\/test-uuid-\d+\.jpg$/);
       // An ArrayBuffer, never a Blob: React Native Blobs upload as 0-byte objects.
       expect(body).toBe(mockBytes);
       expect(options).toEqual({ contentType: 'image/jpeg' });
@@ -71,7 +71,7 @@ describe('feedbackScreenshots', () => {
       const result = await uploadFeedbackScreenshot(userId, 'file:///tmp/shot.PNG');
 
       const [path, , options] = mockBucket.upload.mock.calls[0];
-      expect(path).toMatch(/^user-123\/\d+\.png$/);
+      expect(path).toMatch(/^user-123\/test-uuid-\d+\.png$/);
       expect(options).toEqual({ contentType: 'image/png' });
       // The upload worked; only the link failed, so the path still identifies the object.
       expect(result).toEqual({ path, url: null });
@@ -129,7 +129,7 @@ describe('feedbackScreenshots', () => {
       mockBucket.list.mockResolvedValue({ data: fullPage, error: null });
       mockBucket.remove.mockResolvedValue({ data: [], error: null });
 
-      await removeFeedbackScreenshots(userId);
+      await expect(removeFeedbackScreenshots(userId)).rejects.toThrow('did not remove');
 
       expect(mockBucket.list).toHaveBeenCalledTimes(1);
     });

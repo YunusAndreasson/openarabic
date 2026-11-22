@@ -83,7 +83,6 @@ export const useArticleData = (
   const studyWordsQuery = useQuery({
     ...gated(fsrsQueries.all, userId),
     refetchOnReconnect: false,
-    placeholderData: old => old,
   });
 
   // Keep the fast cached-due fallback that individual words previously used,
@@ -91,7 +90,6 @@ export const useArticleData = (
   const dueWordsQuery = useQuery({
     ...gated(fsrsQueries.due, userId),
     refetchOnReconnect: false,
-    placeholderData: old => old,
   });
 
   const studyWords = studyWordsQuery.data ?? EMPTY_STUDY_WORDS;
