@@ -153,7 +153,7 @@ export const STRINGS = {
   // Says out loud what the bar can only draw: how far into this sitting you are,
   // and how many words the whole session has actually put behind you.
   SESSION_PROGRESS_A11Y: (percent: number, done: number) =>
-    `${percent}% through this round, ${done} words done`,
+    `${percent}% through this round, ${done} ${done === 1 ? 'word' : 'words'} done`,
   GRADE_FORGOT: 'Forgot',
   GRADE_GUESSED: 'Barely',
   GRADE_KNEW_IT: 'Knew it',

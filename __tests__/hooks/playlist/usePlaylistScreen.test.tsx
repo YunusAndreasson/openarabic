@@ -14,7 +14,7 @@
 
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, afterEach, describe, expect, jest, test } from '@jest/globals';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { Provider } from 'react-redux';
 
@@ -573,6 +573,22 @@ describe('usePlaylistScreen', () => {
       });
 
       expect(result.current.shouldShowInitialLoading).toBe(true);
+    });
+
+    test('offers retry when the first reading list fetch is paused offline', () => {
+      const originallyOnline = onlineManager.isOnline();
+      onlineManager.setOnline(false);
+      try {
+        const { result, unmount } = renderHook(() => usePlaylistScreen(), {
+          wrapper: createWrapper(),
+        });
+        expect(result.current.shouldShowInitialLoading).toBe(false);
+        expect(result.current.readingListLoadFailed).toBe(true);
+        expect(mockFetchReadingList).not.toHaveBeenCalled();
+        unmount();
+      } finally {
+        onlineManager.setOnline(originallyOnline);
+      }
     });
 
     test('reports a failed first load instead of an empty playlist', async () => {

@@ -20,6 +20,7 @@ import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useExploreCatalog } from '@/hooks/explore/useExploreCatalog';
 import { useExploreRails } from '@/hooks/explore/useExploreRails';
 import { useOnboardingChecklist } from '@/hooks/onboarding/useOnboardingChecklist';
 import { useOpenStarterArticle } from '@/hooks/onboarding/useOpenStarterArticle';
@@ -66,25 +67,10 @@ export default function ExploreScreen(): JSX.Element {
     categoriesDataRef.current = categoriesData;
   });
 
-  const {
-    data: articlesData = [],
-    isPending: isCatalogPending,
-    isError: isCatalogError,
-    isFetching: isCatalogFetching,
-    refetch: refetchCatalog,
-  } = useQuery(articleQueries.all());
-
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-
-  // The feed is built from the catalogue, so with no catalogue there is no feed —
-  // and every section used to return null, which left a blank tab under the
-  // title with nothing to say why. A retry after a failure counts as loading
-  // again; a pull-to-refresh already has its own spinner, so it doesn't.
-  const hasCatalog = articlesData.length > 0;
-  const isCatalogLoading =
-    !hasCatalog && !isRefreshing && (isCatalogPending || (isCatalogError && isCatalogFetching));
-  const hasCatalogFailed = !hasCatalog && isCatalogError && !isCatalogLoading;
+  const { articlesData, isCatalogLoading, hasCatalogFailed, refetchCatalog } =
+    useExploreCatalog(isRefreshing);
 
   // First-run onboarding: "Get started" checklist + one-shot welcome intro
   const checklist = useOnboardingChecklist(articlesData);

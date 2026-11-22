@@ -46,7 +46,8 @@ export const usePlaylistScreen = () => {
   // fetch lands, so `isLoading` never turns true and an empty placeholder reads
   // as an empty playlist. While the placeholder is what's showing, the real list
   // is not known yet.
-  const isReadingListLoading = readingListQuery.isPlaceholderData;
+  const pausedFirstLoad = readingListQuery.isPlaceholderData && readingListQuery.isPaused;
+  const isReadingListLoading = readingListQuery.isPlaceholderData && !readingListQuery.isPaused;
   const { error: enhancedTracksError } = enhancedTracksQuery;
 
   const shouldShowInitialLoading = useMemo(() => {
@@ -55,7 +56,8 @@ export const usePlaylistScreen = () => {
 
   // A failed first load has nothing to show. Without this it fell through to
   // the empty state and its "add beginner articles" seed.
-  const readingListLoadFailed = readingListQuery.isError && sortedReadingList.length === 0;
+  const readingListLoadFailed =
+    (readingListQuery.isError || pausedFirstLoad) && sortedReadingList.length === 0;
   const retryReadingList = readingListQuery.refetch;
 
   // Refetch on screen focus using official React Query pattern

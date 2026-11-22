@@ -100,6 +100,17 @@ describe('ReviewHeader', () => {
 
   describe('Progress Display', () => {
     test.each([
+      [0, '0 words done'],
+      [1, '1 word done'],
+      [2, '2 words done'],
+    ] as const)('announces %i completed words', (wordsDone, label) => {
+      const { getByRole } = render(
+        <ReviewHeader progress={10} maxProgress={10} wordsDone={wordsDone} />,
+      );
+      expect(getByRole('progressbar', { name: `10% through this round, ${label}` })).toBeTruthy();
+    });
+
+    test.each([
       ['keeps the high-water mark when current progress falls', 8, 10, 10],
       ['shows current progress when it exceeds the high-water mark', 15, 10, 15],
       ['keeps a zero baseline at zero', 0, 0, 0],
