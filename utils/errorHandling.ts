@@ -12,6 +12,12 @@ import { toError } from '@/utils/toError';
 // sites keep working; leaf modules import '@/utils/toError' directly.
 export { toError };
 
+/** The Android bridge can start native ANR reporting independently of the JS client. */
+export function sentryReportingOptions(dsn: string | undefined, development: boolean) {
+  const enabled = Boolean(dsn) && !development;
+  return { enabled, enableNative: enabled };
+}
+
 /**
  * Leave a breadcrumb on the Sentry trail.
  *

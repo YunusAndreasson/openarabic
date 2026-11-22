@@ -8,7 +8,7 @@ import {
   onlineManager,
 } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { isRunningInExpoGo } from 'expo';
 import { useFonts } from 'expo-font';
 import {
   DarkTheme,
@@ -70,7 +70,7 @@ import { simpleAudioService } from '@/services/audioPlayer';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
 import { cleanupNotifications, initializeNotifications } from '@/services/notificationService';
 import { persistor, store } from '@/store/store';
-import { handleError, isDroppedSentryEvent } from '@/utils/errorHandling';
+import { handleError, isDroppedSentryEvent, sentryReportingOptions } from '@/utils/errorHandling';
 import { registerMutationDefaults } from '@/utils/mutationDefaults';
 import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
 import { flushPersistedQueryCache, PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
@@ -104,7 +104,7 @@ const ROOT_SCREEN_LISTENERS = {
 //
 // NOTE: this is an app.json plugin change, so it only takes effect after a
 // native rebuild — an OTA alone will ship the narrowed flag without the fonts.
-const NEEDS_RUNTIME_FONTS = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+const NEEDS_RUNTIME_FONTS = isRunningInExpoGo();
 
 const RUNTIME_FONT_MAP = {
   'NotoSansArabic-Regular': notoSansFont,
@@ -252,13 +252,12 @@ Sentry.init({
   // artifact on the workstation emulator lands in the issue list next to real
   // user crashes and reads exactly like one (OPEAN-ARABIC-S7 was a local
   // emulator, not a user). Local failures are already visible in Metro.
-  enabled: !!sentryDsn && !__DEV__,
+  ...sentryReportingOptions(sentryDsn, __DEV__),
   tracesSampleRate: __DEV__ ? 1.0 : 0.1, // Sample everything in dev; 10% in production (Sentry guidance: don't ship 1.0)
   // No screenshots: a crash screen can show the reader's email or what they study,
   // and the privacy policy says reports carry no screen content.
   attachScreenshot: false,
   debug: false, // Disable Sentry debug logging for performance
-  enableNative: true, // CRITICAL: Enable native crash reporting
   enableNativeCrashHandling: true, // Catch native crashes
   enableAutoSessionTracking: true, // Track sessions
   // iOS 15+: forward the OS's own MetricKit diagnostics — CPU-exception,
@@ -313,7 +312,7 @@ function AppContent() {
   const userId = session?.user?.id;
   const navigationRef = useNavigationContainerRef();
 
-  // Runtime font load for Expo Go + Android — see RUNTIME_FONT_MAP above
+  // Development and store builds already have the embedded fonts on both platforms.
   const [fontsLoaded, fontError] = useFonts(NEEDS_RUNTIME_FONTS ? RUNTIME_FONT_MAP : {});
 
   // A font failure must not strand the user on the splash screen forever, so

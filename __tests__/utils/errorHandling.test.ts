@@ -10,6 +10,7 @@ import {
   showSuccessToast,
   handleError,
   isDroppedSentryEvent,
+  sentryReportingOptions,
   toError,
 } from '@/utils/errorHandling';
 import { STRINGS } from '@/constants/strings';
@@ -626,6 +627,18 @@ describe('errorHandling utility', () => {
       expect(Sentry.addBreadcrumb).not.toHaveBeenCalled();
     });
   });
+
+  test.each([
+    { dsn: 'configured', development: true, enabled: false },
+    { dsn: undefined, development: false, enabled: false },
+    { dsn: '', development: false, enabled: false },
+    { dsn: 'configured', development: false, enabled: true },
+  ])(
+    'gates both Sentry clients for $dsn in development=$development',
+    ({ dsn, development, enabled }) => {
+      expect(sentryReportingOptions(dsn, development)).toEqual({ enabled, enableNative: enabled });
+    },
+  );
 
   describe("isDroppedSentryEvent (beforeSend's gate)", () => {
     const abort = Object.assign(new Error('The operation was aborted.'), { name: 'AbortError' });
