@@ -15,6 +15,9 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import {
   COMMON_STYLES,
+  topicColumnCount,
+  fitsPracticePair,
+  exploreRailBasis,
   createAndroidRipple,
   createMargin,
   createPadding,
@@ -246,5 +249,19 @@ describe('layoutUtils', () => {
         flex: 1,
       });
     });
+  });
+});
+
+describe('window and text size', () => {
+  test('an unfolded window gains columns and larger text gives them back', () => {
+    expect(topicColumnCount(390, 1)).toBe(2);
+    expect(topicColumnCount(390, 2)).toBe(1);
+    expect(topicColumnCount(840, 1)).toBe(4);
+    expect(topicColumnCount(840, 2)).toBe(2);
+    expect(fitsPracticePair(390, 1)).toBe(false);
+    expect(fitsPracticePair(840, 1)).toBe(true);
+    expect(fitsPracticePair(840, 2)).toBe(false);
+    expect(exploreRailBasis(390)).toBe(390);
+    expect(exploreRailBasis(840)).toBeLessThan(840);
   });
 });

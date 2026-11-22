@@ -7,9 +7,11 @@
  * which is why the search cannot be a server-side `ilike`.
  */
 
-import type { QueryClient } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { onlineManager, type QueryClient } from '@tanstack/react-query';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 
+import { articleQueries } from '@/constants/queries';
+import { STRINGS } from '@/constants/strings';
 import { articleId, authorId, categoryId } from '@/__tests__/helpers/ids';
 import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { useArticleSearch } from '@/hooks/articles/useArticleSearch';
@@ -95,6 +97,7 @@ describe('useArticleSearch', () => {
 
   afterEach(() => {
     queryClient.clear();
+    onlineManager.setOnline(true);
   });
 
   const search = async (query: string) => {
@@ -108,6 +111,32 @@ describe('useArticleSearch', () => {
 
     expect(result.current.hasQuery).toBe(false);
     expect(result.current.results).toEqual([]);
+  });
+
+  test('opening search warms the corpus for later offline body searches in the same session', async () => {
+    const warm = renderHook(() => useArticleSearch(''), { wrapper });
+    await waitFor(() =>
+      expect(queryClient.getQueryData(articleQueries.searchCorpus().queryKey)).toEqual(CORPUS),
+    );
+    warm.unmount();
+    onlineManager.setOnline(false);
+    const { result } = await search('estrangement');
+    expect(result.current.results[0]?.bodySnippet).toContain('estrangement');
+    expect(result.current.loadError).toBeUndefined();
+    expect(mockArticlesService.getSearchCorpus).toHaveBeenCalledTimes(1);
+  });
+
+  test('an uncached offline search offers recovery and does not report no matches', async () => {
+    onlineManager.setOnline(false);
+    const { result } = renderHook(() => useArticleSearch('worship'), { wrapper });
+    expect(result.current.loadError).toBe(STRINGS.NO_INTERNET_CONNECTION);
+    expect(result.current.isBodyLoading).toBe(false);
+    await act(async () => {
+      onlineManager.setOnline(true);
+      result.current.retryBody();
+    });
+    await waitFor(() => expect(result.current.results.length).toBeGreaterThan(0));
+    expect(result.current.loadError).toBeUndefined();
   });
 
   test('finds an accented book title from a plain-ASCII query', async () => {

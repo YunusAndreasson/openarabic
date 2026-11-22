@@ -1129,6 +1129,7 @@ export const STRINGS = {
    */
   WORD_SENTENCE_NOTE_TITLE: 'In this sentence',
   /** Fallback title only. The screen sets the word's own meaning once it has it. */
+  OPEN_WORD_DETAILS_HINT: 'Opens word details',
   WORD_DETAIL_TITLE: 'Word',
   /** Shown when the word list has loaded but this word is no longer in it —
    *  e.g. it was removed from another screen. Beats spinning forever. */

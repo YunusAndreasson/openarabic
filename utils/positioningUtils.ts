@@ -1,4 +1,4 @@
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
 
 // ===== TOOLTIP CONSTANTS =====
 export const TOOLTIP_CONSTANTS = {
@@ -56,6 +56,7 @@ export const calculateTooltipDimensions = (
   measuredWidth: number | undefined,
   /** The live window width: the right edge to keep clear of, and the cap's basis. */
   containerWidth: number,
+  fontScale = 1,
 ): TooltipDimensions => {
   const {
     ARROW_SIZE,
@@ -69,7 +70,7 @@ export const calculateTooltipDimensions = (
   } = TOOLTIP_CONSTANTS;
 
   // Estimate text width with accurate calculation
-  const textWidth = text.length * CHAR_WIDTH;
+  const textWidth = text.length * CHAR_WIDTH * fontScale;
 
   // Add space for bookmark if present
   const bookmarkWidth = hasBookmark ? BOOKMARK_WIDTH : 0;
@@ -96,7 +97,14 @@ export const calculateTooltipDimensions = (
   const finalTooltipWidth = Math.max(MIN_WIDTH, Math.min(baseWidth, maxReasonableWidth));
 
   // Calculate tooltip height
-  const tooltipHeight = HEIGHT;
+  const lineCount = Math.max(1, Math.ceil(textWidth / (finalTooltipWidth - MIN_PADDING * 2)));
+  const tooltipHeight = Math.max(
+    HEIGHT,
+    Math.ceil(
+      lineCount * LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL * fontScale,
+    ) +
+      MIN_PADDING * 2,
+  );
 
   // Calculate position
   const wordCenterX = layout.x + layout.width / 2;

@@ -1,6 +1,5 @@
 import * as Sentry from '@sentry/react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { Image } from 'expo-image';
 import { useCallback, useRef, useState } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
@@ -21,7 +20,7 @@ import {
 } from '@/utils/articleUtils';
 import { breadcrumb, handleError } from '@/utils/errorHandling';
 import { runWhenIdle } from '@/utils/runWhenIdle';
-import { generateStorageUrl } from '@/utils/storageUtils';
+import { prefetchArticleImages } from '@/utils/prefetchArticleImages';
 import { MAX_FEATURED_ARTICLES } from '@/hooks/articles/useMultipleFeaturedArticles';
 
 /**
@@ -219,10 +218,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
             queryClient.setQueryData(startupFeaturedKey(), { articles: featured });
 
             // Prefetch images and details for featured articles with error handling
-            const imagePrefetches = featured
-              .map(a => generateStorageUrl('images', a.image_url))
-              .filter(Boolean)
-              .map(url => Image.prefetch(url, { cachePolicy: 'memory-disk' }).catch(() => null)); // Silently handle prefetch failures
+            const imagePrefetch = prefetchArticleImages(featured.map(article => article.image_url));
 
             // OPTIMIZED: Bulk fetch article details to prevent N+1 queries
             // Fetch all featured articles in a single query, then populate individual query caches
@@ -238,13 +234,11 @@ export const useAppPreloader = (): AppPreloaderResult => {
               .catch(() => null); // Silently handle prefetch failures
 
             // Fire-and-forget; do not block loader
-            Promise.allSettled([...imagePrefetches, bulkPrefetchPromise]).catch(
-              (error: unknown) => {
-                Sentry.captureException(error, {
-                  tags: { location: 'preloader:featured-prefetch' },
-                });
-              },
-            );
+            Promise.allSettled([imagePrefetch, bulkPrefetchPromise]).catch((error: unknown) => {
+              Sentry.captureException(error, {
+                tags: { location: 'preloader:featured-prefetch' },
+              });
+            });
           } catch {
             // ignore prefetch errors
           }
@@ -262,21 +256,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
                 ...readingProgressQueries.readingList(user.id),
                 staleTime: 'static',
               });
-              if (readingList.length > 0) {
-                const imagePrefetches = readingList
-                  .map(item => generateStorageUrl('images', item.articles.image_url))
-                  .filter(Boolean)
-                  .map(url =>
-                    Image.prefetch(url, { cachePolicy: 'memory-disk' }).catch(() => null),
-                  );
-
-                // Fire-and-forget; do not block loader
-                Promise.allSettled(imagePrefetches).catch((error: unknown) => {
-                  Sentry.captureException(error, {
-                    tags: { location: 'preloader:bookmark-prefetch' },
-                  });
-                });
-              }
+              await prefetchArticleImages(readingList.map(item => item.articles.image_url));
             } catch {
               // Ignore bookmark prefetch errors
             }

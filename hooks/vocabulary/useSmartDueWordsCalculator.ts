@@ -71,7 +71,10 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
         // "N to review today" number only ever moved on a full app restart.
         // `type: 'active'` refetches exactly the variants something is
         // rendering, instead of every stale leftover in the cache.
-        queryClient.refetchQueries({ queryKey: fsrsQueries.duePrefix(userId), type: 'active' }),
+        queryClient.refetchQueries(
+          { queryKey: fsrsQueries.duePrefix(userId), type: 'active' },
+          { cancelRefetch: false },
+        ),
 
         // The bare variant is also read straight from cache (with no observer)
         // by the due-backlog add gate, so it has to exist and be fresh even

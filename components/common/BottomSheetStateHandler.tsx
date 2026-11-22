@@ -40,6 +40,7 @@ export interface BottomSheetStateHandlerProps {
    * Custom error message (defaults to STRINGS.ERROR_LOADING_DATA)
    */
   errorMessage?: string;
+  onRetry?: () => void;
 
   /**
    * Custom empty state message
@@ -100,6 +101,7 @@ export function BottomSheetStateHandler({
   isEmpty = false,
   loadingMessage = STRINGS.LOADING_GENERIC,
   errorMessage = STRINGS.ERROR_LOADING_DATA,
+  onRetry,
   emptyMessage,
   children,
 }: BottomSheetStateHandlerProps): ReactNode {
@@ -114,7 +116,7 @@ export function BottomSheetStateHandler({
   if (isError) {
     return (
       <View style={styles.stateContainer}>
-        <ErrorState message={errorMessage} />
+        <ErrorState message={errorMessage} onRetry={onRetry} />
       </View>
     );
   }

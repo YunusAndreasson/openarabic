@@ -11,6 +11,7 @@
 
 import { fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import React from 'react';
+import * as RN from 'react-native';
 import { StyleSheet } from 'react-native';
 import * as Reanimated from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
@@ -101,6 +102,23 @@ describe('SkiaSentenceWords', () => {
 
       expect(first.left).toBeGreaterThan(second.left);
       expect(first.top).toBe(second.top);
+    });
+
+    test('a larger system font grows the painted line and its matching native target', () => {
+      const window = { width: 390, height: 850, scale: 2, fontScale: 1 };
+      const dimensions = jest.spyOn(RN, 'useWindowDimensions').mockReturnValue(window);
+      try {
+        const view = render(<SkiaSentenceWords words={WORDS} selectedRootIds={NO_SELECTION} />);
+        layOut(view);
+        const height = () =>
+          StyleSheet.flatten(view.getByTestId('sentence-word-0').props.style).height;
+        const initial = height();
+        dimensions.mockReturnValue({ ...window, fontScale: 2 });
+        view.rerender(<SkiaSentenceWords words={[...WORDS]} selectedRootIds={NO_SELECTION} />);
+        expect(height()).toBeGreaterThan(initial);
+      } finally {
+        dimensions.mockRestore();
+      }
     });
 
     test('wraps onto a second line when the sentence is narrower than the words', () => {

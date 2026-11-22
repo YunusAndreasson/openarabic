@@ -1,3 +1,4 @@
+import { exploreRailBasis } from '@/utils/layoutUtils';
 import { EnhancedImage } from '@/components/ui';
 import { BaseCard } from '@/components/common';
 import { useRouter } from 'expo-router';
@@ -94,7 +95,9 @@ export function ArticleCard({
   // article image has the same height. From the live window, not the launch
   // width: an Android 16 tablet or foldable resizes under a running app.
   const imageHeight = Math.round(
-    (windowWidth - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2) / GOLDEN_RATIO,
+    ((isFeaturedArticle ? exploreRailBasis(windowWidth) : windowWidth) -
+      LAYOUT.SCREEN_HORIZONTAL_PADDING * 2) /
+      GOLDEN_RATIO,
   );
   const gradientHeight = Math.round(imageHeight * GRADIENT_HEIGHT_RATIO);
 

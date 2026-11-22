@@ -9,7 +9,7 @@
 
 import { afterEach, jest } from '@jest/globals';
 
-import { SUPABASE_REQUEST_TIMEOUT_MS } from '@/constants/supabase';
+import { SUPABASE_REQUEST_TIMEOUT_MS, SUPABASE_URL } from '@/constants/supabase';
 import { checkAuthentication, fetchWithTimeout, supabase } from '../../services/supabase';
 import { handleError } from '../../utils/errorHandling';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -129,6 +129,34 @@ describe('fetchWithTimeout', () => {
       name: 'TimeoutError',
       message: `Request timed out after ${SUPABASE_REQUEST_TIMEOUT_MS} ms`,
     });
+  });
+
+  test('a stalled body releases the query by its deadline and a fresh read can succeed', async () => {
+    jest.useFakeTimers();
+    const url = SUPABASE_URL + '/rest/v1/articles?id=eq.430';
+    const stalled = new Response();
+    const reading = Promise.withResolvers<void>();
+    jest.spyOn(stalled, 'text').mockImplementation(() => {
+      reading.resolve();
+      // Simulate a native read that never acknowledges cancellation.
+      return new Promise<string>(() => undefined);
+    });
+    const http = jest
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(stalled)
+      .mockResolvedValueOnce(
+        new Response('[{"id":430}]', { headers: { 'content-range': '0-0/1' } }),
+      );
+    global.fetch = http;
+    const first = fetchWithTimeout(url);
+    await reading.promise;
+    jest.advanceTimersByTime(SUPABASE_REQUEST_TIMEOUT_MS);
+    await expect(first).rejects.toMatchObject({ name: 'TimeoutError' });
+    expect(http.mock.calls[0]?.[1]?.signal?.aborted).toBe(true);
+    const recovered = await fetchWithTimeout(url);
+    expect(recovered.headers.get('content-range')).toBe('0-0/1');
+    await expect(recovered.json()).resolves.toEqual([{ id: 430 }]);
+    expect(http.mock.calls[1]?.[1]?.signal?.aborted).toBe(false);
   });
 
   test("a caller's own abort comes through as it was", async () => {

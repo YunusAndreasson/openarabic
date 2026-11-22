@@ -9,11 +9,13 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
-import { AppState, Linking, Platform, StyleSheet, View } from 'react-native';
+import { AppState, Linking, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Animated, { FadeIn, FadeOut, LayoutAnimationConfig } from 'react-native-reanimated';
 
+import { ErrorState } from '@/components/common/ErrorState';
+import { TextLink } from '@/components/ui/TextLink';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import type { ReviewCardHandle } from '@/components/review/ReviewFlipCard';
 import {
@@ -253,6 +255,7 @@ function ReviewDebugHud({
 // Main review content component (only rendered after tutorial is dismissed)
 function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element {
   const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
   const colors = useColors();
   // The voice debug HUD is a development surface. The selector returns the
   // shipped `false` outside __DEV__, so a flag persisted from an older build
@@ -286,6 +289,8 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     isAudioPreloading,
     isAudioReady,
     isLoading,
+    loadError,
+    retryLoad,
     wordQueue,
     enrichmentBatches,
     sessionWords,
@@ -655,6 +660,23 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     if (!isLoading && isEmpty) router.replace(ROUTE_PATHS.PRACTICE_TAB);
   }, [isEmpty, isLoading]);
 
+  if (loadError) {
+    return (
+      <View
+        style={[
+          baseStyles.containerCentered,
+          {
+            backgroundColor: colors.background,
+            paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE,
+          },
+        ]}
+      >
+        <ErrorState message={loadError} onRetry={retryLoad} />
+        <TextLink label={STRINGS.CANCEL} onPress={() => router.replace(ROUTE_PATHS.PRACTICE_TAB)} />
+      </View>
+    );
+  }
+
   // Keep the route visually neutral for the brief frame before replace lands.
   if (isEmpty) {
     return <ReviewLoadingState />;
@@ -817,7 +839,12 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
             hanging over the incoming card for ~4-5 frames. Same cause as the
             "Tap to continue" reappearance, which the restudy branch solves by
             having no exit at all (it only ever leaves via an advance). */}
-        <View style={baseStyles.actionSlot}>
+        <View
+          style={[
+            baseStyles.actionSlot,
+            fontScale > 1 && { height: LAYOUT.REVIEW.ACTION_SLOT_HEIGHT * fontScale },
+          ]}
+        >
           {/* `remountEpoch` folded in alongside `currentWordKey` (see its own
               comment above `cardRef`): this wrapper's branch swaps run on
               Reanimated layout animations (`entering`/`exiting` below) exactly

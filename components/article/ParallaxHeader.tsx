@@ -2,6 +2,7 @@ import { EnhancedImage } from '@/components/ui';
 import { memo, useMemo } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
+  useReducedMotion,
   Extrapolation,
   interpolate,
   useAnimatedStyle,
@@ -71,6 +72,7 @@ const ParallaxHeaderComparison = (
  */
 const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scrollY }) => {
   const insets = useSafeAreaInsets();
+  const reducedMotion = useReducedMotion();
   const { width: windowWidth } = useWindowDimensions();
 
   // Calculate dynamic height including safe area for proper image display
@@ -117,6 +119,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
   // Animated parallax and pull-to-stretch effect
   const animatedImageStyle = useAnimatedStyle(() => {
     const y = scrollY.get();
+    if (reducedMotion) return { transform: [{ translateY: -y }, { scale: 1 }], opacity: 1 };
     const translateY = y > 0 ? -y * 0.6 : 0; // slower upward movement for parallax
     const maxExtraScale = 0.08; // cap stretch at +8%
     const scale = y < 0 ? 1 + Math.min(-y / headerHeight, maxExtraScale) : 1;
@@ -127,7 +130,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
       transform: [{ translateY }, { scale }],
       opacity,
     };
-  }, [headerHeight]);
+  }, [headerHeight, reducedMotion, scrollY]);
 
   // Memoize EnhancedImage props to prevent unnecessary re-renders
   const imageProps = useMemo(
@@ -140,7 +143,12 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
   );
 
   return (
-    <Animated.View style={containerStyle} pointerEvents="none">
+    <Animated.View
+      style={containerStyle}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
       {/* Background Image Section with safe area height */}
       <Animated.View style={[imageSectionStyle, animatedImageStyle]}>
         <EnhancedImage {...imageProps} />

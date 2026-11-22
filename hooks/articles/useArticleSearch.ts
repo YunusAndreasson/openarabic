@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useDeferredValue } from 'react';
 
+import { firstLoadError } from '@/utils/firstLoadError';
+import { STRINGS } from '@/constants/strings';
 import { articleQueries } from '@/constants/queries';
 import type { Article, SearchCorpusSentence } from '@/types/articles.types';
 import { normalizeForSearch, tokenizeSearchQuery } from '@/utils/searchNormalization';
@@ -90,6 +92,7 @@ export interface UseArticleSearchResult {
   /** The sentence corpus is still downloading; catalogue matches show already. */
   isBodyLoading: boolean;
   isBodyError: boolean;
+  loadError: string | undefined;
   retryBody: () => void;
 }
 
@@ -227,23 +230,21 @@ function rankEntry(
 export function useArticleSearch(query: string): UseArticleSearchResult {
   const deferredQuery = useDeferredValue(query);
 
-  const { data: entries } = useQuery({
+  const catalog = useQuery({
     ...articleQueries.all(),
     select: buildMetadataIndex,
   });
 
-  const {
-    data: bodyIndex,
-    isLoading: isBodyLoading,
-    isError: isBodyError,
-    refetch: refetchBody,
-  } = useQuery({
+  const trimmed = deferredQuery.trim();
+  const hasQuery = trimmed.length >= MIN_QUERY_LENGTH;
+  const corpus = useQuery({
     ...articleQueries.searchCorpus(),
     select: buildBodyIndex,
   });
-
-  const trimmed = deferredQuery.trim();
-  const hasQuery = trimmed.length >= MIN_QUERY_LENGTH;
+  const entries = catalog.data;
+  const bodyIndex = corpus.data;
+  const catalogError = firstLoadError(catalog, STRINGS.FAILED_TO_LOAD_ARTICLES);
+  const corpusError = firstLoadError(corpus, STRINGS.SEARCH_TEXTS_INCOMPLETE_HINT);
   const normalizedQuery = hasQuery ? normalizeForSearch(trimmed) : '';
   const tokens = normalizedQuery ? tokenizeSearchQuery(normalizedQuery) : [];
 
@@ -272,8 +273,12 @@ export function useArticleSearch(query: string): UseArticleSearchResult {
   return {
     results,
     hasQuery,
-    isBodyLoading,
-    isBodyError,
-    retryBody: () => void refetchBody(),
+    isBodyLoading: hasQuery && (catalog.isLoading || corpus.isLoading),
+    isBodyError: !!corpusError,
+    loadError: catalogError ?? corpusError,
+    retryBody: () => {
+      if (catalogError) void catalog.refetch();
+      if (corpusError) void corpus.refetch();
+    },
   };
 }

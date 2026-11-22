@@ -3,7 +3,7 @@ import { FlashList } from '@shopify/flash-list';
 import { memo, type ReactElement, type RefObject } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
@@ -14,6 +14,7 @@ import { SCROLL_EVENT_THROTTLE, TIMING_CONFIG, fadeInStyle } from '@/constants/a
 import {
   LAYOUT,
   LETTER_SPACING,
+  READING_COLUMN_WIDTH,
   LINE_HEIGHT_MULTIPLIERS,
   MIN_TOUCH_TARGET,
   TEXT_STYLES,
@@ -146,6 +147,7 @@ const ArticleContentInternal = function ArticleContent({
   selectedRootIds,
 }: ArticleContentProps) {
   const insets = useSafeAreaInsets();
+  const reducedMotion = useReducedMotion();
 
   // React Compiler auto-memoizes
   const { width: windowWidth } = useWindowDimensions();
@@ -186,6 +188,7 @@ const ArticleContentInternal = function ArticleContent({
     <View>
       <View style={titleContainerStyle}>
         <ThemedText
+          accessibilityRole="header"
           type="heading1"
           colorName="headingText"
           style={[styles.titleText, styles.leftAlign, { textShadowColor: colors.shadow }]}
@@ -233,6 +236,7 @@ const ArticleContentInternal = function ArticleContent({
   // React Compiler auto-memoizes
   const contentContainerStyle = {
     paddingTop: headerHeight,
+    paddingHorizontal: Math.max(0, (windowWidth - READING_COLUMN_WIDTH) / 2),
     paddingBottom: insets.bottom + miniPlayerClearance + COMFORTABLE_READING_SPACE,
   };
 
@@ -241,7 +245,7 @@ const ArticleContentInternal = function ArticleContent({
 
   return (
     <View style={styles.content}>
-      <Animated.View style={[styles.flexOne, MOUNT_FADE_IN_STYLE]}>
+      <Animated.View style={[styles.flexOne, !reducedMotion && MOUNT_FADE_IN_STYLE]}>
         {sortedSentences.length > 0 ? (
           <View style={listContainerStyle}>
             {/* Sticky parallax hero, behind the list it scrolls under */}

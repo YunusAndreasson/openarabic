@@ -1,3 +1,4 @@
+import { exploreRailBasis } from '@/utils/layoutUtils';
 import { memo } from 'react';
 import { useWindowDimensions } from 'react-native';
 
@@ -44,7 +45,7 @@ const HorizontalArticleSliderComponent = ({ articles }: HorizontalArticleSliderP
   const displayArticles = articles.slice(0, MAX_FEATURED_ARTICLES);
 
   return (
-    <SnapRail itemWidth={width * CARD_WIDTH_RATIO} itemHeight={CARD_HEIGHT}>
+    <SnapRail itemWidth={exploreRailBasis(width) * CARD_WIDTH_RATIO} itemHeight={CARD_HEIGHT}>
       {displayArticles.map(article => (
         <ArticleCard
           key={`featured-${article.id}`}

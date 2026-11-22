@@ -38,7 +38,8 @@ export default function SearchScreen(): JSX.Element {
   const [query, setQuery] = useState('');
   const searchBarRef = useRef<SearchBarCommands>(null);
 
-  const { results, hasQuery, isBodyLoading, isBodyError, retryBody } = useArticleSearch(query);
+  const { results, hasQuery, isBodyLoading, isBodyError, loadError, retryBody } =
+    useArticleSearch(query);
 
   /**
    * iOS focuses by hand, and not until the push has finished.
@@ -99,6 +100,7 @@ export default function SearchScreen(): JSX.Element {
         results={results}
         hasQuery={hasQuery}
         isBodyLoading={isBodyLoading}
+        loadError={loadError}
         isBodyError={isBodyError}
         onRetryBody={retryBody}
         onArticlePress={handleArticlePress}

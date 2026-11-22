@@ -6,54 +6,51 @@ import { AppState } from 'react-native';
 import { SUPABASE_ANON_KEY, SUPABASE_REQUEST_TIMEOUT_MS, SUPABASE_URL } from '@/constants/supabase';
 import type { Database } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
+import { withTimeout } from '@/utils/async';
 import { toError } from '@/utils/toError';
 
-/** What the deadline aborts with: how its rejection is told from a caller's abort. */
-const DEADLINE_REASON = Symbol('supabase-request-deadline');
-
 /**
- * `fetch` with a deadline, for every Supabase request.
- *
- * Neither supabase-js nor React Native's fetch imposes a timeout, so a request
- * that lands on a dead pooled connection hangs instead of failing — see
- * SUPABASE_REQUEST_TIMEOUT_MS for the measurement and why a hang is worse than
- * an error here.
- *
- * A caller-supplied signal (supabase-js `.abortSignal()`, and the auth client's
- * own cancellation) is chained rather than replaced, so aborting from outside
- * still works and the deadline applies on top of it.
- *
- * The deadline rejects with a `TimeoutError` of its own. expo/fetch reports
- * every cancelled request alike — "fetch failed: Fetch request has been
- * canceled" (OPENARABIC-TC) — so without it a timed-out request and a
- * superseded one could not be told apart on the breadcrumb trail.
+ * Bound Supabase JSON reads through the last byte. Expo fetch resolves on
+ * headers, then PostgREST reads text (and GoTrue reads JSON) separately. A
+ * stalled body used to outlive both the deadline and caller cancellation.
+ * Leave storage downloads and function streams in their original form.
  */
 export const fetchWithTimeout: typeof fetch = async (input, init) => {
+  const request = typeof input === 'object' && 'url' in input ? input : undefined;
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  const callerSignal = init?.signal ?? request?.signal;
   const controller = new AbortController();
-  const callerSignal = init?.signal;
+  const abortFromCaller = () => controller.abort(callerSignal?.reason);
+  if (callerSignal?.aborted) abortFromCaller();
+  else callerSignal?.addEventListener('abort', abortFromCaller);
 
-  if (callerSignal?.aborted) {
-    controller.abort();
-  }
+  const read = async () => {
+    const response = await fetch(input, { ...init, signal: controller.signal });
+    const jsonApi =
+      url.startsWith(SUPABASE_URL + '/rest/v1/') || url.startsWith(SUPABASE_URL + '/auth/v1/');
+    if (
+      !jsonApi ||
+      (init?.method ?? request?.method)?.toUpperCase() === 'HEAD' ||
+      [204, 205, 304].includes(response.status)
+    )
+      return response;
 
-  const abortFromCaller = (): void => controller.abort();
-  callerSignal?.addEventListener('abort', abortFromCaller);
-  const timeoutId = setTimeout(
-    () => controller.abort(DEADLINE_REASON),
-    SUPABASE_REQUEST_TIMEOUT_MS,
-  );
+    const body = await response.text();
+    return new Response(body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    });
+  };
 
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
-  } catch (error) {
-    if (controller.signal.reason !== DEADLINE_REASON) throw error;
-    const timeoutError = new Error(`Request timed out after ${SUPABASE_REQUEST_TIMEOUT_MS} ms`, {
-      cause: error,
+    return await withTimeout(read(), SUPABASE_REQUEST_TIMEOUT_MS, () => {
+      const error = new Error(`Request timed out after ${SUPABASE_REQUEST_TIMEOUT_MS} ms`);
+      error.name = 'TimeoutError';
+      controller.abort(error);
+      throw error;
     });
-    timeoutError.name = 'TimeoutError';
-    throw timeoutError;
   } finally {
-    clearTimeout(timeoutId);
     callerSignal?.removeEventListener('abort', abortFromCaller);
   }
 };

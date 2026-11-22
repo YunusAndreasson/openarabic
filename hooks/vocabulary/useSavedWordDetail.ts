@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { TextStyle } from 'react-native';
 
+import { STRINGS } from '@/constants/strings';
 import { getArabicHeroFontSize, getArabicHeroTextStyle } from '@/constants/layout';
 import { fsrsQueries, gated } from '@/constants/queries';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
@@ -21,7 +22,8 @@ export interface SavedWordDetail {
   /** The saved-word list is still loading. */
   isLoading: boolean;
   /** The saved-word list failed to load. */
-  error: Error | null;
+  loadError: string | undefined;
+  retry: () => void;
   memory: WordMemory | null;
   enrichment: RootEnrichment | undefined;
   /** The lemma, `roots.letters`; empty until the word resolves. */
@@ -61,7 +63,9 @@ export interface SavedWordDetail {
  */
 export function useSavedWordDetail(rootId: RootId): SavedWordDetail {
   const { user } = useAuth();
-  const { data: allWords, isLoading, error } = useQuery(gated(fsrsQueries.all, user?.id));
+  const query = useQuery(gated(fsrsQueries.all, user?.id));
+
+  const { data: allWords, isLoading } = query;
 
   // Hold the last seen word, so the surface stays rendered while it dismisses
   // after the shared FSRS cache loses this root under it — a remove on this
@@ -100,7 +104,13 @@ export function useSavedWordDetail(rootId: RootId): SavedWordDetail {
   return {
     word,
     isLoading,
-    error,
+    loadError:
+      !word && query.isPaused
+        ? STRINGS.NO_INTERNET_CONNECTION
+        : query.error
+          ? STRINGS.WORD_SHEET_ERROR
+          : undefined,
+    retry: () => void query.refetch(),
     memory,
     enrichment,
     arabicText,

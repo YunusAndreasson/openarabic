@@ -15,6 +15,8 @@
  * - Note: No test.concurrent() - tests share mock state and need isolation
  */
 
+import { onlineManager } from '@tanstack/react-query';
+import { STRINGS } from '@/constants/strings';
 import { useEffect, useRef } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
@@ -109,6 +111,24 @@ describe('useFSRS Hook', () => {
       expect(result.current.isEmpty).toBeFalsy();
       expect(result.current.isComplete).toBeFalsy();
       expect(result.current.isLoading).toBeFalsy();
+    });
+
+    test('a paused first session opens its first card after reconnection and retry', async () => {
+      onlineManager.setOnline(false);
+      try {
+        studyWordsFSRSService.getFSRSWords = jest.fn(async () => [createMockStudyWord()]);
+        const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+        expect(result.current.loadError).toBe(STRINGS.NO_INTERNET_CONNECTION);
+        expect(result.current.isEmpty).toBe(false);
+        await act(async () => {
+          onlineManager.setOnline(true);
+          result.current.retryLoad();
+        });
+        await waitFor(() => expect(result.current.currentWord?.root_id).toBe(rootId(1)));
+        expect(result.current.loadError).toBeUndefined();
+      } finally {
+        onlineManager.setOnline(true);
+      }
     });
 
     test('initializes with loading state when fetching due words', async () => {

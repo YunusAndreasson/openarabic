@@ -1,3 +1,4 @@
+import { firstLoadError } from '@/utils/firstLoadError';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -145,10 +146,12 @@ export function useFSRS({
   // The factory owns the due queryFn (conditional cooldown included) — the key
   // encodes the cooldown, so this never collides with differently-parameterized
   // due consumers. Only the skipToken guard for a missing userId is added here.
-  const { data: dueWords, isLoading } = useQuery({
+  const dueQuery = useQuery({
     ...gated(id => fsrsQueries.due(id, _sessionCooldownHours), userId),
     refetchOnMount: true,
   });
+
+  const { data: dueWords, isLoading } = dueQuery;
 
   // Helper function to get next available word with proper spacing
   const getNextWordWithSpacing = useCallback((): StudyWord | null => {
@@ -657,6 +660,10 @@ export function useFSRS({
     enrichmentBatches,
     sessionWords: allSessionWords,
     isLoading,
+    loadError: allSessionWords.length
+      ? undefined
+      : firstLoadError(dueQuery, STRINGS.FAILED_TO_LOAD_PRACTICE_DATA),
+    retryLoad: () => void dueQuery.refetch(),
     isEmpty,
     isComplete,
     progress,

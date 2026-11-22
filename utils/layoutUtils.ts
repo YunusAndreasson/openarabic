@@ -1,6 +1,12 @@
 import type { PressableAndroidRippleConfig } from 'react-native';
 
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import {
+  EXPANDED_WINDOW_WIDTH,
+  TOPIC_GRID_MIN_COLUMN_WIDTH,
+  INLINE_VALUE_MIN_WIDTH,
+  LAYOUT,
+  MIN_TOUCH_TARGET,
+} from '@/constants/layout';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
 /**
@@ -144,3 +150,23 @@ export const COMMON_STYLES = {
     flex: 1,
   },
 } as const;
+
+/** Size rails for multiple visible cards in an expanded window. */
+export function exploreRailBasis(width: number): number {
+  return width >= EXPANDED_WINDOW_WIDTH ? EXPANDED_WINDOW_WIDTH * 0.75 : width;
+}
+
+export function topicColumnCount(width: number, fontScale: number): number {
+  const gap = LAYOUT.SPACING.SMALL;
+  const available = width - 2 * LAYOUT.SCREEN_HORIZONTAL_PADDING;
+  const fitting = Math.floor((available + gap) / (TOPIC_GRID_MIN_COLUMN_WIDTH * fontScale + gap));
+  return Math.max(1, Math.min(width >= EXPANDED_WINDOW_WIDTH ? 4 : 2, fitting));
+}
+
+export function fitsPracticePair(width: number, fontScale: number): boolean {
+  return (
+    width >= EXPANDED_WINDOW_WIDTH &&
+    width - 2 * LAYOUT.SCREEN_HORIZONTAL_PADDING - LAYOUT.SPACING.SMALL >=
+      2 * INLINE_VALUE_MIN_WIDTH * fontScale
+  );
+}

@@ -526,6 +526,8 @@ function AppContent() {
     backgroundedTime.current = null;
     activeSessionStartedAt.current = Date.now();
 
+    // NetInfo can miss network changes while the app is suspended.
+    void NetInfo.refresh().catch(() => undefined);
     const resumedUserId = userId;
 
     if (resumeRefreshTimer.current) clearTimeout(resumeRefreshTimer.current);

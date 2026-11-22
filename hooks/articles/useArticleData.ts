@@ -1,4 +1,5 @@
 import { useQuery, type QueryObserverResult } from '@tanstack/react-query';
+import NetInfo from '@react-native-community/netinfo';
 import { useMemo } from 'react';
 
 import { articleQueries, fsrsQueries, gated, readingProgressQueries } from '@/constants/queries';
@@ -134,7 +135,12 @@ export const useArticleData = (
     isLoadingArticle,
     isArticleError,
     isArticleMissing,
-    refetchArticle: () => void refetch(),
+    refetchArticle: () => {
+      // A missed handover can leave a query paused on its old network state.
+      // refresh() notifies onlineManager; the retry joins any reconnect fetch.
+      if (isPaused) void NetInfo.refresh().catch(() => undefined);
+      void refetch({ cancelRefetch: false });
+    },
     isInReadingList,
     selectedWordIds,
     sortedSentences,

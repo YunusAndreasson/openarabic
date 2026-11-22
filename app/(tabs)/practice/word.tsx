@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ListRow, LoadingState, RootExplanation } from '@/components/common';
+import { ErrorState, ListRow, LoadingState, RootExplanation } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { ThemedView } from '@/components/primitives/ThemedView';
 import { WordMemoryPanel } from '@/components/practice';
@@ -78,7 +78,8 @@ function PracticeWordDetail({ rootId }: { readonly rootId: RootId }): JSX.Elemen
   const {
     word,
     isLoading,
-    error,
+    loadError,
+    retry,
     memory,
     enrichment,
     arabicText,
@@ -99,6 +100,8 @@ function PracticeWordDetail({ rootId }: { readonly rootId: RootId }): JSX.Elemen
     sentences,
     isLoading: sentencesLoading,
     isEmpty: sentencesEmpty,
+    loadError: examplesError,
+    retry: retryExamples,
   } = useSentencesByWord({
     rootId: word?.root_id,
     limit: SENTENCE_EXAMPLES_LIMIT,
@@ -137,7 +140,13 @@ function PracticeWordDetail({ rootId }: { readonly rootId: RootId }): JSX.Elemen
   // three-way gate `BottomSheetStateHandler` gives the root-level word sheet.
   if (!word) {
     if (isLoading) return <WordPlaceholder />;
-    return <WordPlaceholder message={error ? STRINGS.WORD_SHEET_ERROR : STRINGS.WORD_NOT_FOUND} />;
+    if (loadError)
+      return (
+        <ThemedView style={styles.container}>
+          <ErrorState message={loadError} onRetry={retry} />
+        </ThemedView>
+      );
+    return <WordPlaceholder message={STRINGS.WORD_NOT_FOUND} />;
   }
 
   const nextReviewLabel = getNextReviewLabel(word.fsrs_due);
@@ -282,6 +291,7 @@ function PracticeWordDetail({ rootId }: { readonly rootId: RootId }): JSX.Elemen
             </View>
           )}
 
+          {examplesError && <ErrorState message={examplesError} onRetry={retryExamples} />}
           {!sentencesLoading && sentencesEmpty && (
             <View style={styles.examplesFallback}>
               <ThemedText type="body" colorName="secondaryText">

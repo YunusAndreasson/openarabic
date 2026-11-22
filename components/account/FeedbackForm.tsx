@@ -20,6 +20,7 @@ import {
   uploadFeedbackScreenshot,
 } from '@/services/feedbackScreenshots';
 import { handleError } from '@/utils/errorHandling';
+import { isKnownOffline } from '@/utils/network';
 import { fillTemplate } from '@/utils/fillTemplate';
 
 const MIN_CHARACTERS = 10;
@@ -35,6 +36,7 @@ export const FeedbackForm = memo(() => {
   const colors = useColors();
   const { user } = useAuth();
   const [message, setMessage] = useState('');
+  const [offline, setOffline] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Screenshot attachment with permission handling
@@ -75,6 +77,9 @@ export const FeedbackForm = memo(() => {
     setIsSubmitting(true);
 
     try {
+      const disconnected = await isKnownOffline();
+      setOffline(disconnected);
+      if (disconnected) return;
       let screenshotUrl: string | null = null;
       let screenshotPath: string | null = null;
 
@@ -208,8 +213,19 @@ export const FeedbackForm = memo(() => {
         </ThemedText>
       </View>
 
+      {offline && (
+        <ThemedText accessibilityRole="alert" type="body" colorName="secondaryText">
+          {STRINGS.NO_INTERNET_CONNECTION}
+        </ThemedText>
+      )}
       <ThemedButton
-        title={isSubmitting ? STRINGS.FEEDBACK_SENDING : STRINGS.FEEDBACK_SUBMIT}
+        title={
+          isSubmitting
+            ? STRINGS.FEEDBACK_SENDING
+            : offline
+              ? STRINGS.RETRY
+              : STRINGS.FEEDBACK_SUBMIT
+        }
         onPress={() => void handleSubmit()}
         disabled={characterCount < MIN_CHARACTERS}
         loading={isSubmitting}

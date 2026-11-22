@@ -3,11 +3,11 @@ import type { JSX } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { LAYOUT, TOPIC_GRID_MIN_COLUMN_WIDTH } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { getCategoryDisplayName, getCategorySubtitle } from '@/utils/stringUtils';
 import { formatTextCount } from '@/utils/wordCountText';
 
-const COLUMNS = 2;
+import { topicColumnCount } from '@/utils/layoutUtils';
 
 const styles = StyleSheet.create({
   // Section owns its screen inset (Explore's scroll container is unpadded so
@@ -119,11 +119,7 @@ export function FilterSection({
   filterType,
 }: FilterSectionProps): JSX.Element | null {
   const { width, fontScale } = useWindowDimensions();
-  const contentWidth = width - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
-  const columns =
-    (contentWidth - LAYOUT.SPACING.SMALL) / COLUMNS / fontScale >= TOPIC_GRID_MIN_COLUMN_WIDTH
-      ? COLUMNS
-      : 1;
+  const columns = topicColumnCount(width, fontScale);
   const handleSelect = (id: number, name?: string) => () => onSelect(id, name, filterType);
 
   if (!items?.length) {
@@ -149,7 +145,9 @@ export function FilterSection({
               />
             </View>
           ))}
-          {row.length < columns && <View style={styles.gridItem} />}
+          {Array.from({ length: columns - row.length }, (_, index) => (
+            <View key={`space-${index}`} style={styles.gridItem} />
+          ))}
         </View>
       ))}
     </View>

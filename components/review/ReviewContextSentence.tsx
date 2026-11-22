@@ -168,7 +168,13 @@ export const ReviewContextSentence = memo(({ example, onPlay }: Props) => {
     >
       {/* One a11y node: a screen reader should read the sentence, not eleven
           disconnected words. */}
-      <View accessible accessibilityLabel={example.arabic} style={STATIC_STYLES.sentenceRow}>
+      <View
+        accessible
+        accessibilityRole="text"
+        accessibilityLanguage="ar"
+        accessibilityLabel={example.arabic}
+        style={STATIC_STYLES.sentenceRow}
+      >
         {words.length > 0 ? (
           words.map(word => (
             <View

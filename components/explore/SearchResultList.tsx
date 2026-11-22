@@ -45,6 +45,7 @@ interface SearchResultListProps {
   hasQuery: boolean;
   isBodyLoading: boolean;
   isBodyError: boolean;
+  loadError?: string;
   onRetryBody: () => void;
   onArticlePress: (article: Article) => void;
 }
@@ -70,6 +71,7 @@ export const SearchResultList = ({
   hasQuery,
   isBodyLoading,
   isBodyError,
+  loadError,
   onRetryBody,
   onArticlePress,
 }: SearchResultListProps) => {
@@ -118,15 +120,15 @@ export const SearchResultList = ({
             title={STRINGS.SEARCH_TEXTS_IDLE_TITLE}
             hint={STRINGS.SEARCH_TEXTS_IDLE_HINT}
           />
-        ) : isBodyLoading ? (
-          <LoadingState message={STRINGS.SEARCH_TEXTS_BODY_LOADING} />
-        ) : isBodyError ? (
+        ) : loadError ? (
           <EmptyState
             icon="cloud-offline-outline"
             title={STRINGS.SEARCH_TEXTS_INCOMPLETE_TITLE}
-            hint={STRINGS.SEARCH_TEXTS_INCOMPLETE_HINT}
+            hint={loadError}
             action={{ label: STRINGS.RETRY, onPress: onRetryBody }}
           />
+        ) : isBodyLoading ? (
+          <LoadingState message={STRINGS.SEARCH_TEXTS_BODY_LOADING} />
         ) : (
           <EmptyState
             icon="search-outline"
@@ -136,7 +138,7 @@ export const SearchResultList = ({
         )}
       </View>
     ),
-    [hasQuery, isBodyLoading, isBodyError, onRetryBody],
+    [hasQuery, isBodyLoading, loadError, onRetryBody],
   );
 
   return (

@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
@@ -8,7 +9,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { ThemedView } from '@/components/primitives/ThemedView';
-import { ListSeparator, LoadingState } from '@/components/common';
+import { ScreenStateHandler } from '@/components/common/ScreenStateHandler';
+import { ListSeparator } from '@/components/common';
 import {
   DictionaryEmptyState,
   DictionarySortBar,
@@ -20,11 +22,13 @@ import { HeaderSearchBar } from '@/components/ui/HeaderSearchBar';
 import type { SettingsPickerOption } from '@/components/ui/SettingsPicker';
 import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
+import { firstLoadError } from '@/utils/firstLoadError';
+import { fsrsQueries, gated } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { useDictionaryList, useFSRSQueries, useResetWordProgress } from '@/hooks/vocabulary';
+import { useDictionaryList, useResetWordProgress } from '@/hooks/vocabulary';
 import { isDictionaryScope, isNarrowScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { DictionaryScope, PickerScope } from '@/hooks/vocabulary/useDictionaryList';
 import { useRootEnrichmentPrefetch } from '@/hooks/vocabulary/useRootEnrichmentPrefetch';
@@ -79,7 +83,9 @@ export default function DictionaryScreen(): JSX.Element {
     });
   }, []);
 
-  const { allWords: studyWords, isLoading } = useFSRSQueries({ userId: user?.id });
+  const query = useQuery(gated(fsrsQueries.all, user?.id));
+  const studyWords = query.data;
+  const loadError = firstLoadError(query, STRINGS.FAILED_TO_LOAD_PRACTICE_DATA);
 
   // No refetch callback needed - mutation's onSuccess handles invalidation
   const { handleRootPress } = useStudyWordMutations();
@@ -341,9 +347,12 @@ export default function DictionaryScreen(): JSX.Element {
       style={styles.container}
     >
       <HeaderSearchBar placeholder={STRINGS.SEARCH_WORDS} onQueryChange={setSearchQuery} />
-      {isLoading ? (
-        <LoadingState />
-      ) : (
+      <ScreenStateHandler
+        isLoading={query.isLoading}
+        isError={!!loadError}
+        errorMessage={loadError ?? STRINGS.FAILED_TO_LOAD_PRACTICE_DATA}
+        onRetry={() => void query.refetch()}
+      >
         <View style={styles.contentContainer}>
           <FlashList
             testID="dictionary-word-list"
@@ -365,7 +374,7 @@ export default function DictionaryScreen(): JSX.Element {
             // v2 automatically handles layout - no estimates needed
           />
         </View>
-      )}
+      </ScreenStateHandler>
 
       {/* Inline <BottomSheet> (what SettingsPicker uses), and rendered inside
           this screen rather than at the root: this route is itself a modal, and

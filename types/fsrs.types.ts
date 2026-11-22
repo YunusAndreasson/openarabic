@@ -92,6 +92,8 @@ export interface UseFSRSResult {
    */
   sessionWords: readonly StudyWord[];
   isLoading: boolean;
+  loadError: string | undefined;
+  retryLoad: () => void;
   /** The due query resolved successfully, but there was nothing to review. */
   isEmpty: boolean;
   isComplete: boolean;

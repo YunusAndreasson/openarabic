@@ -1,3 +1,4 @@
+import { exploreRailBasis } from '@/utils/layoutUtils';
 import { memo } from 'react';
 import { StyleSheet, useWindowDimensions } from 'react-native';
 
@@ -86,7 +87,7 @@ const WordRailComponent = ({ words, onWordPress, seeAll }: WordRailProps) => {
   const { width } = useWindowDimensions();
 
   return (
-    <SnapRail itemWidth={width * CARD_WIDTH_RATIO}>
+    <SnapRail itemWidth={exploreRailBasis(width) * CARD_WIDTH_RATIO}>
       {words.map(word => (
         <WordRailCard key={word.root_id} word={word} onPress={() => onWordPress(word)} />
       ))}

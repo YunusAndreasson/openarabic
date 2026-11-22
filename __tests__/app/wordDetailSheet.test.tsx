@@ -46,15 +46,23 @@ jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
 
-const fsrs: { allWords: StudyWord[]; isLoading: boolean; error: Error | null } = {
-  allWords: [],
-  isLoading: false,
-  error: null,
-};
+const mockRetry = jest.fn();
+const fsrs: { isPaused?: boolean; allWords: StudyWord[]; isLoading: boolean; error: Error | null } =
+  {
+    allWords: [],
+    isLoading: false,
+    error: null,
+  };
 
 jest.mock('@tanstack/react-query', () => ({
   ...jest.requireActual<typeof import('@tanstack/react-query')>('@tanstack/react-query'),
-  useQuery: () => ({ data: fsrs.allWords, isLoading: fsrs.isLoading, error: fsrs.error }),
+  useQuery: () => ({
+    isPaused: fsrs.isPaused,
+    refetch: mockRetry,
+    data: fsrs.allWords,
+    isLoading: fsrs.isLoading,
+    error: fsrs.error,
+  }),
 }));
 
 let mockEnrichment: RootEnrichment | undefined;
@@ -94,7 +102,7 @@ const savedWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
   });
 
 const setFsrs = (next: Partial<typeof fsrs>): void => {
-  Object.assign(fsrs, { allWords: [], isLoading: false, error: null }, next);
+  Object.assign(fsrs, { isPaused: false, allWords: [], isLoading: false, error: null }, next);
 };
 
 const familyEnrichment = (member: RootEnrichment['wordFamily'][number]): RootEnrichment => ({
@@ -168,6 +176,15 @@ describe('WordDetailSheet', () => {
 
     expect(screen.getByText('فَسَاد')).toBeTruthy();
     expect(screen.queryByText(STRINGS.WORD_SHEET_ERROR)).toBeNull();
+  });
+
+  test('a paused lookup offers Retry without claiming the word is absent', () => {
+    setFsrs({ isPaused: true });
+    render(<WordDetailSheet />);
+    expect(screen.getByText(STRINGS.NO_INTERNET_CONNECTION)).toBeTruthy();
+    fireEvent.press(screen.getByText(STRINGS.RETRY));
+    expect(mockRetry).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(STRINGS.WORD_NOT_FOUND)).toBeNull();
   });
 
   test('an error with nothing cached does report itself', () => {

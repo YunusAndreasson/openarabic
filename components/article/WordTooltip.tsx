@@ -5,6 +5,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { TIMING_CONSTANTS } from '@/constants/animation';
+import { STRINGS } from '@/constants/strings';
 import { FONTS } from '@/constants/fonts';
 import { getElevation } from '@/constants/elevation';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
@@ -94,7 +95,7 @@ export function WordTooltip({
   onOpenWordDetails,
 }: WordTooltipProps) {
   const colors = useColors();
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, fontScale } = useWindowDimensions();
   const containerRef = useRef<ViewInstance>(null);
   const [containerOffset, setContainerOffset] = useState({ x: 0, y: 0 });
 
@@ -150,7 +151,14 @@ export function WordTooltip({
     };
 
     const displayedText = coloredSegments.map(s => s.text).join('');
-    return calculateTooltipDimensions(adjustedLayout, displayedText, false, undefined, windowWidth);
+    return calculateTooltipDimensions(
+      adjustedLayout,
+      displayedText,
+      false,
+      undefined,
+      windowWidth,
+      fontScale,
+    );
   })();
 
   // `TOOLTIP_CONSTANTS.HEIGHT` already is the touch-target floor, and the
@@ -193,6 +201,9 @@ export function WordTooltip({
     >
       <Animated.View entering={ENTER_ANIMATION} style={dynamicStyles.tooltip} testID="word-tooltip">
         <AnimatedPressable
+          accessibilityRole={onOpenWordDetails ? 'button' : 'text'}
+          accessibilityLabel={coloredSegments.map(segment => segment.text).join('')}
+          accessibilityHint={onOpenWordDetails ? STRINGS.OPEN_WORD_DETAILS_HINT : undefined}
           onPress={handlePress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}

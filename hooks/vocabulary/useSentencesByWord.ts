@@ -1,6 +1,8 @@
 import { skipToken, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { firstLoadError } from '@/utils/firstLoadError';
+import { STRINGS } from '@/constants/strings';
 import { sentenceQueries } from '@/constants/queries';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SentenceWithWords } from '@/services/sentences';
@@ -26,6 +28,8 @@ interface UseSentencesByWordResult {
   isFetching: boolean;
   /** Any error that occurred during fetching */
   error: Error | null;
+  loadError: string | undefined;
+  retry: () => void;
   /** Whether no sentences were found for this word */
   isEmpty: boolean;
 }
@@ -75,6 +79,8 @@ export function useSentencesByWord({
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     error: query.error,
-    isEmpty: !query.isLoading && sentencesWithColors.length === 0,
+    loadError: firstLoadError(query, STRINGS.FAILED_TO_LOAD_SENTENCES),
+    retry: () => void query.refetch(),
+    isEmpty: query.data?.length === 0,
   };
 }

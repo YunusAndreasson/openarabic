@@ -60,7 +60,8 @@ export const WordDetailContent = ({
   const {
     word,
     isLoading,
-    error,
+    loadError,
+    retry,
     memory,
     enrichment,
     arabicText,
@@ -120,15 +121,16 @@ export const WordDetailContent = ({
 
       <BottomSheetStateHandler
         emptyMessage={hasValidRootId ? STRINGS.WORD_NOT_FOUND : STRINGS.WORD_SHEET_INVALID_LINK}
-        errorMessage={STRINGS.WORD_SHEET_ERROR}
+        errorMessage={loadError}
+        onRetry={retry}
         // All three gates are `&& !word`: the study-word list is a shared cache
         // that keeps refetching underneath this content, and a background
         // refresh that fails still leaves the word on screen. Reporting the
         // error over a word we are holding would replace something correct
         // with an apology.
         isEmpty={!word}
-        isError={Boolean(error) && !word}
-        isLoading={isLoading && !word}
+        isError={hasValidRootId && !!loadError && !word}
+        isLoading={hasValidRootId && isLoading && !word}
         loadingMessage={STRINGS.WORD_SHEET_LOADING}
       >
         <ScrollView

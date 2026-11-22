@@ -27,6 +27,10 @@ export const SCREEN_HEIGHT = SCREEN_DIMENSIONS?.height ?? 812;
 // Base scale for systematic sizing
 const BASE_UNIT = 4;
 
+/** Smallest expanded window and the maximum line measure for bilingual reading. */
+export const EXPANDED_WINDOW_WIDTH = 600;
+export const READING_COLUMN_WIDTH = 720;
+
 /** Minimum screen width in unscaled text points for inline label/value rows. */
 export const INLINE_VALUE_MIN_WIDTH = BASE_UNIT * 80;
 /** The auth screens' content keeps a margin of the window on narrow phones. */

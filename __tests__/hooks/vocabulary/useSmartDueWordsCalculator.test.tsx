@@ -183,6 +183,28 @@ describe('useSmartDueWordsCalculator', () => {
       });
     });
 
+    test('resuming joins a mounted due query already refreshing after a handover', async () => {
+      const key = ['fsrs-words', 'test-user-id', 'due', 2, 50];
+      const pending = Promise.withResolvers<number[]>();
+      const fetchDue = jest.fn(() => pending.promise);
+      queryClient.setQueryData(key, [1]);
+      renderHook(
+        () => {
+          useQuery({ queryKey: key, queryFn: fetchDue, refetchOnMount: 'always' });
+          useSmartDueWordsCalculator({ refreshDelay: 0 });
+        },
+        { wrapper },
+      );
+      expect(fetchDue).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        simulateAppStateChange('background');
+        simulateAppStateChange('active');
+        pending.resolve([2]);
+      });
+      expect(fetchDue).toHaveBeenCalledTimes(1);
+      expect(queryClient.getQueryData(key)).toEqual([2]);
+    });
+
     test('clears pending refresh when app becomes inactive', () => {
       renderHook(() => useSmartDueWordsCalculator({ refreshDelay: 1000 }), { wrapper });
 

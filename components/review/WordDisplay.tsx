@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
@@ -42,8 +42,10 @@ const STATIC_STYLES = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
+  scroll: { width: '100%' },
+  scrollBody: { alignItems: 'center', flexGrow: 1 },
   metaRow: {
-    height: LAYOUT.SPACING.XLARGE,
+    minHeight: LAYOUT.SPACING.XLARGE,
     justifyContent: 'center',
   },
   // The lead above the Arabic, as a fraction of the card rather than a share of
@@ -151,6 +153,7 @@ export function WordDisplay({
   wordType,
   children,
 }: Props) {
+  const { fontScale } = useWindowDimensions();
   const readerFontSize = useDebouncedArabicFontSize(100);
 
   const heroFontSize = useMemo(() => {
@@ -171,8 +174,8 @@ export function WordDisplay({
     [heroFontSize],
   );
 
-  return (
-    <View style={[STATIC_STYLES.container, style]}>
+  const content = (
+    <>
       <View style={STATIC_STYLES.metaRow}>
         {wordType ? (
           // Tinted rather than tertiary grey: it is the only tier between the
@@ -184,9 +187,11 @@ export function WordDisplay({
         ) : null}
       </View>
 
-      <View style={STATIC_STYLES.heroLead} pointerEvents="none" />
+      {fontScale <= 1 && <View style={STATIC_STYLES.heroLead} pointerEvents="none" />}
 
-      <View style={[STATIC_STYLES.heroRow, { height: heroBlockHeight(heroFontSize) }]}>
+      <View
+        style={[STATIC_STYLES.heroRow, { minHeight: heroBlockHeight(heroFontSize * fontScale) }]}
+      >
         <Pressable
           style={({ pressed }) => [
             STATIC_STYLES.heroPressable,
@@ -196,7 +201,10 @@ export function WordDisplay({
           // the tap stops here instead of reaching the face underneath.
           onPress={replays ? onWordPress : absorbPress}
           disabled={!replays && !holdWordPress}
-          accessibilityRole={replays ? 'button' : undefined}
+          accessible
+          accessibilityLabel={word}
+          accessibilityLanguage="ar"
+          accessibilityRole={replays ? 'button' : 'text'}
           // A hint, not a label: the label is the Arabic itself, which is the
           // one thing a screen reader must still announce here.
           accessibilityHint={replays ? STRINGS.REPLAY_WORD_AUDIO : undefined}
@@ -210,6 +218,21 @@ export function WordDisplay({
       <View style={STATIC_STYLES.body}>{children}</View>
 
       <View style={STATIC_STYLES.trailer} pointerEvents="none" />
+    </>
+  );
+  return (
+    <View style={[STATIC_STYLES.container, style]}>
+      {fontScale > 1 ? (
+        <ScrollView
+          testID="review-word-scroll"
+          style={STATIC_STYLES.scroll}
+          contentContainerStyle={STATIC_STYLES.scrollBody}
+        >
+          {content}
+        </ScrollView>
+      ) : (
+        content
+      )}
     </View>
   );
 }

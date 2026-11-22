@@ -1,5 +1,7 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
+import { firstLoadError } from '@/utils/firstLoadError';
+import { STRINGS } from '@/constants/strings';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { estimateDueWordsFromCache, fsrsQueries, gated } from '@/constants/queries';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -41,8 +43,9 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions) {
 
   return {
     allWords: allWordsQuery.data,
-    dueWords: dueWordsQuery.data,
+    dueWords: dueWordsQuery.data ?? getDueWordsPlaceholder(queryClient, userId, limit),
     isLoading: allWordsQuery.isLoading || dueWordsQuery.isLoading,
+    loadError: firstLoadError(allWordsQuery, STRINGS.FAILED_TO_LOAD_PRACTICE_DATA),
     isFetching: allWordsQuery.isFetching || dueWordsQuery.isFetching,
     error: allWordsQuery.error || dueWordsQuery.error || null,
   };

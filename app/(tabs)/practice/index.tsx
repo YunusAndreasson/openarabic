@@ -3,7 +3,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { ScreenStateHandler } from '@/components/common/ScreenStateHandler';
 import { PracticeEmptyState, PracticeStatCards } from '@/components/practice';
@@ -48,6 +48,7 @@ const PRACTICE_EMPTY_STATE = <PracticeEmptyState />;
 
 export default function PracticeScreen(): JSX.Element {
   const { user } = useAuth();
+  const reducedMotion = useReducedMotion();
   const userId = user?.id;
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -108,7 +109,7 @@ export default function PracticeScreen(): JSX.Element {
   );
 
   // Use the FSRS queries hook for data fetching
-  const { allWords, dueWords, error, isLoading, isFetching } = useFSRSQueries({
+  const { allWords, dueWords, loadError, isLoading, isFetching } = useFSRSQueries({
     userId: user?.id,
     limit: PRACTICE_DUE_WORDS_LIMIT,
   });
@@ -158,7 +159,7 @@ export default function PracticeScreen(): JSX.Element {
   const memory = useRecallableMemory(studyWords, now);
 
   // Don't show error if user is not authenticated yet - this is expected during auth flow
-  const shouldShowError = error && user;
+  const shouldShowError = !!user && !!loadError;
 
   const handleMemoryStrengthInfo = useCallback(
     () => router.push(ROUTE_PATHS.PRACTICE_MEMORY_RETENTION),
@@ -249,7 +250,7 @@ export default function PracticeScreen(): JSX.Element {
   return (
     <ScreenStateHandler
       isError={Boolean(shouldShowError)}
-      errorMessage={STRINGS.FAILED_TO_LOAD_PRACTICE_DATA}
+      errorMessage={loadError ?? STRINGS.FAILED_TO_LOAD_PRACTICE_DATA}
       onRetry={handleRetry}
       // Initial-load gate: while the words queries are first loading, don't
       // flash the empty state (with its live "Add common words" CTA). Gate on v5
@@ -274,7 +275,7 @@ export default function PracticeScreen(): JSX.Element {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={scrollContentStyle}
       >
-        <Animated.View style={VOCABULARY_SECTION_STYLE}>
+        <Animated.View style={reducedMotion ? styles.vocabularySection : VOCABULARY_SECTION_STYLE}>
           <PracticeStatCards
             dueWords={shown.cost.dueWords}
             reviewedToday={shown.cost.reviewedToday}

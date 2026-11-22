@@ -8,6 +8,7 @@ import {
 } from 'react';
 import {
   PixelRatio,
+  useWindowDimensions,
   StyleSheet,
   View,
   type LayoutChangeEvent,
@@ -140,7 +141,9 @@ const SentenceWordsInternal = function SkiaSentenceWords({
 }: SentenceWordsInternalProps) {
   const colors = useColors();
   const gpuAvailable = useSkiaGpuAvailable();
-  const { fontSize, fontFamily, fontManager } = useSkiaFonts();
+  const { fontSize: readingSize, fontFamily, fontManager } = useSkiaFonts();
+  const { fontScale } = useWindowDimensions();
+  const fontSize = Math.round(readingSize * fontScale);
 
   const blockRef = useRef<ComponentRef<typeof View>>(null);
   const [availableWidth, setAvailableWidth] = useState<number | null>(null);
@@ -256,8 +259,22 @@ const SentenceWordsInternal = function SkiaSentenceWords({
   // measured on the paragraph as laid out at `PARAGRAPH_LAYOUT_WIDTH`, and the
   // canvas lays it out again at its own width when it draws.
   const paintedWords = words.map(word => {
-    const paragraph = buildWordParagraph({ word, colors, fontSize, fontFamily, fontManager });
-    return { word, paragraph, metrics: measureSentenceWord(paragraph, fontSize, fontFamily) };
+    const shape = (size: number) => {
+      const paragraph = buildWordParagraph({
+        word,
+        colors,
+        fontSize: size,
+        fontFamily,
+        fontManager,
+      });
+      return { word, paragraph, metrics: measureSentenceWord(paragraph, size, fontFamily) };
+    };
+    const shaped = shape(fontSize);
+    // Keep a long vocalised word intact on a narrow window at large type.
+    const inkWidth = Math.max(shaped.metrics.outerWidth, shaped.metrics.boxWidth);
+    return fontScale > 1 && availableWidth !== null && inkWidth > availableWidth
+      ? shape(Math.max(1, Math.floor((fontSize * availableWidth) / inkWidth)))
+      : shaped;
   });
 
   const layout =

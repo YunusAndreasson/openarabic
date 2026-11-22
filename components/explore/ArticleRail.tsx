@@ -1,3 +1,4 @@
+import { exploreRailBasis } from '@/utils/layoutUtils';
 import { memo } from 'react';
 import { useWindowDimensions } from 'react-native';
 
@@ -27,7 +28,7 @@ const ArticleRailComponent = ({ items, keyPrefix, onArticlePress }: ArticleRailP
   const { width } = useWindowDimensions();
 
   return (
-    <SnapRail itemWidth={width * CARD_WIDTH_RATIO}>
+    <SnapRail itemWidth={exploreRailBasis(width) * CARD_WIDTH_RATIO}>
       {items.map(({ article, progress }) => (
         <ArticleRow
           key={`${keyPrefix}-${article.id}`}

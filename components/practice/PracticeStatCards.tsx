@@ -23,8 +23,9 @@
  * counts in /due-words. (The growth series went further: it could only ever
  * rise, and it was later removed from the dictionary header too.)
  */
+import { fitsPracticePair } from '@/utils/layoutUtils';
 import { MetricCardGrid } from '@/components/common/MetricCardGrid';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -83,6 +84,8 @@ export function PracticeStatCards({
   // unit — a count of words rather than an abstract percentage — and it was also
   // the most punishing pixel on the screen, painting `colors.error` below 40% so
   // that anyone returning from a break was met with red.
+  const { width, fontScale } = useWindowDimensions();
+  const paired = fitsPracticePair(width, fontScale);
   const stats = [
     {
       id: 'streak',
@@ -122,22 +125,26 @@ export function PracticeStatCards({
 
   return (
     <View style={styles.container}>
-      {/* Cost: what is due now, and what each day ahead adds */}
-      <WeekAheadCard
-        forecast={forecast}
-        dueCount={dueWords}
-        reviewedToday={reviewedToday}
-        onPress={onDuePress}
-      />
-
-      {/* Capability: what you know right now, and how far it reaches */}
-      <MemoryHorizonCard
-        recallableWords={recallableWords}
-        hasMeasuredMemory={hasMeasuredMemory}
-        distribution={distribution}
-        onPress={onMemoryPress}
-      />
-
+      <View style={[styles.container, paired && styles.row]}>
+        <View style={paired && styles.column}>
+          {/* Cost: what is due now, and what each day ahead adds */}
+          <WeekAheadCard
+            forecast={forecast}
+            dueCount={dueWords}
+            reviewedToday={reviewedToday}
+            onPress={onDuePress}
+          />
+        </View>
+        <View style={paired && styles.column}>
+          {/* Capability: what you know right now, and how far it reaches */}
+          <MemoryHorizonCard
+            recallableWords={recallableWords}
+            hasMeasuredMemory={hasMeasuredMemory}
+            distribution={distribution}
+            onPress={onMemoryPress}
+          />
+        </View>
+      </View>
       {/* Habit */}
       <MetricCardGrid metrics={stats} density="comfortable" animated />
     </View>
@@ -147,6 +154,8 @@ export function PracticeStatCards({
 PracticeStatCards.displayName = 'PracticeStatCards';
 
 const styles = StyleSheet.create({
+  row: { flexDirection: 'row' },
+  column: { flex: 1, minWidth: 0 },
   container: {
     gap: LAYOUT.SPACING.SMALL,
   },

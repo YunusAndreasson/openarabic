@@ -15,7 +15,6 @@ import Animated, {
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { CSS_EASING, TIMING_CONFIG, VERDICT } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
 import { useCardVerdict, VERDICT_TONE, type VerdictJudge } from '@/hooks/review/useCardVerdict';
 import { useColors } from '@/hooks/theme/useColors';
@@ -707,8 +706,8 @@ export function ReviewFlipCard({
                   style={STATIC_STYLES.facePressable}
                   onPress={restudying ? onRestudyContinue : undefined}
                   disabled={!restudying}
-                  accessibilityRole={restudying ? 'button' : undefined}
-                  accessibilityLabel={restudying ? STRINGS.RESTUDY_CONTINUE : undefined}
+                  accessible={false}
+                  importantForAccessibility="no"
                 >
                   <WordDisplay
                     word={word}
@@ -742,8 +741,8 @@ export function ReviewFlipCard({
                 <Pressable
                   style={STATIC_STYLES.facePressable}
                   onPress={onReveal}
-                  accessibilityRole="button"
-                  accessibilityLabel={STRINGS.SHOW_ANSWER}
+                  accessible={false}
+                  importantForAccessibility="no"
                 >
                   {/* The word is the replay control on this face too, exactly
                       as it is on the answer face. While the microphone holds

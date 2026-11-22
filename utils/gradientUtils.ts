@@ -1,4 +1,4 @@
-import { GOLDEN_RATIO } from '@/constants/layout';
+import { GOLDEN_RATIO, READING_COLUMN_WIDTH } from '@/constants/layout';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { withOpacity } from '@/utils/colorUtils';
 
@@ -8,7 +8,7 @@ import { withOpacity } from '@/utils/colorUtils';
  * width, because an Android 16 tablet or foldable resizes under a running app.
  */
 export function calculateHeaderHeight(safeAreaTop: number, windowWidth: number): number {
-  return Math.round(windowWidth / GOLDEN_RATIO) + safeAreaTop;
+  return Math.round(Math.min(windowWidth, READING_COLUMN_WIDTH) / GOLDEN_RATIO) + safeAreaTop;
 }
 
 /**

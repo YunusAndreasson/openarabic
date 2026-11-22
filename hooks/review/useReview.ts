@@ -116,6 +116,8 @@ interface UseReviewReturn {
   isEmpty: boolean;
   isUpdating: boolean;
   isLoading: boolean;
+  loadError: string | undefined;
+  retryLoad: () => void;
   wordQueue: StudyWord[];
   enrichmentBatches: readonly (readonly StudyWord[])[];
   /** Every word due in this session, fixed at session start. */
@@ -477,6 +479,8 @@ export function useReview({
     enrichmentBatches,
     sessionWords,
     isLoading,
+    loadError,
+    retryLoad,
     flushPendingWrites,
   } = useFSRS({
     userId: user?.id,
@@ -1575,6 +1579,8 @@ export function useReview({
     isEmpty,
     isUpdating: isUpdatingUI,
     isLoading,
+    loadError,
+    retryLoad,
     wordQueue,
     enrichmentBatches,
     sessionWords,

@@ -10,6 +10,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
+import * as RN from 'react-native';
 import { Pressable, Text } from 'react-native';
 
 import { WordDisplay } from '@/components/review/WordDisplay';
@@ -73,6 +74,21 @@ describe('WordDisplay', () => {
   });
 
   describe('Rendering', () => {
+    test('doubled text can scroll and the Arabic replay control speaks the word', () => {
+      const dimensions = jest
+        .spyOn(RN, 'useWindowDimensions')
+        .mockReturnValue({ width: 360, height: 640, scale: 2, fontScale: 2 });
+      try {
+        const { getByRole, getByTestId } = render(
+          <WordDisplay word="كتب" onWordPress={mockOnWordPress} />,
+        );
+        expect(getByTestId('review-word-scroll')).toBeTruthy();
+        expect(getByRole('button', { name: 'كتب' }).props.accessibilityLanguage).toBe('ar');
+      } finally {
+        dimensions.mockRestore();
+      }
+    });
+
     test('renders Arabic word', () => {
       const { getByText } = render(<WordDisplay word="كتب" />);
 
