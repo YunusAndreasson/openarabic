@@ -93,8 +93,7 @@ export function useAddBeginnerArticles(
       options?.onSuccess?.();
     },
     onError: (error: Error) => {
-      void handleError(error);
-      showToast(STRINGS.FAILED_TO_ADD_BEGINNER_ARTICLES, undefined, ToastType.ERROR);
+      void handleError(error, { toastMessage: STRINGS.FAILED_TO_ADD_BEGINNER_ARTICLES });
     },
   });
 

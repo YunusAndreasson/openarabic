@@ -653,6 +653,7 @@ export const STRINGS = {
   APPLE_SIGN_IN_UNAVAILABLE:
     "Apple sign-in didn't finish. Check that you're signed in to your Apple Account in Settings, then try again.",
   SIGN_IN_WITH_GOOGLE: 'Sign in with Google',
+  GOOGLE_SIGN_IN_RETRY: 'Google sign-in couldn’t open. Try again.',
   SIGN_IN_WITH_EMAIL: 'Sign in with email',
   CREATE_ACCOUNT_WITH_EMAIL: 'Create account with email',
   CONTINUE_WITH: 'or',

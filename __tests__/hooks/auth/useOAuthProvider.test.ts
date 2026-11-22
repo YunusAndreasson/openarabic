@@ -637,6 +637,17 @@ describe('useOAuthProvider', () => {
       executeSignIn,
     });
 
+    test('two immediate taps present the provider once and a later tap can retry', async () => {
+      const config = googleConfig(jest.fn(async () => null));
+      const { result } = renderHook(() => useOAuthProvider(config));
+
+      await Promise.all([result.current.signIn(), result.current.signIn()]);
+      expect(config.executeSignIn).toHaveBeenCalledTimes(1);
+
+      await result.current.signIn();
+      expect(config.executeSignIn).toHaveBeenCalledTimes(2);
+    });
+
     const signInReturning = (user: ReturnType<typeof createUserMock>) => {
       mockSupabase.auth.signInWithIdToken = jest.fn(async () => ({
         data: { user, session: { ...mockSession, user } },

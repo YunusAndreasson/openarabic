@@ -242,6 +242,21 @@ describe('audioCache', () => {
     expect(handleError).toHaveBeenCalled();
   });
 
+  test('a disk failure is reported once even when two callers share the download', async () => {
+    audioCache = require('../../services/audioCache').audioCache;
+    const { handleError } = require('../../utils/errorHandling');
+    mockDigestStringAsync.mockResolvedValue(hash);
+    mockFileConstructor.mockImplementation(makeFileMock({ cachedExists: false }));
+    mockDownloadFileAsync.mockRejectedValue(new Error('Failed to move downloaded file: disk full'));
+
+    expect(await Promise.all([audioCache.getAudio(url), audioCache.getAudio(url)])).toEqual([
+      url,
+      url,
+    ]);
+    expect(mockDownloadFileAsync).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledTimes(1);
+  });
+
   test('clearCache removes files and recreates directory', async () => {
     // One Directory for the life of the cache, created on construction.
     audioCache = require('../../services/audioCache').audioCache;

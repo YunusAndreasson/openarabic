@@ -107,6 +107,10 @@ export interface OAuthProviderConfig<TModule = unknown> {
   moduleNotAvailableMessage?: string;
 }
 
+// Both providers present native UI from the same controller. Their React loading
+// states disable the buttons on the next render, after another press can arrive.
+let providerSignInInProgress = false;
+
 /**
  * Factory hook for OAuth authentication
  *
@@ -141,6 +145,8 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
   const [loading, setLoading] = useState(false);
 
   const signIn = useCallback(async (): Promise<void> => {
+    if (providerSignInInProgress) return;
+    providerSignInInProgress = true;
     setLoading(true);
 
     const providerName = config.provider.charAt(0).toUpperCase() + config.provider.slice(1);
@@ -345,6 +351,7 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
         },
       });
     } finally {
+      providerSignInInProgress = false;
       setLoading(false);
     }
   }, [config]);

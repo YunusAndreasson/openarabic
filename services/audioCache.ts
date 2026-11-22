@@ -8,6 +8,7 @@ import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { toError } from '@/utils/toError';
 import { handleError } from '@/utils/errorHandling';
 import { isKnownOffline } from '@/utils/network';
+import { isNetworkFailure } from '@/utils/networkErrors';
 import { countDiag, isSessionActive, mark } from '@/utils/reviewDiagnostics';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
 
@@ -235,9 +236,8 @@ class AudioCacheManager {
 
     const maxRetries = quick ? 0 : 2; // patient: 2 retries = 3 total attempts
     const timeoutMs = quick ? this.QUICK_DOWNLOAD_TIMEOUT_MS : this.DOWNLOAD_TIMEOUT_MS;
-    let lastError: Error | null = null;
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    for (let attempt = 0; ; attempt++) {
       const tempFile = new File(
         this.cacheDir,
         `${cacheKey}.tmp-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
@@ -296,37 +296,18 @@ class AudioCacheManager {
           // Best-effort temp cleanup — an orphaned .tmp file is never served
         }
 
-        lastError = toError(error);
         if (isSessionActive()) {
           countDiag({ networkFailures: 1 });
           mark('cache.download.fail', {
             url: basename(url),
             ms: Date.now() - attemptStartedAt,
             attempt,
-            message: lastError.message,
+            message: toError(error).message,
           });
         }
-        const errorMsg = lastError.message.toLowerCase();
-
-        // Don't retry on non-network errors (4xx, file system errors, etc.)
-        const isNetworkError =
-          errorMsg.includes('network') ||
-          errorMsg.includes('failed') ||
-          errorMsg.includes('timeout') ||
-          errorMsg.includes('abort') ||
-          errorMsg.includes('connection');
-
-        if (!isNetworkError || attempt >= maxRetries) {
-          await handleError(lastError, { showToast: false });
-          throw lastError;
-        }
-        // Continue to retry for network errors
+        if (attempt >= maxRetries || !isNetworkFailure(error)) throw error;
       }
     }
-
-    // Should never reach here, but TypeScript needs it
-    await handleError(lastError || new Error('Download failed'), { showToast: false });
-    throw lastError || new Error('Download failed');
   }
 
   /**
@@ -374,7 +355,12 @@ class AudioCacheManager {
       }
 
       // Cache miss - start download and track it
-      const downloadPromise = this.cacheAudio(url, options.quick ?? false);
+      const downloadPromise = this.cacheAudio(url, options.quick ?? false).catch(
+        async (error: unknown) => {
+          await handleError(error, { showToast: false });
+          return url;
+        },
+      );
       this.pendingDownloads.set(url, downloadPromise);
 
       try {

@@ -144,6 +144,11 @@ describe('useGoogleAuth executeSignIn', () => {
     expect(signIn).toHaveBeenCalledTimes(1);
   });
 
+  it('gives a retry instruction when Google cannot present Safari', () => {
+    const { expectedFailureMessage } = renderGoogleProvider();
+    expect(expectedFailureMessage?.(new Error('Unable to open Safari'))).toMatch(/try again/i);
+  });
+
   // OPENARABIC-TD: Play Services' NETWORK_ERROR, from the sign-in activity.
   it("names Play Services' network error the connection, and nothing else", () => {
     const { expectedFailureMessage } = renderGoogleProvider();
