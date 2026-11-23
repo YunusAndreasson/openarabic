@@ -18,6 +18,7 @@
 
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { Share } from 'react-native';
 
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -131,6 +132,26 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
     };
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  test('shares the root behind the tapped form, even before it is saved to practice', () => {
+    const root = { id: 42, letters: 'كَتَبَ', meaning: 'to write', audio_url: '', audio_url_en: '' };
+    render(
+      <WordDetailsBottomSheet
+        isVisible
+        onClose={mockOnClose}
+        word={{ ...mockWord, root }}
+        onAddToStudy={mockOnAddToStudy}
+      />,
+    );
+
+    const shareButton = screen.getByLabelText(STRINGS.SHARE_WORD);
+    expect(shareButton).toHaveProp('accessibilityRole', 'button');
+    fireEvent.press(shareButton);
+    expect(Share.share).toHaveBeenCalledWith({
+      title: 'كَتَبَ · to write',
+      url: 'https://openarabic.io/word/to-write-42',
+    });
   });
 
   /**

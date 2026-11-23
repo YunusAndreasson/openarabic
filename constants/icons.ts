@@ -248,6 +248,10 @@ export const ICON_SYMBOLS = {
     ios: 'gearshape',
     android: { name: 'settings', codepoint: 0xe8b8, filled: false },
   },
+  'share-outline': {
+    ios: 'square.and.arrow.up',
+    android: { name: 'share', codepoint: 0xe80d, filled: false },
+  },
   'shield-checkmark': {
     ios: 'checkmark.shield.fill',
     android: { name: 'verified_user', codepoint: 0xe8e8, filled: true },

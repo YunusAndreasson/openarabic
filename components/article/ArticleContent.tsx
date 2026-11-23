@@ -156,11 +156,12 @@ const ArticleContentInternal = function ArticleContent({
   // High-performance scroll handler - runs on UI thread (no cross-thread calls)
   const { scrollY, onScrollAnimated } = useArticleScrollHandler();
 
-  // Reserve right-side space so text never sits under the two floating action
-  // buttons (Listen + playlist, TINY gap between them)
-  // React Compiler auto-memoizes
+  // Reserve the full header row even while Listen moves to the MiniPlayer.
+  const headerButtons = article.published ? 3 : 2;
   const rightOverlayPadding =
-    2 * MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.TINY + LAYOUT.SPACING.LARGE;
+    headerButtons * MIN_TOUCH_TARGET.MEDIUM +
+    (headerButtons - 1) * LAYOUT.SPACING.TINY +
+    LAYOUT.SPACING.LARGE;
 
   // React Compiler auto-memoizes — title needs extra right padding so it never sits
   // under the floating action buttons in the top-right corner.
@@ -284,7 +285,7 @@ const ArticleContentInternal = function ArticleContent({
         <HeaderScrim colors={colors} scrollY={scrollY} headerHeight={headerHeight} />
       )}
 
-      {/* The close/listen/playlist buttons this scrim sits under are drawn by
+      {/* The floating controls this scrim sits under are drawn by
           the reader screen (app/article/[id].tsx), above this whole view. */}
     </View>
   );

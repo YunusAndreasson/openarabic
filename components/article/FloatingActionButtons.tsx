@@ -10,6 +10,7 @@ import { STRINGS } from '@/constants/strings';
 import { ReaderPressable } from './ReaderPressable';
 
 export interface FloatingActionButtonsProps {
+  onShare?: () => void;
   isInReadingList: boolean;
   onToggleReadingList: () => Promise<void>;
   onClose: () => void;
@@ -71,8 +72,7 @@ ReaderCloseButton.displayName = 'ReaderCloseButton';
 
 /**
  * Floating action buttons component positioned over parallax header
- * Provides controls for listening to the article, adding to playlist,
- * and closing the article
+ * Holds the reader’s close, share, listen and playlist controls.
  */
 export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
   ({
@@ -82,6 +82,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     isListening,
     isListenLoading,
     onToggleListen,
+    onShare,
   }) => {
     const insets = useSafeAreaInsets();
 
@@ -120,11 +121,19 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
       <>
         <ReaderCloseButton onClose={onClose} />
 
-        {/* Action buttons - top right: [Listen] [Add to playlist] */}
         <View style={actionButtonsStyle}>
-          {/* No hitSlop on the paired buttons: 12px slop would overlap the 4px
+          {/* No hitSlop on adjacent buttons: 12px slop would overlap the 4px
               gap and let the later sibling claim taps on its neighbour's edge.
-              Both buttons already meet the 44px minimum touch target. */}
+              All buttons already meet the 44px minimum touch target. */}
+          {onShare && (
+            <GlassIconButton
+              accessibilityLabel={STRINGS.SHARE_ARTICLE}
+              icon="share-outline"
+              iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              PressableComponent={ReaderPressable}
+              onPress={onShare}
+            />
+          )}
           {!isPlayingHere && (
             <GlassIconButton
               accessibilityLabel={STRINGS.ARTICLE_LISTEN_A11Y}

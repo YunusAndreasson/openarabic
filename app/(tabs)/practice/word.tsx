@@ -4,7 +4,13 @@ import { useCallback } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ErrorState, ListRow, LoadingState, RootExplanation } from '@/components/common';
+import {
+  ErrorState,
+  ListRow,
+  LoadingState,
+  RootExplanation,
+  ShareWordRow,
+} from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { ThemedView } from '@/components/primitives/ThemedView';
 import { WordMemoryPanel } from '@/components/practice';
@@ -313,14 +319,12 @@ function PracticeWordDetail({ rootId }: { readonly rootId: RootId }): JSX.Elemen
             ))}
         </View>
 
-        {/* Management actions — last in the scroll, low emphasis. Rare and
-            destructive, so they get the end of the page rather than pinned
-            space, and both are still one swipe away on the dictionary row. */}
         {/* Rows, not buttons: they sit in the same left-aligned scan column as
             the stat rows above and read as a continuation of them. A ghost
             ThemedButton needed `alignItems: 'flex-start'` and zeroed padding to
             fake this, which is the component telling you it is the wrong one. */}
         <View style={[styles.actions, { borderTopColor: colors.border }]}>
+          <ShareWordRow root={word.root} />
           <ListRow divider hapticType="selection" onPress={handleResetProgress}>
             <ThemedText type="body">{STRINGS.RESET_PROGRESS_ACTION}</ThemedText>
           </ListRow>

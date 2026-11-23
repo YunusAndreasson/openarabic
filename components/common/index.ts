@@ -36,6 +36,7 @@ export { ScreenScaffold } from './ScreenScaffold';
 export { SeededContentEmptyState } from './SeededContentEmptyState';
 export { SectionLabel } from './SectionLabel';
 export { SnapRail } from './SnapRail';
+export { ShareWordRow } from './ShareWordRow';
 export { SheetExplainer } from './SheetExplainer';
 
 // `SkiaColoredArabic` is deliberately NOT exported here: its consumers are a

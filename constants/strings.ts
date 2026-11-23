@@ -317,6 +317,7 @@ export const STRINGS = {
   THEME_MIDNIGHT: 'Midnight Summer',
   THEME_AUTUMN: 'Autumn Leaves',
   SOMETHING_WENT_WRONG: 'Something went wrong',
+  SHARE_FAILED: "Couldn't open the share sheet",
   PLEASE_TRY_AGAIN: tryAgain,
   LOADING_ARTICLES: 'Loading articles…',
   LOADING_GENERIC: 'Loading…',
@@ -460,6 +461,7 @@ export const STRINGS = {
   EDIT_MODE_START_A11Y: 'Edit list',
   EDIT_MODE_DONE_A11Y: 'Done editing',
   // Article reader floating controls — icon-only, so these are their only accessible name
+  SHARE_ARTICLE: 'Share article',
   ARTICLE_CLOSE_A11Y: 'Close article',
   ARTICLE_LISTEN_A11Y: 'Listen to this article',
   ARTICLE_STOP_LISTENING_A11Y: 'Stop listening',
@@ -1136,6 +1138,7 @@ export const STRINGS = {
   WORD_SENTENCE_NOTE_TITLE: 'In this sentence',
   /** Fallback title only. The screen sets the word's own meaning once it has it. */
   OPEN_WORD_DETAILS_HINT: 'Opens word details',
+  SHARE_WORD: 'Share word',
   WORD_DETAIL_TITLE: 'Word',
   /** Shown when the word list has loaded but this word is no longer in it —
    *  e.g. it was removed from another screen. Beats spinning forever. */

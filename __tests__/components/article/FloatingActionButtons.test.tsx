@@ -11,6 +11,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 
+import { STRINGS } from '@/constants/strings';
 import { FloatingActionButtons } from '@/components/article/FloatingActionButtons';
 
 // Mock reanimated
@@ -107,6 +108,26 @@ describe('FloatingActionButtons', () => {
 
       expect(getByTestId('icon-headset')).toBeTruthy();
     });
+  });
+
+  test('offers the labelled share action only when the reader supplies a public link', () => {
+    const props = {
+      isInReadingList: false,
+      onToggleReadingList: mockOnToggleReadingList,
+      onClose: mockOnClose,
+      isListening: false,
+      isListenLoading: false,
+      onToggleListen: mockOnToggleListen,
+    };
+    const onShare = jest.fn();
+    const { queryByLabelText, getByLabelText, rerender } = render(
+      <FloatingActionButtons {...props} />,
+    );
+    expect(queryByLabelText(STRINGS.SHARE_ARTICLE)).toBeNull();
+
+    rerender(<FloatingActionButtons {...props} onShare={onShare} />);
+    fireEvent.press(getByLabelText(STRINGS.SHARE_ARTICLE));
+    expect(onShare).toHaveBeenCalledTimes(1);
   });
 
   describe('Listen Button', () => {

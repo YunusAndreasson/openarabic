@@ -29,6 +29,7 @@ import { useFirstWordNotificationPriming } from '@/hooks/review/useNotificationP
 import { useColors } from '@/hooks/theme/useColors';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import { getArticleShareLink, sharePublicLink } from '@/utils/publicShare';
 import { readArticleOpenSource } from '@/utils/routeBuilders';
 
 // Static constants to prevent recreation
@@ -301,6 +302,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     );
   }
 
+  const shareLink = getArticleShareLink(article);
+
   return (
     // Any touch — a scroll, a word, a button, the word card — reopens the
     // keep-awake reading window. `onTouchStart` sees touches that a native
@@ -325,13 +328,14 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         </GestureDetector>
       ) : null}
 
-      {/* The reader's chrome — close, listen, playlist. After the content, so
+      {/* The reader's floating controls. After the content, so
           it draws over the text and the hero; before the player, the tooltip
           and the word sheet, so those still draw over it. Sibling order is the
           whole of it: none of these sets a zIndex that would reorder them (the
           sheet has none, which is why the buttons carry none either). */}
       {sortedSentences.length > 0 && (
         <FloatingActionButtons
+          onShare={shareLink ? () => void sharePublicLink(shareLink) : undefined}
           isInReadingList={isInReadingList}
           onToggleReadingList={handleToggleReadingListWithFeedback}
           isListening={isListeningToThisArticle}

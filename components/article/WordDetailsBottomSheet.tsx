@@ -1,4 +1,9 @@
-import { BottomSheetErrorBoundary, ColorCodedText, RootExplanation } from '@/components/common';
+import {
+  BottomSheetErrorBoundary,
+  ColorCodedText,
+  RootExplanation,
+  ShareWordRow,
+} from '@/components/common';
 import { BrandedBottomSheet, IconButton } from '@/components/ui';
 import type { BrandedBottomSheetMethods } from '@/components/ui/BrandedBottomSheet';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
@@ -394,6 +399,7 @@ export function WordDetailsBottomSheet({
                 {/* And why it looks like THIS, here. Scoped to the occurrence,
                     which the root block above structurally cannot be. */}
                 {word.grammar_note && <SentenceNote note={word.grammar_note} />}
+                <ShareWordRow root={word.root} />
               </View>
             </>
           )}

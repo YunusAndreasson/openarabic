@@ -6,6 +6,7 @@ import {
   BottomSheetStateHandler,
   ListRow,
   RootExplanation,
+  ShareWordRow,
 } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { DisclosureChevron, TransparentHeaderButton } from '@/components/ui';
@@ -165,6 +166,7 @@ export const WordDetailContent = ({
             />
           ) : null}
 
+          <ShareWordRow root={word?.root} />
           {/* Everything this content does not carry — the inflected forms, the
               example sentences, reset and remove — lives on the word screen,
               which is inside the practice stack. Named for where it lands

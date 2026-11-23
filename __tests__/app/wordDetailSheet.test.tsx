@@ -16,6 +16,7 @@
 
 import { describe, expect, jest, test } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { Share } from 'react-native';
 import { State } from 'ts-fsrs';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
@@ -134,6 +135,26 @@ describe('WordDetailSheet', () => {
     expect(screen.getByText('Corruption')).toBeTruthy();
     expect(screen.getByText('فَسَاد')).toHaveProp('selectable', true);
     expect(screen.getByText('Corruption')).toHaveProp('selectable', true);
+  });
+
+  test('shares the dictionary page for the displayed root', () => {
+    setFsrs({ allWords: [savedWord()] });
+    render(<WordDetailSheet />);
+
+    const shareButton = screen.getByLabelText(STRINGS.SHARE_WORD);
+    expect(shareButton).toHaveProp('accessibilityRole', 'button');
+    fireEvent.press(shareButton);
+    expect(Share.share).toHaveBeenCalledWith({
+      title: 'فَسَاد · corruption',
+      url: 'https://openarabic.io/word/corruption-42',
+    });
+  });
+
+  test('omits sharing when the saved word has no root record', () => {
+    setFsrs({ allWords: [savedWord({ root: null })] });
+    render(<WordDetailSheet />);
+
+    expect(screen.queryByLabelText(STRINGS.SHARE_WORD)).toBeNull();
   });
 
   test('reports the FSRS stats for the word the route names', () => {
