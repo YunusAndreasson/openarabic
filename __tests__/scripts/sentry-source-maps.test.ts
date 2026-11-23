@@ -11,7 +11,7 @@ test('store builds extend the upload-enabled base and use the Sentry Metro seria
     SENTRY_DISABLE_AUTO_UPLOAD: 'false',
     SENTRY_ALLOW_FAILURE: 'true',
   });
-  const configure = jest.fn(() => ({ serializer: {} }));
+  const configure = jest.fn((_root: string) => ({ serializer: {} }));
   jest.isolateModules(() => {
     jest.doMock('@sentry/react-native/metro', () => ({ getSentryExpoConfig: configure }));
     expect(require('../../metro.config.js')).toBe(configure.mock.results[0]?.value);

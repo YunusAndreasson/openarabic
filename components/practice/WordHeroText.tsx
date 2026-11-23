@@ -65,19 +65,19 @@ export const WordHeroText = ({
           </View>
         ) : null}
 
-        <ThemedText align="left" numberOfLines={1} style={arabicStyle} type="arabic">
+        <ThemedText selectable align="left" style={arabicStyle} type="arabic">
           {arabicText}
         </ThemedText>
 
         <View style={styles.heroReading}>
           {transliteration ? (
-            <ThemedText colorName="textTertiary" type="body">
+            <ThemedText selectable colorName="textTertiary" type="body">
               {transliteration}
             </ThemedText>
           ) : null}
         </View>
 
-        <ThemedText colorName="secondaryText" type="body">
+        <ThemedText selectable colorName="secondaryText" type="body">
           {englishText}
         </ThemedText>
       </View>

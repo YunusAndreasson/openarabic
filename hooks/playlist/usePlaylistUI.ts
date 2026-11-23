@@ -1,11 +1,14 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
+import { AccessibilityInfo } from 'react-native';
 
+import { STRINGS } from '@/constants/strings';
 import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useAppDispatch } from '@/store/hooks';
 import { setCustomOrder } from '@/store/playlistSlice';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
+import { fillTemplate } from '@/utils/fillTemplate';
 import { selectionFeedback } from '@/utils/haptics';
 import { getArticleRoute } from '@/utils/routeBuilders';
 import { runWhenIdle } from '@/utils/runWhenIdle';
@@ -52,7 +55,28 @@ export const usePlaylistUI = ({ sortedReadingList, editMode }: ListenUIParams) =
     [dispatch],
   );
 
+  function moveTrack(articleId: number, offset: -1 | 1) {
+    const index = sortedReadingList.findIndex(item => item.article_id === articleId);
+    const nextIndex = index + offset;
+    const track = sortedReadingList[index];
+    const neighbour = sortedReadingList[nextIndex];
+    if (!editMode || !track || !neighbour) return;
+
+    const reordered = sortedReadingList.slice();
+    reordered[index] = neighbour;
+    reordered[nextIndex] = track;
+    handleDragEnd({ data: reordered });
+    AccessibilityInfo.announceForAccessibility(
+      fillTemplate(STRINGS.PLAYLIST_MOVED, {
+        title: track.articles.title,
+        position: nextIndex + 1,
+        total: reordered.length,
+      }),
+    );
+  }
+
   return {
+    moveTrack,
     canShowEmpty,
     handleArticlePress,
     handleDragEnd,

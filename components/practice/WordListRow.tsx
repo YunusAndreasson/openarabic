@@ -16,7 +16,10 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { PressableLikeProps } from '@/types/ui/base.types';
 
-interface WordListRowProps {
+interface WordListRowProps extends Pick<
+  PressableLikeProps,
+  'accessibilityActions' | 'onAccessibilityAction'
+> {
   /** The vocalised headword — `roots.letters`. */
   arabic: string;
   /** The English gloss, already capitalised by the caller. */
@@ -77,6 +80,8 @@ const WordListRowComponent = ({
   trailing,
   onPress,
   accessibilityLabel,
+  accessibilityActions,
+  onAccessibilityAction,
   divider = false,
 }: WordListRowProps) => (
   <ListRow
@@ -85,6 +90,8 @@ const WordListRowComponent = ({
     onPress={onPress}
     accessibilityLabel={accessibilityLabel}
     PressableComponent={WordRowPressable}
+    accessibilityActions={accessibilityActions}
+    onAccessibilityAction={onAccessibilityAction}
     style={styles.row}
   >
     <ThemedText

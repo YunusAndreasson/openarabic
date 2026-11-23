@@ -13,6 +13,7 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 
 import { DictionaryWordRow } from '@/components/practice/DictionaryWordRow';
+import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { rootId, userId } from '@/__tests__/helpers/ids';
@@ -238,6 +239,21 @@ describe('DictionaryWordRow', () => {
    * ORDER, so it is announced exactly while the meter is drawing it — otherwise
    * a screen reader hears a number that nothing on screen corresponds to.
    */
+  test('offers both swipe actions on the focused word, without opening its detail screen', () => {
+    const word = createMockWord();
+    const { getByLabelText } = renderRow(word);
+    const row = getByLabelText(/كتب/);
+    expect(row).toHaveProp('accessibilityActions', [
+      { name: 'reset', label: STRINGS.RESET_PROGRESS_ACTION },
+      { name: 'remove', label: STRINGS.REMOVE_FROM_PRACTICE_ACTION },
+    ]);
+    fireEvent(row, 'accessibilityAction', { nativeEvent: { actionName: 'reset' } });
+    expect(mockOnResetProgress).toHaveBeenCalledWith(word);
+    fireEvent(row, 'accessibilityAction', { nativeEvent: { actionName: 'remove' } });
+    expect(mockOnRemove).toHaveBeenCalledWith(word);
+    expect(mockOnPress).not.toHaveBeenCalled();
+  });
+
   describe('Accessibility label', () => {
     // The action panels carry labels too; only the row's mentions the word.
     const labelFor = (sortField: 'difficulty' | 'strength' | 'recent') => {

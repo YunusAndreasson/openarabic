@@ -9,6 +9,8 @@ import { createAndroidRipple } from '@/utils/layoutUtils';
 
 export interface DragHandleProps {
   onLongPress: () => void;
+  moveEarlier?: () => void;
+  moveLater?: () => void;
   delayLongPress: number;
   style?: StyleProp<ViewStyle>;
   testID?: string;
@@ -17,6 +19,8 @@ export interface DragHandleProps {
 
 export const DragHandle = ({
   onLongPress,
+  moveEarlier,
+  moveLater,
   delayLongPress = TIMING_CONFIG.FAST.duration,
   style,
   testID,
@@ -28,7 +32,15 @@ export const DragHandle = ({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      accessibilityHint={STRINGS.PLAYLIST_A11Y_REORDER_HINT}
+      accessible={Boolean(moveEarlier || moveLater)}
+      accessibilityActions={[
+        ...(moveEarlier ? [{ name: 'earlier', label: STRINGS.PLAYLIST_MOVE_EARLIER }] : []),
+        ...(moveLater ? [{ name: 'later', label: STRINGS.PLAYLIST_MOVE_LATER }] : []),
+      ]}
+      onAccessibilityAction={({ nativeEvent }) => {
+        if (nativeEvent.actionName === 'earlier') moveEarlier?.();
+        if (nativeEvent.actionName === 'later') moveLater?.();
+      }}
       style={[styles.container, style]}
       onLongPress={onLongPress}
       delayLongPress={delayLongPress}

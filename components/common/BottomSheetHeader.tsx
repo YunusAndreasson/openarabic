@@ -11,7 +11,7 @@ interface BottomSheetHeaderProps {
 export const BottomSheetHeader = ({ title, subtitle }: BottomSheetHeaderProps) => {
   return (
     <View style={styles.header}>
-      <ThemedText type="heading3" weight="bold" style={styles.title}>
+      <ThemedText accessibilityRole="header" type="heading3" weight="bold" style={styles.title}>
         {title}
       </ThemedText>
       {subtitle && (

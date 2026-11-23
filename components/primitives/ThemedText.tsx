@@ -224,6 +224,7 @@ function ArabicThemedText({
 
   return (
     <Text
+      accessibilityLanguage="ar"
       ellipsizeMode={ellipsizeMode}
       numberOfLines={numberOfLines}
       style={finalStyle}

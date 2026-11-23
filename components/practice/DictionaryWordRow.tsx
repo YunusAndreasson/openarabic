@@ -1,6 +1,6 @@
 import { Icon } from '@/components/ui';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { StyleSheet } from 'react-native';
+import { type AccessibilityActionEvent, StyleSheet } from 'react-native';
 // Gesture-handler's Pressable, NOT react-native's, for the action panels — see
 // the note in WordListRow for the swipe/press negotiation this depends on.
 import { Pressable } from 'react-native-gesture-handler';
@@ -37,6 +37,10 @@ const SWIPE_ACTIVATION_DISTANCE = 24;
 
 /** Width of one action panel. Two of them make up the revealed area. */
 const ACTION_WIDTH = 64;
+const WORD_ACTIONS = [
+  { name: 'reset', label: STRINGS.RESET_PROGRESS_ACTION },
+  { name: 'remove', label: STRINGS.REMOVE_FROM_PRACTICE_ACTION },
+];
 const ACTIONS_WIDTH = ACTION_WIDTH * 2;
 const ACTION_ICON_SIZE = 20;
 
@@ -221,6 +225,11 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
       >
         <WordListRow
           accessibilityLabel={accessibilityLabel}
+          accessibilityActions={WORD_ACTIONS}
+          onAccessibilityAction={({ nativeEvent }: AccessibilityActionEvent) => {
+            if (nativeEvent.actionName === 'reset') handleResetProgress();
+            if (nativeEvent.actionName === 'remove') handleRemove();
+          }}
           arabic={arabicText}
           gloss={englishText}
           trailing={

@@ -132,6 +132,8 @@ describe('WordDetailSheet', () => {
 
     expect(screen.getByText('فَسَاد')).toBeTruthy();
     expect(screen.getByText('Corruption')).toBeTruthy();
+    expect(screen.getByText('فَسَاد')).toHaveProp('selectable', true);
+    expect(screen.getByText('Corruption')).toHaveProp('selectable', true);
   });
 
   test('reports the FSRS stats for the word the route names', () => {

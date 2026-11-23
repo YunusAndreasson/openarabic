@@ -475,6 +475,7 @@ jest.mock('react-native', () => {
       isScreenReaderEnabled: mockStable(() => Promise.resolve(false)),
       addEventListener: mockStable(mockSubscription),
       announceForAccessibility: jest.fn(),
+      getRecommendedTimeoutMillis: mockStable(duration => Promise.resolve(duration)),
     },
 
     // Device information

@@ -108,6 +108,7 @@ describe('audioPlayer service', () => {
   type StatusListener = (status: PlayerStatus) => void;
 
   let mockPlayer: {
+    setPlaybackRate: jest.Mock<(rate: number) => void>;
     play: jest.Mock<() => void>;
     pause: jest.Mock<() => void>;
     remove: jest.Mock<() => void>;
@@ -150,6 +151,7 @@ describe('audioPlayer service', () => {
     let statusCallback: StatusListener | null = null;
     mockPlayer = {
       play: jest.fn(),
+      setPlaybackRate: jest.fn(),
       pause: jest.fn(),
       remove: jest.fn(),
       replace: jest.fn(),
@@ -218,6 +220,35 @@ describe('audioPlayer service', () => {
   });
 
   describe('Single Track Playback', () => {
+    test('applies listening speed to the current and next article while word clips use their native default', async () => {
+      audioService.setArticlePlaybackRate(0.75);
+      expect(await audioService.play(testTrack)).toBe(true);
+      expect(mockPlayer.setPlaybackRate).toHaveBeenLastCalledWith(0.75);
+
+      audioService.setArticlePlaybackRate(1.25);
+      expect(mockPlayer.setPlaybackRate).toHaveBeenLastCalledWith(1.25);
+      mockPlayer.setPlaybackRate.mockClear();
+
+      expect(
+        await audioService.play({ id: 'word-1', audioUrl: testTrack.audioUrl, title: 'Word' }),
+      ).toBe(true);
+      audioService.setArticlePlaybackRate(1.5);
+      expect(mockPlayer.setPlaybackRate).not.toHaveBeenCalled();
+
+      expect(await audioService.play(testTrack2)).toBe(true);
+      expect(mockPlayer.setPlaybackRate).toHaveBeenLastCalledWith(1.5);
+    });
+
+    test('a rejected rate change leaves the article playable and keeps the preference for the next track', async () => {
+      audioService.setArticlePlaybackRate(0.75);
+      mockPlayer.setPlaybackRate.mockImplementationOnce(() => {
+        throw new Error('player unavailable');
+      });
+      expect(await audioService.play(testTrack)).toBe(true);
+      expect(await audioService.play(testTrack2)).toBe(true);
+      expect(mockPlayer.setPlaybackRate.mock.calls).toEqual([[0.75], [0.75]]);
+    });
+
     test('should play audio track successfully', async () => {
       const success = await audioService.play(testTrack);
 

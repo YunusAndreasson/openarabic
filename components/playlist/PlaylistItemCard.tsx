@@ -81,8 +81,7 @@ export const PlaylistItemCard = memo(
           <View style={styles.dragHandleContainer}>
             <DragHandle
               accessibilityLabel={fillTemplate(STRINGS.PLAYLIST_A11Y_REORDER_ARTICLE, { title })}
-              onLongPress={dragHandleProps.onLongPress}
-              delayLongPress={dragHandleProps.delayLongPress}
+              {...dragHandleProps}
             />
           </View>
         )}

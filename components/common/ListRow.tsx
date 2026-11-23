@@ -7,7 +7,10 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress, type HapticType } from '@/hooks/ui/useButtonPress';
 import type { PressableLikeProps } from '@/types/ui/base.types';
 
-interface ListRowProps {
+interface ListRowProps extends Pick<
+  PressableLikeProps,
+  'accessibilityActions' | 'onAccessibilityAction'
+> {
   children: ReactNode;
   /** Makes the row pressable. Omit for a static row. */
   onPress?: () => void;
@@ -56,6 +59,8 @@ export const ListRow = ({
   density = 'comfortable',
   hapticType = 'none',
   accessibilityLabel,
+  accessibilityActions,
+  onAccessibilityAction,
   accessibilityRole = 'button',
   style,
   PressableComponent = RNPressable,
@@ -94,6 +99,8 @@ export const ListRow = ({
     <PressableComponent
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityRole}
+      accessibilityActions={accessibilityActions}
+      onAccessibilityAction={onAccessibilityAction}
       android_ripple={rippleConfig}
       // The ripple is Android-only; without a pressed fill an iOS row gave no
       // sign it was touched.

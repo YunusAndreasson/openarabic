@@ -12,6 +12,8 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
+import { SectionLabel } from '@/components/common/SectionLabel';
+import { BottomSheetHeader } from '@/components/common/BottomSheetHeader';
 import { ThemedText } from '@/components/primitives/ThemedText';
 
 // Use shared mock factories from componentMocks.tsx. `captionText` is not in
@@ -68,6 +70,33 @@ describe('ThemedText', () => {
       expect(textElement).toHaveStyle({ fontSize: 16 });
     });
   });
+
+  test('marks section and sheet titles as headings while keeping their descriptions separate', () => {
+    const { getByText } = render(
+      <>
+        <SectionLabel title="Listening" subtitle="Article audio" />
+        <BottomSheetHeader title="Sleep timer" subtitle="Duration" />
+      </>,
+    );
+    for (const title of ['Listening', 'Sleep timer']) {
+      expect(getByText(title)).toHaveProp('accessibilityRole', 'header');
+    }
+    expect(getByText('Duration').props.accessibilityRole).toBeUndefined();
+  });
+
+  test.each(['arabic', 'arabicCompact'] as const)(
+    'announces %s in Arabic and preserves language overrides',
+    type => {
+      const { getByText, rerender } = render(<ThemedText type={type}>قَلَم</ThemedText>);
+      expect(getByText('قَلَم')).toHaveProp('accessibilityLanguage', 'ar');
+      rerender(
+        <ThemedText type={type} accessibilityLanguage="ar-EG">
+          قَلَم
+        </ThemedText>,
+      );
+      expect(getByText('قَلَم')).toHaveProp('accessibilityLanguage', 'ar-EG');
+    },
+  );
 
   describe('Text Types', () => {
     test('renders heading1 type with large font and bold family', () => {

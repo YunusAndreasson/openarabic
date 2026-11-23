@@ -1,6 +1,11 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
+import {
+  NORMAL_PLAYBACK_RATE,
+  resolveArticlePlaybackRate,
+  type ArticlePlaybackRate,
+} from '@/constants/audio';
 import { resolveArabicFont, type ArabicFontName } from '@/constants/fonts';
 import { ARABIC_FONT_SIZE, clampArabicFontSize } from '@/constants/layout';
 import { AudioLanguage } from '@/types/enums';
@@ -15,6 +20,7 @@ export interface SettingsState {
   arabicFont: ArabicFontName;
   arabicFontSize: number;
   audioLanguagePreference: AudioLanguage;
+  articlePlaybackRate: ArticlePlaybackRate;
   audioShuffleEnabled: boolean;
   dailyWordLimit: number; // Number of words that can be added per day (0 = unlimited)
   adaptiveNewWordPacingEnabled: boolean; // Throttle new-word adds when recent recall dips
@@ -61,6 +67,7 @@ const initialState: SettingsState = {
   arabicFont: 'NotoSansArabic-Regular', // Default font
   arabicFontSize: ARABIC_FONT_SIZE.DEFAULT,
   audioLanguagePreference: AudioLanguage.ENGLISH_ARABIC, // Default to English + Arabic
+  articlePlaybackRate: NORMAL_PLAYBACK_RATE,
   audioShuffleEnabled: false, // Default to sequential playback
   dailyWordLimit: 10, // Default to 10 words per day for getting started
   adaptiveNewWordPacingEnabled: true, // Default on; eases new words when recall dips
@@ -117,6 +124,9 @@ const settingsSlice = createSlice({
     },
     setAudioLanguagePreference: (state, action: PayloadAction<AudioLanguage>) => {
       state.audioLanguagePreference = action.payload;
+    },
+    setArticlePlaybackRate: (state, action: PayloadAction<ArticlePlaybackRate>) => {
+      state.articlePlaybackRate = action.payload;
     },
     setAudioShuffleEnabled: (state, action: PayloadAction<boolean>) => {
       state.audioShuffleEnabled = action.payload;
@@ -278,6 +288,9 @@ export const selectArabicFontSize = (state: {
   settings: { arabicFontSize?: number | null };
 }): number => clampArabicFontSize(state.settings.arabicFontSize);
 
+export const selectArticlePlaybackRate = (state: { settings: { articlePlaybackRate?: unknown } }) =>
+  resolveArticlePlaybackRate(state.settings.articlePlaybackRate);
+
 /** Arabic-only, or bilingual for anything else — the same rule the account row displays. */
 export const selectAudioLanguage = (state: {
   settings: { audioLanguagePreference?: unknown };
@@ -308,6 +321,7 @@ export const {
   setArabicFontSize,
   setAudioLanguagePreference,
   setAudioShuffleEnabled,
+  setArticlePlaybackRate,
   setDailyWordLimit,
   setAdaptiveNewWordPacingEnabled,
   setWordTapShowsTooltip,

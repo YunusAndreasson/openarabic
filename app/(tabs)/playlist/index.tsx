@@ -57,12 +57,18 @@ const PlaylistListItem = memo(
     onArticlePress,
     drag,
     _isBeingDragged,
+    moveTrack,
+    first,
+    last,
     isNowPlaying,
   }: {
     item: BookmarkItem;
     editMode: boolean;
     onDelete: (id: ArticleId) => void;
     onArticlePress: (articleId: ArticleId, title: string) => void;
+    moveTrack?: (articleId: number, offset: -1 | 1) => void;
+    first: boolean;
+    last: boolean;
     drag?: () => void;
     _isBeingDragged?: boolean;
     isNowPlaying: boolean;
@@ -83,9 +89,11 @@ const PlaylistListItem = memo(
       if (!drag) return undefined;
       return {
         onLongPress: drag,
+        moveEarlier: !first && moveTrack ? () => moveTrack(item.article_id, -1) : undefined,
+        moveLater: !last && moveTrack ? () => moveTrack(item.article_id, 1) : undefined,
         delayLongPress: TIMING_CONFIG.FAST.duration,
       };
-    }, [drag]);
+    }, [drag, first, last, moveTrack, item.article_id]);
 
     const authorCategoryText = getArticleMetadata(item.articles);
 
@@ -123,6 +131,13 @@ const PlaylistListItem = memo(
     // them kept each row on the closure it mounted with: after switching the
     // audio language, a row tap still played the old language's URLs.
     if (prevProps.onArticlePress !== nextProps.onArticlePress) return false;
+    if (
+      prevProps.drag !== nextProps.drag ||
+      prevProps.moveTrack !== nextProps.moveTrack ||
+      prevProps.first !== nextProps.first ||
+      prevProps.last !== nextProps.last
+    )
+      return false;
     if (prevProps.onDelete !== nextProps.onDelete) return false;
     return prevProps.item.article_id === nextProps.item.article_id;
   },
@@ -170,7 +185,7 @@ export default function PlaylistScreen(): JSX.Element {
     enhancedTracksError,
   } = usePlaylistScreen();
 
-  const { canShowEmpty, handleDragEnd } = usePlaylistUI({
+  const { canShowEmpty, handleDragEnd, moveTrack } = usePlaylistUI({
     sortedReadingList,
     editMode,
   });
@@ -232,12 +247,22 @@ export default function PlaylistScreen(): JSX.Element {
           onDelete={handleDeletePress}
           onArticlePress={handleArticlePress}
           drag={drag}
+          moveTrack={drag ? moveTrack : undefined}
+          first={!!drag && item === sortedReadingList[0]}
+          last={!!drag && item === sortedReadingList.at(-1)}
           _isBeingDragged={isDragging}
           isNowPlaying={item.article_id === nowPlayingArticleId}
         />
       );
     },
-    [editMode, handleDeletePress, handleArticlePress, nowPlayingArticleId],
+    [
+      editMode,
+      handleDeletePress,
+      handleArticlePress,
+      nowPlayingArticleId,
+      moveTrack,
+      sortedReadingList,
+    ],
   );
 
   // keyExtractor is a module-level constant, already stable.

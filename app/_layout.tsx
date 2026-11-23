@@ -69,6 +69,8 @@ import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
 import { cleanupNotifications, initializeNotifications } from '@/services/notificationService';
+import { useAppSelector } from '@/store/hooks';
+import { selectArticlePlaybackRate } from '@/store/settingsSlice';
 import { persistor, store } from '@/store/store';
 import {
   handleError,
@@ -320,6 +322,10 @@ function AppContent() {
   const { isLoading: isAuthLoading, session } = useAuth();
   const userId = session?.user?.id;
   const navigationRef = useNavigationContainerRef();
+  const playbackRate = useAppSelector(selectArticlePlaybackRate);
+  useEffect(() => {
+    simpleAudioService.setArticlePlaybackRate(playbackRate);
+  }, [playbackRate]);
 
   // Development and store builds already have the embedded fonts on both platforms.
   const [fontsLoaded, fontError] = useFonts(NEEDS_RUNTIME_FONTS ? RUNTIME_FONT_MAP : {});

@@ -11,6 +11,7 @@ import {
 } from 'expo-audio';
 import { AppState, Platform } from 'react-native';
 
+import { NORMAL_PLAYBACK_RATE, type ArticlePlaybackRate } from '@/constants/audio';
 import { STRINGS } from '@/constants/strings';
 import { isAudioLoading } from '@/hooks/audio/articleAudioStatus';
 import { audioCache } from '@/services/audioCache';
@@ -282,6 +283,7 @@ class SimpleAudioService {
   }
 
   private currentPlayer: AudioPlayer | null = null;
+  private articlePlaybackRate: ArticlePlaybackRate = NORMAL_PLAYBACK_RATE;
   private currentTrack: EnhancedAudioTrack | null = null;
   /** Notified only when a transport field changes (see TRANSPORT_KEYS). */
   private transportListeners = new Set<(status: AudioStatus) => void>();
@@ -899,6 +901,7 @@ class SimpleAudioService {
         options.keepAudioSessionActive,
       );
       this.currentTrack = track;
+      if (this.articlePlaybackRate !== NORMAL_PLAYBACK_RATE) this.applyArticlePlaybackRate();
 
       // IMMEDIATE FEEDBACK: Update status to loading right away
       // RESET: Ensure progress starts from 0 for new tracks
@@ -1420,9 +1423,21 @@ class SimpleAudioService {
     }
   }
 
-  /**
-   * Seek to position
-   */
+  setArticlePlaybackRate(rate: ArticlePlaybackRate): void {
+    this.articlePlaybackRate = rate;
+    this.applyArticlePlaybackRate();
+  }
+
+  private applyArticlePlaybackRate(): void {
+    if (this.currentTrack?.articleId === undefined) return;
+    try {
+      this.currentPlayer?.setPlaybackRate(this.articlePlaybackRate);
+    } catch {
+      // A rate change is optional. Keep playing if the native player rejects
+      // it, and apply the saved preference to the next article's fresh player.
+    }
+  }
+
   async seekTo(position: number): Promise<void> {
     try {
       if (this.currentPlayer) {

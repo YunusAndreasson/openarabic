@@ -106,7 +106,7 @@ const SkiaColoredArabicInternal = function SkiaColoredArabic({
         }
       : { color: baseColor };
     return (
-      <ThemedText type="arabic" style={fallbackStyle} accessibilityLanguage="ar">
+      <ThemedText type="arabic" style={fallbackStyle}>
         {text}
       </ThemedText>
     );

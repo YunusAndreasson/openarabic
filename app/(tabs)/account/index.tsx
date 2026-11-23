@@ -13,6 +13,7 @@ import {
   SupportSection,
 } from '@/components/account/settings';
 import { BrandFooter } from '@/components/explore';
+import { ARTICLE_PLAYBACK_RATES, resolveArticlePlaybackRate } from '@/constants/audio';
 import { AUDIO_LANGUAGE_OPTIONS } from '@/constants/audioLanguageOptions';
 import type { Theme } from '@/constants/colors';
 import { DAILY_WORD_LIMIT_OPTIONS } from '@/constants/dailyWordLimitOptions';
@@ -26,6 +27,8 @@ import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
   selectAudioLanguage,
+  selectArticlePlaybackRate,
+  setArticlePlaybackRate,
   selectDailyWordLimit,
   setAudioLanguagePreference,
   setDailyWordLimit,
@@ -33,9 +36,16 @@ import {
 import { setTheme } from '@/store/themeSlice';
 import type { AudioLanguage } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
+import { fillTemplate } from '@/utils/fillTemplate';
+
+const PLAYBACK_RATE_OPTIONS = ARTICLE_PLAYBACK_RATES.map(rate => ({
+  id: rate,
+  title: fillTemplate(STRINGS.PLAYBACK_SPEED_VALUE, { rate }),
+  icon: 'speedometer' as const,
+}));
 
 // Type-safe picker state
-type ActivePicker = 'theme' | 'audioLanguage' | 'dailyWordLimit' | null;
+type ActivePicker = 'theme' | 'audioLanguage' | 'playbackRate' | 'dailyWordLimit' | null;
 
 /**
  * Settings (the `account` tab).
@@ -52,6 +62,7 @@ const AccountScreen = () => {
   const miniPlayerClearance = useMiniPlayerClearance();
 
   const currentTheme = useCurrentTheme();
+  const playbackRate = useAppSelectorShallow(selectArticlePlaybackRate);
   const currentAudioLanguage = useAppSelectorShallow(selectAudioLanguage);
 
   const currentDailyWordLimit = useAppSelectorShallow(selectDailyWordLimit);
@@ -89,6 +100,9 @@ const AccountScreen = () => {
         case 'audioLanguage':
           dispatch(setAudioLanguagePreference(value as AudioLanguage));
           break;
+        case 'playbackRate':
+          dispatch(setArticlePlaybackRate(resolveArticlePlaybackRate(value)));
+          break;
         case 'dailyWordLimit':
           dispatch(setDailyWordLimit(value as number));
           break;
@@ -114,13 +128,18 @@ const AccountScreen = () => {
         options: AUDIO_LANGUAGE_OPTIONS,
         selectedValue: currentAudioLanguage,
       },
+      playbackRate: {
+        title: STRINGS.PLAYBACK_SPEED,
+        options: PLAYBACK_RATE_OPTIONS,
+        selectedValue: playbackRate,
+      },
       dailyWordLimit: {
         title: STRINGS.DAILY_WORD_LIMIT,
         options: DAILY_WORD_LIMIT_OPTIONS,
         selectedValue: currentDailyWordLimit,
       },
     }),
-    [currentTheme, currentAudioLanguage, currentDailyWordLimit],
+    [currentTheme, currentAudioLanguage, currentDailyWordLimit, playbackRate],
   );
 
   // Format cache size for display
@@ -169,7 +188,11 @@ const AccountScreen = () => {
           formatReminderTime={formatReminderTime}
         />
 
-        <ListeningSection onAudioLanguagePress={handleAudioLanguagePress} />
+        <ListeningSection
+          onAudioLanguagePress={handleAudioLanguagePress}
+          playbackSpeedLabel={fillTemplate(STRINGS.PLAYBACK_SPEED_VALUE, { rate: playbackRate })}
+          onPlaybackSpeedPress={() => setActivePicker('playbackRate')}
+        />
 
         <AppSection
           onThemePress={handleThemePress}

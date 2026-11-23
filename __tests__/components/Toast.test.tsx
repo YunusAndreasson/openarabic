@@ -20,7 +20,7 @@
 
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
-import { AccessibilityInfo, StyleSheet } from 'react-native';
+import { AccessibilityInfo, Platform, StyleSheet } from 'react-native';
 
 import { Toast } from '@/components/ui/Toast';
 import { ToastType } from '@/types/enums';
@@ -53,6 +53,36 @@ describe('Toast', () => {
   afterEach(() => {
     jest.runOnlyPendingTimers();
     jest.useRealTimers();
+  });
+
+  test('gives each new Android message its recommended reading time', async () => {
+    const platform = Platform.OS;
+    Platform.OS = 'android';
+    try {
+      let resolveOld!: (ms: number) => void;
+      jest
+        .mocked(AccessibilityInfo.getRecommendedTimeoutMillis)
+        .mockImplementationOnce(
+          () =>
+            new Promise(resolve => {
+              resolveOld = resolve;
+            }),
+        )
+        .mockResolvedValueOnce(5000);
+      const { rerender } = render(
+        <Toast visible message="First" duration={1000} onClose={mockOnClose} />,
+      );
+      rerender(<Toast visible message="Second" duration={1000} onClose={mockOnClose} />);
+      await act(async () => {
+        resolveOld(1000);
+      });
+      act(() => jest.advanceTimersByTime(4999));
+      expect(mockOnClose).not.toHaveBeenCalled();
+      act(() => jest.advanceTimersByTime(1));
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
+    } finally {
+      Platform.OS = platform;
+    }
   });
 
   test('should render visible toast with message', () => {

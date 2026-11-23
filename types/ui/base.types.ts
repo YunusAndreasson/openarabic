@@ -4,6 +4,7 @@ import type {
   Insets,
   PressableAndroidRippleConfig,
   StyleProp,
+  ViewProps,
   ViewStyle,
 } from 'react-native';
 import type { AnimatedStyle, CSSStyle } from 'react-native-reanimated';
@@ -18,7 +19,10 @@ import type { AnimatedStyle, CSSStyle } from 'react-native-reanimated';
  * point — see the `PressableComponent` prop on `BaseCard`, `GlassIconButton`
  * and `ListRow`.
  */
-export interface PressableLikeProps {
+export interface PressableLikeProps extends Pick<
+  ViewProps,
+  'accessibilityActions' | 'onAccessibilityAction'
+> {
   children?: React.ReactNode;
   onPress?: () => void;
   onPressIn?: () => void;

@@ -39,7 +39,9 @@ export const SectionLabel = ({
   density = 'comfortable',
 }: SectionLabelProps) => (
   <View style={[styles.container, { paddingTop: DENSITY_TOP_PADDING[density] }, style]}>
-    <ThemedText type="overline">{title}</ThemedText>
+    <ThemedText accessibilityRole="header" type="overline">
+      {title}
+    </ThemedText>
     {subtitle ? (
       <ThemedText type="caption" colorName="secondaryText" style={styles.subtitle}>
         {subtitle}

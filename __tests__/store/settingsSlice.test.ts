@@ -9,6 +9,8 @@
 
 import reducer, {
   type ArabicFontName,
+  selectArticlePlaybackRate,
+  setArticlePlaybackRate,
   selectAdaptiveNewWordPacingEnabled,
   selectVoiceDebugEnabled,
   selectVoiceEnergyGateEnabled,
@@ -51,6 +53,13 @@ describe('settingsSlice reducers', () => {
       wordTapShowsTooltip: false,
       hapticsEnabled: true,
     };
+  });
+
+  test('plays at normal speed for older settings and remembers a supported speed', () => {
+    expect(selectArticlePlaybackRate({ settings: {} })).toBe(1);
+    expect(selectArticlePlaybackRate({ settings: { articlePlaybackRate: 'fast' } })).toBe(1);
+    const settings = reducer(initialState, setArticlePlaybackRate(0.75));
+    expect(selectArticlePlaybackRate({ settings })).toBe(0.75);
   });
 
   describe('reminder events', () => {

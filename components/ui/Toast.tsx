@@ -1,6 +1,6 @@
 import { Icon } from '@/components/ui/Icon';
-import { useEffect, useEffectEvent, useRef } from 'react';
-import { AccessibilityInfo, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useEffect, useEffectEvent } from 'react';
+import { AccessibilityInfo, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -81,9 +81,8 @@ export function Toast({
 }: ToastProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, fontScale } = useWindowDimensions();
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeToast = useEffectEvent(onClose);
 
   // A toast is visual only — it takes no focus and disappears on its own — so
@@ -96,27 +95,25 @@ export function Toast({
   }, [visible, message]);
 
   useEffect(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-
-    if (visible) {
-      // No auto-haptic here: toasts almost always follow a user action that
-      // already fired its own haptic. Callers that need a haptic for unsolicited
-      // toasts (e.g. background errors) should trigger it explicitly.
-      timerRef.current = setTimeout(() => {
-        closeToast();
-      }, duration);
-    }
-
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
+    if (!visible) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const scheduleClose = (timeout: number) => {
+      if (!cancelled) timer = setTimeout(() => closeToast(), Math.max(duration, timeout));
     };
-  }, [visible, duration, type]);
+    if (Platform.OS === 'android') {
+      // Android's "Time to take action" preference also covers transient text.
+      void AccessibilityInfo.getRecommendedTimeoutMillis(duration).then(scheduleClose, () =>
+        scheduleClose(duration),
+      );
+    } else {
+      scheduleClose(duration);
+    }
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [visible, duration, message, type]);
 
   const config = TOAST_CONFIG[type];
   const iconColor = config.colorKey ? colors[config.colorKey] : colors.text;
@@ -166,7 +163,7 @@ export function Toast({
         <ThemedText
           colorName="text"
           ellipsizeMode="tail"
-          numberOfLines={2}
+          numberOfLines={fontScale > 1 ? undefined : 2}
           style={styles.toastText}
         >
           {message}

@@ -40,6 +40,8 @@ export const STRINGS = {
   // Shared bilingual label
   BILINGUAL_LABEL: 'English + Arabic',
   AUDIO_LANGUAGE: 'Audio language',
+  PLAYBACK_SPEED: 'Playback speed',
+  PLAYBACK_SPEED_VALUE: '{rate}×',
   AUDIO_LANGUAGE_ARABIC: 'Arabic only',
   AUDIO_LANGUAGE_ARABIC_SUBTITLE: 'For more fluent listeners',
   AUDIO_LANGUAGE_BILINGUAL_SUBTITLE: 'Hear English first to prepare for Arabic',
@@ -267,7 +269,9 @@ export const STRINGS = {
   PLAYLIST_A11Y_REORDER: 'Reorder track',
   PLAYLIST_A11Y_REORDER_ARTICLE: 'Reorder {title}',
   PLAYLIST_A11Y_REMOVE_ARTICLE: 'Remove {title} from playlist',
-  PLAYLIST_A11Y_REORDER_HINT: 'Press and hold, then drag to move this track',
+  PLAYLIST_MOVED: '{title}, position {position} of {total}',
+  PLAYLIST_MOVE_EARLIER: 'Move earlier',
+  PLAYLIST_MOVE_LATER: 'Move later',
   ARABIC_WORD_A11Y_HINT: 'Shows the meaning',
   ARABIC_WORD_A11Y_TOGGLE_PRACTICE: 'Add to or remove from practice',
   // Sections are named for where a setting takes effect, not for what it is
