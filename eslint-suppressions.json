@@ -67,11 +67,6 @@
       "count": 1
     }
   },
-  "hooks/articles/useArticleData.ts": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 2
-    }
-  },
   "hooks/articles/useArticleScreen.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 7

@@ -12,13 +12,17 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { Colors } from '@/constants/colors';
+import { articleQueries } from '@/constants/queries';
 import { useArticleData } from '@/hooks/articles/useArticleData';
+import * as theme from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
 import { bookmarkService } from '@/services/bookmark';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { ArticleNotFoundError, type Article } from '@/types/articles.types';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import * as wordAnalysis from '@/utils/arabicWordAnalysis';
 import { articleId, authorId, categoryId, rootId, userId } from '@/__tests__/helpers/ids';
 
 // Mock only the service layer (network boundary)
@@ -52,7 +56,7 @@ describe('useArticleData', () => {
     queryClient.clear();
   });
 
-  test('returns processed article data with real React Query caching', async () => {
+  test('reuses sorted and colored words on reopen until the sentences or palette change', async () => {
     const mockArticle: Article = {
       id: articleId(1),
       title: 'Test Article',
@@ -153,7 +157,8 @@ describe('useArticleData', () => {
     mockBookmarkService.getReadingList.mockResolvedValue([savedArticle(1)]);
     mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue(mockStudyWords);
 
-    const { result } = renderHook(() => useArticleData(articleId(1), 'u1'), { wrapper });
+    const palette = jest.spyOn(theme, 'useColors').mockReturnValue(Colors.light);
+    const { result, unmount } = renderHook(() => useArticleData(articleId(1), 'u1'), { wrapper });
 
     // Wait for queries to resolve
     await waitFor(() => {
@@ -185,6 +190,29 @@ describe('useArticleData', () => {
       { forStats: false },
       MANAGED,
     );
+
+    unmount();
+    const colorWord = jest.spyOn(wordAnalysis, 'computeColoredSegments');
+    const reopened = renderHook(() => useArticleData(articleId(1), 'u1'), { wrapper });
+    expect(reopened.result.current.sentenceWordsMap.get(2)).toEqual(words);
+    expect(colorWord).not.toHaveBeenCalled();
+
+    palette.mockReturnValue(Colors.dark);
+    reopened.rerender(undefined);
+    expect(colorWord).toHaveBeenCalledTimes(3);
+    expect(reopened.result.current.sentenceWordsMap.get(1)?.[0]?.coloredSegments?.[0]?.color).toBe(
+      Colors.dark.arabicText,
+    );
+
+    act(() => {
+      queryClient.setQueryData(articleQueries.detail(mockArticle.id).queryKey, {
+        ...mockArticle,
+        article_sentences:
+          mockArticle.article_sentences?.filter(sentence => sentence.id === 2) ?? [],
+      });
+    });
+    await waitFor(() => expect(reopened.result.current.sentenceWordsMap.has(1)).toBe(false));
+    expect(reopened.result.current.sentenceWordsMap.get(2)).toHaveLength(2);
   });
 
   test('handles missing data gracefully with real React Query', async () => {

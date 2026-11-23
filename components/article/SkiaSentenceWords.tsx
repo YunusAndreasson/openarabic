@@ -258,7 +258,9 @@ const SentenceWordsInternal = function SkiaSentenceWords({
   // Paragraphs are built and measured together, from fresh: the ink overhang is
   // measured on the paragraph as laid out at `PARAGRAPH_LAYOUT_WIDTH`, and the
   // canvas lays it out again at its own width when it draws.
-  const paintedWords = words.map(word => {
+  // Until the block has a width there is no canvas or hit target to draw.
+  const wordsToPaint = availableWidth === null ? [] : words;
+  const paintedWords = wordsToPaint.map(word => {
     const shape = (size: number) => {
       const paragraph = buildWordParagraph({
         word,

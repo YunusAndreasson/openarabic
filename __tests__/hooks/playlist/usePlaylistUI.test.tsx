@@ -56,6 +56,12 @@ describe('usePlaylistUI', () => {
     const { result } = renderHook(() =>
       usePlaylistUI({ sortedReadingList: tracks, editMode: true }),
     );
+    // DraggableFlatList returns a new array even when the handle was released
+    // in its starting position. The playlist should still use its default order.
+    const stationaryDrop = { from: 1, to: 1, data: tracks.slice() };
+    result.current.handleDragEnd(stationaryDrop);
+    expect(mockDispatch).not.toHaveBeenCalled();
+
     result.current.moveTrack(1, -1);
     result.current.moveTrack(3, 1);
     result.current.moveTrack(100, 1);

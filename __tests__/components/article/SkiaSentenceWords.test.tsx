@@ -18,6 +18,7 @@ import type { SharedValue } from 'react-native-reanimated';
 import { Canvas, Group, type SkPaint } from 'react-native-skia';
 
 import { SkiaSentenceWords } from '@/components/article/SkiaSentenceWords';
+import * as paragraphs from '@/utils/skiaParagraphBuilder';
 import { LAYOUT } from '@/constants/layout';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
@@ -83,12 +84,15 @@ describe('SkiaSentenceWords', () => {
 
   describe('layout', () => {
     test('draws nothing until it knows its width, rather than a provisional layout', () => {
+      const shape = jest.spyOn(paragraphs, 'buildWordParagraph');
       const screen = render(<SkiaSentenceWords words={WORDS} selectedRootIds={NO_SELECTION} />);
 
       expect(screen.queryByTestId('sentence-word-0')).toBeNull();
+      expect(shape).not.toHaveBeenCalled();
 
       layOut(screen);
 
+      expect(shape).toHaveBeenCalledTimes(WORDS.length);
       expect(screen.getByTestId('sentence-word-0')).toBeTruthy();
       expect(screen.getByTestId('sentence-word-2')).toBeTruthy();
     });

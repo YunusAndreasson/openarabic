@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
+import type { DragEndParams } from 'react-native-draggable-flatlist';
 
 import { STRINGS } from '@/constants/strings';
 import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
@@ -47,7 +48,8 @@ export const usePlaylistUI = ({ sortedReadingList, editMode }: ListenUIParams) =
   );
 
   const handleDragEnd = useCallback(
-    ({ data }: { data: BookmarkItem[] }) => {
+    ({ data, from, to }: DragEndParams<BookmarkItem>) => {
+      if (from === to) return;
       selectionFeedback();
       const newOrder = data.map(item => item.article_id);
       dispatch(setCustomOrder(newOrder));
@@ -65,7 +67,7 @@ export const usePlaylistUI = ({ sortedReadingList, editMode }: ListenUIParams) =
     const reordered = sortedReadingList.slice();
     reordered[index] = neighbour;
     reordered[nextIndex] = track;
-    handleDragEnd({ data: reordered });
+    handleDragEnd({ data: reordered, from: index, to: nextIndex });
     AccessibilityInfo.announceForAccessibility(
       fillTemplate(STRINGS.PLAYLIST_MOVED, {
         title: track.articles.title,

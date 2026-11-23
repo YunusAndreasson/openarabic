@@ -6,10 +6,44 @@ import { articleQueries, fsrsQueries, gated, readingProgressQueries } from '@/co
 import { useColors } from '@/hooks/theme/useColors';
 import { ArticleNotFoundError, type Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
+import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { computeColoredSegments } from '@/utils/arabicWordAnalysis';
 
 const EMPTY_STUDY_WORDS: StudyWord[] = [];
+
+// Article details stay in the query cache for a day. Keep the prepared words
+// for the last reader only, and let them go if its source sentences are evicted.
+type Sentences = NonNullable<Article['article_sentences']>;
+let lastReaderWords = new WeakMap<
+  Sentences,
+  { colors: ThemeColors; words: Map<number, SentenceWord[]> }
+>();
+
+function prepareSentenceWords(
+  source: Sentences | undefined,
+  sortedSentences: Sentences,
+  colors: ThemeColors,
+) {
+  if (!source?.length) return new Map<number, SentenceWord[]>();
+  const previous = lastReaderWords.get(source);
+  if (previous?.colors === colors) return previous.words;
+
+  const words = new Map<number, SentenceWord[]>();
+  for (const sentence of sortedSentences) {
+    if (!sentence.sentence_words?.length) continue;
+    const sortedWords = sentence.sentence_words.slice().sort((a, b) => a.position - b.position);
+    words.set(
+      sentence.id,
+      sortedWords.map(word => ({
+        ...word,
+        coloredSegments: computeColoredSegments(word.word_form, word.english || '', colors),
+      })),
+    );
+  }
+  lastReaderWords = new WeakMap([[source, { colors, words }]]);
+  return words;
+}
 
 interface ArticleDataResult {
   article: Article | undefined;
@@ -93,12 +127,10 @@ export const useArticleData = (
   const isLoadingStudyWords = studyWordsQuery.isLoading;
 
   // Process sentences from article data - no additional fetch needed
+  const sentences = article?.article_sentences;
   const sortedSentences = useMemo(
-    () =>
-      article?.article_sentences
-        ? [...article.article_sentences].sort((a, b) => a.position - b.position)
-        : [],
-    [article],
+    () => (sentences ? [...sentences].sort((a, b) => a.position - b.position) : []),
+    [sentences],
   );
 
   // Extract selected root IDs since study is now root-based
@@ -107,28 +139,10 @@ export const useArticleData = (
     [studyWords, dueWords],
   );
 
-  // Create sentence words map from article data - no additional fetch needed
-  // Pre-compute color analysis at load time for optimal render performance
-  const sentenceWordsMap = useMemo(() => {
-    const map = new Map<number, SentenceWord[]>();
-    // Early return if no sentences or colors not ready
-    if (!sortedSentences?.length || !colors) return map;
-
-    // Process all sentences in one pass
-    return sortedSentences.reduce((acc, sentence) => {
-      if (sentence.sentence_words?.length) {
-        const wordsWithColors = sentence.sentence_words
-          .slice() // Create a new array to avoid mutating the original
-          .sort((a, b) => a.position - b.position)
-          .map(word => ({
-            ...word,
-            coloredSegments: computeColoredSegments(word.word_form, word.english || '', colors),
-          }));
-        acc.set(sentence.id, wordsWithColors);
-      }
-      return acc;
-    }, new Map<number, SentenceWord[]>());
-  }, [sortedSentences, colors]);
+  const sentenceWordsMap = useMemo(
+    () => prepareSentenceWords(sentences, sortedSentences, colors),
+    [sentences, sortedSentences, colors],
+  );
 
   return {
     article,
