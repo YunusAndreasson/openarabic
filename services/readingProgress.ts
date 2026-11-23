@@ -12,8 +12,8 @@ import {
 
 const errorConfig = {
   update: createServiceErrorConfig('reading_progress', 'update', {
-    toastMessage: STRINGS.ERROR_LOADING_DATA,
-    showToast: false,
+    toastMessage: STRINGS.FAILED_TO_UPDATE_READING_PROGRESS,
+    showToast: true,
   }),
   bulkGet: createServiceErrorConfig('reading_progress', 'fetch', {
     toastMessage: STRINGS.ERROR_LOADING_DATA,
@@ -43,7 +43,7 @@ const errorConfig = {
  */
 export type ReadingProgress = Tables<'reading_progress'>;
 
-interface UpdateReadingProgressParams {
+export interface UpdateReadingProgressParams {
   userId: string;
   articleId: ArticleId;
   lastSentenceRead: number;

@@ -134,6 +134,10 @@ async function isUnreachableStream(audioUrl: string, error: unknown): Promise<bo
 // `statusIntervalMs`; see play().
 const DEFAULT_UPDATE_INTERVAL_MS = 500;
 
+// Retry only on a subsequent playback request. After two backed-off probes,
+// leave the constructor alone for the rest of this app session.
+const CREATION_RETRY_DELAYS_MS = [1_000, 4_000] as const;
+
 // How often waitForPlayerReady re-checks `isLoaded`. See the poll in that
 // method for why this is one frame rather than the 50 ms it used to be.
 const READY_POLL_INTERVAL_MS = 16;
@@ -269,6 +273,14 @@ export interface SourceTrackedAudioTrack extends EnhancedAudioTrack {
  */
 
 class SimpleAudioService {
+  private creationFailures = 0;
+  private nextCreationAttempt = 0;
+  private readonly reportedCreationCauses = new Set<string>();
+
+  get playerCreationBlocked(): boolean {
+    return Date.now() < this.nextCreationAttempt;
+  }
+
   private currentPlayer: AudioPlayer | null = null;
   private currentTrack: EnhancedAudioTrack | null = null;
   /** Notified only when a transport field changes (see TRANSPORT_KEYS). */
@@ -457,14 +469,38 @@ class SimpleAudioService {
     }
 
     try {
-      // Ensure audio is active at the OS level (only if app is active)
+      // Configure the category before activating it. After voice capture the
+      // shared session can still have the recorder's mode and route.
+      try {
+        await setAudioModeAsync(this.currentAudioMode());
+      } catch (error) {
+        if (Platform.OS !== 'ios') throw error;
+        // When capture owns the session keep .playAndRecord, dropping the
+        // optional speaker override instead of disabling the microphone.
+        // Otherwise plain .playback with no options, which still plays with
+        // the ring switch off (learners listen that way); only if iOS rejects
+        // even that, .soloAmbient/.default (AudioModule.swift), which obeys it.
+        if (this.recordingSessionEnabled) {
+          await setAudioModeAsync({
+            playsInSilentMode: true,
+            allowsRecording: true,
+            interruptionMode: 'doNotMix',
+            shouldRouteThroughEarpiece: true,
+          });
+        } else {
+          try {
+            await setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'doNotMix' });
+          } catch {
+            await setAudioModeAsync({ playsInSilentMode: false, interruptionMode: 'doNotMix' });
+          }
+        }
+      }
+
       await this.safeActivateAudioSession({
         location: 'configureAudioSession',
         playing: false,
         isPlaylistMode: false,
       });
-
-      await setAudioModeAsync(this.currentAudioMode());
 
       // Set up the AppState listener for background audio handling — once.
       // This method runs again on every return to the foreground, from inside
@@ -772,6 +808,8 @@ class SimpleAudioService {
     };
     try {
       this.currentPlayer = createAudioPlayer(audioUrl, playerOptions);
+      this.creationFailures = 0;
+      this.nextCreationAttempt = 0;
     } catch (error) {
       // Tagged here rather than sniffed out of the message in playCore's catch:
       // the wording belongs to expo, and a terminal failure must not quietly
@@ -808,6 +846,7 @@ class SimpleAudioService {
   ): Promise<PlayOutcome> {
     const generation = ++this.playGeneration;
     const isSuperseded = (): boolean => generation !== this.playGeneration;
+    if (this.playerCreationBlocked) return 'unplayable';
     const playStartedAt = Date.now();
 
     // Note: the record-capable category is deliberately NOT taken back here.
@@ -827,6 +866,15 @@ class SimpleAudioService {
         this.resetPlaylistState();
       }
 
+      // Configure audio session first (should be pre-configured for faster playback)
+      await this.configureAudioSession();
+      if (isSessionActive()) {
+        mark('player.session-ready', { ms: Date.now() - playStartedAt });
+      }
+      if (isSuperseded()) {
+        return 'superseded';
+      }
+
       // Throttled session activation: Only activate if not recently activated (5s window)
       // Reduces redundant calls during practice sessions while maintaining iOS reliability
       const now = Date.now();
@@ -839,15 +887,6 @@ class SimpleAudioService {
         if (isSuperseded()) {
           return 'superseded';
         }
-      }
-
-      // Configure audio session first (should be pre-configured for faster playback)
-      await this.configureAudioSession();
-      if (isSessionActive()) {
-        mark('player.session-ready', { ms: Date.now() - playStartedAt });
-      }
-      if (isSuperseded()) {
-        return 'superseded';
       }
 
       // Stop event subscription from previous track before swapping the player
@@ -984,7 +1023,23 @@ class SimpleAudioService {
       // Terminal for this device: resetting the session only hands the retry
       // the same constructor that just rejected.
       const isUnplayable = error instanceof PlayerCreationError;
-      if (!options.isRetry && !isSourceFailure && !isUnplayable) {
+      if (isUnplayable) {
+        const firstFailure = this.creationFailures === 0;
+        const delay = CREATION_RETRY_DELAYS_MS[this.creationFailures++];
+        this.nextCreationAttempt = delay === undefined ? Infinity : Date.now() + delay;
+        this.currentTrack = null;
+        const firstReport = !this.reportedCreationCauses.has(error.message);
+        if (firstReport || firstFailure) {
+          this.reportedCreationCauses.add(error.message);
+          void handleError(error, {
+            showToast: firstFailure,
+            toastMessage: STRINGS.AUDIO_PLAYER_UNAVAILABLE,
+            captureSentry: firstReport,
+          });
+        }
+        return 'unplayable';
+      }
+      if (!options.isRetry && !isSourceFailure) {
         try {
           await this.resetAudioSession();
           if (isSuperseded()) {
@@ -1018,7 +1073,7 @@ class SimpleAudioService {
         toastMessage: STRINGS.AUDIO_PLAY_FAILED,
         networkFailure: this.lastFailureUnreachable,
       });
-      return isUnplayable ? 'unplayable' : 'failure';
+      return 'failure';
     }
   }
 
@@ -1443,14 +1498,15 @@ class SimpleAudioService {
     this.wantsPlayback = true;
     const generation = this.playGeneration;
     try {
-      await this.safeActivateAudioSession({
-        location: 'resume',
-        playing: true,
-        isPlaylistMode: this.isPlaylistMode,
-      });
-      // A media-services reset or a return to the foreground clears the
-      // configured flag; this re-applies the category before playing again.
-      await this.configureAudioSession();
+      if (this.audioSessionConfigured) {
+        await this.safeActivateAudioSession({
+          location: 'resume',
+          playing: true,
+          isPlaylistMode: this.isPlaylistMode,
+        });
+      } else {
+        await this.configureAudioSession();
+      }
       if (generation !== this.playGeneration || player !== this.currentPlayer) return false;
       // Paused again while the session was activating. TypeScript still sees
       // the `true` assigned above; pause() can clear it during the awaits.

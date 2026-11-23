@@ -13,6 +13,7 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { MutationObserver, QueryClient, dehydrate } from '@tanstack/react-query';
 import { PERSISTENCE_OPTIONS, queryPersister } from '@/utils/queryPersistence';
 
 // Capture options passed into the persister factory. queryPersistence.ts
@@ -48,6 +49,29 @@ describe('Query Persistence', () => {
   });
 
   describe('queryPersister', () => {
+    test('an in-flight idempotent write is persisted as resumable even during retry backoff', async () => {
+      const client = new QueryClient({ defaultOptions: { mutations: { gcTime: Infinity } } });
+      const { promise, resolve } = Promise.withResolvers<void>();
+      const observer = new MutationObserver(client, {
+        mutationKey: ['reading-progress', 'update'],
+        meta: { persistPending: true },
+        mutationFn: () => promise,
+      });
+      const writing = observer.mutate();
+      try {
+        const clientState = dehydrate(client, PERSISTENCE_OPTIONS.dehydrateOptions);
+        for (const options of captured.allOptions) {
+          const saved = JSON.parse(options.serialize({ timestamp: 1, buster: 'v2', clientState }));
+          expect(saved.clientState.mutations[0]?.state.isPaused).toBe(true);
+        }
+        expect(client.getMutationCache().getAll()[0]?.state.isPaused).toBe(false);
+      } finally {
+        resolve();
+        await writing;
+        client.clear();
+      }
+    });
+
     test('should expose public API and be configured with correct options', () => {
       // Public API shape
       expect(typeof (queryPersister as any).persistClient).toBe('function');

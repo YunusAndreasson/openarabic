@@ -86,3 +86,26 @@ test('an offline tap restores the same reader and articles after a restart', asy
   expect(readingProgressQueries.onListChanged).toHaveBeenCalledWith(restored, 'reader');
   restored.clear();
 });
+
+test('a transfer interrupted after an online tap resumes with the original article IDs', async () => {
+  const { wrapper, queryClient } = createHookTestWrapper({ withRedux: true });
+  registerMutationDefaults(queryClient);
+  jest
+    .mocked(bookmarkService.addManyToReadingList)
+    .mockImplementationOnce(async () => {
+      onlineManager.setOnline(false);
+      throw new Error('The network connection was lost.');
+    })
+    .mockResolvedValue(undefined);
+  const { result } = renderHook(() => useAddBeginnerArticles(), { wrapper });
+  await waitFor(() => expect(result.current.hasArticlesAvailable).toBe(true));
+  act(() => result.current.addArticles());
+  await waitFor(
+    () => expect(queryClient.getMutationCache().getAll()[0]?.state.isPaused).toBe(true),
+    { timeout: 2500 },
+  );
+  expect(handleError).not.toHaveBeenCalled();
+  onlineManager.setOnline(true);
+  await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  expect(bookmarkService.addManyToReadingList).toHaveBeenCalledTimes(2);
+});

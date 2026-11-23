@@ -662,6 +662,28 @@ describe('audioCache', () => {
     expect(result).toBe(emptyCachedPath);
   });
 
+  test('background downloads wait for connectivity without using an attempt or slot', async () => {
+    audioCache = require('../../services/audioCache').audioCache;
+    const { onlineManager } =
+      require('@tanstack/react-query') as typeof import('@tanstack/react-query');
+    mockDigestStringAsync.mockResolvedValue(hash);
+    mockFileConstructor.mockImplementation(makeFileMock({}));
+    onlineManager.setOnline(false);
+    jest.useFakeTimers();
+    try {
+      const pending = audioCache.getAudio(url);
+      await jest.advanceTimersByTimeAsync(3000);
+      expect(mockDownloadFileAsync).not.toHaveBeenCalled();
+      onlineManager.setOnline(true);
+      await expect(pending).resolves.toBe(cachedPath);
+      expect(mockDownloadFileAsync).toHaveBeenCalledTimes(1);
+      expect(onlineManager.hasListeners()).toBe(false);
+    } finally {
+      onlineManager.setOnline(true);
+      jest.useRealTimers();
+    }
+  });
+
   test('quick mode does not retry a failed download', async () => {
     const quickUrl = 'http://example.com/quick-test.mp3';
     const quickHash = 'quickhash';

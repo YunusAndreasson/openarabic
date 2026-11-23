@@ -6,7 +6,7 @@ import { analytics } from '@/services/analytics';
 import { ToastType } from '@/types/enums';
 import { getAnalyticsErrorCode } from '@/utils/authUtils';
 import { isNetworkFailure } from '@/utils/networkErrors';
-import { toError } from '@/utils/toError';
+import { containsResponseBody, safeErrorMessage, toError } from '@/utils/toError';
 
 // Re-exported so the many `import { toError } from '@/utils/errorHandling'`
 // sites keep working; leaf modules import '@/utils/toError' directly.
@@ -271,12 +271,63 @@ const networkFailureBreadcrumb = (error: unknown, context?: Record<string, unkno
 export const isDroppedSentryEvent = (
   level: Sentry.SeverityLevel | undefined,
   originalException: unknown,
+  exceptions?: Sentry.Exception[],
 ): boolean => {
-  if (level === 'fatal' || typeof originalException !== 'object') return false;
+  if (level === 'fatal') return false;
+  if (originalException == null && exceptions?.length) {
+    return exceptions.every(({ type, value }) => isNetworkFailure({ name: type, message: value }));
+  }
+  if (typeof originalException !== 'object') return false;
   if (!isNetworkFailure(originalException)) return false;
   networkFailureBreadcrumb(originalException, { path: 'beforeSend' });
   return true;
 };
+
+// Only diagnostic identifiers may carry free text. In particular the SDK's
+// __serialized__ extra can be the entire value of a non-Error rejection.
+const diagnosticStringKeys = new Set([
+  'operation',
+  'location',
+  'appState',
+  'failedStep',
+  'errorType',
+  'errorCode',
+  'modelId',
+  'notificationId',
+  'userId',
+]);
+
+export function sanitizeSentryEvent(event: Sentry.Event): void {
+  if (event.logentry) {
+    event.logentry = { message: safeErrorMessage(event.logentry.message ?? '') };
+  }
+  if (event.message) event.message = safeErrorMessage(event.message);
+  for (const exception of event.exception?.values ?? []) {
+    if (exception.value) exception.value = safeErrorMessage(exception.value);
+    if (exception.type) exception.type = safeErrorMessage(exception.type);
+    const stack = exception.stacktrace;
+    if (stack?.frames) {
+      stack.frames = stack.frames.filter(
+        frame =>
+          ![frame.filename, frame.function, frame.abs_path, frame.module].some(
+            value => value && containsResponseBody(value),
+          ),
+      );
+    }
+  }
+  if (event.extra) {
+    event.extra = Object.fromEntries(
+      Object.entries(event.extra).filter(
+        ([key, value]) =>
+          typeof value === 'number' ||
+          typeof value === 'boolean' ||
+          (typeof value === 'string' &&
+            diagnosticStringKeys.has(key) &&
+            /^[\w.-]{1,100}$/.test(value)),
+      ),
+    );
+  }
+}
 
 // Helper functions to reduce complexity
 const captureInSentry = (

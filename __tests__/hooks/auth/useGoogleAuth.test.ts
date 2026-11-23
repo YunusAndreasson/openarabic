@@ -149,6 +149,18 @@ describe('useGoogleAuth executeSignIn', () => {
     expect(expectedFailureMessage?.(new Error('Unable to open Safari'))).toMatch(/try again/i);
   });
 
+  it('recognizes the bridged Safari presentation failure without suppressing other GID -1 errors', () => {
+    const { expectedFailureMessage } = renderGoogleProvider();
+    const error = {
+      code: '-1',
+      message: 'RNGoogleSignIn: Unknown error in google sign in., Unable to open Safari',
+    };
+    expect(expectedFailureMessage?.(error)).toMatch(/Safari.*try again/i);
+    expect(
+      expectedFailureMessage?.({ ...error, message: 'Unknown error in google sign in.' }),
+    ).toBeUndefined();
+  });
+
   // OPENARABIC-TD: Play Services' NETWORK_ERROR, from the sign-in activity.
   it("names Play Services' network error the connection, and nothing else", () => {
     const { expectedFailureMessage } = renderGoogleProvider();

@@ -4,17 +4,21 @@ import { POSTGREST_MAX_ROWS } from '@/constants/supabase';
 import { checkAuthentication } from '@/services/supabase';
 import type { ErrorOptions } from '@/utils/errorHandling';
 import { handleError } from '@/utils/errorHandling';
-
-/** Longest PostgREST error message kept as it came; anything longer is a response body. */
-const MAX_ERROR_MESSAGE_LENGTH = 200;
+import {
+  containsResponseBody,
+  MAX_ERROR_MESSAGE_LENGTH,
+  safeErrorMessage,
+  toError,
+} from '@/utils/toError';
 
 /**
  * What postgrest-js resolves a failure as. Its type promises a `code`, but a
  * body it cannot parse as JSON is reported as `{ message: body }` and nothing
  * else — so `code`, `details` and `hint` can be missing at runtime.
  */
-type PostgrestFailure = Pick<PostgrestError, 'message'> &
-  Partial<Pick<PostgrestError, 'code' | 'details' | 'hint'>>;
+type PostgrestFailure = { message?: unknown } & Partial<
+  Pick<PostgrestError, 'code' | 'details' | 'hint'>
+>;
 
 /**
  * Whether postgrest-js made the response body itself the error message.
@@ -27,8 +31,10 @@ type PostgrestFailure = Pick<PostgrestError, 'message'> &
  * code; a short code-less message (a gateway's JSON `message`) is kept.
  */
 const isResponseBody = (error: PostgrestFailure, status: number): boolean =>
-  error.code === undefined &&
-  ((status >= 200 && status < 300) || error.message.length > MAX_ERROR_MESSAGE_LENGTH);
+  typeof error.message !== 'string' ||
+  containsResponseBody(error.message) ||
+  (error.code === undefined &&
+    ((status >= 200 && status < 300) || error.message.length > MAX_ERROR_MESSAGE_LENGTH));
 
 /**
  * A failed PostgREST request, as a real `Error` that keeps the HTTP status.
@@ -56,13 +62,14 @@ export class SupabaseRequestError extends Error {
     // The status names the failure and the length describes the body, which
     // stays out of the report: a fixed title groups every occurrence into one
     // issue and carries none of the payload.
-    super(isBody ? `Unreadable response body (HTTP ${status})` : error.message);
+    super(isBody ? `Unreadable response body (HTTP ${status})` : safeErrorMessage(error.message));
     this.status = status;
     this.code = error.code ?? '';
-    this.details = isBody
-      ? `${error.message.length} characters that are not JSON`
-      : (error.details ?? '');
-    this.hint = error.hint ?? '';
+    this.details =
+      isBody && typeof error.message === 'string'
+        ? `${error.message.length} characters that are not JSON`
+        : safeErrorMessage(error.details ?? '');
+    this.hint = safeErrorMessage(error.hint ?? '');
     this.pendingReport = pendingReport;
   }
 
@@ -87,8 +94,8 @@ export interface RequestOptions {
    * The request runs inside a TanStack query or mutation function, so its
    * failure is reported by the query or mutation cache (`app/_layout.tsx`) —
    * once, after the last retry — instead of here, on every attempt. Set only
-   * through {@link managedRequest}. A direct call (the background task, the
-   * reader's unmount flush, a settings action) leaves it unset and keeps
+   * through {@link managedRequest}. A direct call (the background task, a
+   * settings action) leaves it unset and keeps
    * reporting at the throw, so a failure outside TanStack still reaches the
    * user and Sentry.
    */
@@ -155,7 +162,13 @@ async function settle<T>(
   errorConfig: ErrorOptions,
   request: RequestOptions,
 ): Promise<SucceededResponse<T>> {
-  const response = await queryFn();
+  let response: PostgrestSingleResponse<T>;
+  try {
+    response = await queryFn();
+  } catch (cause) {
+    request.signal?.throwIfAborted();
+    throw toError(cause);
+  }
 
   if (!response.error) return response;
 

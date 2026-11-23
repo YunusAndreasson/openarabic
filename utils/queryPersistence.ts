@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import type { Query, QueryClient } from '@tanstack/react-query';
-import { persistQueryClientSave } from '@tanstack/react-query-persist-client';
+import type { Mutation, Query, QueryClient } from '@tanstack/react-query';
+import { persistQueryClientSave, type PersistedClient } from '@tanstack/react-query-persist-client';
 
 import { PERSISTED_CACHE_MAX_AGE_MS } from '@/constants/queries';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
@@ -28,12 +28,23 @@ const EXCLUDED_KEYS = new Set([
 ]);
 const EXCLUDED_PATTERNS = new Set(['due', 'cooldown']);
 
+// A lost response leaves these idempotent writes safe to repeat. TanStack
+// resumes only paused snapshots, including when the app died mid-transfer.
+function serializeClient(client: PersistedClient): string {
+  const mutations = client.clientState.mutations.map(mutation =>
+    mutation.meta?.persistPending
+      ? { ...mutation, state: { ...mutation.state, isPaused: true, failureReason: null } }
+      : mutation,
+  );
+  return JSON.stringify({ ...client, clientState: { ...client.clientState, mutations } });
+}
+
 // Create the persister backed by AsyncStorage
 export const queryPersister = createAsyncStoragePersister({
   storage: AsyncStorage,
   key: CACHE_KEY,
   throttleTime: THROTTLE_TIME,
-  serialize: JSON.stringify,
+  serialize: serializeClient,
   deserialize: JSON.parse,
 });
 
@@ -49,7 +60,7 @@ const immediatePersister = createAsyncStoragePersister({
   storage: AsyncStorage,
   key: CACHE_KEY,
   throttleTime: 0,
-  serialize: JSON.stringify,
+  serialize: serializeClient,
   deserialize: JSON.parse,
 });
 
@@ -97,6 +108,9 @@ export const PERSISTENCE_OPTIONS = {
   buster: 'v2',
   dehydrateOptions: {
     shouldDehydrateQuery,
+    shouldDehydrateMutation: (mutation: Mutation) =>
+      mutation.state.isPaused ||
+      (mutation.meta?.persistPending === true && mutation.state.status === 'pending'),
   },
 } as const;
 

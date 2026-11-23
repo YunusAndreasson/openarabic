@@ -225,7 +225,13 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     // The device's connection, not a fault: told as such, kept out of Sentry.
     expectedFailureMessage: (error: unknown) => {
       if (getErrorCode(error) === NETWORK_ERROR_CODE) return STRINGS.NO_INTERNET_CONNECTION;
-      if (error instanceof Error && /unable to open safari/i.test(error.message)) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+        typeof error.message === 'string' &&
+        /unable to open safari/i.test(error.message)
+      ) {
         return STRINGS.GOOGLE_SIGN_IN_RETRY;
       }
       return undefined;

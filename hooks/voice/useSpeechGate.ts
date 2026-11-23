@@ -57,6 +57,7 @@ async function loadDetector(signal: AbortSignal): Promise<ExecuTorch.FsmnVoiceAc
   const { createFsmnVoiceActivityDetector, download, models } =
     require('react-native-executorch') as typeof ExecuTorch;
   const model = await download(models.voiceActivityDetection.FSMN_VAD.DEFAULT, { signal });
+  signal.throwIfAborted();
   return createFsmnVoiceActivityDetector(model);
 }
 
@@ -124,8 +125,11 @@ export function useSpeechGate({ enabled }: { enabled: boolean }): SpeechGateStat
       controller.abort();
       setLoaded(false);
       handlersRef.current = null;
-      detectorRef.current?.dispose();
+      // The provider owns this instance. Streaming forward calls are synchronous
+      // on this JS thread, so no native forward remains pending here.
+      const detector = detectorRef.current;
       detectorRef.current = null;
+      detector?.dispose();
     };
   }, [enabled]);
 
@@ -145,9 +149,10 @@ export function useSpeechGate({ enabled }: { enabled: boolean }): SpeechGateStat
     // Detection runs right here, on the buffer in hand, and anything it throws
     // is the contract: `VoiceCaptureSession` catches it and hands the rest of
     // the window to the energy gate.
+    if (!handlersRef.current) return;
     const event = detector.detectVoiceOnStream(waveform, STREAM_OPTIONS);
-    if (event === 'speechStart') handlersRef.current?.onSpeechBegin();
-    else if (event === 'speechEnd') handlersRef.current?.onSpeechEnd();
+    if (event === 'speechStart') handlersRef.current.onSpeechBegin();
+    else if (event === 'speechEnd') handlersRef.current.onSpeechEnd();
   }, []);
 
   const stop = useCallback((): void => {

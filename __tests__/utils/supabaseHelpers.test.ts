@@ -108,6 +108,16 @@ describe('supabaseHelpers', () => {
   });
 
   describe('executeQuery', () => {
+    test('normalizes rejected rows and malformed non-2xx response data at the query boundary', async () => {
+      const rows = [{ article: 'private row' }];
+      await expect(executeQuery(() => Promise.reject(rows))).rejects.toThrow(
+        'Non-Error thrown: Array(1)',
+      );
+      await expect(
+        executeQuery(async () => failed(rows as unknown as PostgrestError, 503)),
+      ).rejects.toThrow('Unreadable response body (HTTP 503)');
+    });
+
     test('should return data when query succeeds', async () => {
       const mockData = { id: 1, name: 'Test' };
       const mockQueryFn = jest.fn(async () => ok(mockData));

@@ -70,7 +70,12 @@ import { simpleAudioService } from '@/services/audioPlayer';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
 import { cleanupNotifications, initializeNotifications } from '@/services/notificationService';
 import { persistor, store } from '@/store/store';
-import { handleError, isDroppedSentryEvent, sentryReportingOptions } from '@/utils/errorHandling';
+import {
+  handleError,
+  isDroppedSentryEvent,
+  sanitizeSentryEvent,
+  sentryReportingOptions,
+} from '@/utils/errorHandling';
 import { registerMutationDefaults } from '@/utils/mutationDefaults';
 import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
 import { flushPersistedQueryCache, PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
@@ -186,7 +191,8 @@ const queryClient = new QueryClient({
     mutations: {
       retry: retryWhileOnline(QUERY_DEFAULTS.MUTATION_MAX_RETRIES),
       networkMode: 'online',
-      gcTime: 0, // Don't cache mutation results
+      // Use TanStack's default. A paused, unobserved mutation reschedules
+      // its GC timer until settlement; zero makes it spin while offline.
     },
   },
 });
@@ -270,7 +276,10 @@ Sentry.init({
     // A request that got no answer, captured around handleError (a direct
     // captureException, an unhandled rejection): dropped like handleError
     // drops it, as a breadcrumb.
-    if (isDroppedSentryEvent(event.level, hint.originalException)) return null;
+    if (isDroppedSentryEvent(event.level, hint.originalException, event.exception?.values))
+      return null;
+
+    sanitizeSentryEvent(event);
 
     // Add environment diagnostic context to all events
     const skiaGpu = getSkiaGpuContext();

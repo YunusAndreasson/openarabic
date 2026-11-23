@@ -7,7 +7,9 @@
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
 
-import type { QueryClient } from '@tanstack/react-query';
+import { QueryClient, dehydrate, hydrate, onlineManager } from '@tanstack/react-query';
+import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
+import { registerMutationDefaults } from '@/utils/mutationDefaults';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { act } from 'react';
 
@@ -37,6 +39,7 @@ describe('useReadingProgress', () => {
   const testArticleId = articleId(42);
 
   beforeEach(() => {
+    jest.useFakeTimers();
     jest.clearAllMocks();
     ({ wrapper, queryClient } = createHookTestWrapper());
 
@@ -185,8 +188,53 @@ describe('useReadingProgress', () => {
   });
 
   describe('Mutation Flow', () => {
+    test('closing the reader offline saves its final position through a restart', async () => {
+      const { result, unmount } = renderHook(
+        () =>
+          useReadingProgress({
+            articleId: testArticleId,
+            totalSentences: 10,
+            isActive: true,
+          }),
+        { wrapper },
+      );
+      await waitFor(() => expect(result.current.lastSentenceRead).toBe(5));
+      onlineManager.setOnline(false);
+      try {
+        act(() => result.current.scheduleProgressUpdate(9));
+        unmount();
+        await Promise.resolve();
+        expect(mockReadingProgressService.updateProgress).not.toHaveBeenCalled();
+        const restored = new QueryClient({ defaultOptions: { mutations: { gcTime: Infinity } } });
+        registerMutationDefaults(restored);
+        hydrate(
+          restored,
+          JSON.parse(JSON.stringify(dehydrate(queryClient, PERSISTENCE_OPTIONS.dehydrateOptions))),
+        );
+        queryClient
+          .getMutationCache()
+          .getAll()
+          .forEach(mutation => mutation.destroy());
+        queryClient.clear();
+        onlineManager.setOnline(true);
+        await restored.resumePausedMutations();
+        expect(mockReadingProgressService.updateProgress).toHaveBeenCalledWith(
+          {
+            userId: testUserId,
+            articleId: testArticleId,
+            lastSentenceRead: 9,
+            totalSentences: 10,
+          },
+          { managed: true, signal: undefined },
+        );
+        restored.clear();
+      } finally {
+        onlineManager.setOnline(true);
+      }
+    });
+
     test('coalesces visible sentences into one latest-position write', async () => {
-      const { result } = renderHook(
+      const { result, unmount } = renderHook(
         () =>
           useReadingProgress({
             articleId: testArticleId,
@@ -218,6 +266,7 @@ describe('useReadingProgress', () => {
           expect.objectContaining({ managed: true }),
         );
       } finally {
+        unmount();
         jest.useRealTimers();
       }
     });

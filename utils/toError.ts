@@ -8,7 +8,26 @@
  */
 
 /** Upper bound on a synthesised error message, so one can never carry a payload. */
-const MAX_THROWN_VALUE_LENGTH = 200;
+export const MAX_ERROR_MESSAGE_LENGTH = 200;
+const errorFields = new Set([
+  'message',
+  'name',
+  'stack',
+  'code',
+  'details',
+  'hint',
+  'status',
+  'cause',
+]);
+
+// Includes truncated and prefixed JSON, which cannot be detected by parsing.
+export const containsResponseBody = (message: string): boolean =>
+  /\{\s*"|\[\s*["{[]|^\s*<(?:html|!doctype)/i.test(message);
+
+export const safeErrorMessage = (message: unknown): string =>
+  typeof message !== 'string' || containsResponseBody(message)
+    ? 'Unreadable response body'
+    : message.slice(0, MAX_ERROR_MESSAGE_LENGTH);
 
 /**
  * Describe a thrown non-Error WITHOUT serialising its contents.
@@ -20,7 +39,7 @@ const MAX_THROWN_VALUE_LENGTH = 200;
  * keep such errors groupable and the payload out of the message.
  */
 function describeThrownValue(value: unknown): string {
-  if (typeof value === 'string') return value.slice(0, MAX_THROWN_VALUE_LENGTH);
+  if (typeof value === 'string') return value;
   if (value === null) return 'Non-Error thrown: null';
   if (value === undefined) return 'Non-Error thrown: undefined';
   if (Array.isArray(value)) return `Non-Error thrown: Array(${value.length})`;
@@ -35,10 +54,10 @@ function describeThrownValue(value: unknown): string {
   // Remaining primitives, narrowed explicitly so nothing can reach String()
   // that would render as "[object Object]".
   if (typeof value === 'number' || typeof value === 'bigint' || typeof value === 'boolean') {
-    return `Non-Error thrown: ${typeof value} ${String(value).slice(0, MAX_THROWN_VALUE_LENGTH)}`;
+    return `Non-Error thrown: ${typeof value} ${String(value).slice(0, MAX_ERROR_MESSAGE_LENGTH)}`;
   }
   if (typeof value === 'symbol') {
-    return `Non-Error thrown: symbol ${value.toString().slice(0, MAX_THROWN_VALUE_LENGTH)}`;
+    return `Non-Error thrown: symbol ${value.toString().slice(0, MAX_ERROR_MESSAGE_LENGTH)}`;
   }
   return `Non-Error thrown: ${typeof value}`;
 }
@@ -54,15 +73,27 @@ function describeThrownValue(value: unknown): string {
  * which turned a thrown array into its whole serialised payload.
  */
 export function toError(error: unknown): Error {
-  if (error instanceof Error) return error;
+  if (error instanceof Error) {
+    const message = safeErrorMessage(error.message);
+    if (message === error.message) return error;
+    // Do not carry the original stack or cause: either can repeat the body.
+    const sanitized = new Error(message);
+    sanitized.name = safeErrorMessage(error.name);
+    // Keep HTTP classification when executeQuery catches an SDK rejection.
+    if ('status' in error && typeof error.status === 'number')
+      Object.assign(sanitized, { status: error.status });
+    return sanitized;
+  }
   // Handle plain objects with a message property (e.g. Supabase error objects)
   if (
     error &&
     typeof error === 'object' &&
+    !Array.isArray(error) &&
     'message' in error &&
-    typeof error.message === 'string'
+    typeof error.message === 'string' &&
+    Object.keys(error).every(key => errorFields.has(key))
   ) {
-    return new Error(error.message.slice(0, MAX_THROWN_VALUE_LENGTH));
+    return new Error(safeErrorMessage(error.message));
   }
-  return new Error(describeThrownValue(error));
+  return new Error(safeErrorMessage(describeThrownValue(error)));
 }

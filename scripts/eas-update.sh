@@ -84,11 +84,21 @@ fi
 
 "${cmd[@]}"
 
-# Sentry needs a debug ID in each bundle and its map to match them, and only
-# @sentry/react-native's getSentryExpoConfig (metro.config.js) writes one.
-if grep -rqs --include='*.map' '"debugId"' dist; then
+# Validate the top-level debug ID, using the same two spellings the SDK accepts.
+# Check each bundle: one valid map should not hide a missing map on the other platform.
+has_map=false
+if [[ -d dist ]]; then
+  while IFS= read -r -d '' bundle; do
+    if node node_modules/@sentry/react-native/scripts/has-sourcemap-debugid.js "$bundle.map"; then
+      has_map=true
+    else
+      echo "warning: the update is live, but $bundle has no usable source map." >&2
+    fi
+  done < <(find dist -type f \( -name '*.hbc' -o -name '*.js' \) -print0)
+fi
+if [[ "$has_map" == true ]]; then
   yarn sentry-expo-upload-sourcemaps dist ||
     echo "warning: the update is live, but its source maps did not upload. Retry with: yarn sentry-expo-upload-sourcemaps dist" >&2
 else
-  echo "warning: the update is live; source maps were not sent to Sentry because the bundles carry no debug IDs (metro.config.js does not use getSentryExpoConfig)." >&2
+  echo "warning: the update is live, but there are no symbolication-ready bundles in dist." >&2
 fi

@@ -1,13 +1,19 @@
 import { mutationOptions, type QueryClient } from '@tanstack/react-query';
 
 import { FSRS_BASE_KEY } from '@/constants/fsrs';
-import { readingProgressQueries } from '@/constants/queries';
+import { QUERY_DEFAULTS, readingProgressQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { bookmarkService } from '@/services/bookmark';
+import {
+  readingProgressService,
+  type UpdateReadingProgressParams,
+} from '@/services/readingProgress';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { ArticleId, RootId } from '@/types/branded.types';
 import type { FSRSWordUpdate } from '@/types/fsrs.types';
 import type { StudyWordIntent } from '@/types/vocabulary.types';
+import { isNetworkFailure } from '@/utils/networkErrors';
+import { isRetryableError } from '@/utils/queryRetry';
 import { managedRequest } from '@/utils/supabaseHelpers';
 
 /** One review grade: the card's whole new FSRS state. */
@@ -53,6 +59,43 @@ export interface ReadingListVariables {
  * The keys are persisted with paused mutations too, so they never change.
  */
 
+// These two idempotent writes can be replayed even if the server applied a
+// request whose response was lost. TanStack backs off and pauses on disconnect.
+const durableWriteRetry = (failures: number, error: Error): boolean =>
+  isNetworkFailure(error) ||
+  (failures < QUERY_DEFAULTS.MUTATION_MAX_RETRIES && isRetryableError(error));
+
+export const readingProgressMutation = mutationOptions({
+  mutationKey: ['reading-progress', 'update'] as const,
+  meta: {
+    persistPending: true,
+    errorReport: { toastMessage: STRINGS.FAILED_TO_UPDATE_READING_PROGRESS },
+  },
+  mutationFn: async (variables: UpdateReadingProgressParams, { client }) => {
+    await readingProgressService.updateProgress(variables, managedRequest());
+    const { userId, articleId, lastSentenceRead, totalSentences } = variables;
+    client.setQueryData(readingProgressQueries.bulk(userId).queryKey, current => {
+      // A restored mutation may run before the full map has been fetched.
+      if (!current) return undefined;
+      const next = new Map(current);
+      const existing = next.get(articleId);
+      const now = new Date().toISOString();
+      next.set(articleId, {
+        article_id: articleId,
+        user_id: userId,
+        last_sentence_read: Math.min(
+          totalSentences - 1,
+          Math.max(existing?.last_sentence_read ?? 0, lastSentenceRead),
+        ),
+        total_sentences: totalSentences,
+        created_at: existing?.created_at ?? now,
+        updated_at: now,
+      });
+      return next;
+    });
+  },
+});
+
 /** A review grade (`useFSRS`). */
 export const fsrsGradeMutation = mutationOptions({
   mutationKey: [FSRS_BASE_KEY, 'grade'] as const,
@@ -86,7 +129,10 @@ export const readingListAddMutation = mutationOptions({
 export const readingListAddManyMutation = mutationOptions({
   mutationKey: ['readingList', 'addMany'] as const,
   scope: READING_LIST_SCOPE,
-  meta: { errorReport: { toastMessage: STRINGS.FAILED_TO_ADD_BEGINNER_ARTICLES } },
+  meta: {
+    persistPending: true,
+    errorReport: { toastMessage: STRINGS.FAILED_TO_ADD_BEGINNER_ARTICLES },
+  },
   mutationFn: async (
     { userId, articleIds }: { userId: string | undefined; articleIds: ArticleId[] },
     { client },
@@ -121,12 +167,16 @@ export const readingListRemoveMutation = mutationOptions({
  * it — not from inside a hook that may not have mounted yet.
  */
 export function registerMutationDefaults(queryClient: QueryClient): void {
+  queryClient.setMutationDefaults(readingProgressMutation.mutationKey, {
+    ...readingProgressMutation,
+    retry: durableWriteRetry,
+  });
   queryClient.setMutationDefaults(fsrsGradeMutation.mutationKey, fsrsGradeMutation);
   queryClient.setMutationDefaults(studyWordToggleMutation.mutationKey, studyWordToggleMutation);
   queryClient.setMutationDefaults(readingListAddMutation.mutationKey, readingListAddMutation);
-  queryClient.setMutationDefaults(
-    readingListAddManyMutation.mutationKey,
-    readingListAddManyMutation,
-  );
+  queryClient.setMutationDefaults(readingListAddManyMutation.mutationKey, {
+    ...readingListAddManyMutation,
+    retry: durableWriteRetry,
+  });
   queryClient.setMutationDefaults(readingListRemoveMutation.mutationKey, readingListRemoveMutation);
 }

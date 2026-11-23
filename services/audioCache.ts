@@ -7,7 +7,7 @@ import { delay, withTimeout } from '@/utils/async';
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { toError } from '@/utils/toError';
 import { handleError } from '@/utils/errorHandling';
-import { isKnownOffline } from '@/utils/network';
+import { onlineManager } from '@tanstack/react-query';
 import { isNetworkFailure } from '@/utils/networkErrors';
 import { countDiag, isSessionActive, mark } from '@/utils/reviewDiagnostics';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
@@ -252,6 +252,20 @@ class AudioCacheManager {
     const timeoutMs = quick ? this.QUICK_DOWNLOAD_TIMEOUT_MS : this.DOWNLOAD_TIMEOUT_MS;
 
     for (let attempt = 0; ; attempt++) {
+      if (attempt > 0) await delay(1000 * attempt);
+      if (!onlineManager.isOnline()) {
+        if (quick) return url;
+        // Never occupy a transfer slot or consume a retry while offline.
+        const { promise, resolve } = Promise.withResolvers<boolean>();
+        const unsubscribe = onlineManager.subscribe(online => {
+          if (online) resolve(true);
+        });
+        try {
+          if (!(await withTimeout(promise, timeoutMs, () => false))) return url;
+        } finally {
+          unsubscribe();
+        }
+      }
       const tempFile = new File(
         this.cacheDir,
         `${cacheKey}.tmp-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
@@ -259,18 +273,6 @@ class AudioCacheManager {
       const attemptStartedAt = Date.now();
 
       try {
-        // Check network before retry (skip check on first attempt for efficiency).
-        // Only a device KNOWN to be offline skips it: NetInfo reports `null`
-        // while it has not yet determined the state (just after resume), and
-        // treating that as offline spent both retries without sending a byte.
-        if (attempt > 0) {
-          if (await isKnownOffline()) {
-            throw new Error('No network connection available');
-          }
-          // Exponential backoff: 1s, 2s
-          await delay(1000 * attempt);
-        }
-
         if (!quick) await this.acquireBackgroundDownloadSlot();
         try {
           await File.downloadFileAsync(url, tempFile, {

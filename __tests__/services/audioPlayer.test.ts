@@ -427,6 +427,67 @@ describe('audioPlayer service', () => {
       expect(success).toBeTruthy();
     });
 
+    test('bounds repeated creation failures across tracks and reports a cause once', async () => {
+      const now = jest.spyOn(Date, 'now').mockReturnValue(100_000);
+      mockCreateAudioPlayer.mockImplementation(() => {
+        throw new Error('ISession.getController() on a null object reference');
+      });
+
+      for (let i = 0; i < 63; i++) await audioService.play(testTrack);
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1);
+      now.mockReturnValue(101_000);
+      await audioService.playPlaylist([testTrack2]);
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(2);
+      now.mockReturnValue(102_000);
+      await audioService.play(testTrack);
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(2);
+      now.mockReturnValue(110_000);
+      await audioService.play(testTrack);
+      now.mockReturnValue(999_000);
+      await audioService.play(testTrack);
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(3);
+      expect(mockHandleError).toHaveBeenCalledTimes(1);
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          showToast: true,
+          toastMessage: STRINGS.AUDIO_PLAYER_UNAVAILABLE,
+        }),
+      );
+    });
+
+    test('a recovered constructor resets the delay but retains the session reporting history', async () => {
+      const now = jest.spyOn(Date, 'now').mockReturnValue(100_000);
+      const fail = () => {
+        throw new Error('MediaSession refused');
+      };
+      mockCreateAudioPlayer.mockImplementationOnce(fail);
+      expect(await audioService.play(testTrack)).toBe(false);
+      now.mockReturnValue(102_000);
+      expect(await audioService.play(testTrack2)).toBe(true);
+      mockCreateAudioPlayer.mockImplementationOnce(fail);
+      expect(await audioService.play(testTrack)).toBe(false);
+      expect(mockHandleError).toHaveBeenLastCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          captureSentry: false,
+          showToast: true,
+        }),
+      );
+      now.mockReturnValue(104_000);
+      mockCreateAudioPlayer.mockImplementationOnce(() => {
+        throw new Error('Different failure');
+      });
+      expect(await audioService.play(testTrack)).toBe(false);
+      expect(mockHandleError).toHaveBeenLastCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          captureSentry: true,
+          showToast: false,
+        }),
+      );
+    });
+
     test('does not retry when the native player cannot be constructed', async () => {
       // Android rejects the AudioPlayer constructor when the platform
       // MediaSession comes back null; it then rejects for every subsequent
@@ -959,6 +1020,30 @@ describe('audioPlayer service', () => {
   });
 
   describe('Edge Cases', () => {
+    test('recovers from iOS OSStatus -50 by configuring a minimal mode before activation', async () => {
+      mockSetAudioModeAsync.mockRejectedValueOnce(new Error('OSStatus error -50.'));
+      expect(await audioService.play(testTrack)).toBe(true);
+      expect(mockSetAudioModeAsync.mock.calls[1]?.[0]).toEqual({
+        playsInSilentMode: true,
+        interruptionMode: 'doNotMix',
+      });
+      expect(mockSetAudioModeAsync.mock.invocationCallOrder[1]).toBeLessThan(
+        mockSetIsAudioActiveAsync.mock.invocationCallOrder[0]!,
+      );
+      expect(mockHandleError).not.toHaveBeenCalled();
+    });
+
+    test('falls back to the ambient mode only when iOS rejects plain playback too', async () => {
+      mockSetAudioModeAsync
+        .mockRejectedValueOnce(new Error('OSStatus error -50.'))
+        .mockRejectedValueOnce(new Error('OSStatus error -50.'));
+      expect(await audioService.play(testTrack)).toBe(true);
+      expect(mockSetAudioModeAsync.mock.calls[2]?.[0]).toEqual({
+        playsInSilentMode: false,
+        interruptionMode: 'doNotMix',
+      });
+    });
+
     test('should handle preconfigureAudioSession before first play', async () => {
       await audioService.preconfigureAudioSession();
 

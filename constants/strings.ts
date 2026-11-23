@@ -324,6 +324,7 @@ export const STRINGS = {
   MINI_PLAYER_RESUME_A11Y: 'Resume',
   /** A hint, not a label: the title is what is announced, this says what a tap does. */
   MINI_PLAYER_OPEN_ARTICLE_HINT: 'Opens the article',
+  AUDIO_PLAYER_UNAVAILABLE: 'Audio is unavailable right now. You can keep reading or practising.',
   AUDIO_PLAY_FAILED: "Couldn't play audio. " + tryAgain,
   AUDIO_PAUSE_FAILED: "Couldn't pause audio. " + tryAgain,
   AUDIO_RESUME_FAILED: "Couldn't resume audio. " + tryAgain,
@@ -653,7 +654,8 @@ export const STRINGS = {
   APPLE_SIGN_IN_UNAVAILABLE:
     "Apple sign-in didn't finish. Check that you're signed in to your Apple Account in Settings, then try again.",
   SIGN_IN_WITH_GOOGLE: 'Sign in with Google',
-  GOOGLE_SIGN_IN_RETRY: 'Google sign-in couldn’t open. Try again.',
+  GOOGLE_SIGN_IN_RETRY:
+    'Google sign-in couldn’t open Safari. Check that Safari is available, then try again or sign in with email.',
   SIGN_IN_WITH_EMAIL: 'Sign in with email',
   CREATE_ACCOUNT_WITH_EMAIL: 'Create account with email',
   CONTINUE_WITH: 'or',

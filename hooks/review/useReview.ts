@@ -748,7 +748,7 @@ export function useReview({
         // stay silent in every future session. Re-fetch once and retry. The
         // remembered path goes too, or the retry would resolve straight back to
         // the file we just deleted.
-        if (localPath !== url) {
+        if (localPath !== url && !simpleAudioService.playerCreationBlocked) {
           detail.healed = true;
           forgetCached(url);
           await audioCache.invalidate(url);

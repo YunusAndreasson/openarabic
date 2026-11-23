@@ -11,6 +11,7 @@ import {
   handleError,
   isDroppedSentryEvent,
   sentryReportingOptions,
+  sanitizeSentryEvent,
   toError,
 } from '@/utils/errorHandling';
 import { STRINGS } from '@/constants/strings';
@@ -466,6 +467,41 @@ describe('errorHandling utility', () => {
   // JSON.stringify-ing a rejected query's payload produced a ~100KB title made of
   // article JSON — which Sentry grouped per-payload, opening a new issue each time.
   describe('toError - non-Error normalisation', () => {
+    test('removes serialized row bodies before truncating and caps real Errors', () => {
+      const body = JSON.stringify([{ article: 'private row', words: ['word'] }]);
+      for (const value of [body, new Error(body), { message: body }]) {
+        expect(toError(value).message).not.toContain('private row');
+      }
+      expect(toError({ article_id: 1, message: 'private row' }).message).not.toContain(
+        'private row',
+      );
+      expect(toError(new Error('x'.repeat(900))).message).toHaveLength(200);
+    });
+
+    test('beforeSend sanitizes direct events, nested exceptions, bogus frames and SDK extras', () => {
+      const body = JSON.stringify([{ article: 'private row' }]);
+      const event = {
+        message: 'x'.repeat(500),
+        logentry: { message: body, params: [body] },
+        exception: {
+          values: [
+            {
+              value: body,
+              stacktrace: { frames: [{ filename: body }, { filename: 'index.android.bundle' }] },
+            },
+          ],
+        },
+        extra: { __serialized__: { rows: [body] }, response: body, attemptCount: 2 },
+      };
+      sanitizeSentryEvent(event);
+      expect(event.message).toHaveLength(200);
+      expect(JSON.stringify(event)).not.toContain('private row');
+      expect(event.extra).toEqual({ attemptCount: 2 });
+      expect(event.exception.values[0]?.stacktrace.frames).toEqual([
+        { filename: 'index.android.bundle' },
+      ]);
+    });
+
     test('returns an Error unchanged', () => {
       const original = new Error('boom');
       expect(toError(original)).toBe(original);
@@ -642,6 +678,20 @@ describe('errorHandling utility', () => {
 
   describe("isDroppedSentryEvent (beforeSend's gate)", () => {
     const abort = Object.assign(new Error('The operation was aborted.'), { name: 'AbortError' });
+
+    test.each([
+      'No network connection available',
+      'fetch failed: FetchRequestCanceledException: Fetch request has been canceled',
+      'The request timed out.',
+    ])('drops the production exception with or without its JS hint: %s', message => {
+      expect(isDroppedSentryEvent('error', new Error(message))).toBe(true);
+      expect(isDroppedSentryEvent('error', undefined, [{ type: 'Error', value: message }])).toBe(
+        true,
+      );
+      expect(isDroppedSentryEvent('fatal', undefined, [{ type: 'Error', value: message }])).toBe(
+        false,
+      );
+    });
 
     test('drops a network failure captured around handleError, leaving a breadcrumb', () => {
       expect(isDroppedSentryEvent('error', abort)).toBe(true);

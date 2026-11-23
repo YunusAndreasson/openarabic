@@ -94,6 +94,7 @@ it('goes quiet once the window is stopped', async () => {
   result.current.gate.insert(buffer);
 
   expect(handlers.onSpeechBegin).not.toHaveBeenCalled();
+  expect(detector.detectVoiceOnStream).not.toHaveBeenCalled();
   expect(detector.resetStream).toHaveBeenCalledTimes(2);
 });
 
@@ -152,4 +153,15 @@ it('disposes a detector that finishes loading after it is no longer wanted', asy
   });
 
   expect(detector.dispose).toHaveBeenCalledTimes(1);
+});
+
+it('does not construct a native module when a cached download resolves after unmount', async () => {
+  const { promise, resolve } = Promise.withResolvers<{ modelPath: string }>();
+  jest.mocked(download).mockReturnValue(promise);
+  const { unmount } = renderHook(() => useSpeechGate({ enabled: true }));
+  unmount();
+  await act(async () => {
+    resolve({ modelPath: '/local/model.pte' });
+  });
+  expect(createFsmnVoiceActivityDetector).not.toHaveBeenCalled();
 });

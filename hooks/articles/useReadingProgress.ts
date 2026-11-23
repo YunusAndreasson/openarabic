@@ -1,14 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { gated, readingProgressQueries } from '@/constants/queries';
-import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { readingProgressService, type ReadingProgress } from '@/services/readingProgress';
+import type { ReadingProgress } from '@/services/readingProgress';
 import type { ArticleId } from '@/types/branded.types';
-import { handleError } from '@/utils/errorHandling';
+import { readingProgressMutation } from '@/utils/mutationDefaults';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
-import { managedRequest } from '@/utils/supabaseHelpers';
 
 interface UseReadingProgressOptions {
   articleId: ArticleId;
@@ -24,7 +22,8 @@ export function useReadingProgress({
   isActive,
 }: UseReadingProgressOptions) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const userId = user?.id;
+
   const lastSavedSentenceRef = useRef<number>(0);
   const latestSentenceRef = useRef<number>(0);
   const pendingSentencesRef = useRef<Set<number>>(new Set());
@@ -42,13 +41,13 @@ export function useReadingProgress({
     lastSavedSentenceRef.current = 0;
     latestSentenceRef.current = 0;
     pendingSentencesRef.current.clear();
-  }, [articleId, user?.id]);
+  }, [articleId, userId]);
 
   // Extract progress for this specific article from the bulk cache
   const rawProgress = useMemo(() => {
-    if (!progressMap || !user?.id || articleId <= 0) return null;
+    if (!progressMap || !userId || articleId <= 0) return null;
     return progressMap.get(articleId) || null;
-  }, [progressMap, user?.id, articleId]);
+  }, [progressMap, userId, articleId]);
 
   // Sanitize progress data to ensure it's valid for current article
   const progress = useMemo(() => {
@@ -72,27 +71,45 @@ export function useReadingProgress({
     return needsSanitization ? sanitized : rawProgress;
   }, [rawProgress, totalSentences]);
 
+  // Refs to capture latest values for unmount cleanup (avoid stale closure)
+  const unmountDataRef = useRef({
+    isActive,
+    userId,
+    articleId,
+    totalSentences,
+    progressLastSentence: progress?.last_sentence_read ?? 0,
+  });
+
+  const { mutate, isPending } = useMutation({
+    ...readingProgressMutation,
+    onSettled: (_result, error, write) => {
+      const active = unmountDataRef.current;
+      if (write.articleId !== active.articleId || write.userId !== active.userId) return;
+      pendingSentencesRef.current.delete(write.lastSentenceRead);
+      if (!error)
+        lastSavedSentenceRef.current = Math.max(
+          lastSavedSentenceRef.current,
+          write.lastSentenceRead,
+        );
+    },
+  });
+
   // Update database if sanitization was required
   useEffect(() => {
-    if (!rawProgress || !user?.id || !progress || totalSentences <= 0) return;
+    if (!rawProgress || !userId || !progress || totalSentences <= 0) return;
 
     // Check if we sanitized the data (last_sentence_read changed)
     const lastSentenceNeedsFix = rawProgress.last_sentence_read !== progress.last_sentence_read;
 
     if (lastSentenceNeedsFix) {
-      // Update the database with the corrected value (silent failure)
-      readingProgressService
-        .updateProgress({
-          userId: user.id,
-          articleId,
-          lastSentenceRead: progress.last_sentence_read,
-          totalSentences,
-        })
-        .catch(() => {
-          // Silent error - sanitization update failed but we still use corrected value
-        });
+      mutate({
+        userId,
+        articleId,
+        lastSentenceRead: progress.last_sentence_read,
+        totalSentences,
+      });
     }
-  }, [rawProgress, progress, user?.id, articleId, totalSentences]);
+  }, [rawProgress, progress, userId, articleId, totalSentences, mutate]);
 
   // Update the ref when we load progress
   const progressLastSentence = progress?.last_sentence_read;
@@ -106,61 +123,10 @@ export function useReadingProgress({
   const isInitialProgressReady = !isLoading && !isPlaceholderData;
   const initialLastSentenceRead = isInitialProgressReady ? (progress?.last_sentence_read ?? 0) : 0;
 
-  // Mutation to update reading progress
-  const updateProgressMutation = useMutation({
-    mutationFn: async (lastSentenceRead: number) => {
-      if (!user?.id) throw new Error('User not authenticated');
-
-      return readingProgressService.updateProgress(
-        {
-          userId: user.id,
-          articleId,
-          lastSentenceRead,
-          totalSentences,
-        },
-        managedRequest(),
-      );
-    },
-    onSuccess: (_, lastSentenceRead) => {
-      // Mutations can settle out of order. Never let an older completion lower
-      // the local high-water mark and reopen an already reserved range.
-      lastSavedSentenceRef.current = Math.max(lastSavedSentenceRef.current, lastSentenceRead);
-
-      // Update the shared cache directly. Invalidating here used to refetch the
-      // entire user's progress map after every reading pause, notifying every
-      // progress consumer in the app.
-      if (user?.id) {
-        queryClient.setQueryData(readingProgressQueries.bulk(user.id).queryKey, current => {
-          const next = new Map(current);
-          const existing = next.get(articleId);
-          const now = new Date().toISOString();
-
-          next.set(articleId, {
-            article_id: articleId,
-            user_id: user.id,
-            last_sentence_read: Math.max(existing?.last_sentence_read ?? 0, lastSentenceRead),
-            total_sentences: totalSentences,
-            created_at: existing?.created_at ?? now,
-            updated_at: now,
-          });
-          return next;
-        });
-      }
-    },
-    onError: error => {
-      // The toast says what failed, never the request's own wording: a failed
-      // save arrives as a SupabaseRequestError whose message is PostgREST's.
-      void handleError(error, { toastMessage: STRINGS.FAILED_TO_UPDATE_READING_PROGRESS });
-    },
-    onSettled: (_data, _error, lastSentenceRead) => {
-      pendingSentencesRef.current.delete(lastSentenceRead);
-    },
-  });
-
   // Only save forward progress (never regress)
   const updateProgress = useCallback(
     (sentenceIndex: number) => {
-      if (!isActive || !user?.id || articleId <= 0 || totalSentences <= 0) {
+      if (!isActive || !userId || articleId <= 0 || totalSentences <= 0) {
         return;
       }
 
@@ -179,24 +145,22 @@ export function useReadingProgress({
         // leave this set in onSettled and can then be retried; successful ones
         // advance lastSavedSentenceRef in onSuccess.
         pendingSentencesRef.current.add(validSentenceIndex);
-        updateProgressMutation.mutate(validSentenceIndex);
+        mutate({
+          userId,
+          articleId,
+          lastSentenceRead: validSentenceIndex,
+          totalSentences,
+        });
       }
     },
-    [
-      isActive,
-      user?.id,
-      articleId,
-      totalSentences,
-      progress?.last_sentence_read,
-      updateProgressMutation,
-    ],
+    [isActive, userId, articleId, totalSentences, progress?.last_sentence_read, mutate],
   );
 
   // Called directly by the list's viewability callback. Keeping the current
   // position in refs avoids a React render for every newly visible sentence.
   const scheduleProgressUpdate = useCallback(
     (sentenceIndex: number) => {
-      if (!isActive || !user?.id || sentenceIndex < 0) return;
+      if (!isActive || !userId || sentenceIndex < 0) return;
 
       latestSentenceRef.current = Math.max(latestSentenceRef.current, sentenceIndex);
       if (debounceTimeoutRef.current) {
@@ -207,37 +171,23 @@ export function useReadingProgress({
         updateProgress(latestSentenceRef.current);
       }, DEBOUNCE_DELAY);
     },
-    [isActive, updateProgress, user?.id],
+    [isActive, updateProgress, userId],
   );
-
-  // Refs to capture latest values for unmount cleanup (avoid stale closure)
-  const unmountDataRef = useRef({
-    isActive,
-    userId: user?.id,
-    articleId,
-    totalSentences,
-    progressLastSentence: progress?.last_sentence_read ?? 0,
-  });
-
-  // Stable ref for queryClient so unmount cleanup can invalidate cache
-  const queryClientRef = useRef(queryClient);
-  useEffect(() => {
-    queryClientRef.current = queryClient;
-  });
 
   // Update refs whenever values change
   useEffect(() => {
     unmountDataRef.current = {
       isActive,
-      userId: user?.id,
+      userId,
       articleId,
       totalSentences,
       progressLastSentence: progress?.last_sentence_read ?? 0,
     };
-  }, [isActive, user?.id, articleId, totalSentences, progress?.last_sentence_read]);
+  }, [isActive, userId, articleId, totalSentences, progress?.last_sentence_read]);
 
-  // Also save progress immediately when component unmounts (article closed)
+  // A route change or unmount flushes the last visible sentence for this article.
   useEffect(() => {
+    const pendingSentences = pendingSentencesRef.current;
     return () => {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
@@ -247,7 +197,11 @@ export function useReadingProgress({
       // Save final progress when hook unmounts using latest values from ref
       const data = unmountDataRef.current;
       if (data.isActive && latestSentenceRef.current >= 0 && data.userId && data.articleId > 0) {
-        const lastRecorded = Math.max(lastSavedSentenceRef.current, data.progressLastSentence);
+        const lastRecorded = Math.max(
+          lastSavedSentenceRef.current,
+          data.progressLastSentence,
+          ...pendingSentences,
+        );
         // Ensure valid bounds before saving
         const validFinalSentenceIndex = Math.max(
           0,
@@ -256,28 +210,16 @@ export function useReadingProgress({
 
         // Never overwrite newer stored progress with an earlier position.
         if (validFinalSentenceIndex > lastRecorded) {
-          const userId = data.userId;
-          // Save final progress. Successful debounced mutations already keep
-          // the shared cache current; this is only the last-chance flush.
-          readingProgressService
-            .updateProgress({
-              userId,
-              articleId: data.articleId,
-              lastSentenceRead: validFinalSentenceIndex,
-              totalSentences: data.totalSentences,
-            })
-            .then(() =>
-              queryClientRef.current.invalidateQueries({
-                queryKey: readingProgressQueries.bulk(userId).queryKey,
-              }),
-            )
-            .catch(() => {
-              // Silent error - final progress save failed
-            });
+          mutate({
+            userId: data.userId,
+            articleId: data.articleId,
+            lastSentenceRead: validFinalSentenceIndex,
+            totalSentences: data.totalSentences,
+          });
         }
       }
     };
-  }, []); // Empty dependency array is safe now - cleanup uses ref values
+  }, [articleId, userId, mutate]);
 
   return {
     progress: progress
@@ -295,7 +237,7 @@ export function useReadingProgress({
     isLoading,
     updateProgress,
     scheduleProgressUpdate,
-    isUpdating: updateProgressMutation.isPending,
+    isUpdating: isPending,
     lastSentenceRead: progress?.last_sentence_read ?? 0,
     isInitialProgressReady,
     initialLastSentenceRead,

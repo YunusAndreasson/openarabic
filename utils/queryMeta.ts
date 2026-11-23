@@ -27,7 +27,10 @@ export interface AppQueryMeta extends Record<string, unknown> {
 }
 
 /** The mutation counterpart of {@link AppQueryMeta}; the same two switches. */
-export type AppMutationMeta = AppQueryMeta;
+export interface AppMutationMeta extends AppQueryMeta {
+  /** The write is idempotent and can be replayed if the response was lost. */
+  persistPending?: boolean;
+}
 
 declare module '@tanstack/react-query' {
   interface Register {
