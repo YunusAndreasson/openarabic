@@ -10,6 +10,7 @@ import {
   createFsmnVoiceActivityDetector,
   download,
   type FsmnVoiceActivityDetector,
+  setTelemetryEnabled,
 } from 'react-native-executorch';
 
 import { useSpeechGate } from '@/hooks/voice/useSpeechGate';
@@ -18,6 +19,7 @@ import { voiceBreadcrumb } from '@/utils/errorHandling';
 jest.mock('react-native-executorch', () => ({
   createFsmnVoiceActivityDetector: jest.fn(),
   download: jest.fn(),
+  setTelemetryEnabled: jest.fn(),
   models: { voiceActivityDetection: { FSMN_VAD: { DEFAULT: { modelPath: 'https://model.pte' } } } },
 }));
 jest.mock('@/utils/errorHandling', () => ({ voiceBreadcrumb: jest.fn() }));
@@ -63,6 +65,15 @@ it('downloads the model and builds the detector from the local copy', async () =
   );
   expect(createFsmnVoiceActivityDetector).toHaveBeenCalledWith({ modelPath: '/local/model.pte' });
   expect(result.current.gate.isReady).toBe(true);
+});
+
+it("opts out of the library's download analytics before the first download", async () => {
+  await renderLoadedGate();
+
+  expect(setTelemetryEnabled).toHaveBeenCalledWith(false);
+  expect(jest.mocked(setTelemetryEnabled).mock.invocationCallOrder[0]).toBeLessThan(
+    jest.mocked(download).mock.invocationCallOrder[0]!,
+  );
 });
 
 it('reports speech starting and stopping from the buffers it is fed', async () => {

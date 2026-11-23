@@ -54,8 +54,12 @@ import { toError } from '@/utils/toError';
  * ceremony rather than consent.
  */
 async function loadDetector(signal: AbortSignal): Promise<ExecuTorch.FsmnVoiceActivityDetector> {
-  const { createFsmnVoiceActivityDetector, download, models } =
+  const { createFsmnVoiceActivityDetector, download, models, setTelemetryEnabled } =
     require('react-native-executorch') as typeof ExecuTorch;
+  // The library posts an anonymous download event (model, locale region, platform)
+  // to Software Mansion unless the app opts out. The privacy labels declare it off.
+  // The Hugging Face download counter it also fires cannot be turned off.
+  setTelemetryEnabled(false);
   const model = await download(models.voiceActivityDetection.FSMN_VAD.DEFAULT, { signal });
   signal.throwIfAborted();
   return createFsmnVoiceActivityDetector(model);
