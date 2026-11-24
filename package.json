@@ -1,7 +1,7 @@
 {
   "name": "OpenArabic",
   "main": "expo-router/entry",
-  "version": "1448.6.5+284",
+  "version": "1448.6.6+285",
   "description": "Read the classics in Arabic: the OpenArabic app for iPhone and Android.",
   "license": "MIT",
   "repository": "github:YunusAndreasson/openarabic",
