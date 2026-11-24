@@ -40,6 +40,8 @@ module.exports = {
   ignorePaths: [
     // CNG: prebuild output is generated from the app config, plugins and native
     // packages hashed above. A local Android build leaves android/ behind.
+    'modules/**/android/build/**',
+    'modules/**/android/.gradle/**',
     'android/**',
     'ios/**',
     // From edenmind: react-native-executorch's postinstall downloads the runtime
@@ -52,5 +54,23 @@ module.exports = {
     '**/@sentry/react-native/android/expo-handler/.gradle/**',
     '**/@sentry/react-native/android/expo-handler/.cxx/**',
   ],
-  extraSources: nativePatchSources(),
+  extraSources: [
+    ...nativePatchSources(),
+    // Embedded gallery layouts, extension resources and the local bridge ship in the binary.
+    ...['widgets', 'modules/word-widget'].map(filePath => ({
+      type: 'dir',
+      filePath,
+      reasons: ['OpenArabic word widget'],
+    })),
+    ...[
+      'constants/widgetEdition.ts',
+      'plugins/withWordWidgetResources.js',
+      'assets/fonts/NotoSans.ttf',
+      'assets/first-page/books.jpg',
+    ].map(filePath => ({
+      type: 'file',
+      filePath,
+      reasons: ['OpenArabic word widget resources'],
+    })),
+  ],
 };

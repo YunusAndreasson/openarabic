@@ -360,7 +360,49 @@
           }
         }
       ],
-      "./plugins/withAndroidBuildResources"
+      "./plugins/withAndroidBuildResources",
+      "./plugins/withWordWidgetResources",
+      [
+        "expo-widgets",
+        {
+          "enableAndroid": true,
+          "groupIdentifier": "group.openarabic",
+          "widgets": [
+            {
+              "name": "WordInContext",
+              "displayName": "Word in context",
+              "description": "A word, its meaning and the line it came from.",
+              "ios": {
+                "supportedFamilies": ["systemSmall", "systemMedium"],
+                "initialLayout": "widgets/WordInContext.ios.tsx"
+              },
+              "android": {
+                "minWidth": 110,
+                "minHeight": 110,
+                "targetCellWidth": 2,
+                "targetCellHeight": 2,
+                "resizeMode": "horizontal",
+                "initialLayout": "widgets/WordInContext.android.tsx"
+              }
+            },
+            {
+              "name": "OpenText",
+              "displayName": "Open text",
+              "description": "Arabic from the public passage for your Lock Screen or StandBy.",
+              "ios": {
+                "supportedFamilies": [
+                  "accessoryCircular",
+                  "accessoryRectangular",
+                  "accessoryInline",
+                  "systemSmall"
+                ],
+                "initialLayout": "widgets/OpenText.ios.tsx"
+              },
+              "android": null
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -372,7 +414,7 @@
       }
     },
     "owner": "edenmind",
-    "runtimeVersion": "1448.6.14",
+    "runtimeVersion": "1448.6.24",
     "updates": {
       "url": "https://u.expo.dev/644480e0-3ac0-4ce6-b6ca-b950f62ca438",
       "enableBsdiffPatchSupport": true,

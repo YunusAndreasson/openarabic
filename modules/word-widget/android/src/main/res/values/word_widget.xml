@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="word_widget_open_text">Open text</string>
+    <string name="word_widget_seed" translatable="false">كَنْزٍ</string>
+    <string name="word_widget_read">Read the line</string>
+</resources>

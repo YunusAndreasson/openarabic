@@ -84,6 +84,11 @@ scripts/output/
 
 # Native build directories
 android/
+!modules/word-widget/android/
+!__tests__/native/widget-host/android/
+/modules/word-widget/android/build/
+/modules/word-widget/android/.gradle/
+/modules/word-widget/android/.cxx/
 
 # Cloudflare Wrangler cache (admin-dashboard)
 admin-dashboard/.wrangler/

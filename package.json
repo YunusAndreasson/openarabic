@@ -98,6 +98,7 @@
     "expo-system-ui": "~58.0.7",
     "expo-task-manager": "~58.0.14",
     "expo-updates": "~58.0.22",
+    "expo-widgets": "patch:expo-widgets@npm%3A58.0.29#~/.yarn/patches/expo-widgets-npm-58.0.29.patch",
     "mixpanel-react-native": "^4.1.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",

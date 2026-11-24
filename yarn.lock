@@ -5098,6 +5098,7 @@ __metadata:
     expo-system-ui: "npm:~58.0.7"
     expo-task-manager: "npm:~58.0.14"
     expo-updates: "npm:~58.0.22"
+    expo-widgets: "patch:expo-widgets@npm%3A58.0.29#~/.yarn/patches/expo-widgets-npm-58.0.29.patch"
     fast-check: "npm:^4.11.0"
     globals: "npm:^17.14.0"
     jest: "npm:~30.5.2"
@@ -7990,6 +7991,34 @@ __metadata:
   bin:
     expo-updates: bin/cli.js
   checksum: 10c0/b9e7616bc5638d8d4d5c52cd9c28f786893f09289784723c1b3172eed8535c2cb66455db48a006b6c98fe2f215354cca4997f39d53d22fe251b19cdef98939f0
+  languageName: node
+  linkType: hard
+
+"expo-widgets@npm:58.0.29":
+  version: 58.0.29
+  resolution: "expo-widgets@npm:58.0.29"
+  dependencies:
+    "@expo/plist": "npm:^0.10.2"
+    "@expo/ui": "npm:~58.0.29"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/5b034fd8a5cb0660e6460f18b330821d0df1788389f61c6360743f5435a07d041a4b49f33691c5c14800ca6f63ad5d2bdc2ec77f9138185a465e46c0d32fefea
+  languageName: node
+  linkType: hard
+
+"expo-widgets@patch:expo-widgets@npm%3A58.0.29#~/.yarn/patches/expo-widgets-npm-58.0.29.patch":
+  version: 58.0.29
+  resolution: "expo-widgets@patch:expo-widgets@npm%3A58.0.29#~/.yarn/patches/expo-widgets-npm-58.0.29.patch::version=58.0.29&hash=e7b14b"
+  dependencies:
+    "@expo/plist": "npm:^0.10.2"
+    "@expo/ui": "npm:~58.0.29"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/e3cebc99551f62ccc28f9c6e0aa9cb0a64cb1ef0fa91f2240ea48c6dc580be094fccf9f56f91a66df8dd874fd8353daa0a94cb6e1142d8d450e3b8d40b38e9dc
   languageName: node
   linkType: hard
 

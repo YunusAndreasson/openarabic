@@ -31,6 +31,10 @@
 !/hooks
 !/lib
 !/plugins
+!/widgets
+!/modules
+/modules/**/android/build
+/modules/**/android/.gradle
 !/services
 !/store
 !/types

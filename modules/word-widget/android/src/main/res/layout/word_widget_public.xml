@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="#145735" android:orientation="vertical" android:gravity="center_vertical"
+    android:padding="14dp">
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:gravity="right" android:textDirection="rtl" android:text="@string/word_widget_seed"
+        android:textColor="#FCFFFD" android:textSize="36sp" />
+</LinearLayout>
