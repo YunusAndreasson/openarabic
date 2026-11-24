@@ -60,6 +60,11 @@ jest.mock('@/services/supabase', () => ({
   checkAuthentication: () => mockCheckAuthentication(),
 }));
 
+jest.mock('@/services/readerSaveRpc', () => ({
+  writeReaderIntent: async () => {
+    throw new Error('acknowledgement lost');
+  },
+}));
 jest.mock('@/services/studyWordsFSRS', () => ({
   studyWordsFSRSService: {
     setFSRSStudyRoot: async (...args: unknown[]) => ({
@@ -215,6 +220,34 @@ describe('useStudyWordMutations', () => {
       expect(mockIncrementDailyWordCount).not.toHaveBeenCalled();
     });
 
+    test('the missing RPC fallback refunds an ambiguous journalled add', async () => {
+      mockToggleFSRSStudyRoot.mockRejectedValue(new Error('committed but lost acknowledgement'));
+      const { result } = renderHook(() => useStudyWordMutations(undefined, { journaled: true }), {
+        wrapper,
+      });
+      await act(async () => {
+        await result.current.handleRootPress(rootId(7), 'add', {
+          expectedOwner: 'test-user-id',
+          attribution: { sheet_id: 'same-journal', platform: 'ios', provider: 'signed_in' },
+        });
+      });
+      expect(mockIncrementDailyWordCount).toHaveBeenCalledWith('same-journal');
+      expect(mockDecrementDailyWordCount).toHaveBeenCalledWith('same-journal');
+    });
+
+    test('keeps the guided reservation when an already committed write loses its acknowledgement', async () => {
+      // Both transports see a lost response if the client uses the legacy write.
+      mockToggleFSRSStudyRoot.mockRejectedValue(new Error('acknowledgement lost'));
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+      await act(async () => {
+        await result.current.handleRootPress(rootId(7), 'add', {
+          readerIntent: 'intent',
+          attribution: { sheet_id: 'intent', platform: 'ios', provider: 'email_code' },
+        });
+      });
+      expect(mockIncrementDailyWordCount).toHaveBeenCalledWith('intent');
+      expect(mockDecrementDailyWordCount).not.toHaveBeenCalled();
+    });
     test('releases the reserved daily slot when an add fails', async () => {
       queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
       mockToggleFSRSStudyRoot.mockRejectedValue(new Error('network failure'));

@@ -4,7 +4,7 @@
  * It used to call router.back() after `await deleteAccount()`. The hook never
  * throws — it reports a failure and resolves — so a failed deletion popped the
  * screen and threw away the typed "DELETE", and a successful one queued a
- * GO_BACK behind the hook's own replace to /auth.
+ * GO_BACK behind the hook's own replace to the public reader.
  */
 
 import { describe, expect, jest, test, beforeEach } from '@jest/globals';

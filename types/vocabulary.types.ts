@@ -52,6 +52,7 @@ export interface StudyWord extends Omit<
   | 'fsrs_stability_fast'
   | 'fsrs_fast_reviewed_at'
 > {
+  review_revision?: string | null;
   /** Root ID (branded for type safety) */
   root_id: RootId;
   /** User ID (branded for type safety) */

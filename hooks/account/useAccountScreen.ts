@@ -1,3 +1,4 @@
+import { accountTeardown } from '@/services/accountLifecycle';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -9,12 +10,11 @@ import { readingProgressQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAudioCache } from '@/hooks/audio/useAudioCache';
+import { recordSettingsReminderChoice } from '@/services/reviewReminderJourney';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
-import { simpleAudioService } from '@/services/audioPlayer';
 import { ensurePermissions } from '@/services/notificationService';
 import { ReadingProgressService } from '@/services/readingProgress';
-import { supabase } from '@/services/supabase';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { reminderClockSet, remindersToggled } from '@/store/settingsSlice';
 import { ToastType } from '@/types/enums';
@@ -124,17 +124,8 @@ export const useAccountScreen = () => {
           onPress: () =>
             void (async () => {
               try {
-                // Stop audio before signing out to prevent stale audio state
-                await simpleAudioService.stop();
-                const { error } = await supabase.auth.signOut();
-                if (error) {
-                  Alert.alert(STRINGS.ERROR, error.message);
-                  return;
-                }
-                // Only a sign-out that happened, and before reset() replaces the
-                // anonymous id it belongs to.
-                await analytics.trackSignOut();
-                await analytics.reset();
+                if (!user) return;
+                await accountTeardown.begin(user.id, 'signOut');
                 router.replace(ROUTE_PATHS.AUTH);
               } catch (error) {
                 Alert.alert(
@@ -147,7 +138,7 @@ export const useAccountScreen = () => {
       ],
       { cancelable: true },
     );
-  }, []);
+  }, [user]);
 
   const handleResetReadingProgress = () => {
     if (!user?.id) {
@@ -230,11 +221,12 @@ export const useAccountScreen = () => {
       }
 
       // useSmartNotifications watches this setting and reschedules the plan.
+      if (user?.id) await recordSettingsReminderChoice(user.id, enabled).catch(() => undefined);
       dispatch(remindersToggled(enabled));
       void analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_TOGGLED, { enabled });
       lightFeedback();
     },
-    [dispatch],
+    [dispatch, user],
   );
 
   const handleTimePickerOpen = useCallback(() => {

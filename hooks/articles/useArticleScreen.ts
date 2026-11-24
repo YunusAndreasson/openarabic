@@ -1,3 +1,5 @@
+import { articleOccurrence } from '@/services/widgets/articleOccurrence';
+import { keepWidgetOccurrence } from '@/services/widgets/storage';
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { AppState, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 
@@ -118,6 +120,18 @@ export function useArticleScreen({
     handleAddWordToStudy,
     closeTooltipOnScroll,
   } = useArticleWordInteractions({
+    onOccurrenceSaved: (owner, word) => {
+      if (!articleId) return;
+      void keepWidgetOccurrence(
+        owner,
+        articleOccurrence(
+          articleId,
+          word,
+          sentenceWordsMap.get(word.sentence_id) ?? [],
+          article?.author.name,
+        ),
+      ).catch(() => undefined);
+    },
     handleRootPress,
     refetchStudyWords,
     showTooltipFirst,

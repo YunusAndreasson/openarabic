@@ -199,12 +199,18 @@ export const analytics = {
   },
 
   // Convenience methods for common events
-  trackSignIn: async (method: string = 'email'): Promise<void> => {
-    await analytics.track(ANALYTICS_EVENTS.SIGN_IN, { method });
+  trackSignIn: async (
+    method: string = 'email',
+    properties?: AnalyticsProperties,
+  ): Promise<void> => {
+    await analytics.track(ANALYTICS_EVENTS.SIGN_IN, { ...properties, method });
   },
 
-  trackSignUp: async (method: string = 'email'): Promise<void> => {
-    await analytics.track(ANALYTICS_EVENTS.SIGN_UP, { method });
+  trackSignUp: async (
+    method: string = 'email',
+    properties?: AnalyticsProperties,
+  ): Promise<void> => {
+    await analytics.track(ANALYTICS_EVENTS.SIGN_UP, { ...properties, method });
   },
 
   trackSignOut: async (): Promise<void> => {

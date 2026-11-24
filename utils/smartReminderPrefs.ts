@@ -1,3 +1,4 @@
+import { teardownPending } from '@/services/accountTeardown';
 /**
  * Headless mirror of the smart-reminder settings.
  * The background task runs without Redux, and parsing redux-persist's blob is
@@ -16,19 +17,21 @@ import { createJsonStore } from '@/utils/createJsonStore';
  * finished and re-added the reminder the foreground had correctly dropped.
  */
 export interface SmartReminderMirror extends ReminderTime {
+  owner?: string;
   lastSessionCompletedAt?: number;
 }
 
 /** Only a mirror with all three setting fields is usable; anything else reads as absent. */
 function decodeMirror(raw: unknown): SmartReminderMirror | null {
   if (typeof raw !== 'object' || raw === null) return null;
-  const { hour, minute, enabled, lastSessionCompletedAt } = raw as Partial<
+  const { hour, minute, enabled, owner, lastSessionCompletedAt } = raw as Partial<
     Record<keyof SmartReminderMirror, unknown>
   >;
   if (typeof hour !== 'number' || typeof minute !== 'number' || typeof enabled !== 'boolean') {
     return null;
   }
   return {
+    owner: typeof owner === 'string' ? owner : undefined,
     hour,
     minute,
     enabled,
@@ -48,6 +51,6 @@ export function readSmartReminderPrefs(): Promise<SmartReminderMirror | null> {
   return mirrorStore.read();
 }
 
-export function writeSmartReminderPrefs(prefs: SmartReminderMirror): Promise<void> {
-  return mirrorStore.write(prefs);
+export async function writeSmartReminderPrefs(prefs: SmartReminderMirror): Promise<void> {
+  if (!(await teardownPending())) await mirrorStore.write(prefs);
 }

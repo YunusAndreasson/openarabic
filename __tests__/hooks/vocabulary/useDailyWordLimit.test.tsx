@@ -171,6 +171,22 @@ describe('useDailyWordLimit', () => {
     });
   });
 
+  test('a reserved reader slot survives restart at the daily limit and can be released only once', async () => {
+    mockStore = createTestStore(1);
+    const first = renderHook(() => useDailyWordLimit(), { wrapper });
+    expect(await first.result.current.incrementDailyWordCount('operation')).toBe(true);
+    first.unmount();
+    const next = renderHook(() => useDailyWordLimit(), { wrapper });
+    expect(await next.result.current.canAddWord('operation')).toBe(true);
+    expect(await next.result.current.canAddWord('other')).toBe(false);
+    expect(await next.result.current.incrementDailyWordCount('operation')).toBe(true);
+    expect(await next.result.current.getDailyWordCount()).toBe(1);
+    await next.result.current.decrementDailyWordCount('other');
+    expect(await next.result.current.getDailyWordCount()).toBe(1);
+    await next.result.current.decrementDailyWordCount('operation');
+    await next.result.current.decrementDailyWordCount('operation');
+    expect(await next.result.current.getDailyWordCount()).toBe(0);
+  });
   describe('canAddWord', () => {
     test('returns true when unlimited', async () => {
       const unlimitedStore = createTestStore(0);

@@ -39,30 +39,35 @@ function serializeClient(client: PersistedClient): string {
   return JSON.stringify({ ...client, clientState: { ...client.clientState, mutations } });
 }
 
-// Create the persister backed by AsyncStorage
-export const queryPersister = createAsyncStoragePersister({
-  storage: AsyncStorage,
-  key: CACHE_KEY,
-  throttleTime: THROTTLE_TIME,
-  serialize: serializeClient,
-  deserialize: JSON.parse,
-});
-
-// A second persister on the same storage key, with no throttle. `queryPersister`
-// above throttles its own `persistClient` internally (see `asyncThrottle` in
-// @tanstack/query-async-storage-persister) — calling IT again from an app-state
-// checkpoint doesn't bypass that throttle, it just updates the args of whatever
-// invocation is already queued. This persister exists solely so
-// `flushPersistedQueryCache` can force an immediate write: a review grade or a
-// saved word can otherwise sit unwritten for up to a second, and the OS/user can
-// kill the process inside that window with no further chance to flush.
-const immediatePersister = createAsyncStoragePersister({
-  storage: AsyncStorage,
-  key: CACHE_KEY,
-  throttleTime: 0,
-  serialize: serializeClient,
-  deserialize: JSON.parse,
-});
+// A throttled write may already be queued with the departing learner's mutations.
+let epoch = 0;
+function makePersister(throttleTime: number) {
+  const generation = epoch;
+  return createAsyncStoragePersister({
+    storage: {
+      getItem: key => AsyncStorage.getItem(key),
+      removeItem: key => AsyncStorage.removeItem(key),
+      setItem: (key, value) =>
+        generation === epoch ? AsyncStorage.setItem(key, value) : Promise.resolve(),
+    },
+    key: CACHE_KEY,
+    throttleTime,
+    serialize: serializeClient,
+    deserialize: JSON.parse,
+  });
+}
+let throttled = makePersister(THROTTLE_TIME);
+let immediatePersister = makePersister(0);
+export const queryPersister: typeof throttled = {
+  persistClient: client => throttled.persistClient(client),
+  restoreClient: () => throttled.restoreClient(),
+  removeClient: () => throttled.removeClient(),
+};
+export function invalidateQueryPersistence() {
+  epoch++;
+  throttled = makePersister(THROTTLE_TIME);
+  immediatePersister = makePersister(0);
+}
 
 /**
  * Helper to check if query key contains any excluded patterns

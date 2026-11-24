@@ -41,6 +41,6 @@ describe('accessibility containers', () => {
       </BrandedBottomSheet>,
     );
 
-    expect(UNSAFE_getByProps({ accessible: false, index: -1 })).toBeTruthy();
+    expect(UNSAFE_getByProps({ accessible: false, index: 0 })).toBeTruthy();
   });
 });

@@ -16,6 +16,8 @@ const mockCanDismiss = jest.fn<() => boolean>();
 const mockDismiss = jest.fn();
 const mockReplace = jest.fn();
 
+jest.mock('@/components/first-page/TrackWordSheet', () => ({ TrackWordSheet: () => null }));
+
 jest.mock('expo-router', () => ({
   router: {
     canDismiss: () => mockCanDismiss(),

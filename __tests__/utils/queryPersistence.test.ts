@@ -14,7 +14,11 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { MutationObserver, QueryClient, dehydrate } from '@tanstack/react-query';
-import { PERSISTENCE_OPTIONS, queryPersister } from '@/utils/queryPersistence';
+import {
+  invalidateQueryPersistence,
+  PERSISTENCE_OPTIONS,
+  queryPersister,
+} from '@/utils/queryPersistence';
 
 // Capture options passed into the persister factory. queryPersistence.ts
 // creates two persisters on the same storage key — the throttled
@@ -83,7 +87,7 @@ describe('Query Persistence', () => {
       const throttledOptions = captured.allOptions.find(opts => opts.throttleTime === 1000);
       expect(throttledOptions).toBeDefined();
       expect(throttledOptions.key).toBe('REACT_QUERY_OFFLINE_CACHE_V2');
-      expect(throttledOptions.storage).toBe(AsyncStorage);
+      expect(typeof throttledOptions.storage.getItem).toBe('function');
       expect(typeof throttledOptions.serialize).toBe('function');
       expect(typeof throttledOptions.deserialize).toBe('function');
     });
@@ -278,4 +282,14 @@ describe('Query Persistence', () => {
       });
     });
   });
+});
+
+test('a delayed write from either persister cannot restore private mutations after account cleanup', async () => {
+  const previous = captured.allOptions.slice(-2);
+  invalidateQueryPersistence();
+  for (const { storage, key } of previous) await storage.setItem(key, 'old account mutation');
+  expect(AsyncStorage.setItem).not.toHaveBeenCalledWith(expect.any(String), 'old account mutation');
+  const next = captured.allOptions.at(-1);
+  await next.storage.setItem(next.key, 'new account mutation');
+  expect(AsyncStorage.setItem).toHaveBeenCalledWith(next.key, 'new account mutation');
 });

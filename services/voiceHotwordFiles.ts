@@ -1,3 +1,5 @@
+import { createSerialQueue } from '@/utils/createSerialQueue';
+import { teardownPending } from '@/services/accountTeardown';
 import { Directory, File, Paths } from 'expo-file-system';
 
 import { PARAKEET_MODEL_ID, VOICE_HOTWORDS_SCORE } from '@/constants/voiceModel';
@@ -23,10 +25,20 @@ const toUri = (path: string): string => (path.includes('://') ? path : `file://$
  * files that engine was built from. Nothing is downloaded and the model archive
  * is left alone.
  */
-export async function prepareHotwordFiles(
-  modelPath: string,
-  hotwords: string,
-): Promise<HotwordOptions> {
+const fileQueue = createSerialQueue();
+export function purgeVoiceHotwords() {
+  return fileQueue(async () => {
+    const dir = new Directory(Paths.cache, 'voice-hotwords');
+    if (dir.exists) dir.delete();
+  });
+}
+export function prepareHotwordFiles(modelPath: string, hotwords: string) {
+  return fileQueue(async () => {
+    if (await teardownPending()) throw new Error('Account cleanup in progress');
+    return writeHotwordFiles(modelPath, hotwords);
+  });
+}
+async function writeHotwordFiles(modelPath: string, hotwords: string): Promise<HotwordOptions> {
   const root = new Directory(toUri(modelPath));
   let tokens = new File(root, 'tokens.txt');
   // Some download-manager versions keep the archive's enclosing directory.

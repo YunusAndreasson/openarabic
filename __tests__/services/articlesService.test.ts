@@ -254,6 +254,14 @@ describe('articlesService', () => {
     });
   });
 
+  test('public search filters its sentence source to published parents', async () => {
+    const builder = createPagedBuilder(ok([]));
+    fromMock.mockReturnValue(builder);
+    await articlesService.getSearchCorpus();
+    expect(builder.select).toHaveBeenCalledWith(expect.stringContaining('articles!inner()'));
+    expect(builder.eq).toHaveBeenCalledWith('articles.published', true);
+  });
+
   describe('getArticleById', () => {
     test('retrieves single article and maps data', async () => {
       const response = { data: { id: 1 }, error: null };

@@ -1,3 +1,5 @@
+import { widgetBridge } from '@/services/widgets/native';
+import { teardownPending } from '@/services/accountTeardown';
 /**
  * Notification Service
  * Push notification and reminder management with graceful error handling
@@ -37,6 +39,15 @@
  */
 
 import { Platform } from 'react-native';
+import { createSerialQueue } from '@/utils/createSerialQueue';
+import {
+  REMINDER_CHANNEL,
+  reminderRevision,
+  verifiedReminderTimes,
+  type ReminderAccess,
+  type ReminderObservation,
+} from '@/utils/reviewReminderPlan';
+import { recordReminderObservation } from '@/services/reviewReminderJourney';
 
 import type * as NotificationsModule from 'expo-notifications';
 import type { Href } from 'expo-router';
@@ -276,20 +287,68 @@ function isManagedNotification(request: NotificationsModule.NotificationRequest)
 
 async function cancelManagedNotifications(
   notifications: NonNullable<typeof Notifications>,
+  stale?: { owner: string; revision: string },
 ): Promise<void> {
   const scheduled = await notifications.getAllScheduledNotificationsAsync();
   for (const request of scheduled) {
-    if (isManagedNotification(request)) {
+    if (
+      isManagedNotification(request) &&
+      (!stale ||
+        (request.content.data?.['reminderOwner'] === stale.owner &&
+          request.content.data['planRevision'] === stale.revision))
+    ) {
       await notifications.cancelScheduledNotificationAsync(request.identifier);
     }
   }
+}
+
+const planQueue = createSerialQueue();
+/** Drain foreground writes before removing scheduled and delivered requests.
+ * Legacy daily requests predate owner tags and belong to the outgoing session. */
+export async function cancelAccountNotifications(owner: string) {
+  await widgetBridge?.closePublications();
+  return planQueue(async () => {
+    if (!Notifications) {
+      if (Platform.OS === 'ios' || Platform.OS === 'android')
+        throw new Error('Notification cleanup is unavailable');
+      return;
+    }
+    const belongs = (request: NotificationsModule.NotificationRequest) => {
+      const tagged = request.content.data?.['reminderOwner'];
+      return isManagedNotification(request) && (tagged == null || tagged === owner);
+    };
+    for (const request of await Notifications.getAllScheduledNotificationsAsync()) {
+      if (belongs(request))
+        await Notifications.cancelScheduledNotificationAsync(request.identifier);
+    }
+    for (const { request } of await Notifications.getPresentedNotificationsAsync()) {
+      if (belongs(request)) await Notifications.dismissNotificationAsync(request.identifier);
+    }
+    await setAppBadgeCount(0);
+  });
+}
+type Observer = (owner: string | undefined, result?: ReminderObservation) => void;
+const observers = new Set<Observer>();
+export function observeReminderPlan(observer: Observer) {
+  observers.add(observer);
+  return () => {
+    observers.delete(observer);
+  };
+}
+async function publishReminder(owner?: string, result?: ReminderObservation) {
+  observers.forEach(observer => observer(owner, result));
+  await recordReminderObservation(owner, result).catch(() => undefined);
 }
 
 /** Cancel all smart-scheduled (and legacy daily) reminders. Never throws. */
 export async function cancelSmartNotifications(): Promise<void> {
   if (!Notifications) return;
   try {
-    await cancelManagedNotifications(Notifications);
+    const notifications = Notifications;
+    await planQueue(async () => {
+      await publishReminder();
+      await cancelManagedNotifications(notifications);
+    });
   } catch (error) {
     void handleError(error, { showToast: false });
   }
@@ -310,13 +369,24 @@ let lastReportedScheduledCount: number | null = null;
  * Check-only on permissions — never triggers the OS permission dialog.
  * Returns the number of notifications scheduled.
  */
-export async function syncSmartNotifications(
+export function syncSmartNotifications(plan: PlannedNotification[], trigger?: string) {
+  return planQueue(() => replaceSmartNotifications(plan, trigger));
+}
+
+async function replaceSmartNotifications(
   plan: PlannedNotification[],
   trigger?: string,
+  tags?: { reminderOwner: string; planRevision: string },
+  acknowledged?: Set<string>,
+  current?: () => Promise<boolean>,
 ): Promise<number> {
   if (!Notifications) return 0;
   try {
     await initializeNotifications();
+    // A process can stop between removing yesterday’s plan and verifying the replacement.
+    // Retire the old metric snapshot before the first destructive OS operation.
+    if (tags) await recordReminderObservation(tags.reminderOwner).catch(() => undefined);
+    if (current && !(await current())) return 0;
     await cancelManagedNotifications(Notifications);
 
     if (plan.length === 0) return 0;
@@ -326,6 +396,7 @@ export async function syncSmartNotifications(
 
     let scheduledCount = 0;
     for (const planned of plan) {
+      if (current && !(await current())) break;
       try {
         const kind = reminderKindForPlan(
           planned.type,
@@ -338,7 +409,7 @@ export async function syncSmartNotifications(
           dayOfYearSeed(planned.fireDate),
         );
 
-        await Notifications.scheduleNotificationAsync({
+        const identifier = await Notifications.scheduleNotificationAsync({
           identifier: planned.identifier,
           content: {
             title,
@@ -348,19 +419,37 @@ export async function syncSmartNotifications(
             priority: Notifications.AndroidNotificationPriority.HIGH,
             categoryIdentifier: 'reminder',
             data: {
+              ...tags,
               type: planned.type,
               wordCount: planned.wordCount,
               sampleRootId: planned.sampleWord?.rootId,
             },
           },
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DATE,
-            date: planned.fireDate,
-            channelId: Platform.OS === 'android' ? 'reminders' : undefined,
-          },
+          trigger:
+            tags && Platform.OS === 'ios'
+              ? {
+                  type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+                  timezone: 'UTC',
+                  repeats: false,
+                  year: planned.fireDate.getUTCFullYear(),
+                  month: planned.fireDate.getUTCMonth() + 1,
+                  day: planned.fireDate.getUTCDate(),
+                  hour: planned.fireDate.getUTCHours(),
+                  minute: planned.fireDate.getUTCMinutes(),
+                  second: 0,
+                }
+              : {
+                  type: Notifications.SchedulableTriggerInputTypes.DATE,
+                  date: planned.fireDate,
+                  channelId: Platform.OS === 'android' ? 'reminders' : undefined,
+                },
         });
+        acknowledged?.add(identifier);
         scheduledCount++;
       } catch (error) {
+        await Notifications.cancelScheduledNotificationAsync(planned.identifier).catch(
+          () => undefined,
+        );
         void handleError(error, {
           showToast: false,
           analyticsEventName: ANALYTICS_EVENTS.REMINDER_SCHEDULING_ERROR,
@@ -398,15 +487,181 @@ export async function syncReminderPlan(
   words: StudyWord[],
   prefs: SmartReminderMirror,
   trigger: string,
+  stillCurrent?: () => boolean | Promise<boolean>,
 ): Promise<number> {
-  const plan = buildNotificationPlan({
+  if (!prefs.owner) return syncSmartNotifications(makeReminderPlan(words, prefs), trigger);
+  return (await syncVerifiedReminderPlan(words, prefs, prefs.owner, trigger, stillCurrent)).times
+    .length;
+}
+
+export function makeReminderPlan(words: StudyWord[], prefs: SmartReminderMirror) {
+  return buildNotificationPlan({
     words,
     now: new Date(),
     preferredHour: prefs.hour,
     preferredMinute: prefs.minute,
     lastSessionCompletedAt: prefs.lastSessionCompletedAt,
   });
-  return syncSmartNotifications(plan, trigger);
+}
+
+const unavailable: ReminderAccess = {
+  full: false,
+  channel: false,
+  canAskAgain: false,
+  raw: 'unavailable',
+};
+
+export async function readReminderAccess(): Promise<ReminderAccess> {
+  if (!Notifications) return unavailable;
+  try {
+    const permission = await Notifications.getPermissionsAsync();
+    const channel =
+      Platform.OS !== 'android' ||
+      Number(Platform.Version) < 26 ||
+      ((await Notifications.getNotificationChannelAsync(REMINDER_CHANNEL))?.importance ?? 0) >
+        Notifications.AndroidImportance.NONE;
+    const full =
+      Platform.OS === 'ios'
+        ? permission.ios?.status === Notifications.IosAuthorizationStatus.AUTHORIZED
+        : Platform.OS === 'android' && permission.status === 'granted';
+    return {
+      full,
+      channel,
+      canAskAgain: permission.canAskAgain,
+      raw:
+        Platform.OS === 'ios' ? String(permission.ios?.status ?? 'unavailable') : permission.status,
+    };
+  } catch {
+    return unavailable;
+  }
+}
+
+export async function requestReviewReminder(attemptId: string, source: string) {
+  await initializeNotifications();
+  let access = await readReminderAccess();
+  const prompted = !!Notifications && !access.full && access.canAskAgain;
+  if (Notifications && prompted) {
+    void analytics.track(ANALYTICS_EVENTS.PERMISSION_PROMPT_SHOWN, {
+      permission: 'notifications',
+      primed: false,
+      attempt_id: attemptId,
+      source,
+    });
+    try {
+      await Notifications.requestPermissionsAsync({
+        ios: { allowAlert: true, allowBadge: true, allowSound: true, allowProvisional: false },
+      });
+      access = await readReminderAccess();
+    } catch {
+      access = unavailable;
+    }
+  }
+  void analytics.track(ANALYTICS_EVENTS.PERMISSION_RESULT, {
+    permission: 'notifications',
+    primed: false,
+    prompted,
+    attempt_id: attemptId,
+    source,
+    raw_authorization: access.raw,
+    canAskAgain: access.canAskAgain,
+    granted: access.full,
+    channel_available: access.channel,
+  });
+  registerNotificationsEnabled(access.full && access.channel);
+  return access;
+}
+
+export function syncVerifiedReminderPlan(
+  words: StudyWord[],
+  prefs: SmartReminderMirror,
+  owner: string,
+  trigger: string,
+  stillCurrent: () => boolean | Promise<boolean> = () => true,
+  enabling = false,
+): Promise<ReminderObservation> {
+  return planQueue(async () => {
+    const current = async () => !(await teardownPending()) && (await stillCurrent());
+    const plan = makeReminderPlan(words, prefs);
+    const revision = reminderRevision(plan, prefs.lastSessionCompletedAt);
+    const result: ReminderObservation = {
+      revision,
+      enabled: prefs.enabled,
+      access: unavailable,
+      times: [],
+      result: 'error',
+    };
+    if (!(await current()) || !Notifications) return result;
+    if (widgetBridge && !widgetBridge.beginPublication(owner)) return result;
+    try {
+      try {
+        await initializeNotifications();
+        const access = await readReminderAccess();
+        result.access = access;
+        if (!(await current())) return result;
+        if (!prefs.enabled || !access.full || !access.channel) {
+          await recordReminderObservation(owner).catch(() => undefined);
+          if (
+            prefs.enabled &&
+            access.raw === String(Notifications.IosAuthorizationStatus.PROVISIONAL) &&
+            Platform.OS === 'ios'
+          ) {
+            await replaceSmartNotifications(
+              plan,
+              trigger,
+              { reminderOwner: owner, planRevision: revision },
+              undefined,
+              current,
+            );
+          } else await cancelManagedNotifications(Notifications);
+          result.result =
+            !prefs.enabled && !enabling
+              ? 'disabled'
+              : access.raw === 'unavailable'
+                ? 'error'
+                : 'restricted';
+        } else {
+          const acknowledged = new Set<string>();
+          await replaceSmartNotifications(
+            plan,
+            trigger,
+            {
+              reminderOwner: owner,
+              planRevision: revision,
+            },
+            acknowledged,
+            current,
+          );
+          const pending = await Notifications.getAllScheduledNotificationsAsync();
+          result.access = await readReminderAccess();
+          if (!result.access.full || !result.access.channel)
+            result.result = result.access.raw === 'unavailable' ? 'error' : 'restricted';
+          else {
+            result.times = verifiedReminderTimes(
+              owner,
+              revision,
+              plan,
+              pending.filter(r => acknowledged.has(r.identifier)),
+              Date.now(),
+            );
+            result.result = result.times.length ? 'verified' : 'empty';
+          }
+        }
+      } catch {
+        result.result = 'error';
+      }
+      if (await current()) await publishReminder(owner, result);
+      else {
+        // The account, grade or preference changed while the OS write was in flight.
+        // Remove only this obsolete revision, including after a headless wake.
+        await cancelManagedNotifications(Notifications, { owner, revision }).catch(() => undefined);
+        result.times = [];
+        result.result = 'empty';
+      }
+      return result;
+    } finally {
+      widgetBridge?.endPublication();
+    }
+  });
 }
 
 /**

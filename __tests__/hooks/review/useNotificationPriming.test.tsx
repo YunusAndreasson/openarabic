@@ -13,10 +13,14 @@ jest.mock('@/services/analytics', () => ({ analytics: { track: jest.fn() } }));
 
 const mockDispatch = jest.fn();
 let mockRemindersEnabled = false;
+let mockFirstPage = { shown: false };
 jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
   useAppSelector: (selector: (state: unknown) => unknown) =>
-    selector({ settings: { reminderTime: { enabled: mockRemindersEnabled } } }),
+    selector({
+      firstPage: mockFirstPage,
+      settings: { reminderTime: { enabled: mockRemindersEnabled } },
+    }),
 }));
 
 let mockIntroPending = false;
@@ -40,7 +44,11 @@ jest.mock('@/utils/notificationPromptStorage', () => ({
 }));
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { useFirstWordNotificationPriming } from '@/hooks/review/useNotificationPriming';
+import { persistConfig, PERSIST_VERSION } from '@/store/persistConfig';
+import {
+  useNotificationPriming,
+  useFirstWordNotificationPriming,
+} from '@/hooks/review/useNotificationPriming';
 import { analytics } from '@/services/analytics';
 import { ensurePermissions, getPermissionStatus } from '@/services/notificationService';
 import {
@@ -60,12 +68,30 @@ const promptState = (overrides = {}) => ({
 
 describe('useFirstWordNotificationPriming', () => {
   beforeEach(() => {
+    mockFirstPage = { shown: false };
     mockRemindersEnabled = false;
     mockIntroPending = false;
     jest.mocked(loadNotificationPromptState).mockResolvedValue(promptState());
     jest.mocked(getPermissionStatus).mockResolvedValue('undetermined');
     jest.mocked(ensurePermissions).mockResolvedValue(true);
     jest.mocked(recordFirstWordOffer).mockResolvedValue(undefined);
+  });
+
+  test('a signed-out v2 upgrade preserves both eligible reminder offers', async () => {
+    const migrated = await persistConfig.migrate!(
+      { _persist: { version: 2, rehydrated: true } },
+      PERSIST_VERSION,
+    );
+    mockFirstPage = (migrated as unknown as { firstPage: { shown: boolean } }).firstPage;
+    jest
+      .mocked(loadNotificationPromptState)
+      .mockResolvedValue(promptState({ sessionsCompleted: 5 }));
+    const first = renderHook(() => useFirstWordNotificationPriming());
+    const completion = renderHook(() => useNotificationPriming());
+    await act(async () => first.result.current.offer());
+    await waitFor(() => expect(completion.result.current.resolved).toBe(true));
+    expect(first.result.current.showPrimingCard).toBe(true);
+    expect(completion.result.current.showPrimingCard).toBe(true);
   });
 
   const offerOnce = async () => {

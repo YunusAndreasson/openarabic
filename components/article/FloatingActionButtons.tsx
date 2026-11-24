@@ -12,7 +12,7 @@ import { ReaderPressable } from './ReaderPressable';
 export interface FloatingActionButtonsProps {
   onShare?: () => void;
   isInReadingList: boolean;
-  onToggleReadingList: () => Promise<void>;
+  onToggleReadingList?: () => Promise<void>;
   onClose: () => void;
   /** This article is playing through the MiniPlayer */
   isListening: boolean;
@@ -107,7 +107,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
       // value stays committed until the parent prop has caught up.
       startTransition(async () => {
         setOptimisticBookmark(newValue);
-        await onToggleReadingList();
+        await onToggleReadingList?.();
       });
     };
 
@@ -144,19 +144,21 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
             />
           )}
 
-          <GlassIconButton
-            accessibilityLabel={
-              optimisticIsInReadingList
-                ? STRINGS.ARTICLE_REMOVE_FROM_PLAYLIST_A11Y
-                : STRINGS.ARTICLE_ADD_TO_PLAYLIST_A11Y
-            }
-            accessibilityState={{ selected: optimisticIsInReadingList }}
-            active={optimisticIsInReadingList}
-            icon={optimisticIsInReadingList ? 'headset' : 'headset-outline'}
-            iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            PressableComponent={ReaderPressable}
-            onPress={handleOptimisticToggle}
-          />
+          {onToggleReadingList && (
+            <GlassIconButton
+              accessibilityLabel={
+                optimisticIsInReadingList
+                  ? STRINGS.ARTICLE_REMOVE_FROM_PLAYLIST_A11Y
+                  : STRINGS.ARTICLE_ADD_TO_PLAYLIST_A11Y
+              }
+              accessibilityState={{ selected: optimisticIsInReadingList }}
+              active={optimisticIsInReadingList}
+              icon={optimisticIsInReadingList ? 'headset' : 'headset-outline'}
+              iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              PressableComponent={ReaderPressable}
+              onPress={handleOptimisticToggle}
+            />
+          )}
         </View>
       </>
     );

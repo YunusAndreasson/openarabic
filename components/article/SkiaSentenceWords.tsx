@@ -1,4 +1,6 @@
+import { ArticleWordTargets } from '@/hooks/articles/articleWordTargets';
 import {
+  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -236,7 +238,12 @@ const SentenceWordsInternal = function SkiaSentenceWords({
               onWordLongPress={onWordLongPress}
               style={styles.fallbackWord}
             >
-              <ThemedText type="arabic" style={{ color: colors.arabicText }}>
+              <ThemedText
+                type="arabic"
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={{ color: colors.arabicText }}
+              >
                 {word.word_form}
               </ThemedText>
               {markerHeight > 0 && (
@@ -274,7 +281,7 @@ const SentenceWordsInternal = function SkiaSentenceWords({
     const shaped = shape(fontSize);
     // Keep a long vocalised word intact on a narrow window at large type.
     const inkWidth = Math.max(shaped.metrics.outerWidth, shaped.metrics.boxWidth);
-    return fontScale > 1 && availableWidth !== null && inkWidth > availableWidth
+    return availableWidth !== null && inkWidth > availableWidth
       ? shape(Math.max(1, Math.floor((fontSize * availableWidth) / inkWidth)))
       : shaped;
   });
@@ -443,6 +450,15 @@ interface WordTargetProps {
 function WordTarget({ word, onWordPress, onWordLongPress, style, children }: WordTargetProps) {
   // Measured fresh on every press, on the box itself: the tooltip anchors on it.
   const pressableRef = useRef<ComponentRef<typeof View>>(null);
+  const targets = useContext(ArticleWordTargets);
+  useEffect(() => {
+    const node = pressableRef.current;
+    if (!targets || !node) return;
+    targets.set(word.id, node);
+    return () => {
+      if (targets.get(word.id) === node) targets.delete(word.id);
+    };
+  }, [targets, word.id]);
   // Async measurement callbacks must not fire into an unmounted word.
   const isMountedRef = useRef(true);
   useEffect(() => {
@@ -557,6 +573,8 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.HALF_TINY,
   },
   fallbackWord: {
+    flexShrink: 0,
+    maxWidth: '100%',
     paddingHorizontal: LAYOUT.SPACING.MICRO,
     position: 'relative',
   },

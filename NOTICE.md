@@ -17,7 +17,12 @@ content and media below, which you may not copy or redistribute on its terms.
   `translate/data/fawaid/output/translation_opus.jsonl`,
   the dictionary entries in `admin-dashboard/lib/word-enrichment.ts`, and the
   words and glosses in `social/*.json`. The app's articles, translations and
-  audio live in its database, not here, under the terms shown in the app.
+  audio are served from its database under the terms shown in the app. The
+  bundled first-page excerpt from Ṣayd al-Khāṭir by Ibn al-Jawzī, its English
+  translation, glosses, audio and OpenArabic book photograph in `assets/first-page/`
+  are included with permission and excluded from the MIT code licence. The sentence
+  audio was generated with ElevenLabs and the word pronunciations with Google
+  Cloud Text-to-Speech. The root note draws on Lane’s Arabic-English Lexicon.
 
 ## Third-party material, under its own terms
 

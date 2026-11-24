@@ -1,6 +1,38 @@
 // Helper functions for consistent messaging
 const tryAgain = 'Try again';
 export const STRINGS = {
+  TRACK_THIS_WORD: 'Track this word',
+  TRACK_WORD_BENEFIT:
+    'A free account keeps your practice list and review history. We’ll bring this word back when it’s due.',
+  SAVE_WORD_HINT: 'Save this word to practise its meaning.',
+  TRACK_WORD_SAVED: 'Added to practice',
+  TRACK_WORD_EXISTING: 'Already in practice',
+  REVIEW_THIS_WORD: 'Review this word',
+  KEEP_READING: 'Keep reading',
+  TRACK_WORD_FAILED: 'Couldn’t save this word',
+  TRACK_WORD_SAVING: 'Saving to practice…',
+  READER_SIGN_IN_BENEFIT: 'Open your practice words and reviews.',
+  READER_NOT_NOW: 'Not now',
+  FIRST_PAGE_BROWSE: 'Browse texts',
+  FIRST_PAGE_TIP: 'Tap a word for its meaning.',
+  FIRST_PAGE_HIDE_TIP: 'Hide tip',
+  FIRST_PAGE_BACK: 'Back to reading',
+  FIRST_PAGE_PLAY: 'Play excerpt',
+  FIRST_PAGE_AUDIO_OPTIONS: 'Audio options',
+  FIRST_PAGE_NO_AUDIO: 'Audio is unavailable for this excerpt.',
+  FIRST_PAGE_BROWSE_OFFLINE: 'Connect to the internet to browse more texts.',
+  FIRST_PAGE_EMAIL: 'Continue with email',
+  FIRST_PAGE_PASSWORD: 'Use a password instead',
+  CHECK_YOUR_EMAIL: 'Check your email',
+  EMAIL_ADDRESS_LABEL: 'Email address',
+  EMAIL_CODE: 'Email code',
+  SEND_EMAIL_CODE: 'Send code',
+  VERIFY_EMAIL_CODE: 'Verify code',
+  CHANGE_EMAIL_ADDRESS: 'Change address',
+  RESEND_EMAIL_CODE: 'Resend code',
+  EMAIL_CODE_ERROR:
+    'That code didn’t work. Enter the latest code from your email, or request a new one.',
+  EMAIL_CODE_SEND_FAILED: 'Couldn’t send a code. Check your address and try again.',
   // Common actions
   CANCEL: 'Cancel',
   RETRY: 'Retry',
@@ -17,6 +49,43 @@ export const STRINGS = {
   // Settings & preferences
   STUDY_REMINDERS: 'Review reminders',
   SMART_REMINDERS_SUBTITLE: 'Sent when words are due',
+  ONE_WORD_DUE: '1 word due',
+  SETTINGS: 'Settings',
+  DONE: 'Done',
+  WIDGET_TITLE: 'Word in context',
+  HOME_WIDGET: 'Home Screen widget',
+  WIDGET_RECEIPT: 'Add a Home Screen widget',
+  WIDGET_SETTINGS_COPY: 'Keep a word and its meaning beside your apps.',
+  WIDGET_DESCRIPTION: 'A word, its meaning and the line it came from.',
+  WIDGET_GUIDE_TITLE: 'Add OpenArabic to your Home Screen',
+  WIDGET_PIN_COPY: 'Choose Add widget, then confirm its placement in your launcher.',
+  WIDGET_ADD: 'Add widget',
+  WIDGET_PLACED: 'Widget added',
+  WIDGET_MANUAL: 'Show manual steps',
+  WIDGET_SHOW_GUIDE: 'Show how to add it',
+  WIDGET_IOS_STEPS: [
+    'Touch and hold an empty area of your Home Screen.',
+    'Tap Edit, then Add Widget, or tap the + button.',
+    'Search for OpenArabic. Choose Word in context, pick a size, then tap Add Widget.',
+  ],
+  WIDGET_ANDROID_STEPS: [
+    'Touch and hold an empty area of your Home Screen, then tap Widgets.',
+    'Find OpenArabic and choose Word in context.',
+    'Touch and hold the widget, then drag it to your Home Screen.',
+  ],
+  SET_REVIEW_REMINDER: 'Set a review reminder',
+  REVIEW_REMINDER_COPY: (time: string) =>
+    `Once a day, around ${time}, if you have words to review.`,
+  REVIEW_REMINDERS_ON: 'Review reminders on',
+  REVIEW_REMINDERS_OFF: 'Review reminders are off',
+  REVIEW_REMINDERS_OFF_BODY: 'Your word is saved. You can review it here whenever it is due.',
+  REVIEW_REMINDERS_RETRY: 'Your word is saved. We couldn’t confirm a reminder.',
+  NEXT_REMINDER: 'Next reminder',
+  REMINDER_AROUND: (day: string, time: string) => `${day} around ${time}`,
+  REMINDER_SETTINGS_COPY:
+    'You have a word due. You can turn on reminders in your phone’s settings.',
+  OPEN_NOTIFICATION_SETTINGS: 'Open notification settings',
+  DISMISS_REMINDER: 'Dismiss',
   REMINDER_TIME: 'Time',
   THEME: 'Theme',
   // The row shows the plain mode; the poetic names live in the picker, where
@@ -78,6 +147,7 @@ export const STRINGS = {
    *  this screen is tapped, so saying so here is the one thing this label
    *  does NOT need to say; what it needs to say is what happens next. */
   VOICE_SPEAK_TO_ANSWER: 'Speak to answer',
+  VOICE_OPT_IN_DETAIL: '100 MB download · On device',
   VOICE_HANDS_FREE: 'Answer hands-free',
   VOICE_HANDS_FREE_SUBTITLE: 'The mic opens by itself after the word plays. Turn off to tap first.',
   /** While the mic is live. An action, not a state: "Listening…" belongs on the
@@ -144,6 +214,14 @@ export const STRINGS = {
   // like the app mishearing in the learner's favour without saying so.
   VOICE_NEAR_MATCH_TEMPLATE: (heard: string) => `Heard “${heard}” — counted it`,
   // Reveal-first self-grade (shown after the card flips to its answer)
+  FIRST_REVIEW_TITLE: 'Your first review',
+  FIRST_REVIEW_PROMPT: 'What did it mean?',
+  FIRST_REVIEW_CONTEXT: 'In this sentence',
+  FIRST_REVIEW_AGAIN: 'Try the word again',
+  FIRST_REVIEW_FAILED: 'Couldn’t confirm your review',
+  FIRST_REVIEW_RETRY_HINT: 'Check your connection and try again.',
+  FIRST_REVIEW_CONFLICT:
+    'This word changed on another device. Review it again with its current schedule.',
   SHOW_ANSWER: 'Show answer',
   PLAY_SENTENCE_AUDIO: 'Play sentence',
   // An accessibility HINT, not a label: the word itself is the control, so the
@@ -616,7 +694,7 @@ export const STRINGS = {
     'When you create an account, we collect your email address. If you use Apple or Google Sign In, we receive basic profile information from those services.',
   PRIVACY_COLLECTION_LEARNING: 'Learning Data',
   PRIVACY_COLLECTION_LEARNING_DESC:
-    'We store your reading progress, vocabulary lists, practice session history, review performance, and app preferences (theme, audio settings, notifications).',
+    'You can read public texts without an account. Your place in the bundled passage stays on this device. If you choose Add to practice, this device remembers the selected word and any email address awaiting a sign-in code so you can finish or cancel the save. With an account, we store your reading progress, vocabulary lists, practice session history, review performance, and app preferences (theme, audio settings, notifications).',
   PRIVACY_COLLECTION_ANALYTICS: 'Usage Analytics',
   PRIVACY_COLLECTION_ANALYTICS_DESC:
     'We use Mixpanel to record how the app is used: which screens are opened, actions such as reading articles, studying words and practice sessions, and errors. These events are linked to a random identifier created on your device, not to your account, and do not include your name, email address or account ID. A new identifier is created when you sign out or delete your account. Each event also carries a random installation ID that stays the same until you uninstall the app, and on Android we record which link or ad the Play Store says brought you to the app.',
@@ -1238,7 +1316,6 @@ export const STRINGS = {
   // spot", "when memory strengthens most") — nothing measures those.
   NOTIFICATION_DUE_TITLE_POOL: [
     'Your words are ready',
-    'Right on time for review',
     'Some words are due',
     'Your review window is open',
     'Time for a review',
@@ -1356,6 +1433,7 @@ export const STRINGS = {
   DELETE_ACCOUNT_ENTER_CONFIRMATION: 'Type DELETE to confirm',
   DELETE_ACCOUNT_CONFIRMATION_WORD: 'DELETE',
   DELETE_ACCOUNT_CONFIRMATION_MISMATCH: 'Type DELETE exactly as shown',
+  DELETION_RETRY_MESSAGE: 'Account deletion is pending. You can keep reading or sign in.',
   DELETE_ACCOUNT_SUCCESS: 'Account deleted',
   FAILED_TO_DELETE_ACCOUNT: "Couldn't delete account. " + tryAgain,
   ACCOUNT_DELETION_IN_PROGRESS: 'Deleting account…',
@@ -1409,6 +1487,10 @@ export const STRINGS = {
   LEGAL_ATTRIBUTIONS: 'Legal & attributions',
   LEGAL_INTRO:
     'OpenArabic is built with open source projects and third-party services. Thanks to all developers who make their work freely available.',
+  LEGAL_FIRST_PAGE_TITLE: 'First reading',
+  LEGAL_FIRST_PAGE_SOURCE: 'The opening passage is from Ṣayd al-Khāṭir by Ibn al-Jawzī.',
+  LEGAL_FIRST_PAGE_AUDIO:
+    'The sentence audio was generated with ElevenLabs and the word pronunciations with Google Cloud Text-to-Speech.',
   LEGAL_AUDIO_TITLE: 'Audio generation',
   LEGAL_AUDIO_ELEVENLABS: 'ElevenLabs',
   LEGAL_AUDIO_ELEVENLABS_DESC: 'Text-to-speech API for high-quality Arabic and English audio',

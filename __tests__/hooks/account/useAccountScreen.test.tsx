@@ -1,3 +1,22 @@
+jest.mock('expo-file-system', () => ({
+  Directory: class {
+    exists = false;
+  },
+  Paths: { cache: 'cache' },
+}));
+import { Platform } from 'react-native';
+const mockPublishPublic = jest.fn(async (_name: string, _word: string) => undefined as void);
+jest.mock('@/services/widgets/publicHost', () => ({
+  submitPublicWidget: (name: string, word: string) => mockPublishPublic(name, word),
+}));
+jest.mock('@/widgets/WordInContext.android', () => ({ wordWidget: { updateSnapshot: jest.fn() } }));
+jest.mock('@/services/widgets/native', () => ({
+  widgetBridge: { setOwner: (owner: string) => owner },
+}));
+jest.mock('@/widgets/WordInContext.ios', () => ({ wordWidget: { updateTimeline: jest.fn() } }));
+jest.mock('@/widgets/OpenText.ios', () => ({ publicWidget: { updateTimeline: jest.fn() } }));
+import { clearWordWidget } from '@/services/widgets/publish';
+jest.mock('@/services/widgets/publish', () => ({ clearWordWidget: jest.fn() }));
 import { MutationObserver, QueryClient, onlineManager } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
@@ -55,9 +74,11 @@ jest.mock('@/store/hooks', () => ({
 }));
 
 jest.mock('@/services/notificationService', () => ({
+  cancelAccountNotifications: jest.fn(async () => undefined),
   ensurePermissions: (...args: unknown[]) => mockEnsurePermissions(...args),
 }));
 jest.mock('@/utils/notificationPromptStorage', () => ({
+  resetNotificationPromptState: jest.fn(),
   recordAccepted: (...args: unknown[]) => mockRecordAccepted(...args),
 }));
 jest.mock('@/utils/queryPersistence', () => ({
@@ -76,6 +97,7 @@ jest.mock('@/services/analytics', () => ({
 jest.mock('@/services/supabase', () => ({
   supabase: {
     auth: {
+      getSession: async () => ({ data: { session: { user: { id: 'user-1' } } }, error: null }),
       getUser: (...args: unknown[]) => mockGetUser(...args),
       signOut: (...args: unknown[]) => mockSignOut(...args),
     },
@@ -100,6 +122,7 @@ describe('useAccountScreen', () => {
   });
 
   beforeEach(() => {
+    jest.mocked(clearWordWidget).mockReturnValue(() => undefined);
     jest.useRealTimers();
     jest.clearAllMocks();
     mockReminderTime = { enabled: false, hour: 19, minute: 0 };
@@ -179,7 +202,45 @@ describe('useAccountScreen', () => {
     expect(result.current.formatReminderTime(7, 5)).toBe('07:05');
   });
 
+  test('ending the session cannot leave a private RemoteViews when the Android render worker dies', async () => {
+    const platform = jest.replaceProperty(Platform, 'OS', 'android');
+    const host = { displayed: 'private fixture', queued: 'private fixture' };
+    const renderer = jest.requireMock<{
+      wordWidget: { updateSnapshot: jest.Mock<void, [face: { arabic: string }]> };
+    }>('@/widgets/WordInContext.android').wordWidget;
+    renderer.updateSnapshot.mockImplementation(face => {
+      host.queued = face.arabic;
+    });
+    const publish = jest.requireActual<typeof import('@/services/widgets/publish')>(
+      '@/services/widgets/publish',
+    );
+    jest.mocked(clearWordWidget).mockImplementation(publish.clearWordWidget);
+    mockPublishPublic.mockImplementation(async (_name: string, word: string) => {
+      host.displayed = word;
+    });
+    const view = renderHook(() => useAccountScreen());
+    act(() => view.result.current.handleSignOut());
+    await act(async () => {
+      await alertSpy.mock.calls[0]?.[2]?.find(b => b.style === 'destructive')?.onPress?.();
+    });
+    await waitFor(() => expect(mockSignOut).toHaveBeenCalled());
+    host.queued = ''; // process death before the queued rich render
+    platform.restore();
+    expect(host.displayed).not.toBe('private fixture');
+  });
+
   test('stops audio and signs out only after destructive confirmation', async () => {
+    const publish = jest.requireActual<typeof import('@/services/widgets/publish')>(
+      '@/services/widgets/publish',
+    );
+    const renderer = jest.requireMock<{ wordWidget: { updateTimeline: jest.Mock } }>(
+      '@/widgets/WordInContext.ios',
+    );
+    publish.widgetOwner('test-owner', Date.now());
+    renderer.wordWidget.updateTimeline.mockImplementationOnce(() => {
+      throw new Error('host timeline unavailable');
+    });
+    jest.mocked(clearWordWidget).mockImplementation(publish.clearWordWidget);
     const { result } = renderHook(() => useAccountScreen());
 
     act(() => result.current.handleSignOut());
@@ -191,6 +252,9 @@ describe('useAccountScreen', () => {
       await signOutButton?.onPress?.();
     });
 
+    expect(jest.mocked(clearWordWidget).mock.invocationCallOrder[0]).toBeLessThan(
+      mockSignOut.mock.invocationCallOrder[0]!,
+    );
     expect(mockStopAudio).toHaveBeenCalledTimes(1);
     expect(mockSignOut).toHaveBeenCalledTimes(1);
     expect(mockAnalyticsReset).toHaveBeenCalledTimes(1);

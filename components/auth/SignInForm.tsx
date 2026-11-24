@@ -1,3 +1,4 @@
+import type { StartReaderAuth } from '@/services/readerSaveAuth';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback } from 'react';
@@ -25,8 +26,11 @@ import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
  * - Loading states
  * - Error handling
  */
-export function SignInForm(): JSX.Element {
-  const fields = useAuthFormFields();
+export function SignInForm({
+  returnToReader = false,
+  startAttempt,
+}: { returnToReader?: boolean; startAttempt?: StartReaderAuth } = {}): JSX.Element {
+  const fields = useAuthFormFields(returnToReader, startAttempt);
   const { loading, signInWithEmail, resetPassword } = fields;
 
   const handleForgotPassword = useCallback(async () => {
@@ -67,14 +71,16 @@ export function SignInForm(): JSX.Element {
         />
       </View>
 
-      <AuthSwitchPrompt
-        disabled={loading}
-        prompt={STRINGS.DONT_HAVE_ACCOUNT}
-        label={STRINGS.CREATE_ACCOUNT}
-        accessibilityLabel="Go to create account"
-        testID="navigate-to-sign-up-link"
-        onPress={handleCreateAccount}
-      />
+      {!returnToReader && (
+        <AuthSwitchPrompt
+          disabled={loading}
+          prompt={STRINGS.DONT_HAVE_ACCOUNT}
+          label={STRINGS.CREATE_ACCOUNT}
+          accessibilityLabel="Go to create account"
+          testID="navigate-to-sign-up-link"
+          onPress={handleCreateAccount}
+        />
+      )}
     </View>
   );
 }

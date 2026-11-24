@@ -36,6 +36,8 @@ export interface WordDetailsBottomSheetProps {
   isVisible: boolean;
   onClose: () => void;
   word: SentenceWord | null;
+  hideAdd?: boolean;
+  onGuidedAdd?: (word: SentenceWord) => void;
   onAddToStudy: (
     word: SentenceWord,
     intent: StudyWordIntent,
@@ -81,6 +83,8 @@ export function WordDetailsBottomSheet({
   onClose,
   word: selectedWord,
   onAddToStudy,
+  hideAdd = false,
+  onGuidedAdd,
   isInStudyList = false,
   isStudyStateLoading = false,
 }: WordDetailsBottomSheetProps) {
@@ -185,6 +189,10 @@ export function WordDetailsBottomSheet({
   const handleAddToStudy = () => {
     if (!isVisible || !selectedWord || !word || isStudyStateLoading || isToggling) return;
 
+    if (onGuidedAdd) {
+      onGuidedAdd(word);
+      return;
+    }
     const newValue = !optimisticIsInStudyList;
     const generation = openingGeneration.current;
     const requestClose = () => {
@@ -356,25 +364,27 @@ export function WordDetailsBottomSheet({
                   it first is what lets either of them grow freely — the root
                   block used to be exiled below the buttons for exactly that
                   reason, which cost it its place in the reading order. */}
-              <View style={styles.buttonSection}>
-                <ThemedButton
-                  title={
-                    isStudyStateLoading || isToggling
-                      ? STRINGS.LOADING_GENERIC
-                      : optimisticIsInStudyList
-                        ? STRINGS.REMOVE_FROM_PRACTICE
-                        : STRINGS.ADD_TO_PRACTICE
-                  }
-                  variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
-                  // ThemedButton fires the press haptic itself — its default,
-                  // `selection`, the apt type for a toggle. This used to be a
-                  // manual selectionFeedback() on top of the button's own, so
-                  // one save buzzed twice.
-                  onPress={handleAddToStudy}
-                  disabled={isStudyStateLoading || isToggling}
-                  fullWidth
-                />
-              </View>
+              {(!hideAdd || optimisticIsInStudyList) && (
+                <View style={styles.buttonSection}>
+                  <ThemedButton
+                    title={
+                      isStudyStateLoading || isToggling
+                        ? STRINGS.LOADING_GENERIC
+                        : optimisticIsInStudyList
+                          ? STRINGS.REMOVE_FROM_PRACTICE
+                          : STRINGS.ADD_TO_PRACTICE
+                    }
+                    variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
+                    // ThemedButton fires the press haptic itself — its default,
+                    // `selection`, the apt type for a toggle. This used to be a
+                    // manual selectionFeedback() on top of the button's own, so
+                    // one save buzzed twice.
+                    onPress={handleAddToStudy}
+                    disabled={isStudyStateLoading || isToggling}
+                    fullWidth
+                  />
+                </View>
+              )}
 
               {/* No route to the word detail screen, deliberately. The reader
                   is itself a root-level modal above the tabs, and

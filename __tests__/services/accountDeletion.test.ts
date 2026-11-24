@@ -1,3 +1,24 @@
+import { mockReviewStorage } from '@/__tests__/helpers/reviewStorage';
+import { accountTeardown } from '@/services/accountLifecycle';
+import { analytics } from '@/services/analytics';
+jest.mock('@/services/analytics', () => ({ analytics: { reset: jest.fn(), track: jest.fn() } }));
+jest.mock('expo-file-system', () => ({
+  Directory: class {
+    exists = false;
+  },
+  Paths: { cache: 'cache' },
+}));
+jest.mock('@/services/notificationService', () => ({
+  cancelAccountNotifications: jest.fn(async () => undefined),
+}));
+jest.mock('@/services/audioPlayer', () => ({
+  simpleAudioService: { stop: jest.fn(async () => true) },
+}));
+jest.mock('@/services/widgets/native', () => ({
+  widgetBridge: { setOwner: (owner: string) => owner },
+}));
+jest.mock('@/widgets/WordInContext.ios', () => ({ wordWidget: { updateTimeline: jest.fn() } }));
+jest.mock('@/widgets/OpenText.ios', () => ({ publicWidget: { updateTimeline: jest.fn() } }));
 /**
  * Service Tests
  *
@@ -14,19 +35,30 @@
  * This is the only application-callable RPC in the system (see RPC_AUDIT_SUMMARY.md)
  */
 
+import { clearWordWidget } from '@/services/widgets/publish';
+jest.mock('@/services/widgets/publish', () => ({ clearWordWidget: jest.fn() }));
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { accountOwnedStorageKeys, STORAGE_KEYS } from '../../constants/storageKeys';
 import { AccountDeletionService } from '../../services/accountDeletion';
 
+const mockDeleteRpc = jest.fn();
+const mockRpcHeader = jest.fn();
+
 // Mock dependencies
 jest.mock('../../services/supabase', () => ({
   supabase: {
     auth: {
+      getSession: jest.fn(),
       getUser: jest.fn(),
       signOut: jest.fn(),
     },
-    rpc: jest.fn(),
+    rpc: (...args: unknown[]) => ({
+      setHeader: (header: string, value: string) => {
+        mockRpcHeader(header, value);
+        return mockDeleteRpc(...args);
+      },
+    }),
   },
   checkAuthentication: jest.fn(async (..._args: unknown[]) => undefined),
 }));
@@ -48,7 +80,13 @@ describe('AccountDeletionService', () => {
   const mockUserEmail = 'test@example.com';
 
   beforeEach(() => {
+    jest.mocked(clearWordWidget).mockReturnValue(() => undefined);
     jest.clearAllMocks();
+    mockReviewStorage();
+    supabase.auth.getSession.mockResolvedValue({
+      data: { session: { access_token: 'owner-session', user: { id: mockUserId } } },
+      error: null,
+    });
   });
 
   describe('deleteAccount', () => {
@@ -62,7 +100,7 @@ describe('AccountDeletionService', () => {
       });
 
       // Mock successful RPC call
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (mockDeleteRpc as jest.Mock).mockResolvedValue({
         data: null,
         error: null,
       });
@@ -72,10 +110,26 @@ describe('AccountDeletionService', () => {
         error: null,
       });
 
+      const publish = jest.requireActual<typeof import('@/services/widgets/publish')>(
+        '@/services/widgets/publish',
+      );
+      const renderer = jest.requireMock<{ wordWidget: { updateTimeline: jest.Mock } }>(
+        '@/widgets/WordInContext.ios',
+      );
+      publish.widgetOwner('test-owner', Date.now());
+      renderer.wordWidget.updateTimeline.mockImplementationOnce(() => {
+        throw new Error('host timeline unavailable');
+      });
+      jest.mocked(clearWordWidget).mockImplementation(publish.clearWordWidget);
       await AccountDeletionService.deleteAccount();
 
+      expect(jest.mocked(clearWordWidget).mock.invocationCallOrder[0]).toBeGreaterThan(
+        jest.mocked(mockDeleteRpc).mock.invocationCallOrder[0]!,
+      );
+      expect(analytics.reset).toHaveBeenCalledTimes(1);
+      expect(mockRpcHeader).toHaveBeenCalledWith('Authorization', 'Bearer owner-session');
       // Verify RPC was called with delete_user_account
-      expect(supabase.rpc).toHaveBeenCalledWith('delete_user_account', {
+      expect(mockDeleteRpc).toHaveBeenCalledWith('delete_user_account', {
         user_id: mockUserId,
       });
 
@@ -83,6 +137,186 @@ describe('AccountDeletionService', () => {
       expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
     });
 
+    test.each([null, { user: { id: 'replacement' } }])(
+      'a session lost or replaced before the first request is a deletion failure (%j)',
+      async session => {
+        supabase.auth.getUser.mockResolvedValue({
+          data: { user: { id: mockUserId } },
+          error: null,
+        });
+        supabase.auth.getSession.mockResolvedValue({ data: { session }, error: null });
+        await expect(AccountDeletionService.deleteAccount()).rejects.toThrow();
+        expect(mockDeleteRpc).not.toHaveBeenCalled();
+        expect(supabase.auth.signOut).not.toHaveBeenCalled();
+        expect(analytics.track).not.toHaveBeenCalled();
+        expect(await AsyncStorage.getItem(STORAGE_KEYS.ACCOUNT_TEARDOWN)).toBeNull();
+        await accountTeardown.resume();
+        await accountTeardown.resume();
+        expect(accountTeardown.snapshot()).toBe('ready');
+      },
+    );
+
+    test('a failed request checkpoint leaves no marker and sends nothing', async () => {
+      supabase.auth.getUser.mockResolvedValue({ data: { user: { id: mockUserId } }, error: null });
+      const write = jest.mocked(AsyncStorage.setItem).getMockImplementation()!;
+      jest.mocked(AsyncStorage.setItem).mockImplementationOnce(async (key, value) => {
+        await write(key, value);
+        throw new Error('storage acknowledgement lost');
+      });
+      await expect(AccountDeletionService.deleteAccount()).rejects.toThrow(
+        'storage acknowledgement lost',
+      );
+      expect(await AsyncStorage.getItem(STORAGE_KEYS.ACCOUNT_TEARDOWN)).toBeNull();
+      expect(mockDeleteRpc).not.toHaveBeenCalled();
+    });
+
+    test.each([0, 408, 503])(
+      'a returned transport failure (%d) preserves the request across Retry',
+      async status => {
+        supabase.auth.getUser.mockResolvedValue({
+          data: { user: { id: mockUserId } },
+          error: null,
+        });
+        mockDeleteRpc.mockResolvedValueOnce({ status, error: { message: 'response unavailable' } });
+        await expect(AccountDeletionService.deleteAccount()).rejects.toThrow(
+          'response unavailable',
+        );
+        expect(accountTeardown.snapshot()).toBe('deletionRetry');
+        mockDeleteRpc.mockResolvedValueOnce({ error: null });
+        supabase.auth.signOut.mockResolvedValue({ error: null });
+        await accountTeardown.retry();
+        expect(mockDeleteRpc).toHaveBeenCalledTimes(2);
+        expect(await AsyncStorage.getItem(STORAGE_KEYS.ACCOUNT_TEARDOWN)).toBeNull();
+      },
+    );
+
+    test('a replacement authenticated before the first identity lookup cannot inherit the confirmation', async () => {
+      supabase.auth.getUser.mockResolvedValue({
+        data: { user: { id: 'replacement' } },
+        error: null,
+      });
+      supabase.auth.getSession.mockResolvedValue({
+        data: { session: { user: { id: 'replacement' } } },
+        error: null,
+      });
+      mockDeleteRpc.mockResolvedValueOnce({ error: null });
+      supabase.auth.signOut.mockResolvedValueOnce({ error: null });
+      await expect(AccountDeletionService.deleteAccount(mockUserId)).rejects.toThrow();
+      expect(mockDeleteRpc).not.toHaveBeenCalled();
+    });
+
+    test('a legacy journal with no request marker cannot confirm a missing session', async () => {
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.ACCOUNT_TEARDOWN,
+        JSON.stringify({ owner: mockUserId, mode: 'delete' }),
+      );
+      supabase.auth.getSession.mockResolvedValue({ data: { session: null }, error: null });
+      await expect(accountTeardown.resume()).rejects.toThrow();
+      expect(mockDeleteRpc).not.toHaveBeenCalled();
+    });
+
+    test('user_not_found before dispatch cannot confirm deletion', async () => {
+      supabase.auth.getUser
+        .mockResolvedValueOnce({ data: { user: { id: mockUserId } }, error: null })
+        .mockResolvedValueOnce({ data: { user: null }, error: { code: 'user_not_found' } });
+      await expect(AccountDeletionService.deleteAccount()).rejects.toBeDefined();
+      expect(mockDeleteRpc).not.toHaveBeenCalled();
+      expect(supabase.auth.signOut).not.toHaveBeenCalled();
+    });
+
+    test('a fresh authenticated deletion entry point reconciles an existing request before starting another', async () => {
+      supabase.auth.getUser.mockResolvedValue({ data: { user: { id: mockUserId } }, error: null });
+      mockDeleteRpc
+        .mockRejectedValueOnce(new Error('lost response'))
+        .mockResolvedValueOnce({ error: null });
+      supabase.auth.signOut.mockResolvedValue({ error: null });
+      await expect(AccountDeletionService.deleteAccount()).rejects.toThrow('lost response');
+      await expect(AccountDeletionService.deleteAccount()).rejects.toThrow();
+      expect(mockDeleteRpc).toHaveBeenCalledTimes(1);
+      expect(await AsyncStorage.getItem(STORAGE_KEYS.ACCOUNT_TEARDOWN)).toBeNull();
+    });
+
+    test('confirming a surviving owner retires the old request marker before retry preparation', async () => {
+      supabase.auth.getUser.mockResolvedValue({ data: { user: { id: mockUserId } }, error: null });
+      mockDeleteRpc.mockRejectedValueOnce(new Error('response lost'));
+      await expect(AccountDeletionService.deleteAccount()).rejects.toThrow('response lost');
+      await expect(accountTeardown.resume()).rejects.toThrow();
+      await accountTeardown.resume();
+      expect(mockDeleteRpc).toHaveBeenCalledTimes(1);
+      const journal = await AsyncStorage.getItem(STORAGE_KEYS.ACCOUNT_TEARDOWN);
+      expect(journal).toBeNull();
+    });
+
+    test.each([
+      'missing',
+      'session_expired',
+      'refresh_token_not_found',
+      'bad_jwt',
+      'user_not_found',
+    ])('lost delete response followed by %s releases the cold-start gate', async signal => {
+      supabase.auth.getUser.mockResolvedValue({ data: { user: { id: mockUserId } }, error: null });
+      mockDeleteRpc.mockImplementationOnce(async () => {
+        const journal = await AsyncStorage.getItem(STORAGE_KEYS.ACCOUNT_TEARDOWN);
+        expect(JSON.parse(journal!)).toMatchObject({ owner: mockUserId, phase: 'requested' });
+        throw new Error('connection closed after commit');
+      });
+      await expect(AccountDeletionService.deleteAccount()).rejects.toThrow('after commit');
+      if (signal === 'user_not_found') {
+        supabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: { code: signal } });
+        supabase.auth.signOut.mockResolvedValue({ error: { code: 'session_not_found' } });
+      } else
+        supabase.auth.getSession.mockResolvedValue({
+          data: { session: null },
+          error: signal === 'missing' ? null : { code: signal },
+        });
+      await accountTeardown.resume();
+      await accountTeardown.resume();
+      expect(accountTeardown.snapshot()).toBe('ready');
+      expect(await AsyncStorage.getItem(STORAGE_KEYS.ACCOUNT_TEARDOWN)).toBeNull();
+      expect(mockDeleteRpc).toHaveBeenCalledTimes(1);
+    });
+    test('a replacement session cannot be deleted or signed out when the previous request is replayed', async () => {
+      supabase.auth.getUser.mockResolvedValue({ data: { user: { id: mockUserId } }, error: null });
+      mockDeleteRpc.mockRejectedValueOnce(new Error('lost response'));
+      await expect(AccountDeletionService.deleteAccount()).rejects.toThrow('lost response');
+      supabase.auth.getSession.mockResolvedValue({
+        data: { session: { user: { id: 'replacement' } } },
+        error: null,
+      });
+      await expect(accountTeardown.resume()).rejects.toThrow();
+      expect(await AsyncStorage.getItem(STORAGE_KEYS.ACCOUNT_TEARDOWN)).toBeNull();
+      expect(mockDeleteRpc).toHaveBeenCalledTimes(1);
+      expect(supabase.auth.signOut).not.toHaveBeenCalled();
+    });
+    test('a replacement session established during deletion survives the acknowledgement', async () => {
+      supabase.auth.getUser.mockResolvedValue({ data: { user: { id: mockUserId } }, error: null });
+      mockDeleteRpc.mockImplementationOnce(async () => {
+        supabase.auth.getSession.mockResolvedValue({
+          data: { session: { user: { id: 'replacement' } } },
+          error: null,
+        });
+        return { error: null };
+      });
+      await AccountDeletionService.deleteAccount();
+      expect(supabase.auth.signOut).not.toHaveBeenCalled();
+    });
+    test('a transient refresh failure keeps the journal and the surviving owner can retry deletion', async () => {
+      supabase.auth.getUser.mockResolvedValue({ data: { user: { id: mockUserId } }, error: null });
+      mockDeleteRpc
+        .mockRejectedValueOnce(new Error('lost request'))
+        .mockResolvedValueOnce({ error: null });
+      supabase.auth.signOut.mockResolvedValue({ error: null });
+      await expect(AccountDeletionService.deleteAccount()).rejects.toThrow('lost request');
+      supabase.auth.getSession.mockResolvedValueOnce({
+        data: { session: null },
+        error: new Error('network unavailable'),
+      });
+      await expect(accountTeardown.resume()).rejects.toThrow('network unavailable');
+      expect(supabase.auth.signOut).not.toHaveBeenCalled();
+      await accountTeardown.retry();
+      expect(accountTeardown.snapshot()).toBe('ready');
+      expect(mockDeleteRpc).toHaveBeenCalledTimes(2);
+    });
     test('throws error when user is not authenticated', async () => {
       // Mock no authenticated user
       (supabase.auth.getUser as jest.Mock).mockResolvedValue({
@@ -95,7 +329,7 @@ describe('AccountDeletionService', () => {
       );
 
       // Verify RPC was not called
-      expect(supabase.rpc).not.toHaveBeenCalled();
+      expect(mockDeleteRpc).not.toHaveBeenCalled();
     });
 
     test('throws error when session check fails', async () => {
@@ -110,7 +344,7 @@ describe('AccountDeletionService', () => {
       );
 
       // Verify RPC was not called
-      expect(supabase.rpc).not.toHaveBeenCalled();
+      expect(mockDeleteRpc).not.toHaveBeenCalled();
     });
 
     test('throws error when RPC deletion fails', async () => {
@@ -124,7 +358,7 @@ describe('AccountDeletionService', () => {
 
       // Mock RPC failure
       const rpcError = new Error('RPC deletion failed');
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (mockDeleteRpc as jest.Mock).mockResolvedValue({
         data: null,
         error: rpcError,
       });
@@ -142,7 +376,7 @@ describe('AccountDeletionService', () => {
         data: { user: { id: mockUserId, email: mockUserEmail } },
         error: null,
       });
-      (supabase.rpc as jest.Mock).mockResolvedValue({ data: null, error: null });
+      (mockDeleteRpc as jest.Mock).mockResolvedValue({ data: null, error: null });
       (supabase.auth.signOut as jest.Mock).mockResolvedValue({
         error: new Error('Storage unavailable'),
       });
@@ -158,7 +392,7 @@ describe('AccountDeletionService', () => {
           data: { user: { id: mockUserId, email: mockUserEmail } },
           error: null,
         });
-        (supabase.rpc as jest.Mock).mockResolvedValue({ data: null, error: null });
+        (mockDeleteRpc as jest.Mock).mockResolvedValue({ data: null, error: null });
         (supabase.auth.signOut as jest.Mock).mockResolvedValue({ error: null });
       };
 
@@ -170,7 +404,7 @@ describe('AccountDeletionService', () => {
         expect(removeFeedbackScreenshots).toHaveBeenCalledWith(mockUserId);
         // Before the RPC: the owner-only bucket policies need the account to still exist.
         const cleanupOrder = (removeFeedbackScreenshots as jest.Mock).mock.invocationCallOrder[0];
-        const rpcOrder = (supabase.rpc as jest.Mock).mock.invocationCallOrder[0];
+        const rpcOrder = (mockDeleteRpc as jest.Mock).mock.invocationCallOrder[0];
         expect(cleanupOrder).toBeLessThan(rpcOrder);
       });
 
@@ -188,7 +422,7 @@ describe('AccountDeletionService', () => {
             analyticsEventName: 'Account_Deletion_Screenshot_Cleanup_Error',
           }),
         );
-        expect(supabase.rpc).toHaveBeenCalledWith('delete_user_account', { user_id: mockUserId });
+        expect(mockDeleteRpc).toHaveBeenCalledWith('delete_user_account', { user_id: mockUserId });
       });
 
       test('removes every key the registry attributes to the deleted account', async () => {
@@ -233,12 +467,12 @@ describe('AccountDeletionService', () => {
         expect(removed).not.toContain(STORAGE_KEYS.REDUX_PERSIST_ROOT);
       });
 
-      test('does not touch local data when the RPC fails', async () => {
+      test('a rejected RPC purges local data and clears the request journal without signing out', async () => {
         (supabase.auth.getUser as jest.Mock).mockResolvedValue({
           data: { user: { id: mockUserId, email: mockUserEmail } },
           error: null,
         });
-        (supabase.rpc as jest.Mock).mockResolvedValue({
+        (mockDeleteRpc as jest.Mock).mockResolvedValue({
           data: null,
           error: new Error('RPC deletion failed'),
         });
@@ -247,25 +481,22 @@ describe('AccountDeletionService', () => {
           'Failed to delete account: RPC deletion failed',
         );
 
-        expect(AsyncStorage.multiRemove).not.toHaveBeenCalled();
+        expect(AsyncStorage.multiRemove).toHaveBeenCalledWith(accountOwnedStorageKeys(mockUserId));
+        expect(supabase.auth.signOut).not.toHaveBeenCalled();
+        expect(await AsyncStorage.getItem(STORAGE_KEYS.ACCOUNT_TEARDOWN)).toBeNull();
       });
 
-      test('a storage failure is reported but never masks a successful deletion', async () => {
+      test('storage failure after confirmation retries cleanup without another RPC', async () => {
         authenticateAndSucceed();
-        const storageError = new Error('Storage unavailable');
-        (AsyncStorage.multiRemove as jest.Mock).mockRejectedValueOnce(storageError);
-
-        await expect(AccountDeletionService.deleteAccount()).resolves.toBeUndefined();
-
-        expect(handleError).toHaveBeenCalledWith(
-          storageError,
-          expect.objectContaining({
-            showToast: false,
-            analyticsEventName: 'Account_Deletion_Local_Cleanup_Error',
-          }),
+        (AsyncStorage.multiRemove as jest.Mock).mockRejectedValueOnce(
+          new Error('Storage unavailable'),
         );
-        // The user must still reach the signed-out state.
-        expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+        await expect(AccountDeletionService.deleteAccount()).rejects.toThrow('Storage unavailable');
+        expect(supabase.auth.signOut).not.toHaveBeenCalled();
+        expect(mockDeleteRpc).toHaveBeenCalledTimes(1);
+        await accountTeardown.retry();
+        expect(mockDeleteRpc).toHaveBeenCalledTimes(1);
+        expect(await AsyncStorage.getItem(STORAGE_KEYS.ACCOUNT_TEARDOWN)).toBeNull();
       });
     });
 
@@ -279,7 +510,7 @@ describe('AccountDeletionService', () => {
       });
 
       // Mock successful RPC call
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (mockDeleteRpc as jest.Mock).mockResolvedValue({
         data: null,
         error: null,
       });
@@ -292,13 +523,13 @@ describe('AccountDeletionService', () => {
 
       // Verify EXACTLY which RPC is called
       // Per RPC_AUDIT_SUMMARY.md, delete_user_account is the ONLY application-callable RPC
-      expect(supabase.rpc).toHaveBeenCalledTimes(1);
-      expect(supabase.rpc).toHaveBeenCalledWith('delete_user_account', {
+      expect(mockDeleteRpc).toHaveBeenCalledTimes(1);
+      expect(mockDeleteRpc).toHaveBeenCalledWith('delete_user_account', {
         user_id: mockUserId,
       });
 
       // Ensure NO other RPCs are called (e.g., not update_word_and_review)
-      expect(supabase.rpc).not.toHaveBeenCalledWith(
+      expect(mockDeleteRpc).not.toHaveBeenCalledWith(
         expect.stringMatching(/^(?!delete_user_account$).*/),
         expect.anything(),
       );

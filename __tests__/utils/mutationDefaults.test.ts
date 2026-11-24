@@ -11,6 +11,7 @@ import { describe, expect, jest, test, afterEach } from '@jest/globals';
 import {
   MutationObserver,
   QueryClient,
+  QueryObserver,
   dehydrate,
   hydrate,
   onlineManager,
@@ -171,4 +172,31 @@ describe('registerMutationDefaults', () => {
       scope: mutation.scope,
     });
   });
+});
+
+test('a restored ordinary grade receiving SQLSTATE 40001 refetches the account once without replaying the grade', async () => {
+  const client = createClient();
+  const invalidate = jest.spyOn(client, 'invalidateQueries');
+  const key = ['fsrs-words', 'user-1'];
+  client.setQueryData(key, []);
+  const fetchCurrent = jest.fn(async () => []);
+  const queue = new QueryObserver(client, {
+    queryKey: key,
+    queryFn: fetchCurrent,
+    staleTime: Infinity,
+  });
+  const stop = queue.subscribe(() => undefined);
+  const write = jest.mocked(studyWordsFSRSService.updateWordAndReview);
+  write.mockRejectedValueOnce(
+    Object.assign(new Error('Study word changed before this grade'), { code: '40001' }),
+  );
+  const observer = new MutationObserver(client, fsrsGradeMutation);
+  await expect(
+    observer.mutate({ userId: 'user-1', rootId: 7 as RootId, update: gradeWithReps(1) }),
+  ).rejects.toThrow('changed on another device');
+  expect(invalidate).toHaveBeenCalledWith({ queryKey: ['fsrs-words', 'user-1'] });
+  expect(write).toHaveBeenCalledTimes(1);
+  expect(fetchCurrent).toHaveBeenCalledTimes(1);
+  stop();
+  client.clear();
 });

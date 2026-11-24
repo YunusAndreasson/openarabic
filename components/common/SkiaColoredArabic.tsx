@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 
-import { Canvas, Paragraph as SkiaParagraph } from 'react-native-skia';
+import { Canvas, Group, Paragraph as SkiaParagraph } from 'react-native-skia';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
@@ -15,7 +15,11 @@ interface SkiaColoredArabicProps {
   /** The full word or phrase, used when there is nothing to colour. */
   text: string;
   /** Per-component colours; when empty the whole string paints in `color`. */
-  segments?: ColoredSegment[];
+  segments?: Pick<ColoredSegment, 'text' | 'color'>[];
+  /** In a wrapping reader row, fit only words wider than the entire row. */
+  wordMaxWidth?: number;
+  /** Count both ink overhangs in the width of an edge-bounded word row. */
+  reserveInk?: boolean;
   /** Point size for the glyphs. Defaults to the user's Arabic reading size. */
   fontSize?: number;
   /** Colour for text with no coloured components. Defaults to `arabicText`. */
@@ -40,6 +44,8 @@ const SkiaColoredArabicInternal = function SkiaColoredArabic({
   segments,
   fontSize: fontSizeOverride,
   color,
+  wordMaxWidth,
+  reserveInk = false,
 }: SkiaColoredArabicProps) {
   const colors = useColors();
   const gpuAvailable = useSkiaGpuAvailable();
@@ -84,20 +90,21 @@ const SkiaColoredArabicInternal = function SkiaColoredArabic({
   // The ink reserve is paint-only, so cancel it in flex layout: the component's
   // layout box is the glyph advance, and callers space words with their own gap
   // rather than inheriting however much the chosen face happens to bleed.
+  const scale = wordMaxWidth && canvas.width > wordMaxWidth ? wordMaxWidth / canvas.width : 1;
   const canvasStyle = useMemo(
     () => ({
-      width: canvas.width,
-      height: canvas.height,
-      marginLeft: -canvas.inkLeft,
-      marginRight: -canvas.inkRight,
+      width: canvas.width * scale,
+      height: canvas.height * scale,
+      marginLeft: reserveInk ? 0 : -canvas.inkLeft * scale,
+      marginRight: reserveInk ? 0 : -canvas.inkRight * scale,
     }),
-    [canvas.width, canvas.height, canvas.inkLeft, canvas.inkRight],
+    [canvas.width, canvas.height, canvas.inkLeft, canvas.inkRight, scale, reserveInk],
   );
 
   // No GPU, so a canvas would stay blank. One Text in one colour: a single
   // span is a single shaping run, so the word still joins. It loses the
   // grammar colours, not the Arabic. Text applies the OS font scale itself.
-  if (!gpuAvailable) {
+  if (!gpuAvailable || (wordMaxWidth !== undefined && !paragraph)) {
     const fallbackStyle = fontSizeOverride
       ? {
           color: baseColor,
@@ -106,7 +113,12 @@ const SkiaColoredArabicInternal = function SkiaColoredArabic({
         }
       : { color: baseColor };
     return (
-      <ThemedText type="arabic" style={fallbackStyle}>
+      <ThemedText
+        type="arabic"
+        style={[fallbackStyle, wordMaxWidth !== undefined && { maxWidth: wordMaxWidth }]}
+        numberOfLines={wordMaxWidth !== undefined ? 1 : undefined}
+        adjustsFontSizeToFit={wordMaxWidth !== undefined}
+      >
         {text}
       </ThemedText>
     );
@@ -122,7 +134,9 @@ const SkiaColoredArabicInternal = function SkiaColoredArabic({
 
   return (
     <Canvas style={canvasStyle} accessible accessibilityRole="text" accessibilityLabel={text}>
-      <SkiaParagraph paragraph={paragraph} x={0} y={canvas.paintY} width={canvas.layoutWidth} />
+      <Group transform={[{ scale }]}>
+        <SkiaParagraph paragraph={paragraph} x={0} y={canvas.paintY} width={canvas.layoutWidth} />
+      </Group>
     </Canvas>
   );
 };

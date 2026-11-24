@@ -234,6 +234,7 @@ jest.mock('@/services/audioCache', () => {
     prefetch: mockStable(() => Promise.resolve(undefined)),
     cacheAudio: mockStable(() => Promise.resolve(undefined)),
     invalidate: mockStable(() => Promise.resolve(undefined)),
+    clearLearnerCache: mockStable(() => Promise.resolve(undefined)),
     clearCache: mockStable(() => Promise.resolve(undefined)),
     getCacheSize: mockStable(() => Promise.resolve(0)),
   });
@@ -868,3 +869,7 @@ process.on('unhandledRejection', reason => {
   // Handle unhandled promise rejections silently in tests
   throw new Error(`Unhandled promise rejection: ${reason}`);
 });
+
+// The Expo widget bridge exists only in the store/development binary. Suites
+// exercising pinning or configuration observations install their own bridge.
+jest.mock('@/services/widgets/native', () => ({ widgetBridge: null }));

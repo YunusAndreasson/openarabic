@@ -47,6 +47,8 @@ class AudioCacheManager {
   private readonly DOWNLOAD_TIMEOUT_MS = 15000;
   private readonly QUICK_DOWNLOAD_TIMEOUT_MS = 6000;
   // Track pending downloads to prevent duplicate requests for same file
+  private activeLookups = new Set<Promise<unknown>>();
+  private privacyCleanup?: Promise<void>;
   private pendingDownloads = new Map<string, Promise<string>>();
   // Background (session-preload) downloads self-throttle through this gate so
   // a burst of prefetch requests can never hold every native connection slot
@@ -275,6 +277,7 @@ class AudioCacheManager {
       try {
         if (!quick) await this.acquireBackgroundDownloadSlot();
         try {
+          if (this.privacyCleanup) return url;
           await File.downloadFileAsync(url, tempFile, {
             idempotent: true,
             // Armed only once the transfer is about to start. Armed earlier it
@@ -330,7 +333,19 @@ class AudioCacheManager {
    * Get audio file - returns cached path if available, otherwise downloads and caches
    * For local files, returns the original URL without caching
    */
-  async getAudio(url: string, options: GetAudioOptions = {}): Promise<string> {
+  private trackLookup<T>(lookup: Promise<T>): Promise<T> {
+    this.activeLookups.add(lookup);
+    return lookup.finally(() => {
+      this.activeLookups.delete(lookup);
+    });
+  }
+
+  getAudio(url: string, options: GetAudioOptions = {}): Promise<string> {
+    if (this.privacyCleanup) return Promise.resolve(url);
+    return this.trackLookup(this.loadAudio(url, options));
+  }
+
+  private async loadAudio(url: string, options: GetAudioOptions): Promise<string> {
     try {
       // Don't cache local files - return them directly
       if (!isRemoteAudioUrl(url)) {
@@ -405,7 +420,12 @@ class AudioCacheManager {
    * Local (non-remote) sources are already playable as-is, so they come back
    * unchanged rather than reporting a miss.
    */
-  async getCachedPath(url: string): Promise<string | null> {
+  getCachedPath(url: string): Promise<string | null> {
+    if (this.privacyCleanup) return Promise.resolve(null);
+    return this.trackLookup(this.lookupCachedPath(url));
+  }
+
+  private async lookupCachedPath(url: string): Promise<string | null> {
     try {
       if (!isRemoteAudioUrl(url)) {
         return url;
@@ -438,7 +458,12 @@ class AudioCacheManager {
    * always a corrupt/partial download, and without purging it the same broken
    * file would be served on every future play of that word.
    */
-  async invalidate(url: string): Promise<void> {
+  invalidate(url: string): Promise<void> {
+    if (this.privacyCleanup) return Promise.resolve();
+    return this.trackLookup(this.removeCachedFile(url));
+  }
+
+  private async removeCachedFile(url: string): Promise<void> {
     try {
       if (!isRemoteAudioUrl(url)) {
         return;
@@ -457,6 +482,17 @@ class AudioCacheManager {
   /**
    * Clear all cached audio files
    */
+  clearLearnerCache(): Promise<void> {
+    // Track callers from before even the first disk read. A quick download
+    // can replace an older transfer in the per-URL deduplication map.
+    this.privacyCleanup ??= Promise.allSettled(this.activeLookups)
+      .then(() => this.clearCache())
+      .finally(() => {
+        this.privacyCleanup = undefined;
+      });
+    return this.privacyCleanup;
+  }
+
   async clearCache(): Promise<void> {
     try {
       if (this.cacheDir.exists) {
@@ -466,6 +502,7 @@ class AudioCacheManager {
       // Clear memory cache and pending downloads
       this.memoryCache.clear();
       this.pendingDownloads.clear();
+      this.cacheKeys.clear();
     } catch (error) {
       await handleError(error);
       throw error;

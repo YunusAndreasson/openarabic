@@ -2,6 +2,7 @@ import { combineReducers } from '@reduxjs/toolkit';
 
 import { accountSwitched } from '@/store/accountActions';
 
+import firstPageReducer from '@/store/firstPageSlice';
 import editModeReducer from '@/store/editModeSlice';
 import playlistReducer from '@/store/playlistSlice';
 import settingsReducer from '@/store/settingsSlice';
@@ -20,6 +21,7 @@ import voiceAliasesReducer from '@/store/voiceAliasesSlice';
  * effects, both consumers.
  */
 const sliceReducer = combineReducers({
+  firstPage: firstPageReducer,
   theme: themeReducer,
   settings: settingsReducer,
   playlist: playlistReducer,
@@ -27,17 +29,21 @@ const sliceReducer = combineReducers({
   voiceAliases: voiceAliasesReducer,
 });
 
-// On an account switch every slice but the theme returns to its initial state:
-// settings, the playlist and the learned voice aliases belong to whoever made
-// them, and one persisted blob holds them for the whole device. The theme is
-// the device's, so it stays.
+// Reading position and appearance belong to the device. Reset private study,
+// playback and voice state when the account changes.
 export const rootReducer: typeof sliceReducer = (state, action) =>
-  sliceReducer(accountSwitched.match(action) && state ? { theme: state.theme } : state, action);
+  sliceReducer(
+    accountSwitched.match(action) && state
+      ? { theme: state.theme, firstPage: state.firstPage }
+      : state,
+    action,
+  );
 
 export type RootStateShape = ReturnType<typeof rootReducer>;
 
 /** The slices redux-persist writes into `STORAGE_KEYS.REDUX_PERSIST_ROOT`. */
 export const PERSISTED_SLICES = [
+  'firstPage',
   'theme',
   'settings',
   'playlist',

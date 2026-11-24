@@ -54,6 +54,10 @@ const LegalAttributionsScreen = () => (
   <LegalDocument>
     <DocParagraph>{STRINGS.LEGAL_INTRO}</DocParagraph>
 
+    <DocHeading>{STRINGS.LEGAL_FIRST_PAGE_TITLE}</DocHeading>
+    <DocParagraph>{STRINGS.LEGAL_FIRST_PAGE_SOURCE}</DocParagraph>
+    <DocParagraph>{STRINGS.LEGAL_FIRST_PAGE_AUDIO}</DocParagraph>
+
     {SERVICES.map(({ section, name, description, url }) => (
       <Fragment key={section}>
         <DocHeading>{section}</DocHeading>

@@ -1,3 +1,4 @@
+import { trackReaderAccount, type StartReaderAuth } from '@/services/readerSaveAuth';
 import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -44,7 +45,10 @@ const EMAIL_METHOD = 'email';
 /**
  * Hook handling authentication form logic
  */
-export function useAuthForm(): UseAuthFormReturn {
+export function useAuthForm(
+  returnToReader = false,
+  startAttempt?: StartReaderAuth,
+): UseAuthFormReturn {
   // Form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -138,12 +142,22 @@ export function useAuthForm(): UseAuthFormReturn {
 
     await runAuthRequest(
       async () => {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const attempt = await startAttempt?.('password');
+        if (startAttempt && !attempt) return;
+        const request = () =>
+          supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
 
+        const { error } = await (attempt
+          ? attempt.exchange({ email, password }, request).catch((cause: unknown) => {
+              attempt.end('failed', 'password');
+              throw cause;
+            })
+          : request());
         if (error) {
+          attempt?.end('failed', 'password');
           void analytics.trackAuthFailed(EMAIL_METHOD, getAnalyticsErrorCode(error) ?? 'unknown');
           // Show inline error so it's visible even when auth screen overlays the toast
           setPasswordError(error.message);
@@ -155,9 +169,10 @@ export function useAuthForm(): UseAuthFormReturn {
           return;
         }
 
-        await analytics.trackSignIn(EMAIL_METHOD);
+        attempt?.verifiedHeader?.('returning');
+        await trackReaderAccount(EMAIL_METHOD, false, attempt);
         successFeedback();
-        router.replace(ROUTE_PATHS.EXPLORE_TAB);
+        if (!returnToReader) router.replace(ROUTE_PATHS.EXPLORE_TAB);
       },
       {
         toastMessage: `${STRINGS.SIGN_IN_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
@@ -166,7 +181,15 @@ export function useAuthForm(): UseAuthFormReturn {
         isAuthAttempt: true,
       },
     );
-  }, [email, password, validateEmail, validatePassword, runAuthRequest]);
+  }, [
+    email,
+    password,
+    validateEmail,
+    validatePassword,
+    runAuthRequest,
+    returnToReader,
+    startAttempt,
+  ]);
 
   const signUpWithEmail = useCallback(async () => {
     const isEmailValid = validateEmail(email);

@@ -1,3 +1,4 @@
+import type { RootId } from '@/types/branded.types';
 import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import {
@@ -81,6 +82,8 @@ interface ReviewStateRefs {
 }
 
 interface UseReviewProps {
+  source?: 'practice_tab' | 'widget';
+  rootId?: RootId;
   fromRemember?: boolean;
   onClose?: () => void;
   /**
@@ -277,7 +280,9 @@ const TRANSITION_DELAYS = {
 };
 
 export function useReview({
+  source = 'practice_tab',
   fromRemember,
+  rootId,
   onClose,
   setPlaybackPriority,
   isMicStreamOpen,
@@ -483,6 +488,7 @@ export function useReview({
     retryLoad,
     flushPendingWrites,
   } = useFSRS({
+    rootId,
     userId: user?.id,
     onComplete: triggerCompletionTransition,
     sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
@@ -638,6 +644,7 @@ export function useReview({
         // tap and voice are indistinguishable here.
         void analytics.track(ANALYTICS_EVENTS.REVIEW_WORD_GRADED, {
           confidence,
+          ...(source === 'widget' && { source }),
           root_id: rootId,
           old_stability: oldStability,
           new_stability: newStability,
@@ -687,6 +694,7 @@ export function useReview({
       currentWord,
       updateWord,
       updateMetrics,
+      source,
       recoverRejectedGrade,
       releasePendingFadeIn,
       setTimer,
@@ -1081,9 +1089,9 @@ export function useReview({
     totalWordsInSessionRef.current = wordQueue.length;
     void analytics.track(ANALYTICS_EVENTS.REVIEW_SESSION_STARTED, {
       word_count: wordQueue.length,
-      source: 'practice_tab',
+      source,
     });
-  }, [wordQueue.length, isComplete, stopAudioSafely]);
+  }, [wordQueue.length, isComplete, stopAudioSafely, source]);
 
   /**
    * Stamp the moment this card became the current one — deliberately ahead of

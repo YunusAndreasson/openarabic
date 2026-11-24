@@ -70,7 +70,7 @@ describe('useAppOpenTracking', () => {
 
     await waitFor(() => expect(trackedEvents()).toContain(ANALYTICS_EVENTS.INSTALL_ATTRIBUTION));
     expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.APP_OPENED, {
-      launch: 'foreground',
+      launch: 'cold',
     });
     expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.FIRST_OPEN, {
       install_kind: 'new',
@@ -93,14 +93,16 @@ describe('useAppOpenTracking', () => {
     expect(analytics.track).not.toHaveBeenCalled();
   });
 
-  test("iOS's 'unknown' while a foreground launch settles counts as foreground", async () => {
+  test('unknown waits for active before counting a cold launch', async () => {
     setAppState('unknown');
 
     renderHook(() => useAppOpenTracking(true, jest.fn()));
 
+    expect(analytics.track).not.toHaveBeenCalled();
+    act(() => moveTo('active'));
     await waitFor(() =>
       expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.APP_OPENED, {
-        launch: 'foreground',
+        launch: 'cold',
       }),
     );
   });
@@ -136,7 +138,7 @@ describe('useAppOpenTracking', () => {
     );
   });
 
-  test('App Opened goes out once per launch; later returns are App Resumed, not this', async () => {
+  test('a background return counts once as a warm open', async () => {
     const { rerender } = renderHook<void, { ready: boolean }>(
       ({ ready }) => useAppOpenTracking(ready, jest.fn()),
       {
@@ -152,6 +154,7 @@ describe('useAppOpenTracking', () => {
       await Promise.resolve();
     });
 
-    expect(trackedEvents().filter(event => event === ANALYTICS_EVENTS.APP_OPENED)).toHaveLength(1);
+    expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.APP_OPENED, { launch: 'warm' });
+    expect(trackedEvents().filter(event => event === ANALYTICS_EVENTS.APP_OPENED)).toHaveLength(2);
   });
 });

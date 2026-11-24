@@ -1,3 +1,4 @@
+import { formatPreviewInterval } from '@/utils/review/formatPreviewInterval';
 import { firstLoadError } from '@/utils/firstLoadError';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -31,7 +32,7 @@ import {
   updateSpacingCounters as updateSpacingState,
   type SpacingState,
 } from '@/utils/fsrsSpacing';
-import { fsrsGradeMutation } from '@/utils/mutationDefaults';
+import { fsrsGradeMutation, isPracticeGradeConflict } from '@/utils/mutationDefaults';
 import { PriorityQueue } from '@/utils/priorityQueue';
 import { decideDrill, type DrillProgress } from '@/utils/review/drillPolicy';
 import { getSessionProgress } from '@/utils/review/sessionProgress';
@@ -59,21 +60,9 @@ interface FSRSStateTracking {
 }
 
 // Terse interval labels ("10m"/"4d"): each unit, and how many of it make the next.
-const PREVIEW_UNITS = ['s', 'm', 'h', 'd', 'mo', 'y'] as const;
-const PREVIEW_UNIT_SIZES = [60, 60, 24, 31, 12];
-
-function formatPreviewInterval(due: Date, now: Date): string {
-  let amount = (due.getTime() - now.getTime()) / 1000;
-  let unit = 0;
-  while (unit < PREVIEW_UNIT_SIZES.length && amount >= (PREVIEW_UNIT_SIZES[unit] ?? Infinity)) {
-    amount /= PREVIEW_UNIT_SIZES[unit] ?? 1;
-    unit += 1;
-  }
-  return `${Math.floor(amount)}${PREVIEW_UNITS[unit] ?? ''}`;
-}
-
 export function useFSRS({
   userId,
+  rootId,
   onComplete,
   sessionCooldownHours: _sessionCooldownHours = DEFAULT_SESSION_COOLDOWN_HOURS,
 }: UseFSRSOptions): UseFSRSResult {
@@ -147,11 +136,14 @@ export function useFSRS({
   // encodes the cooldown, so this never collides with differently-parameterized
   // due consumers. Only the skipToken guard for a missing userId is added here.
   const dueQuery = useQuery({
-    ...gated(id => fsrsQueries.due(id, _sessionCooldownHours), userId),
-    refetchOnMount: true,
+    ...gated(id => fsrsQueries.due(id, _sessionCooldownHours, undefined, rootId), userId),
+    ...(rootId && { staleTime: 0, gcTime: 0 }),
+    refetchOnMount: rootId ? 'always' : true,
   });
 
-  const { data: dueWords, isLoading } = dueQuery;
+  const awaitingRecoveryQueue = !!rootId && (!dueQuery.isFetchedAfterMount || dueQuery.isError);
+  const dueWords = awaitingRecoveryQueue ? undefined : dueQuery.data;
+  const isLoading = dueQuery.isLoading || (awaitingRecoveryQueue && dueQuery.isFetching);
 
   // Helper function to get next available word with proper spacing
   const getNextWordWithSpacing = useCallback((): StudyWord | null => {
@@ -382,7 +374,11 @@ export function useFSRS({
           // Re-ask within this session. The FSRS-advanced copy continues from the
           // new (Relearning/Review) state; `decision.lag` is counted down by
           // the spacing counters and the word is served the card it reaches 0.
-          const updatedWord: StudyWord = { ...currentWord, ...wordUpdateData };
+          const updatedWord: StudyWord = {
+            ...currentWord,
+            ...wordUpdateData,
+            review_revision: undefined,
+          };
           spacingQueueRef.current.spacedWords.push({
             word: updatedWord,
             remainingSpacing: decision.lag,
@@ -524,11 +520,23 @@ export function useFSRS({
         // to the response. Registered in pendingWritesRef so flushPendingWrites
         // can order a post-session refetch behind it.
         const write = gradeMutation
-          .mutateAsync({ userId, rootId, update: wordUpdateData })
+          .mutateAsync({
+            userId,
+            rootId,
+            update: wordUpdateData,
+            expected: {
+              revision: currentWord.review_revision,
+              created: currentWord.created_at,
+              reps: currentWord.fsrs_reps,
+              last: currentWord.fsrs_last_review,
+            },
+          })
           .catch((error: unknown) => {
             // handleError normalises via toError — never JSON.stringify a thrown
             // value into the message, that is how a whole payload ends up as a
             // Sentry issue title.
+            if (!isPracticeGradeConflict(error))
+              void fsrsQueries.invalidateAll(queryClient, userId);
             void handleError(error, { toastType: ToastType.IMPORTANT });
           })
           .finally(() => {
@@ -561,6 +569,7 @@ export function useFSRS({
       updateSpacingCounters,
       refillWorkingSet,
       gradeMutation,
+      queryClient,
     ],
   );
 

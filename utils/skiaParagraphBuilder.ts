@@ -7,7 +7,7 @@ import {
 } from 'react-native-skia';
 
 import type { SkiaFontFamily } from '@/constants/fonts';
-import type { ColoredSegment, SentenceWord } from '@/types/vocabulary.types';
+import type { ColoredSegment } from '@/types/vocabulary.types';
 
 /** Strut height multiplier for consistent Arabic diacritics spacing */
 const STRUT_HEIGHT_MULTIPLIER = 1.8;
@@ -44,7 +44,7 @@ interface ParagraphBaseConfig {
 }
 
 export interface ParagraphConfig extends ParagraphBaseConfig {
-  segments: ColoredSegment[];
+  segments: Pick<ColoredSegment, 'text' | 'color'>[];
 }
 
 export interface SimpleParagraphConfig extends ParagraphBaseConfig {
@@ -310,7 +310,7 @@ export const hasGrammarColour = (
 ): boolean => segments.some(seg => seg.color !== colors.text && seg.color !== colors.arabicText);
 
 interface WordParagraphConfig {
-  word: Pick<SentenceWord, 'word_form' | 'coloredSegments'>;
+  word: { word_form: string; coloredSegments?: ParagraphConfig['segments'] };
   colors: WordParagraphColors;
   /** The single run's colour when the word carries no grammar colour. Defaults to `arabicText`. */
   plainColor?: string;

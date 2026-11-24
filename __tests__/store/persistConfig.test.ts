@@ -25,6 +25,7 @@ import { describe, expect, jest, test } from '@jest/globals';
 import { configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore, type PersistedState } from 'redux-persist';
 
+import firstPage, { pageShown, markReturningInstall } from '@/store/firstPageSlice';
 import { REDUX_PERSIST_KEY } from '@/constants/storageKeys';
 import { PERSIST_MIGRATIONS, PERSIST_VERSION, persistConfig } from '@/store/persistConfig';
 import { rootReducer } from '@/store/rootReducer';
@@ -143,7 +144,7 @@ describe('persisted store rehydration', () => {
       _persist: { version: PERSIST_VERSION, rehydrated: true },
     });
 
-    expect(state.settings.voiceEnabled).toBe(true);
+    expect(state.settings.voiceEnabled).toBe(false);
   });
 
   test('the legacy persisted edit mode is still discarded', async () => {
@@ -168,7 +169,7 @@ describe('persisted store rehydration', () => {
       persistStore(store, null, resolve);
     });
 
-    expect(store.getState().settings.voiceEnabled).toBe(true);
+    expect(store.getState().settings.voiceEnabled).toBe(false);
   });
 });
 
@@ -192,4 +193,19 @@ describe('migration 2', () => {
     expect(migrate(themeOnly)).toBe(themeOnly);
     expect(migrate(undefined)).toBeUndefined();
   });
+});
+
+test('a signed-out pre-reader store rehydrates as returning', async () => {
+  const state = await rehydrate({ settings: {}, _persist: { version: 2, rehydrated: true } });
+  expect(state.firstPage.returningInstall).toBe(true);
+  expect(state.firstPage.browsed).toBe(false);
+  expect(state.firstPage.shown).toBe(false);
+});
+
+test('reading the passage voluntarily after an upgrade preserves the legacy cohort', async () => {
+  const migrated = await rehydrate({ settings: {}, _persist: { version: 2, rehydrated: true } });
+  const visited = firstPage(migrated.firstPage, pageShown());
+  expect(visited).toMatchObject({ returningInstall: true, shown: true, guided: false });
+  const fresh = firstPage(undefined, pageShown());
+  expect(firstPage(fresh, markReturningInstall())).toMatchObject({ guided: true });
 });

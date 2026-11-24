@@ -37,8 +37,9 @@ jest.mock('@/services/readingProgress', () => ({
 jest.mock('@/services/studyWordsFSRS', () => ({
   studyWordsFSRSService: { getFSRSWords: jest.fn() },
 }));
+let mockUser: { id: string } | null = null;
 jest.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
+  useAuth: () => ({ user: mockUser }),
 }));
 jest.mock('@/hooks/articles/useMultipleFeaturedArticles', () => ({
   MAX_FEATURED_ARTICLES: 7,
@@ -55,6 +56,7 @@ describe('useAppPreloader splash gate', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
+    mockUser = { id: 'user-1' };
     jest.useFakeTimers();
     // The app's own query defaults (app/_layout.tsx): fetches pause while
     // offline, and the retry policy is the shared one.
@@ -82,6 +84,19 @@ describe('useAppPreloader splash gate', () => {
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
       ),
     });
+
+  test('a signed-out launch and resume leave the catalog and private data untouched', async () => {
+    mockUser = null;
+    const { result } = renderPreloader();
+    await act(async () => {
+      await result.current.preloadAppData();
+      await result.current.preloadAppData();
+    });
+    expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
+    expect(articlesService.getArticles).not.toHaveBeenCalled();
+    expect(categoriesService.getCategories).not.toHaveBeenCalled();
+    expect(studyWordsFSRSService.getFSRSWords).not.toHaveBeenCalled();
+  });
 
   test('an offline cold start settles every awaited query and hides the splash', async () => {
     onlineManager.setOnline(false);

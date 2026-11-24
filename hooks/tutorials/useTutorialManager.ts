@@ -10,6 +10,7 @@ import type { TutorialId } from '@/constants/tutorials';
 import {
   loadAllTutorialStates,
   markTutorialCompleted,
+  observeTutorialCompletion,
   resetAllTutorials as resetAllTutorialsStorage,
 } from '@/utils/tutorialStorage';
 
@@ -46,11 +47,21 @@ export function useTutorialManager() {
   useEffect(() => {
     let mounted = true;
 
+    const completedDuringLoad: Partial<Record<TutorialId, boolean>> = {};
+    const unsubscribe = observeTutorialCompletion((id, owner) => {
+      if ((owner ?? null) !== userId) return;
+      completedDuringLoad[id] = true;
+      setState(prev => ({
+        ...prev,
+        completedTutorials: { ...prev.completedTutorials, [id]: true },
+      }));
+    });
+
     async function loadStates() {
       const states = await loadAllTutorialStates(userId);
       if (mounted) {
         setState({
-          completedTutorials: states,
+          completedTutorials: { ...states, ...completedDuringLoad },
           isLoaded: true,
         });
       }
@@ -60,6 +71,7 @@ export function useTutorialManager() {
 
     return () => {
       mounted = false;
+      unsubscribe();
     };
   }, [userId]);
 

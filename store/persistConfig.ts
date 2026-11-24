@@ -25,7 +25,7 @@ import { PERSISTED_SLICES, type RootStateShape } from '@/store/rootReducer';
  * `_persist.version: 1`, and `createMigrate` only runs migrations keyed above
  * the stored version. Every other install stored no version, which reads -1.
  */
-export const PERSIST_VERSION = 2;
+export const PERSIST_VERSION = 3;
 
 /** Narrowed by hand: a corrupt blob is not a reason to throw away the whole store. */
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -58,6 +58,11 @@ const pinVoiceOffForPreVoiceSettings = (state: PersistedState): PersistedState =
 
 export const PERSIST_MIGRATIONS: MigrationManifest = {
   2: pinVoiceOffForPreVoiceSettings,
+  3: state => {
+    if (!state || 'firstPage' in state) return state;
+    const migrated = { ...state, firstPage: { returningInstall: true, shown: false } };
+    return migrated;
+  },
 };
 
 export const persistConfig: PersistConfig<RootStateShape> = {

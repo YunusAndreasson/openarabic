@@ -1,3 +1,6 @@
+import { registerAccountStorageReset } from '@/services/accountLifecycle';
+import { AccountTeardownGate } from '@/components/providers/AccountTeardownGate';
+import { resetAccountPersistence } from '@/store/resetAccountPersistence';
 import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 import {
@@ -56,6 +59,7 @@ import { useAppOpenTracking } from '@/hooks/app/useAppOpenTracking';
 import { useScreenViewTracking } from '@/hooks/app/useScreenViewTracking';
 import { useUpdateReady } from '@/hooks/app/useUpdateReady';
 import { useNotificationResponseRouting } from '@/hooks/notifications/useNotificationResponseRouting';
+import { useWordWidgetSync } from '@/hooks/app/useWordWidgetSync';
 import { useSmartNotifications } from '@/hooks/notifications/useSmartNotifications';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { GlobalAudioStateProvider } from '@/hooks/audio/useGlobalAudioState';
@@ -80,7 +84,11 @@ import {
 } from '@/utils/errorHandling';
 import { registerMutationDefaults } from '@/utils/mutationDefaults';
 import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
-import { flushPersistedQueryCache, PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
+import {
+  flushPersistedQueryCache,
+  invalidateQueryPersistence,
+  PERSISTENCE_OPTIONS,
+} from '@/utils/queryPersistence';
 import { reportQueryFailure } from '@/utils/queryMeta';
 import { retryWhileOnline } from '@/utils/queryRetry';
 import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
@@ -203,6 +211,12 @@ const queryClient = new QueryClient({
 // sees a rehydrated mutation — see registerMutationDefaults' own comment for
 // why a mutation resumed with no registered default fails outright.
 registerMutationDefaults(queryClient);
+registerAccountStorageReset(async () => {
+  invalidateQueryPersistence();
+  await queryClient.cancelQueries();
+  queryClient.clear();
+  await resetAccountPersistence();
+});
 
 // A mutation paused offline (networkMode 'online') is dehydrated with the rest
 // of the persisted cache on app close. Without resuming it here, it stays
@@ -353,6 +367,7 @@ function AppContent() {
   useUpdateReady();
 
   // Smart SRS reminders - keeps the scheduled notification plan in sync with FSRS state
+  useWordWidgetSync();
   useSmartNotifications();
 
   // Smart due words calculator - refreshes data when app becomes active
@@ -419,13 +434,13 @@ function AppContent() {
 
   // Handle preloading app data - start when auth is ready
   useEffect(() => {
-    if (!isAuthLoading && !isLoaded && !hasTriggeredPreload.current) {
+    if (userId && !isAuthLoading && !isLoaded && !hasTriggeredPreload.current) {
       hasTriggeredPreload.current = true;
       preloadAppData().catch(() => {
         // Preload errors are already logged in the preloader
       });
     }
-  }, [isAuthLoading, isLoaded, preloadAppData]);
+  }, [userId, isAuthLoading, isLoaded, preloadAppData]);
 
   // Wait for all resources before setting appReady
   useEffect(() => {
@@ -436,8 +451,8 @@ function AppContent() {
     // Auth must be fully resolved (not loading anymore)
     const authIsReady = !isAuthLoading;
 
-    // Critical content must be loaded (articles, categories, etc.)
-    const contentIsReady = isLoaded;
+    // The guest route reads from the bundle. Only the account home awaits its catalog.
+    const contentIsReady = !userId || isLoaded;
 
     // CRITICAL: Require fonts AND auth AND content to be ready
     // This prevents janky behavior from showing UI before resources are available
@@ -454,22 +469,26 @@ function AppContent() {
       // Hide splash screen when app is ready
       SplashScreen.hide();
     }
-  }, [fontsLoaded, fontError, isAuthLoading, isLoaded, appReady]);
+  }, [fontsLoaded, fontError, isAuthLoading, isLoaded, appReady, userId]);
 
   // Every event carries these; registered before App Opened goes out below.
   useAnalyticsSuperProperties({ appReady, signedIn: !!session });
 
   // App Opened (and First Open) once the learner can see the app. After a
   // background launch, the session starts at that open, not at the launch.
-  useAppOpenTracking(appReady, () => {
-    activeSessionStartedAt.current = Date.now();
-  });
+  useAppOpenTracking(
+    appReady,
+    () => {
+      activeSessionStartedAt.current = Date.now();
+    },
+    session?.user?.id,
+  );
 
   useScreenViewTracking(appReady);
 
   // Initialize notifications when app is ready (Expo best practice)
   useEffect(() => {
-    if (appReady) {
+    if (appReady && userId) {
       const initializeAppServices = async () => {
         try {
           await initializeNotifications();
@@ -481,7 +500,7 @@ function AppContent() {
 
       void initializeAppServices();
     }
-  }, [appReady]);
+  }, [appReady, userId]);
 
   // Notification taps — the one that launched the app, then every later one —
   // open their screen once the navigator is up.
@@ -548,7 +567,7 @@ function AppContent() {
     if (resumeRefreshTimer.current) clearTimeout(resumeRefreshTimer.current);
     resumeRefreshTimer.current = setTimeout(() => {
       resumeRefreshTimer.current = null;
-      void preloadAppData();
+      if (resumedUserId) void preloadAppData();
 
       // The streak is date-derived, but its query opts out of every automatic
       // refetch (refetchOnMount and refetchOnWindowFocus are both false) and
@@ -603,7 +622,7 @@ function AppContent() {
     <NavigationThemeProvider value={navigationTheme}>
       <View style={containerStyle}>
         <FSRSDataProvider userId={session?.user?.id}>
-          <VoiceGradingProvider>
+          <VoiceGradingProvider signedIn={isAuthenticated}>
             <GlobalAudioStateProvider>
               <Stack
                 screenOptions={rootScreenOptions}
@@ -625,48 +644,42 @@ function AppContent() {
                 // only ever filled immediately before a dismissal.
                 screenListeners={ROOT_SCREEN_LISTENERS}
               >
-                {/* Authenticated routes — on sign-out these redirect to auth */}
+                <Stack.Screen name="first-page" />
+                <Stack.Screen name="(tabs)" options={FADE_ROUTE_OPTIONS} />
+                <Stack.Screen
+                  name="article/[id]"
+                  options={createNavigationOptions(colors, {
+                    headerShown: false,
+                    /*
+                     * Full screen, not the app's usual pageSheet — the reader
+                     * is the one modal that hosts a bottom sheet.
+                     *
+                     * iOS drives a pageSheet's interactive dismissal from any
+                     * scroll view inside it, so dragging the word card down
+                     * dragged the article with it. `gestureEnabled: false`
+                     * does NOT fix that: on `presentation: 'modal'` it blocks
+                     * only the final dismissal and leaves the modal tracking
+                     * the finger and springing back
+                     * (software-mansion/react-native-screens#1410, open since
+                     * 2022). That matches the report exactly — "both pull down
+                     * like the finger is pulling both".
+                     *
+                     * `fullScreenModal` is `UIModalPresentationFullScreen`,
+                     * which has no dismissal gesture to conflict with. The
+                     * conflict cannot be suppressed on a pageSheet, so the
+                     * reader stops being one.
+                     *
+                     * Costs the swipe-down exit and the inset card look;
+                     * `CloseButton` and the Android back gesture are
+                     * unaffected, and Android falls back to `modal` anyway.
+                     * `gestureEnabled` stays false to state the intent if the
+                     * presentation is ever changed back.
+                     */
+                    presentation: 'fullScreenModal',
+                    gestureEnabled: false,
+                  })}
+                />
                 <Stack.Protected guard={isAuthenticated} redirectTo={ROUTE_PATHS.AUTH}>
-                  {/* Animation re-enabled after Stack.Protected migration. The
-                      previous `animation: 'none'` worked around a black-screen
-                      bug caused by imperative router.replace racing with mount.
-                      Declarative guards mount directly into the right route, so
-                      the race is gone — fade matches the auth screen for a
-                      symmetric sign-in / sign-out transition. */}
-                  <Stack.Screen name="(tabs)" options={FADE_ROUTE_OPTIONS} />
-                  <Stack.Screen
-                    name="article/[id]"
-                    options={createNavigationOptions(colors, {
-                      headerShown: false,
-                      /*
-                       * Full screen, not the app's usual pageSheet — the reader
-                       * is the one modal that hosts a bottom sheet.
-                       *
-                       * iOS drives a pageSheet's interactive dismissal from any
-                       * scroll view inside it, so dragging the word card down
-                       * dragged the article with it. `gestureEnabled: false`
-                       * does NOT fix that: on `presentation: 'modal'` it blocks
-                       * only the final dismissal and leaves the modal tracking
-                       * the finger and springing back
-                       * (software-mansion/react-native-screens#1410, open since
-                       * 2022). That matches the report exactly — "both pull down
-                       * like the finger is pulling both".
-                       *
-                       * `fullScreenModal` is `UIModalPresentationFullScreen`,
-                       * which has no dismissal gesture to conflict with. The
-                       * conflict cannot be suppressed on a pageSheet, so the
-                       * reader stops being one.
-                       *
-                       * Costs the swipe-down exit and the inset card look;
-                       * `CloseButton` and the Android back gesture are
-                       * unaffected, and Android falls back to `modal` anyway.
-                       * `gestureEnabled` stays false to state the intent if the
-                       * presentation is ever changed back.
-                       */
-                      presentation: 'fullScreenModal',
-                      gestureEnabled: false,
-                    })}
-                  />
                   <Stack.Screen
                     name="review"
                     options={createNavigationOptions(colors, {
@@ -742,26 +755,28 @@ export default Sentry.wrap(function RootLayout() {
     <GestureHandlerRootView style={styles.gestureRoot}>
       <Provider store={store}>
         <PersistGate loading={PERSIST_GATE_LOADING} persistor={persistor}>
-          <PersistQueryClientProvider
-            client={queryClient}
-            persistOptions={PERSISTENCE_OPTIONS}
-            onSuccess={resumePausedMutationsOnRestore}
-          >
-            <AuthProvider>
-              {/* initialMetrics seeds the insets synchronously from the native side,
+          <AccountTeardownGate>
+            <PersistQueryClientProvider
+              client={queryClient}
+              persistOptions={PERSISTENCE_OPTIONS}
+              onSuccess={resumePausedMutationsOnRestore}
+            >
+              <AuthProvider>
+                {/* initialMetrics seeds the insets synchronously from the native side,
                   so the first frame is laid out with real safe areas instead of
                   zeros that get corrected a frame later. */}
-              <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-                <TutorialProvider>
-                  <ToastProvider>
-                    <Sentry.ErrorBoundary fallback={renderSentryFallback}>
-                      <AppContent />
-                    </Sentry.ErrorBoundary>
-                  </ToastProvider>
-                </TutorialProvider>
-              </SafeAreaProvider>
-            </AuthProvider>
-          </PersistQueryClientProvider>
+                <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+                  <TutorialProvider>
+                    <ToastProvider>
+                      <Sentry.ErrorBoundary fallback={renderSentryFallback}>
+                        <AppContent />
+                      </Sentry.ErrorBoundary>
+                    </ToastProvider>
+                  </TutorialProvider>
+                </SafeAreaProvider>
+              </AuthProvider>
+            </PersistQueryClientProvider>
+          </AccountTeardownGate>
         </PersistGate>
       </Provider>
     </GestureHandlerRootView>

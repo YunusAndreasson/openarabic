@@ -485,6 +485,12 @@ const createGrammarColors = (variant: 'light' | 'dark' | 'sepia') => ({
 // CARD OVERLAY FACTORY
 // =============================================================================
 
+/** The photograph keeps its warm shadow and light controls in all three themes. */
+export const PASSAGE_COVER = {
+  background: basePalette.sepiaPure.black,
+  control: withAlpha(basePalette.sepiaPure.black, opacity.darkBackdrop),
+} as const;
+
 /**
  * The scrim over a card's image and the text laid on it, for one theme.
  *

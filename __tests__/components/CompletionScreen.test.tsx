@@ -254,7 +254,7 @@ describe('CompletionScreen Component', () => {
 
       render(<CompletionScreen sessionMetrics={metrics} />);
 
-      expect(useReviewCompletion).toHaveBeenCalledWith(metrics);
+      expect(useReviewCompletion).toHaveBeenCalledWith(metrics, undefined);
     });
 
     test('calls useEncouragingMetrics with metrics and dailyStreak', () => {
@@ -273,7 +273,7 @@ describe('CompletionScreen Component', () => {
 
       render(<CompletionScreen />);
 
-      expect(useReviewCompletion).toHaveBeenCalledWith(undefined);
+      expect(useReviewCompletion).toHaveBeenCalledWith(undefined, undefined);
     });
   });
 
@@ -418,7 +418,7 @@ describe('CompletionScreen Component', () => {
 
       render(<CompletionScreen sessionMetrics={metrics} />);
 
-      expect(useReviewCompletion).toHaveBeenCalledWith(metrics);
+      expect(useReviewCompletion).toHaveBeenCalledWith(metrics, undefined);
     });
 
     test('should display metrics in order of importance', () => {

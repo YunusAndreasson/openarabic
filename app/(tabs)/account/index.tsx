@@ -1,3 +1,4 @@
+import { WidgetSettingsEntry } from '@/components/widget/WidgetOffer';
 // External Libraries
 import { SettingsPicker, TimePicker } from '@/components/ui';
 import { useCallback, useMemo, useState } from 'react';
@@ -179,6 +180,7 @@ const AccountScreen = () => {
         contentContainerStyle={scrollContentStyle}
       >
         <ReadingSection />
+        <WidgetSettingsEntry />
 
         <PracticeSection
           onDailyWordLimitPress={handleDailyWordLimitPress}

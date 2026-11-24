@@ -6,7 +6,7 @@ import { STRINGS } from '@/constants/strings';
 import { checkAuthentication, supabase } from '@/services/supabase';
 import type { RootId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
-import type { FSRSWordUpdate, GetFSRSWordsOptions } from '@/types/fsrs.types';
+import type { GradePrecondition, FSRSWordUpdate, GetFSRSWordsOptions } from '@/types/fsrs.types';
 import type { StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { MILLISECONDS_PER_HOUR } from '@/utils/dateTimeUtils';
 import { createBulkFSRSEntries, createInitialFSRSEntry } from '@/utils/fsrsInitializers';
@@ -109,35 +109,15 @@ export const studyWordsFSRSService = {
         );
       } else {
         // Get full data with relationships - root is the only relation we need
-        // Spelled out as a literal, deliberately: supabase-js parses this
-        // string as a TEMPLATE LITERAL TYPE against the generated schema, so a
-        // renamed or misspelled column fails to compile here and the row type
-        // flows through typed. Building it at runtime (`COLUMNS.join(',')`)
-        // widens it to `string`, which the parser rejects outright — this is
-        // already the most strongly checked part of the query.
-        const columns = `
-          root_id,
-          user_id,
-          fsrs_due,
-          fsrs_stability,
-          fsrs_stability_fast,
-          fsrs_fast_reviewed_at,
-          fsrs_model,
-          fsrs_difficulty,
-          fsrs_scheduled_days,
-          fsrs_reps,
-          fsrs_learning_steps,
-          fsrs_lapses,
-          fsrs_state,
-          fsrs_last_review,
-          created_at,
-          root:roots (id, letters, meaning, audio_url, audio_url_en)
-        `;
+        // The live grading migration adds review_revision. Select the complete row so
+        // clients can use its UUID without hand-editing the generated database types.
+        const columns = '*, root:roots (id, letters, meaning, audio_url, audio_url_en)';
         selectQuery = query.select(columns);
       }
 
       // Add filters after the select
       let filteredQuery = selectQuery.eq('user_id', userId);
+      if (options.rootId !== undefined) filteredQuery = filteredQuery.eq('root_id', options.rootId);
 
       // Add due date filter if requested
       if (options.onlyDue) {
@@ -225,36 +205,44 @@ export const studyWordsFSRSService = {
     rootId: RootId,
     update: FSRSWordUpdate,
     request: RequestOptions = {},
+    expected?: GradePrecondition,
   ): Promise<void> {
-    // Direct UPDATE - simpler than RPC, no database migration needed
-    // RLS policies ensure user can only update their own words
-    await executeAuthenticatedQuery(
+    const rows = await executeAuthenticatedQuery(
       userId,
-      () =>
-        supabase
+      () => {
+        let query = supabase
           .from('study_words')
-          .update({
-            fsrs_due: update.fsrs_due,
-            fsrs_stability: update.fsrs_stability,
-            fsrs_stability_fast: update.fsrs_stability_fast,
-            fsrs_fast_reviewed_at: update.fsrs_fast_reviewed_at,
-            fsrs_model: update.fsrs_model,
-            fsrs_difficulty: update.fsrs_difficulty,
-            fsrs_scheduled_days: update.fsrs_scheduled_days,
-            fsrs_learning_steps: update.fsrs_learning_steps,
-            fsrs_reps: update.fsrs_reps,
-            fsrs_lapses: update.fsrs_lapses,
-            fsrs_state: update.fsrs_state,
-            fsrs_last_review: update.fsrs_last_review,
-          })
+          .update(update)
           .eq('user_id', userId)
-          .eq('root_id', rootId),
-      {
-        ...errorConfig.update,
-        analyticsProperties: { rootId },
+          .eq('root_id', rootId);
+        if (!expected) return query;
+        query = expected.created
+          ? query.eq('created_at', expected.created)
+          : query.is('created_at', null);
+        if (expected.revision !== undefined) {
+          query = query.filter(
+            'review_revision',
+            expected.revision === null ? 'is' : 'eq',
+            expected.revision ?? 'null',
+          );
+        } else {
+          // A locally queued successor or pre-upgrade cached card has no revision.
+          query =
+            expected.reps === null
+              ? query.is('fsrs_reps', null)
+              : query.eq('fsrs_reps', expected.reps);
+          query =
+            expected.last === null
+              ? query.is('fsrs_last_review', null)
+              : query.eq('fsrs_last_review', expected.last);
+        }
+        return query.select('root_id');
       },
+      { ...errorConfig.update, analyticsProperties: { rootId } },
       request,
     );
+    if (expected && (!Array.isArray(rows) || !rows.length))
+      throw Object.assign(new Error(STRINGS.FIRST_REVIEW_CONFLICT), { code: '40001' });
   },
 
   // Toggle FSRS study for roots
@@ -311,6 +299,22 @@ export const studyWordsFSRSService = {
 
     // Create a new FSRS card for the root with proper initial values
     const newEntry = createInitialFSRSEntry(userId, rootId);
+
+    if (intent === 'add') {
+      // A concurrent add (including a replay after a lost response) can win after
+      // the existence check. DO NOTHING preserves its FSRS schedule.
+      const inserted = await executeAuthenticatedQuery(
+        userId,
+        () =>
+          supabase
+            .from('study_words')
+            .upsert(newEntry, { onConflict: 'user_id,root_id', ignoreDuplicates: true })
+            .select('root_id'),
+        { ...errorConfig.toggleInsert, analyticsProperties: { rootId } },
+        request,
+      );
+      return { inStudyList: true, changed: inserted.length > 0 };
+    }
 
     await executeAuthenticatedQuery(
       userId,

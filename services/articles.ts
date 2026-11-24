@@ -32,7 +32,7 @@ const errorConfig = {
   }),
 };
 
-const SEARCH_CORPUS_COLUMNS = 'article_id, position, arabic, english';
+const SEARCH_CORPUS_COLUMNS = 'article_id, position, arabic, english, articles!inner()';
 
 // Define different column sets for different use cases
 const LIST_VIEW_COLUMNS = `
@@ -239,10 +239,8 @@ export const articlesService = {
    * (`utils/queryPersistence.ts`) because a payload this size threatens
    * Android's 2 MB CursorWindow.
    *
-   * Unpublished articles are not filtered out here. There is no `published`
-   * column on `article_sentences`, and adding the join would buy nothing: a hit
-   * is only ever surfaced by joining back to the published catalogue, which
-   * drops them anyway.
+   * The empty embed filters on the parent without downloading its fields.
+   * A guest search should only receive sentences from the published catalogue.
    */
   getSearchCorpus(request: RequestOptions = {}): Promise<SearchCorpusSentence[]> {
     return fetchAllPages(
@@ -250,6 +248,7 @@ export const articlesService = {
         supabase
           .from('article_sentences')
           .select(SEARCH_CORPUS_COLUMNS)
+          .eq('articles.published', true)
           .order('article_id', { ascending: true })
           .order('position', { ascending: true })
           .range(from, to)

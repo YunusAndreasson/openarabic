@@ -313,10 +313,9 @@ export const useAppPreloader = (): AppPreloaderResult => {
   }, [queryClient, user, prefetchFeaturedArticles]);
 
   const preloadAppData = useCallback(async () => {
-    if (preloadLockRef.current) {
+    if (!user?.id || preloadLockRef.current) {
       return;
     }
-    // Don't wait for auth - critical data (categories, articles) can load without user
 
     preloadLockRef.current = true;
 
@@ -325,7 +324,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
     } finally {
       preloadLockRef.current = false;
     }
-  }, [preloadCriticalData]);
+  }, [preloadCriticalData, user?.id]);
 
   const prefetchVocabularyData = useCallback(async () => {
     if (!user?.id) return false;

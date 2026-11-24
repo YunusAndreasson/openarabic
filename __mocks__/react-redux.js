@@ -17,6 +17,15 @@ const React = require('react');
 const actual = jest.requireActual('react-redux/alternate-renderers');
 
 const mockState = {
+  firstPage: {
+    hasSaved: false,
+    version: 1,
+    shown: false,
+    firstLineSeen: false,
+    browsed: false,
+    tipHidden: false,
+    offset: 0,
+  },
   theme: {
     theme: 'dark', // Default to dark theme (Midnight Summer)
   },

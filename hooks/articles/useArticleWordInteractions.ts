@@ -21,6 +21,7 @@ const trackWordCardOpened = (via: 'tap' | 'tooltip', inStudy: boolean): void => 
 };
 
 export interface UseArticleWordInteractionsOptions {
+  onOccurrenceSaved?: (owner: string, word: SentenceWord) => void;
   /** Handler for toggling word study status */
   handleRootPress: (
     rootId: RootId,
@@ -48,6 +49,7 @@ export function useArticleWordInteractions({
   handleRootPress,
   refetchStudyWords,
   showTooltipFirst = false,
+  onOccurrenceSaved,
 }: UseArticleWordInteractionsOptions) {
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -185,19 +187,21 @@ export function useArticleWordInteractions({
    * Updates local state optimistically and invalidates queries
    * @returns true if operation succeeded, false if it failed (e.g., daily limit reached)
    */
+  const owner = user?.id;
   const handleAddWordToStudy = useCallback(
     async (
       word: SentenceWord,
       intent?: StudyWordIntent,
       options?: StudyWordPressOptions,
     ): Promise<boolean> => {
-      if (!user?.id || !word.root_id) return false;
+      if (!owner || !word.root_id) return false;
 
       // No haptic here: every caller has already fired its own for the press
       // that got us here (the word sheet a selection tick, long-press a medium
       // one). Firing a second one made a single save buzz twice.
       const result = await handleRootPress(word.root_id, intent, options);
       if (result === undefined) return false;
+      if (result) onOccurrenceSaved?.(owner, word);
 
       // No local state to update: the mutation's onMutate already wrote the
       // optimistic value into the fsrsQueries.all cache, and isRootInStudyList
@@ -206,7 +210,7 @@ export function useArticleWordInteractions({
 
       return true;
     },
-    [user?.id, handleRootPress, refetchStudyWords],
+    [owner, handleRootPress, refetchStudyWords, onOccurrenceSaved],
   );
 
   // The query mutation/refetch callbacks can receive new identities when the

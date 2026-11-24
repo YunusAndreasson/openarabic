@@ -65,6 +65,29 @@ describe('setFSRSStudyRoot', () => {
     expect(result).toBeTruthy();
   });
 
+  test('a competing explicit add preserves the first card and reports no new save', async () => {
+    const read = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn(async () => ({ data: null, error: null })),
+    };
+    const insert = {
+      upsert: jest.fn().mockReturnThis(),
+      select: jest.fn(async () => ({ data: [], error: null })),
+    };
+    (supabase.from as jest.Mock)
+      .mockImplementationOnce(() => read)
+      .mockImplementationOnce(() => insert);
+    expect(await studyWordsFSRSService.setFSRSStudyRoot('u1', rootId(4), 'add')).toEqual({
+      inStudyList: true,
+      changed: false,
+    });
+    expect(insert.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: 'u1', root_id: 4 }),
+      { onConflict: 'user_id,root_id', ignoreDuplicates: true },
+    );
+  });
+
   test('deletes existing entry when found', async () => {
     const selectObj = {
       select: jest.fn().mockReturnThis(),
@@ -156,6 +179,28 @@ describe('updateWordAndReview', () => {
     fsrs_last_review: '2024-01-01T00:00:00.000Z',
   };
 
+  test('a competing revision rejects the ordinary grade without retrying an unconditional update', async () => {
+    const query = {
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      filter: jest.fn().mockReturnThis(),
+      select: jest.fn(async () => ({ data: [], error: null })),
+    };
+    supabase.from.mockReturnValue(query);
+    const expected = {
+      created: update.fsrs_last_review,
+      revision: 'old-revision',
+      reps: 0,
+      last: null,
+    };
+    await expect(
+      studyWordsFSRSService.updateWordAndReview('u1', rootId(5), update, {}, expected),
+    ).rejects.toThrow('changed on another device');
+    expect(query.eq).toHaveBeenCalledWith('created_at', expected.created);
+    expect(query.filter).toHaveBeenCalledWith('review_revision', 'eq', expected.revision);
+    expect(query.update).toHaveBeenCalledTimes(1);
+  });
+
   test('calls direct UPDATE to update word FSRS parameters', async () => {
     const selectMock = jest.fn();
     const updateObj: any = {
@@ -195,6 +240,16 @@ describe('getFSRSWords', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  test('the single-word receipt loads the exact saved dictionary row for this owner', async () => {
+    const builder = createBuilder();
+    (supabase.from as jest.Mock).mockReturnValue(builder);
+    await studyWordsFSRSService.getFSRSWords('owner', { rootId: rootId(37), limit: 1 });
+    expect(builder.eq).toHaveBeenCalledWith('user_id', 'owner');
+    expect(builder.eq).toHaveBeenCalledWith('root_id', 37);
+    expect(builder.limit).toHaveBeenCalledWith(1);
+    expect(builder.or).not.toHaveBeenCalled();
   });
 
   test('adds due filter when onlyDue is true', async () => {

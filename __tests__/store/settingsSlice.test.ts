@@ -267,12 +267,9 @@ describe('settingsSlice reducers', () => {
   describe('speak-the-answer offer', () => {
     const defaults = () => reducer(undefined, { type: '@@INIT' });
 
-    it('ships ON for a new install, and un-refused', () => {
-      // The whole point of the default flip: opting in produced four users in
-      // the feature's entire history, so a new learner starts with voice
-      // available rather than having to discover a setting.
+    it('waits for an explicit voice choice on a new install', () => {
       const state = defaults();
-      expect(state.voiceEnabled).toBe(true);
+      expect(state.voiceEnabled).toBe(false);
       expect(state.voiceOfferDismissed).toBe(false);
     });
 
@@ -282,7 +279,7 @@ describe('settingsSlice reducers', () => {
       // silently disable voice for anyone who dismissed a card.
       const state = reducer(defaults(), setVoiceOfferDismissed(true));
       expect(state.voiceOfferDismissed).toBe(true);
-      expect(state.voiceEnabled).toBe(true);
+      expect(state.voiceEnabled).toBe(false);
     });
 
     it('an existing install that turned voice off stays off', () => {

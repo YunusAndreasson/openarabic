@@ -1,3 +1,4 @@
+import type { StartReaderAuth } from '@/services/readerSaveAuth';
 import { useCallback, useRef } from 'react';
 import type { TextInputInstance } from 'react-native';
 
@@ -16,9 +17,9 @@ import { useAuthForm } from '@/hooks/auth/useAuthForm';
  * already here, and this codebase deliberately does not sweep existing manual
  * memoisation.
  */
-export function useAuthFormFields() {
+export function useAuthFormFields(returnToReader = false, startAttempt?: StartReaderAuth) {
   const passwordInputRef = useRef<TextInputInstance>(null);
-  const form = useAuthForm();
+  const form = useAuthForm(returnToReader, startAttempt);
 
   const {
     email,

@@ -10,11 +10,8 @@
  * outlives the components that trigger it, so there is deliberately **no cleanup
  * function** on the effect below.
  *
- * MOUNT LOCATION MATTERS. This must stay inside `PersistGate`
- * (`app/_layout.tsx:692`), which `VoiceGradingProvider` is. Mounted above it,
- * `voiceEnabled` reads as its initial value before rehydration — now `true` —
- * and would start a 103 MB download for every learner who has ever turned voice
- * off.
+ * VoiceGradingProvider combines the signed-in session and the persisted voice
+ * preference after PersistGate has rehydrated the device.
  */
 import { useEffect } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';

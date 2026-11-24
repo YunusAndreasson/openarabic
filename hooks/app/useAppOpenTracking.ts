@@ -1,20 +1,19 @@
 import { useEffect, useEffectEvent, useRef } from 'react';
-import { AppState, type AppStateStatus } from 'react-native';
+import { AppState } from 'react-native';
 
 import { ANALYTICS_EVENTS, SUPER_PROPERTIES } from '@/constants/analytics';
 import { analytics } from '@/services/analytics';
 import { loadInstallRecord } from '@/services/analyticsInstall';
 import { startInstallAttribution, trackFirstOpen } from '@/services/installAttribution';
 
-/**
- * - `foreground`: the app was on screen when it became ready.
- * - `after_background_launch`: iOS started it in the background (a background
- *   task, the voice-model download finishing) and this is the learner opening
- *   it later.
- *
- * A return to an app already running is App Resumed, sent by the root layout.
- */
-type AppOpenLaunch = 'foreground' | 'after_background_launch';
+import {
+  enterReminderSession,
+  backgroundReminderSession,
+  finishIdleReminderSession,
+  REMINDER_SESSION_TIMEOUT_MS,
+} from '@/services/reviewReminderJourney';
+
+type AppOpenLaunch = 'cold' | 'warm' | 'after_background_launch';
 
 /** `install_date` on every event from here on. */
 const registerInstallDate = (): Promise<void> =>
@@ -40,54 +39,59 @@ const trackAppOpened = async (
 ): Promise<void> => {
   await installDateRegistered;
 
-  await trackFirstOpen();
+  if (launch !== 'warm') await trackFirstOpen();
   await analytics.track(ANALYTICS_EVENTS.APP_OPENED, { launch });
-  await startInstallAttribution();
+  if (launch !== 'warm') await startInstallAttribution();
 };
 
-/**
- * App Opened once per launch the learner actually sees.
- *
- * iOS launches the app into the background (UIBackgroundModes processing, and
- * the relaunch that finishes a voice-model download), and the app becomes ready
- * there with nobody looking. Counting that as an open inflated every active
- * count, and the real open that followed was never counted at all: App Resumed
- * needs a background transition the app never made. So a launch that is ready
- * in the background waits, and the first move to `active` is its App Opened.
- *
- * `onOpenAfterBackgroundLaunch` lets the caller start its session clock there,
- * not at the background launch.
- */
-export function useAppOpenTracking(appReady: boolean, onOpenAfterBackgroundLaunch: () => void) {
-  // Set once, at the latch: a background launch registers it too, for the
-  // events it sends before anyone opens the app.
+/** A launch counts only while active. An inactive interruption is part of the same session. */
+export function useAppOpenTracking(
+  appReady: boolean,
+  onOpenAfterBackgroundLaunch: () => void,
+  owner?: string,
+) {
   const installDateRef = useRef<Promise<void> | null>(null);
-  const isOpenPendingRef = useRef(false);
-
-  useEffect(() => {
-    if (!appReady || installDateRef.current) return;
-    const installDateRegistered = registerInstallDate();
-    installDateRef.current = installDateRegistered;
-
-    // 'unknown' and 'inactive' are a foreground launch still settling: iOS
-    // reports 'unknown' until the app first becomes active.
-    if (AppState.currentState === 'background') {
-      isOpenPendingRef.current = true;
-      return;
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const hasOpened = useRef(false);
+  const wasBackgrounded = useRef(false);
+  const observe = useEffectEvent((state: typeof AppState.currentState) => {
+    if (state === 'background') {
+      wasBackgrounded.current = true;
+      if (hasOpened.current) {
+        void backgroundReminderSession().catch(() => undefined);
+        clearTimeout(idleTimer.current);
+        idleTimer.current = setTimeout(() => {
+          void finishIdleReminderSession(Date.now(), owner).catch(() => undefined);
+        }, REMINDER_SESSION_TIMEOUT_MS);
+      }
     }
-    void trackAppOpened('foreground', installDateRegistered);
-  }, [appReady]);
+    if (!appReady || state !== 'active' || (hasOpened.current && !wasBackgrounded.current)) return;
 
-  const handleAppStateChange = useEffectEvent((nextAppState: AppStateStatus) => {
-    const installDateRegistered = installDateRef.current;
-    if (nextAppState !== 'active' || !isOpenPendingRef.current || !installDateRegistered) return;
-    isOpenPendingRef.current = false;
-    onOpenAfterBackgroundLaunch();
-    void trackAppOpened('after_background_launch', installDateRegistered);
+    clearTimeout(idleTimer.current);
+    const launch = hasOpened.current
+      ? 'warm'
+      : wasBackgrounded.current
+        ? 'after_background_launch'
+        : 'cold';
+    hasOpened.current = true;
+    wasBackgrounded.current = false;
+    if (launch === 'after_background_launch') onOpenAfterBackgroundLaunch();
+    installDateRef.current ??= registerInstallDate();
+    void trackAppOpened(
+      launch,
+      Promise.all([
+        installDateRef.current,
+        enterReminderSession(launch !== 'warm', Date.now(), owner).catch(() => undefined),
+      ]).then(() => undefined),
+    );
   });
 
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-    return () => subscription.remove();
-  }, []);
+    const subscription = AppState.addEventListener('change', observe);
+    observe(AppState.currentState);
+    return () => {
+      subscription.remove();
+      clearTimeout(idleTimer.current);
+    };
+  }, [appReady]);
 }

@@ -4,6 +4,11 @@ import { useCallback, useState } from 'react';
 import { REFUSAL_TOAST_DURATION } from '@/constants/animation';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
+import {
+  trackReaderAccount,
+  type ReaderAuthAttempt,
+  type StartReaderAuth,
+} from '@/services/readerSaveAuth';
 import { metaEvents } from '@/services/metaEvents';
 import { supabase } from '@/services/supabase';
 import {
@@ -144,217 +149,229 @@ let providerSignInInProgress = false;
 export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) {
   const [loading, setLoading] = useState(false);
 
-  const signIn = useCallback(async (): Promise<void> => {
-    if (providerSignInInProgress) return;
-    providerSignInInProgress = true;
-    setLoading(true);
+  const signIn = useCallback(
+    async (start?: StartReaderAuth): Promise<void> => {
+      if (providerSignInInProgress) return;
+      providerSignInInProgress = true;
+      setLoading(true);
 
-    const providerName = config.provider.charAt(0).toUpperCase() + config.provider.slice(1);
-    let step: OAuthSignInStep = 'module_load';
+      const providerName = config.provider.charAt(0).toUpperCase() + config.provider.slice(1);
+      let attempt: ReaderAuthAttempt | undefined;
+      let step: OAuthSignInStep = 'module_load';
 
-    try {
-      authBreadcrumb(`Checking ${providerName} Auth native module availability`);
-
-      let nativeModule: TModule;
       try {
-        nativeModule = await config.loadModule();
-      } catch (moduleError) {
-        authBreadcrumb(
-          `${providerName} Auth native module unavailable`,
-          { errorMessage: toError(moduleError).message },
-          'error',
-        );
-        throw new Error(
-          config.moduleNotAvailableMessage ??
-            `${providerName} Sign In is not available. Please rebuild the app with: npx expo prebuild`,
-        );
-      }
-      authBreadcrumb(`${providerName} Auth native module loaded successfully`);
+        attempt = await start?.(config.provider);
+        if (start && !attempt) return;
+        authBreadcrumb(`Checking ${providerName} Auth native module availability`);
 
-      step = 'provider_signin';
-      authBreadcrumb(`Starting ${providerName} sign-in flow`);
-
-      let signInResult: OAuthSignInResult | null;
-      try {
-        signInResult = await config.executeSignIn(nativeModule);
-      } catch (signInError) {
-        // Let provider handle specific errors
-        const handledMessage = config.handleProviderError?.(signInError);
-        if (handledMessage) {
-          // Create error with formatted message but preserve original error code
-          // This ensures isCancellationError can correctly identify non-cancellation errors
-          const formattedError = new Error(handledMessage);
-          const code = getErrorCode(signInError);
-          if (code !== undefined) Object.assign(formattedError, { code });
-          throw formattedError;
+        let nativeModule: TModule;
+        try {
+          nativeModule = await config.loadModule();
+        } catch (moduleError) {
+          authBreadcrumb(
+            `${providerName} Auth native module unavailable`,
+            { errorMessage: toError(moduleError).message },
+            'error',
+          );
+          throw new Error(
+            config.moduleNotAvailableMessage ??
+              `${providerName} Sign In is not available. Please rebuild the app with: npx expo prebuild`,
+          );
         }
-        throw signInError;
-      }
+        authBreadcrumb(`${providerName} Auth native module loaded successfully`);
 
-      if (signInResult === null) {
-        authBreadcrumb(`${providerName} sign-in cancelled by the user`);
-        void analytics.trackAuthFailed(config.provider, 'cancelled');
-        return;
-      }
+        step = 'provider_signin';
+        authBreadcrumb(`Starting ${providerName} sign-in flow`);
 
-      authBreadcrumb(`${providerName} sign-in successful`, {
-        hasIdToken: !!signInResult.idToken,
-        hasUserInfo: !!signInResult.userInfo,
-      });
+        let signInResult: OAuthSignInResult | null;
+        try {
+          signInResult = await config.executeSignIn(nativeModule);
+        } catch (signInError) {
+          // Let provider handle specific errors
+          const handledMessage = config.handleProviderError?.(signInError);
+          if (handledMessage) {
+            // Create error with formatted message but preserve original error code
+            // This ensures isCancellationError can correctly identify non-cancellation errors
+            const formattedError = new Error(handledMessage);
+            const code = getErrorCode(signInError);
+            if (code !== undefined) Object.assign(formattedError, { code });
+            throw formattedError;
+          }
+          throw signInError;
+        }
 
-      step = 'token_validation';
-      if (!signInResult.idToken) {
-        throw new Error(`No ID token returned from ${providerName} Sign In`);
-      }
+        if (signInResult === null) {
+          authBreadcrumb(`${providerName} sign-in cancelled by the user`);
+          attempt?.end('cancelled', step);
+          void analytics.trackAuthFailed(config.provider, 'cancelled');
+          return;
+        }
 
-      step = 'supabase_exchange';
-      authBreadcrumb(`Exchanging ${providerName} token with Supabase`, {
-        hasIdToken: true,
-        tokenLength: signInResult.idToken.length,
-      });
-
-      // Pass nonce only if provided (required for Apple iOS where token contains nonce)
-      const { data, error: authError } = await supabase.auth.signInWithIdToken({
-        provider: config.provider,
-        token: signInResult.idToken,
-        ...(signInResult.nonce ? { nonce: signInResult.nonce } : {}),
-      });
-
-      if (authError) {
-        const enrichedError = new Error(`Supabase authentication failed: ${authError.message}`);
-        Object.assign(enrichedError, { originalError: authError });
-        throw enrichedError;
-      }
-
-      authBreadcrumb('Supabase authentication successful', {
-        hasSession: !!data.session,
-      });
-
-      // Apple hands over the user's name ONCE — on the very first authorization
-      // — and outside the ID token, so Supabase cannot record it by itself. It
-      // can only be saved now that a session exists: the Apple step used to
-      // save it before signInWithIdToken, where updateUser resolves with "auth
-      // session missing" (it does not reject, so nothing noticed) and the name
-      // was gone for good. A provider whose token already carries the name
-      // (Google) has it in the metadata, so this never overwrites one.
-      const providedName = signInResult.userInfo?.name;
-      if (providedName && !data.user.user_metadata['full_name']) {
-        void supabase.auth
-          .updateUser({ data: { full_name: providedName } })
-          .then(({ error }) => {
-            if (error) {
-              authBreadcrumb(
-                'Saving the provider name failed',
-                { message: error.message },
-                'warning',
-              );
-            }
-          })
-          .catch(() => {
-            // Not critical: the account works without a display name.
-          });
-      }
-
-      // Apple and Google create the account on the first sign-in, so the same
-      // call is a sign-up once and a sign-in after that. Meta's registration
-      // event goes with the sign-up, as it does for email.
-      if (isNewAccount(data.user)) {
-        await analytics.trackSignUp(config.provider);
-        metaEvents.logSignUp(config.provider);
-      } else {
-        await analytics.trackSignIn(config.provider);
-      }
-
-      // Success handling - haptic feedback only
-      // Navigation is handled by root layout when session state updates
-      successFeedback();
-    } catch (error: unknown) {
-      const errorCode = getErrorCode(error);
-      const errorMessage = toError(error).message;
-      const isCancellation = isCancellationError(error);
-
-      // Add diagnostic breadcrumb BEFORE cancellation check for debugging
-      authBreadcrumb(
-        `${providerName} Sign In error caught`,
-        {
-          step,
-          errorCode: errorCode ?? 'none',
-          errorMessage: errorMessage.substring(0, 100),
-          isCancellation,
-        },
-        isCancellation ? 'info' : 'warning',
-      );
-
-      // Handle user cancellation silently
-      if (isCancellation) {
-        void analytics.trackAuthFailed(config.provider, 'cancelled');
-        return;
-      }
-
-      // The Supabase error rides along on the one thrown at the exchange step.
-      // Without any code, the step it failed at is the code.
-      const originalError =
-        typeof error === 'object' && error !== null && 'originalError' in error
-          ? error.originalError
-          : undefined;
-      void analytics.trackAuthFailed(
-        config.provider,
-        getAnalyticsErrorCode(originalError) ?? getAnalyticsErrorCode(error) ?? step,
-      );
-
-      // Not the app's fault: the learner is told what to do, and Sentry is
-      // spared an issue no build can fix. A Supabase exchange that failed
-      // offline arrives wrapped, so the error it carries is checked too.
-      const isConnectionFailure = isNetworkFailure(error) || isNetworkFailure(originalError);
-      const expectedMessage = isConnectionFailure
-        ? STRINGS.NO_INTERNET_CONNECTION
-        : config.expectedFailureMessage?.(error);
-      if (expectedMessage) {
-        void handleError(error, {
-          toastMessage: expectedMessage,
-          toastDuration: REFUSAL_TOAST_DURATION,
-          analyticsEventName: `${providerName}_Sign_In_Error`,
-          captureSentry: false,
-          networkFailure: isConnectionFailure,
+        authBreadcrumb(`${providerName} sign-in successful`, {
+          hasIdToken: !!signInResult.idToken,
+          hasUserInfo: !!signInResult.userInfo,
         });
-        return;
-      }
 
-      const detailedErrorMessage = [
-        `❌ ${providerName} Sign In Failed`,
-        ``,
-        `Step: ${STEP_MESSAGES[step](providerName)}`,
-        errorCode === undefined ? '' : `Error Code: ${errorCode}`,
-        ``,
-        `Error Message:`,
-        errorMessage,
-      ]
-        .filter(Boolean)
-        .join('\n');
+        step = 'token_validation';
+        if (!signInResult.idToken) {
+          throw new Error(`No ID token returned from ${providerName} Sign In`);
+        }
 
-      void handleError(error, {
-        toastMessage: detailedErrorMessage,
-        toastDuration: 15000,
-        analyticsEventName: `${providerName}_Sign_In_Error`,
-        sentrySeverity: 'error',
-        sentryTags: {
-          location: `${config.provider}_auth`,
-          step,
-          errorCode: errorCode ?? 'unknown',
-        },
-        sentryExtra: {
-          errorType: error instanceof Error ? error.constructor.name : typeof error,
+        step = 'supabase_exchange';
+        authBreadcrumb(`Exchanging ${providerName} token with Supabase`, {
+          hasIdToken: true,
+          tokenLength: signInResult.idToken.length,
+        });
+
+        // Pass nonce only if provided (required for Apple iOS where token contains nonce)
+        const { idToken: token, nonce } = signInResult;
+        const exchange = () =>
+          supabase.auth.signInWithIdToken({
+            provider: config.provider,
+            token,
+            ...(nonce ? { nonce } : {}),
+          });
+
+        const { data, error: authError } = await (attempt
+          ? attempt.exchange({ provider: config.provider, id_token: token }, exchange)
+          : exchange());
+        if (authError) {
+          const enrichedError = new Error(`Supabase authentication failed: ${authError.message}`);
+          Object.assign(enrichedError, { originalError: authError });
+          throw enrichedError;
+        }
+
+        authBreadcrumb('Supabase authentication successful', {
+          hasSession: !!data.session,
+        });
+
+        // Apple hands over the user's name ONCE — on the very first authorization
+        // — and outside the ID token, so Supabase cannot record it by itself. It
+        // can only be saved now that a session exists: the Apple step used to
+        // save it before signInWithIdToken, where updateUser resolves with "auth
+        // session missing" (it does not reject, so nothing noticed) and the name
+        // was gone for good. A provider whose token already carries the name
+        // (Google) has it in the metadata, so this never overwrites one.
+        const providedName = signInResult.userInfo?.name;
+        if (providedName && !data.user.user_metadata['full_name']) {
+          void supabase.auth
+            .updateUser({ data: { full_name: providedName } })
+            .then(({ error }) => {
+              if (error) {
+                authBreadcrumb(
+                  'Saving the provider name failed',
+                  { message: error.message },
+                  'warning',
+                );
+              }
+            })
+            .catch(() => {
+              // Not critical: the account works without a display name.
+            });
+        }
+
+        // Apple and Google create the account on the first sign-in, so the same
+        // call is a sign-up once and a sign-in after that. Meta's registration
+        // event goes with the sign-up, as it does for email.
+        const created = isNewAccount(data.user);
+        attempt?.verifiedHeader?.(created ? 'unknown' : 'returning');
+        await trackReaderAccount(config.provider, created, attempt);
+        if (created) metaEvents.logSignUp(config.provider);
+
+        // Success handling - haptic feedback only
+        // Navigation is handled by root layout when session state updates
+        successFeedback();
+      } catch (error: unknown) {
+        const errorCode = getErrorCode(error);
+        const errorMessage = toError(error).message;
+        const isCancellation = isCancellationError(error);
+
+        // Add diagnostic breadcrumb BEFORE cancellation check for debugging
+        authBreadcrumb(
+          `${providerName} Sign In error caught`,
+          {
+            step,
+            errorCode: errorCode ?? 'none',
+            errorMessage: errorMessage.substring(0, 100),
+            isCancellation,
+          },
+          isCancellation ? 'info' : 'warning',
+        );
+
+        // Handle user cancellation silently
+        if (isCancellation) {
+          attempt?.end('cancelled', step);
+          void analytics.trackAuthFailed(config.provider, 'cancelled');
+          return;
+        }
+
+        // The Supabase error rides along on the one thrown at the exchange step.
+        // Without any code, the step it failed at is the code.
+        attempt?.end('failed', step);
+        const originalError =
+          typeof error === 'object' && error !== null && 'originalError' in error
+            ? error.originalError
+            : undefined;
+        void analytics.trackAuthFailed(
+          config.provider,
+          getAnalyticsErrorCode(originalError) ?? getAnalyticsErrorCode(error) ?? step,
+        );
+
+        // Not the app's fault: the learner is told what to do, and Sentry is
+        // spared an issue no build can fix. A Supabase exchange that failed
+        // offline arrives wrapped, so the error it carries is checked too.
+        const isConnectionFailure = isNetworkFailure(error) || isNetworkFailure(originalError);
+        const expectedMessage = isConnectionFailure
+          ? STRINGS.NO_INTERNET_CONNECTION
+          : config.expectedFailureMessage?.(error);
+        if (expectedMessage) {
+          void handleError(error, {
+            toastMessage: expectedMessage,
+            toastDuration: REFUSAL_TOAST_DURATION,
+            analyticsEventName: `${providerName}_Sign_In_Error`,
+            captureSentry: false,
+            networkFailure: isConnectionFailure,
+          });
+          return;
+        }
+
+        const detailedErrorMessage = [
+          `❌ ${providerName} Sign In Failed`,
+          ``,
+          `Step: ${STEP_MESSAGES[step](providerName)}`,
+          errorCode === undefined ? '' : `Error Code: ${errorCode}`,
+          ``,
+          `Error Message:`,
           errorMessage,
-          errorCode: errorCode ?? 'unknown',
-          errorStack: error instanceof Error ? error.stack : undefined,
-          failedStep: step,
-        },
-      });
-    } finally {
-      providerSignInInProgress = false;
-      setLoading(false);
-    }
-  }, [config]);
+        ]
+          .filter(Boolean)
+          .join('\n');
+
+        void handleError(error, {
+          toastMessage: detailedErrorMessage,
+          toastDuration: 15000,
+          analyticsEventName: `${providerName}_Sign_In_Error`,
+          sentrySeverity: 'error',
+          sentryTags: {
+            location: `${config.provider}_auth`,
+            step,
+            errorCode: errorCode ?? 'unknown',
+          },
+          sentryExtra: {
+            errorType: error instanceof Error ? error.constructor.name : typeof error,
+            errorMessage,
+            errorCode: errorCode ?? 'unknown',
+            errorStack: error instanceof Error ? error.stack : undefined,
+            failedStep: step,
+          },
+        });
+      } finally {
+        providerSignInInProgress = false;
+        setLoading(false);
+      }
+    },
+    [config],
+  );
 
   return {
     signIn,

@@ -8,6 +8,15 @@ import { clearFlag, readFlag, setFlag } from '@/utils/createJsonStore';
 import { handleError } from '@/utils/errorHandling';
 import { scopedKey } from '@/constants/storageKeys';
 
+type CompletionListener = (id: TutorialId, owner?: string | null) => void;
+const listeners = new Set<CompletionListener>();
+export function observeTutorialCompletion(listener: CompletionListener) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
 /**
  * Check if a tutorial has been completed
  * FAIL-SAFE: Returns true (completed) on error to avoid spamming users with tutorials
@@ -44,6 +53,7 @@ export async function markTutorialCompleted(
   try {
     const config = TUTORIALS[tutorialId];
     await setFlag(scopedKey(config.storageKey, userId));
+    for (const listener of listeners) listener(tutorialId, userId);
   } catch (error) {
     void handleError(error, {
       showToast: false,

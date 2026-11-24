@@ -3,6 +3,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
 
+import { bindReaderResponse, captureReaderExchange } from '@/services/readerAuthExchange';
 import { SUPABASE_ANON_KEY, SUPABASE_REQUEST_TIMEOUT_MS, SUPABASE_URL } from '@/constants/supabase';
 import type { Database } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
@@ -24,6 +25,9 @@ export const fetchWithTimeout: typeof fetch = async (input, init) => {
   if (callerSignal?.aborted) abortFromCaller();
   else callerSignal?.addEventListener('abort', abortFromCaller);
 
+  const bind = url.startsWith(SUPABASE_URL + '/auth/v1/')
+    ? captureReaderExchange(init?.body)
+    : undefined;
   const read = async () => {
     const response = await fetch(input, { ...init, signal: controller.signal });
     const jsonApi =
@@ -36,6 +40,7 @@ export const fetchWithTimeout: typeof fetch = async (input, init) => {
       return response;
 
     const body = await response.text();
+    if (bind && response.ok) await bindReaderResponse(bind, body);
     return new Response(body, {
       status: response.status,
       statusText: response.statusText,

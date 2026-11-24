@@ -226,15 +226,11 @@ export const fsrsQueries = {
    * cooldown window. Outside that window no cooldown is applied, so words in
    * short relearning steps reappear on time.
    */
-  due: (userId: string, sessionCooldownHours?: number, limit?: number) =>
+  due: (userId: string, sessionCooldownHours?: number, limit?: number, rootId?: RootId) =>
     queryOptions({
-      queryKey: [
-        FSRS_BASE_KEY,
-        userId,
-        'due',
-        sessionCooldownHours ?? null,
-        limit ?? null,
-      ] as const,
+      queryKey: rootId
+        ? ([FSRS_BASE_KEY, userId, 'single', rootId] as const)
+        : ([FSRS_BASE_KEY, userId, 'due', sessionCooldownHours ?? null, limit ?? null] as const),
       queryFn: ({ client, signal }) => {
         const recentlyCompleted =
           sessionCooldownHours !== undefined &&
@@ -244,15 +240,21 @@ export const fsrsQueries = {
             Date.now(),
           );
 
-        return studyWordsFSRSService.getFSRSWords(
-          userId,
-          {
-            onlyDue: true,
-            ...(recentlyCompleted ? { sessionCooldownHours } : {}),
-            ...(limit !== undefined ? { limit } : {}),
-          },
-          managedRequest(signal),
-        );
+        return studyWordsFSRSService
+          .getFSRSWords(
+            userId,
+            {
+              onlyDue: true,
+              ...(recentlyCompleted ? { sessionCooldownHours } : {}),
+              ...(limit !== undefined ? { limit } : {}),
+            },
+            managedRequest(signal),
+          )
+          .then(words => {
+            if (!rootId) return words;
+            const preferred = words.find(word => word.root_id === rootId);
+            return preferred ? [preferred] : words;
+          });
       },
       enabled: !!userId,
       ...CACHE_TIMES.SHORT,

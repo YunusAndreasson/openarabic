@@ -18,18 +18,56 @@ const DAILY_WORD_RESET_KEY = STORAGE_KEYS.DAILY_WORD_RESET_DATE;
 // cannot reserve or release the same slot concurrently.
 const enqueueDailyCountOperation = createSerialQueue();
 
-async function getDailyWordCountUnlocked(currentDate: string): Promise<number> {
+interface Quota {
+  count: number;
+  reservation?: string;
+}
+// A single durable value commits the slot and the reader operation that owns it.
+// Devices with only a numeric counter retain exactly that count.
+function writeQuota(count: number, reservation?: string) {
+  return AsyncStorage.setItem(
+    DAILY_WORD_COUNT_KEY,
+    reservation ? JSON.stringify({ count, reservation }) : String(count),
+  );
+}
+async function getDailyQuotaUnlocked(currentDate: string): Promise<Quota> {
   const lastResetDate = await AsyncStorage.getItem(DAILY_WORD_RESET_KEY);
 
   if (lastResetDate !== currentDate) {
     await AsyncStorage.setItem(DAILY_WORD_COUNT_KEY, '0');
     await AsyncStorage.setItem(DAILY_WORD_RESET_KEY, currentDate);
-    return 0;
+    return { count: 0 };
   }
 
   const count = await AsyncStorage.getItem(DAILY_WORD_COUNT_KEY);
+  if (count?.startsWith('{')) {
+    try {
+      const parsed: unknown = JSON.parse(count);
+      if (
+        typeof parsed === 'object' &&
+        parsed &&
+        'count' in parsed &&
+        typeof parsed.count === 'number' &&
+        Number.isSafeInteger(parsed.count) &&
+        parsed.count >= 0 &&
+        'reservation' in parsed &&
+        typeof parsed.reservation === 'string'
+      ) {
+        return { count: parsed.count, reservation: parsed.reservation };
+      }
+    } catch {
+      /* Fall back to an empty counter for malformed storage. */
+    }
+  }
   const storedCount = Number(count);
-  return Number.isSafeInteger(storedCount) && storedCount >= 0 ? storedCount : 0;
+  return { count: Number.isSafeInteger(storedCount) && storedCount >= 0 ? storedCount : 0 };
+}
+
+export function settleReaderQuota(intent: string, added: boolean) {
+  return enqueueDailyCountOperation(async () => {
+    const quota = await getDailyQuotaUnlocked(toLocalDateString(new Date()));
+    if (quota.reservation === intent) await writeQuota(Math.max(0, quota.count - (added ? 0 : 1)));
+  });
 }
 
 export const useDailyWordLimit = () => {
@@ -43,7 +81,7 @@ export const useDailyWordLimit = () => {
   const getDailyWordCount = useCallback(async (): Promise<number> => {
     try {
       return await enqueueDailyCountOperation(() =>
-        getDailyWordCountUnlocked(getCurrentDateString()),
+        getDailyQuotaUnlocked(getCurrentDateString()).then(quota => quota.count),
       );
     } catch {
       return 0;
@@ -77,45 +115,56 @@ export const useDailyWordLimit = () => {
     });
   }, [dailyWordLimit, adaptivePacingEnabled]);
 
-  const incrementDailyWordCount = useCallback(async (): Promise<boolean> => {
-    try {
-      const { effective } = await getEffectiveLimitInfo();
+  const incrementDailyWordCount = useCallback(
+    async (reservation?: string): Promise<boolean> => {
+      try {
+        const { effective } = await getEffectiveLimitInfo();
 
-      // Unlimited → always allow.
-      if (effective === Infinity) {
-        return true;
+        // Unlimited → always allow.
+        if (effective === Infinity) {
+          return true;
+        }
+
+        return await enqueueDailyCountOperation(async () => {
+          const quota = await getDailyQuotaUnlocked(getCurrentDateString());
+          if (reservation && quota.reservation === reservation) return true;
+
+          // Check and reserve in the same serialized operation.
+          // `effective === 0` (paused) naturally blocks here.
+          if (quota.count >= effective) return false;
+
+          await writeQuota(quota.count + 1, reservation ?? quota.reservation);
+          return true;
+        });
+      } catch {
+        return false;
       }
-
-      return await enqueueDailyCountOperation(async () => {
-        const currentCount = await getDailyWordCountUnlocked(getCurrentDateString());
-
-        // Check and reserve in the same serialized operation.
-        // `effective === 0` (paused) naturally blocks here.
-        if (currentCount >= effective) return false;
-
-        await AsyncStorage.setItem(DAILY_WORD_COUNT_KEY, String(currentCount + 1));
-        return true;
-      });
-    } catch {
-      return false;
-    }
-  }, [getEffectiveLimitInfo, getCurrentDateString]);
+    },
+    [getEffectiveLimitInfo, getCurrentDateString],
+  );
 
   /** Release a slot reserved by incrementDailyWordCount when the add fails. */
-  const decrementDailyWordCount = useCallback(async (): Promise<void> => {
-    try {
-      const { effective } = await getEffectiveLimitInfo();
-      // Unlimited mode never persists a reservation.
-      if (effective === Infinity) return;
+  const decrementDailyWordCount = useCallback(
+    async (reservation?: string): Promise<void> => {
+      try {
+        const { effective } = await getEffectiveLimitInfo();
+        // Unlimited mode never persists a reservation.
+        if (effective === Infinity) return;
 
-      await enqueueDailyCountOperation(async () => {
-        const currentCount = await getDailyWordCountUnlocked(getCurrentDateString());
-        await AsyncStorage.setItem(DAILY_WORD_COUNT_KEY, String(Math.max(0, currentCount - 1)));
-      });
-    } catch {
-      // A failed cleanup must not hide the original mutation error.
-    }
-  }, [getEffectiveLimitInfo, getCurrentDateString]);
+        await enqueueDailyCountOperation(async () => {
+          const quota = await getDailyQuotaUnlocked(getCurrentDateString());
+          if (reservation && reservation !== quota.reservation) return;
+          await writeQuota(
+            Math.max(0, quota.count - 1),
+            reservation ? undefined : quota.reservation,
+          );
+        });
+      } catch {
+        // A failed cleanup must not hide the original mutation error.
+      }
+    },
+    [getEffectiveLimitInfo, getCurrentDateString],
+  );
 
   /**
    * Release today's reserved quota slot ONLY if `createdAt` falls on today's
@@ -135,13 +184,22 @@ export const useDailyWordLimit = () => {
     [getCurrentDateString, decrementDailyWordCount],
   );
 
-  const canAddWord = useCallback(async (): Promise<boolean> => {
-    const { effective } = await getEffectiveLimitInfo();
-    if (effective === Infinity) return true;
+  const canAddWord = useCallback(
+    async (reservation?: string): Promise<boolean> => {
+      const { effective } = await getEffectiveLimitInfo();
+      if (effective === Infinity) return true;
 
-    const currentCount = await getDailyWordCount();
-    return currentCount < effective;
-  }, [getEffectiveLimitInfo, getDailyWordCount]);
+      if (reservation) {
+        const quota = await enqueueDailyCountOperation(() =>
+          getDailyQuotaUnlocked(getCurrentDateString()),
+        );
+        return quota.reservation === reservation || quota.count < effective;
+      }
+      const currentCount = await getDailyWordCount();
+      return currentCount < effective;
+    },
+    [getEffectiveLimitInfo, getDailyWordCount, getCurrentDateString],
+  );
 
   const getRemainingWords = useCallback(async (): Promise<number> => {
     const { effective } = await getEffectiveLimitInfo();

@@ -7,7 +7,7 @@ import { useAndroidBackHandler } from '@/hooks/ui/useAndroidBackHandler';
  * Controls a BottomSheet's visibility by calling expand() / close()
  * based on the isVisible flag. Returns the ref to pass to the BottomSheet component.
  */
-export function useBottomSheetVisibility(isVisible: boolean) {
+export function useBottomSheetVisibility(isVisible: boolean, dismissible = true) {
   const ref = useRef<BottomSheet>(null);
 
   useEffect(() => {
@@ -21,7 +21,9 @@ export function useBottomSheetVisibility(isVisible: boolean) {
   // A native Android bottom sheet dismisses on hardware/gesture back; this one
   // is JS-driven and doesn't unless we wire it up ourselves. close() replays the
   // same onClose path a swipe-to-dismiss already takes, so callers need no change.
-  useAndroidBackHandler(isVisible, () => ref.current?.close());
+  useAndroidBackHandler(isVisible, () => {
+    if (dismissible) ref.current?.close();
+  });
 
   return ref;
 }

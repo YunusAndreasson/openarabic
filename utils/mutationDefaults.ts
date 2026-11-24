@@ -1,7 +1,8 @@
+import { writeReaderIntent } from '@/services/readerSaveRpc';
 import { mutationOptions, type QueryClient } from '@tanstack/react-query';
 
 import { FSRS_BASE_KEY } from '@/constants/fsrs';
-import { QUERY_DEFAULTS, readingProgressQueries } from '@/constants/queries';
+import { QUERY_DEFAULTS, fsrsQueries, readingProgressQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { bookmarkService } from '@/services/bookmark';
 import {
@@ -10,20 +11,22 @@ import {
 } from '@/services/readingProgress';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { ArticleId, RootId } from '@/types/branded.types';
-import type { FSRSWordUpdate } from '@/types/fsrs.types';
+import type { FSRSWordUpdate, GradePrecondition } from '@/types/fsrs.types';
 import type { StudyWordIntent } from '@/types/vocabulary.types';
 import { isNetworkFailure } from '@/utils/networkErrors';
-import { isRetryableError } from '@/utils/queryRetry';
+import { isRetryableError, retryWhileOnline } from '@/utils/queryRetry';
 import { managedRequest } from '@/utils/supabaseHelpers';
 
 /** One review grade: the card's whole new FSRS state. */
 export interface FSRSGradeVariables {
+  expected?: GradePrecondition;
   userId: string;
   rootId: RootId;
   update: FSRSWordUpdate;
 }
 
 export interface StudyWordToggleVariables {
+  readerIntent?: string;
   userId: string;
   rootId: RootId;
   /** Explicit direction from the UI the user acted on; omitted = legacy toggle */
@@ -96,20 +99,42 @@ export const readingProgressMutation = mutationOptions({
   },
 });
 
-/** A review grade (`useFSRS`). */
+export function isPracticeGradeConflict(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === '40001';
+}
+
+/** A stale grade must never retry its frozen schedule, including after process death. */
 export const fsrsGradeMutation = mutationOptions({
   mutationKey: [FSRS_BASE_KEY, 'grade'] as const,
   scope: { id: 'fsrs-grade' },
-  mutationFn: ({ userId, rootId, update }: FSRSGradeVariables) =>
-    studyWordsFSRSService.updateWordAndReview(userId, rootId, update, managedRequest()),
+  retry: (count, error) =>
+    !isPracticeGradeConflict(error) &&
+    retryWhileOnline(QUERY_DEFAULTS.MUTATION_MAX_RETRIES)(count, error),
+  mutationFn: async ({ userId, rootId, update, expected }: FSRSGradeVariables, { client }) => {
+    try {
+      await studyWordsFSRSService.updateWordAndReview(
+        userId,
+        rootId,
+        update,
+        managedRequest(),
+        ...(expected ? [expected] : []),
+      );
+    } catch (error) {
+      if (!isPracticeGradeConflict(error)) throw error;
+      void fsrsQueries.invalidateAll(client, userId);
+      throw Object.assign(new Error(STRINGS.FIRST_REVIEW_CONFLICT), { code: '40001' });
+    }
+  },
 });
 
 /** Saving or removing a word (`useStudyWordMutations`). */
 export const studyWordToggleMutation = mutationOptions({
   mutationKey: ['study-words', 'toggle'] as const,
   scope: { id: 'study-word-toggle' },
-  mutationFn: ({ userId, rootId, intent }: StudyWordToggleVariables) =>
-    studyWordsFSRSService.setFSRSStudyRoot(userId, rootId, intent, managedRequest()),
+  mutationFn: ({ userId, rootId, intent, readerIntent }: StudyWordToggleVariables) =>
+    readerIntent
+      ? writeReaderIntent(userId, rootId, readerIntent)
+      : studyWordsFSRSService.setFSRSStudyRoot(userId, rootId, intent, managedRequest()),
 });
 
 /*

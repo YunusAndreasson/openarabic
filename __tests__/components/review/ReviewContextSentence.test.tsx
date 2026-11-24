@@ -22,8 +22,8 @@
  * default colour — which is the contract these tests are actually about.
  */
 
-import { describe, expect, jest, test } from '@jest/globals';
-import { render } from '@testing-library/react-native';
+import { afterAll, beforeAll, describe, expect, jest, test } from '@jest/globals';
+import { configure, fireEvent, render, resetToDefaults } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
@@ -127,10 +127,21 @@ function underlineColor(
     : undefined;
 }
 
+function renderExample(example = makeExample()) {
+  const view = render(<ReviewContextSentence example={example} />);
+  fireEvent(view.getByLabelText(example.arabic), 'layout', {
+    nativeEvent: { layout: { width: 320 } },
+  });
+  return view;
+}
+
 describe('ReviewContextSentence', () => {
+  // Individual glyphs and the underline are visual children of one accessible sentence.
+  beforeAll(() => configure({ defaultIncludeHiddenElements: true }));
+  afterAll(resetToDefaults);
   describe('The sentence', () => {
     test('renders every word of the sentence', () => {
-      const { getAllByText } = render(<ReviewContextSentence example={makeExample()} />);
+      const { getAllByText } = renderExample();
 
       expect(getAllByText('قرأت').length).toBeGreaterThan(0);
       expect(getAllByText('كتاب').length).toBeGreaterThan(0);
@@ -141,7 +152,7 @@ describe('ReviewContextSentence', () => {
     // `تْ` floating free of the `ل`. Each word must reach the painter whole,
     // with its colours as data alongside it rather than as sibling text nodes.
     test('hands each word to the painter whole, not split per colour', () => {
-      const { queryByTestId } = render(<ReviewContextSentence example={makeExample()} />);
+      const { queryByTestId } = renderExample();
 
       expect(queryByTestId('painted-word-الكتاب')).toBeTruthy();
       expect(queryByTestId('painted-word-قرأت')).toBeTruthy();
@@ -150,13 +161,13 @@ describe('ReviewContextSentence', () => {
     });
 
     test('paints a grammar segment in its role colour', () => {
-      const { getAllByText } = render(<ReviewContextSentence example={makeExample()} />);
+      const { getAllByText } = renderExample();
 
       expect(someNodeIsColored(getAllByText('ال'), DEFINITE_ARTICLE)).toBe(true);
     });
 
     test('renders a word the analyzer found nothing in as plain text', () => {
-      const { getAllByText } = render(<ReviewContextSentence example={makeExample()} />);
+      const { getAllByText } = renderExample();
 
       // "قرأت" has no coloredSegments in this fixture — it must still appear,
       // in the neutral Arabic colour rather than disappearing or throwing.
@@ -164,14 +175,15 @@ describe('ReviewContextSentence', () => {
     });
 
     test('falls back to the raw sentence when the word breakdown is missing', () => {
-      const { getByText } = render(<ReviewContextSentence example={makeExample({ words: [] })} />);
+      const { getByTestId } = renderExample(makeExample({ words: [] }));
 
-      expect(getByText('قرأت الكتاب')).toBeTruthy();
+      expect(getByTestId('painted-word-قرأت')).toBeTruthy();
+      expect(getByTestId('painted-word-الكتاب')).toBeTruthy();
     });
 
     test('reads as one sentence to a screen reader', () => {
       const example = makeExample();
-      const { getByLabelText } = render(<ReviewContextSentence example={example} />);
+      const { getByLabelText } = renderExample(example);
 
       expect(getByLabelText(example.arabic)).toBeTruthy();
     });
@@ -179,7 +191,7 @@ describe('ReviewContextSentence', () => {
 
   describe('Marking the practised word', () => {
     test('underlines the target word and only the target word', () => {
-      const { queryByTestId } = render(<ReviewContextSentence example={makeExample()} />);
+      const { queryByTestId } = renderExample();
 
       expect(underlineColor(queryByTestId, 2)).toBeDefined();
       expect(underlineColor(queryByTestId, 1)).toBeUndefined();
@@ -196,16 +208,14 @@ describe('ReviewContextSentence', () => {
           word({ position: 2, wordForm: 'الكتاب', rootId: 77, isTarget: false }),
         ],
       });
-      const { queryByTestId } = render(<ReviewContextSentence example={example} />);
+      const { queryByTestId } = renderExample(example);
 
       expect(underlineColor(queryByTestId, 1)).toBeDefined();
       expect(underlineColor(queryByTestId, 2)).toBeUndefined();
     });
 
     test('marks the word with an underline, never with a text colour', () => {
-      const { queryByTestId, getAllByText } = render(
-        <ReviewContextSentence example={makeExample()} />,
-      );
+      const { queryByTestId, getAllByText } = renderExample();
 
       // The underline is a sibling of the word's text…
       expect(underlineColor(queryByTestId, 2)).toBeDefined();
@@ -234,7 +244,7 @@ describe('ReviewContextSentence', () => {
     });
 
     test('offers nothing when the card passed no handler', () => {
-      const { queryByLabelText } = render(<ReviewContextSentence example={makeExample()} />);
+      const { queryByLabelText } = renderExample();
 
       expect(queryByLabelText(STRINGS.PLAY_SENTENCE_AUDIO)).toBeNull();
     });

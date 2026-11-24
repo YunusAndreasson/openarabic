@@ -1,3 +1,4 @@
+import type { StartReaderAuth } from '@/services/readerSaveAuth';
 import type * as GoogleSigninLibrary from '@react-native-google-signin/google-signin';
 import * as Sentry from '@sentry/react-native';
 import { useEffect, useState } from 'react';
@@ -26,7 +27,7 @@ type GoogleSignInModule = typeof GoogleSigninLibrary;
  */
 let cachedGoogleSignin: GoogleSignInModule | null | undefined;
 
-function getGoogleSignin(): GoogleSignInModule | null {
+export function getGoogleSignin(): GoogleSignInModule | null {
   if (cachedGoogleSignin === undefined) {
     try {
       cachedGoogleSignin =
@@ -57,7 +58,7 @@ const RETRY_BACKOFF_MS = 1000;
  * Hook return type for Google authentication
  */
 export interface UseGoogleAuthReturn {
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (start?: StartReaderAuth) => Promise<void>;
   loading: boolean;
 }
 

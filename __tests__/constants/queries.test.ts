@@ -17,6 +17,7 @@ import {
   skipUnless,
   studyStreakQueries,
 } from '@/constants/queries';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { bookmarkService } from '@/services/bookmark';
 import { StudySessionStreakService } from '@/services/studyStreak';
 import type { BookmarkItem } from '@/types/bookmark.types';
@@ -60,6 +61,25 @@ describe('query factories', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+  });
+
+  test('recovery rechecks the tapped root and falls back to a different eligible word', async () => {
+    const moved = createTestWord({
+      root_id: rootId(1),
+      fsrs_due: new Date(Date.now() + 86400000).toISOString(),
+    });
+    const due = createTestWord({ root_id: rootId(2), fsrs_state: 0 });
+    const read = jest
+      .spyOn(studyWordsFSRSService, 'getFSRSWords')
+      .mockImplementation(async (_owner, options) => (options?.onlyDue ? [due] : [moved]));
+    try {
+      const words = await client.query(
+        fsrsQueries.due(USER, DEFAULT_SESSION_COOLDOWN_HOURS, undefined, moved.root_id),
+      );
+      expect(words).toEqual([due]);
+    } finally {
+      read.mockRestore();
+    }
   });
 
   afterEach(() => {

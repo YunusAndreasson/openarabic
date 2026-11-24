@@ -183,6 +183,7 @@ const createEmptyVoiceDebug = (): VoiceDebug => ({
 });
 
 interface UseVoiceReviewArgs {
+  manualOnly?: boolean;
   /** The English meaning expected from the user. Empty if no current card. */
   expected: string | null | undefined;
   /** Key that changes when a new card is shown. */
@@ -291,6 +292,7 @@ function transcribeWithTimeout(
 }
 
 export function useVoiceReview({
+  manualOnly = false,
   expected,
   currentWordKey,
   rootId,
@@ -340,7 +342,8 @@ export function useVoiceReview({
    */
   handsFreeActive: boolean;
 } {
-  const voiceEnabled = useAppSelectorShallow(selectVoiceEnabled);
+  const preferredVoice = useAppSelectorShallow(selectVoiceEnabled);
+  const voiceEnabled = !manualOnly && preferredVoice;
   // Advanced dev toggles — snapshotted into each telemetry attempt's `meta`.
   const energyGateEnabled = useAppSelectorShallow(selectVoiceEnergyGateEnabled);
   const gainNormalizeEnabled = useAppSelectorShallow(selectVoiceGainNormalizeEnabled);

@@ -30,7 +30,7 @@ export interface SettingsState {
   // once the user knows the card is there.
   wordTapShowsTooltip: boolean;
   hapticsEnabled: boolean; // Vibration for button presses and interactions
-  voiceEnabled: boolean; // Speak the English answer in Practice. Default ON — see initialState.
+  voiceEnabled: boolean; // Speak the English answer in Practice.
   /**
    * The learner explicitly refused the speak-the-answer offer on the practice
    * screen. Until then the offer is shown every visit — it's a flagship
@@ -41,7 +41,7 @@ export interface SettingsState {
   voiceOfferDismissed: boolean;
   /**
    * The microphone opens itself once the Arabic prompt has finished, and the
-   * learner just answers. Default ON — see initialState.
+   * learner just answers.
    *
    * Off restores the explicit "Speak to answer" button, which is what a learner
    * in a shared room or on a bus wants: an unattended microphone is the right
@@ -73,23 +73,8 @@ const initialState: SettingsState = {
   adaptiveNewWordPacingEnabled: true, // Default on; eases new words when recall dips
   wordTapShowsTooltip: false, // Default: tap a word to open its card directly (discoverable)
   hapticsEnabled: true, // Default to enabled for haptic feedback
-  /**
-   * ON by default for new installs — speaking the answer is the point of the
-   * product, not a power-user extra, and opt-in had produced four users in the
-   * feature's entire history.
-   *
-   * Only a genuinely new install reads this `true`. An existing install's
-   * persisted `false` wins over it on rehydrate, so that learner keeps the
-   * offer card. An install whose settings predate the field is pinned to
-   * `false` by persist migration 2 (store/persistConfig.ts): the slice now
-   * merges onto this initial state, and without the pin those learners would
-   * have had voice, and the model prefetch, switched on with no say in it.
-   *
-   * Flipping this does NOT start a download by itself: the bytes are fetched by
-   * `useVoiceModelPrefetch` on Wi-Fi only, and the recognizer is only built once
-   * something retains it (see `acquireEngine`).
-   */
-  voiceEnabled: true,
+  // New readers choose voice explicitly. Existing persisted preferences take precedence.
+  voiceEnabled: false,
   voiceOfferDismissed: false,
   voiceHandsFree: true,
   voiceEnergyGateEnabled: true,

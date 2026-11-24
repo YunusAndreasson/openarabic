@@ -12,6 +12,7 @@ import type { ArticleId, CategoryId, RootId } from '@/types/branded.types';
 
 /** Where the reader was opened from, as Article Viewed reports it. */
 const ARTICLE_OPEN_SOURCES = [
+  'public_browse',
   'intro_cta',
   'checklist',
   'continue',
@@ -85,3 +86,12 @@ export const getPracticeWordRoute = (rootId: RootId) =>
  */
 export const getWordDetailRoute = (rootId: RootId) =>
   ({ pathname: ROUTE_PATHS.WORD_DETAIL, params: { rootId } }) satisfies Href;
+
+export const getDueWordReviewRoute = (dueRoot: RootId) =>
+  ({ pathname: ROUTE_PATHS.REVIEW, params: { dueRoot } }) satisfies Href;
+
+export const getSingleWordReviewRoute = (rootId: RootId) =>
+  ({ pathname: ROUTE_PATHS.REVIEW, params: { rootId } }) satisfies Href;
+
+export const getFirstReviewReceiptRoute = (rootId: RootId) =>
+  ({ pathname: ROUTE_PATHS.PRACTICE_TAB, params: { reviewedRoot: rootId } }) satisfies Href;

@@ -1,8 +1,11 @@
-import { router } from 'expo-router';
-import { useCallback, type JSX } from 'react';
+import { useIsFocused, router } from 'expo-router';
+import { useCallback, useEffect, useState, type JSX } from 'react';
 
 import { HeaderTextButton } from '@/components/ui';
 import { PRACTICE_DUE_WORDS_LIMIT } from '@/constants/queries';
+import { resumeFirstReview } from '@/services/firstReview';
+import { getSingleWordReviewRoute } from '@/utils/routeBuilders';
+import type { RootId } from '@/types/branded.types';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
@@ -33,23 +36,45 @@ export function ReviewButton(): JSX.Element | null {
   const { session } = useAuth();
   const userId = session?.user?.id;
 
+  const focused = useIsFocused();
+  const [pending, setPending] = useState<{ owner: string; root: RootId }>();
+  useEffect(() => {
+    if (!focused || !userId) return;
+    let active = true;
+    void resumeFirstReview(userId)
+      .then(review => {
+        if (active)
+          setPending(
+            review && review.step !== 'complete'
+              ? { owner: userId, root: review.word.rootId }
+              : undefined,
+          );
+      })
+      .catch(() => {
+        if (active) setPending(undefined);
+      });
+    return () => {
+      active = false;
+    };
+  }, [focused, userId]);
+  const resumeRoot = pending?.owner === userId ? pending?.root : undefined;
   const hasStudyWords = useHasStudyWords(userId);
   const dueWordsCount = useDueWordsCount({ userId, limit: PRACTICE_DUE_WORDS_LIMIT });
 
   const handleStartReview = useCallback(() => {
-    router.push(ROUTE_PATHS.REVIEW);
-  }, []);
+    router.push(resumeRoot ? getSingleWordReviewRoute(resumeRoot) : ROUTE_PATHS.REVIEW);
+  }, [resumeRoot]);
 
   // Matches the empty state's secondary CTA.
   const handleBrowseArticles = useCallback(() => router.navigate(ROUTE_PATHS.EXPLORE_TAB), []);
 
   // No words saved yet — the screen is showing its empty state, which carries
   // its own call to action. A second one in the header would compete with it.
-  if (!hasStudyWords) {
+  if (!hasStudyWords && !resumeRoot) {
     return null;
   }
 
-  const hasDueWords = dueWordsCount > 0;
+  const hasDueWords = !!resumeRoot || dueWordsCount > 0;
 
   return (
     <HeaderTextButton

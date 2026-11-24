@@ -5,7 +5,6 @@
  * This service is a thin wrapper around Expo Background Task APIs.
  *
  * Focus: Error handling, graceful degradation
- * Note: TaskManager.defineTask runs at module level and is hard to test
  *
  * Modern Jest 29 Patterns:
  * - ✅ jest.mocked() for type-safe mocking
@@ -71,6 +70,12 @@ jest.mock('@/utils/errorHandling', () => ({
 
 // Import after mocks
 import * as BackgroundTask from 'expo-background-task';
+import { defineTask } from 'expo-task-manager';
+import { submitPublicWidget } from '@/services/widgets/publicHost';
+jest.mock('@/services/widgets/publicHost', () => ({ submitPublicWidget: jest.fn() }));
+import { clearWordWidget } from '@/services/widgets/publish';
+import { supabase } from '@/services/supabase';
+jest.mock('@/services/widgets/publish', () => ({ clearWordWidget: jest.fn() }));
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
 import { handleError } from '@/utils/errorHandling';
 
@@ -79,6 +84,36 @@ const mockGetStatusAsync = jest.mocked(BackgroundTask.getStatusAsync);
 const mockRegisterTaskAsync = jest.mocked(BackgroundTask.registerTaskAsync);
 const mockUnregisterTaskAsync = jest.mocked(BackgroundTask.unregisterTaskAsync);
 const mockHandleError = jest.mocked(handleError);
+
+// Capture the native registration before Jest resets call histories between tests.
+const [taskName, runHeadless] = jest.mocked(defineTask).mock.calls[0]!;
+test.each([false, true])(
+  'sessionless headless launch repairs the widget only after a definitive session read (error=%s)',
+  async failed => {
+    const { AuthError } =
+      jest.requireActual<typeof import('@supabase/supabase-js')>('@supabase/supabase-js');
+    jest
+      .mocked(supabase.auth.getSession)
+      .mockResolvedValue(
+        failed
+          ? { data: { session: null }, error: new AuthError('refresh unavailable') }
+          : { data: { session: null }, error: null },
+      );
+    await runHeadless({ data: {}, error: null, executionInfo: { taskName, eventId: 'headless' } });
+    expect(clearWordWidget).toHaveBeenCalledTimes(failed ? 0 : 1);
+  },
+);
+
+test('sessionless repair replaces the launcher copy before its queued renderer can die', async () => {
+  jest.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null });
+  let displayed = 'private';
+  jest.mocked(submitPublicWidget).mockImplementation(async (_name, word) => {
+    displayed = word;
+  });
+  await runHeadless({ data: {}, error: null, executionInfo: { taskName, eventId: 'cold' } });
+  expect(clearWordWidget).toHaveBeenCalled();
+  expect(displayed).not.toBe('private');
+});
 
 describe('backgroundTasks service', () => {
   beforeEach(() => {

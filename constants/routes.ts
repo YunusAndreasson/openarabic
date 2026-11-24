@@ -1,6 +1,9 @@
 import type { NativeStackNavigationOptions } from 'expo-router';
 
 export const ROUTE_PATHS = {
+  WIDGET_GUIDE: '/widget-guide',
+  WIDGET_SETTINGS: '/widget-settings',
+  FIRST_PAGE: '/first-page',
   AUTH: '/auth',
   AUTH_SIGN_IN: '/auth/sign-in',
   AUTH_SIGN_UP: '/auth/sign-up',

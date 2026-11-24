@@ -46,6 +46,7 @@ module.exports = {
 
   setNotificationHandler: mockSetNotificationHandler,
   setNotificationCategoryAsync: mockSetNotificationCategoryAsync,
+  getNotificationChannelAsync: mockStable(() => Promise.resolve({ importance: 5 })),
   setNotificationChannelAsync: mockSetNotificationChannelAsync,
   addNotificationReceivedListener: mockAddNotificationReceivedListener,
   addNotificationResponseReceivedListener: mockAddNotificationResponseReceivedListener,
@@ -68,11 +69,14 @@ module.exports = {
   // itself, on both platforms (expo-notifications/build/NotificationsEmitter).
   DEFAULT_ACTION_IDENTIFIER: 'expo.modules.notifications.actions.DEFAULT',
   AndroidImportance: {
-    MIN: 1,
-    LOW: 2,
-    DEFAULT: 3,
-    HIGH: 4,
-    MAX: 5,
+    UNKNOWN: 0,
+    UNSPECIFIED: 1,
+    NONE: 2,
+    MIN: 3,
+    LOW: 4,
+    DEFAULT: 5,
+    HIGH: 6,
+    MAX: 7,
   },
   AndroidNotificationPriority: {
     MIN: 'min',

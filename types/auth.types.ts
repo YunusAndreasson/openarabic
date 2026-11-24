@@ -14,7 +14,10 @@ import type { Session } from '@supabase/supabase-js';
  * models "signed out" as a session whose user is absent.
  */
 export interface UserSession {
-  user: Pick<Session['user'], 'id' | 'email' | 'created_at'> | null;
+  user:
+    | (Pick<Session['user'], 'id' | 'email' | 'created_at'> &
+        Partial<Pick<Session['user'], 'user_metadata' | 'last_sign_in_at'>>)
+    | null;
 }
 
 /**

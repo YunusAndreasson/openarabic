@@ -11,13 +11,8 @@ const enqueueClaim = createSerialQueue();
  * Record `userId` as the account now signed in on this device, and report
  * whether it replaced a DIFFERENT one.
  *
- * Several stores hold one learner's data under keys that carry no user id: the
- * streak ledger, the recall history behind new-word pacing, today's add count,
- * the reminder prefs. Signing out leaves them — deliberately, since the same
- * learner signing back in must find their streak where they left it. The cost
- * was that a second account on the device inherited all of it. So the sweep
- * happens here instead, at the one moment the data is known to be someone
- * else's: when the incoming id differs from the last one seen.
+ * A session may change directly, or the install may come from an older
+ * binary. Sweep their shared keys before publishing the incoming session.
  *
  * Resolves `true` when a switch was detected and the shared keys were removed,
  * so the caller can reset the matching in-memory state.

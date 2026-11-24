@@ -40,13 +40,15 @@ export interface UseVoicePrimingResult {
 export function useVoiceOfferEligible(): boolean {
   const voiceEnabled = useAppSelectorShallow(selectVoiceEnabled);
   const dismissed = useAppSelectorShallow(state => state.settings.voiceOfferDismissed);
-  return !voiceEnabled && !dismissed;
+  const guided = useAppSelectorShallow(state => state.firstPage.guided);
+  return !guided && !voiceEnabled && !dismissed;
 }
 
 /**
  * The speak-the-answer offer.
  *
- * Speaking is a flagship feature, so the offer keeps standing rather than
+ * Guided installs choose speaking on a later review card. On legacy installs
+ * the offer keeps standing rather than
  * snoozing itself: it stays available until the learner either turns it on or
  * explicitly says no. There is deliberately no session gate, no impression cap
  * and no persisted funnel state — the two booleans it needs (is it on, was it

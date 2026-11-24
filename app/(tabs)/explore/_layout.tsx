@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { useCallback, type JSX } from 'react';
 
+import { useAuth } from '@/hooks/auth/useAuth';
 import { ExploreSearchButton } from '@/components/explore/ExploreSearchButton';
 import { STRINGS } from '@/constants/strings';
 import {
@@ -34,6 +35,7 @@ const renderSearchButton = () => <ExploreSearchButton />;
 
 export default function LibraryLayout(): JSX.Element {
   const colors = useColors();
+  const { session } = useAuth();
 
   return (
     <Stack>
@@ -43,7 +45,7 @@ export default function LibraryLayout(): JSX.Element {
         // to sit here is now the Account tab, and everything else Explore does,
         // it does by being browsed.
         options={createTabHeaderOptions({
-          title: AppTab.EXPLORE,
+          title: session ? AppTab.EXPLORE : STRINGS.FIRST_PAGE_BROWSE,
           rightComponent: renderSearchButton,
         })}
       />

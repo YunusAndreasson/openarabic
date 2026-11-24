@@ -1,3 +1,4 @@
+import { removeWidgetOccurrence } from '@/services/widgets/storage';
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
@@ -39,7 +40,7 @@ export interface AddRefusal {
 export type WordAddMethod = 'sheet' | 'long_press';
 
 /** Where the saving screen is, as Word Added to Study reports it. */
-export type WordAddSource = 'article' | 'practice';
+export type WordAddSource = 'article' | 'practice' | 'first_run_reader';
 
 /** Refusal reasons as Word Add Refused spells them. */
 const REFUSAL_EVENT_REASON: Record<AddRefusal['reason'], string> = {
@@ -50,11 +51,16 @@ const REFUSAL_EVENT_REASON: Record<AddRefusal['reason'], string> = {
 export interface StudyWordMutationsOptions {
   /** Where the adds through this hook happen. */
   source?: WordAddSource;
+  journaled?: boolean;
   /** An add landed in a study list that was empty: the learner's first saved word. */
   onFirstWordSaved?: () => void;
 }
 
 export interface StudyWordPressOptions {
+  readerIntent?: string;
+  expectedOwner?: string;
+  attribution?: { platform: string; provider: string; sheet_id: string; attempt_id?: string };
+  onConfirmed?: (changed: boolean) => void;
   /** How the add was made; the word card's Save when left out. */
   method?: WordAddMethod;
   /**
@@ -95,7 +101,7 @@ interface StudyWordMutationsResult {
  */
 export const useStudyWordMutations = (
   refetchStudyWords?: () => Promise<void>,
-  { source, onFirstWordSaved }: StudyWordMutationsOptions = {},
+  { source, onFirstWordSaved, journaled }: StudyWordMutationsOptions = {},
 ): StudyWordMutationsResult => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -170,8 +176,8 @@ export const useStudyWordMutations = (
   // the stored counter), so it is not something a caller can safely run just to
   // ask a question.
   const checkAddAllowed = useCallback(
-    async (userId?: string): Promise<AddRefusal | null> => {
-      if (!(await canAddWord())) {
+    async (userId?: string, reservation?: string): Promise<AddRefusal | null> => {
+      if (!(await canAddWord(reservation))) {
         return { reason: 'daily-limit', message: await getLimitReachedMessage() };
       }
       const backlogCount = getDueBacklogBlock(userId);
@@ -210,6 +216,7 @@ export const useStudyWordMutations = (
   // so a toggle resumed after a restart is exactly this write.
   const toggleStudyOptions = {
     ...studyWordToggleMutation,
+    ...(journaled && { networkMode: 'always' as const, retry: false }),
     onMutate: async ({
       userId,
       rootId,
@@ -261,8 +268,7 @@ export const useStudyWordMutations = (
       context?: StudyWordContext,
     ) => {
       // Track word added/removed (fire and forget - don't block UI)
-      const wasInStudyList =
-        context?.previousStudyWords?.some(sw => sw.root_id === rootId) ?? false;
+      const wasInStudyList = context?.previousStudyWords.some(sw => sw.root_id === rootId) ?? false;
 
       if (result.changed && !result.inStudyList && wasInStudyList) {
         void analytics.track(ANALYTICS_EVENTS.WORD_REMOVED_FROM_STUDY, {
@@ -270,7 +276,8 @@ export const useStudyWordMutations = (
         });
         // A same-day add-then-remove nets to zero words spent against today's
         // cap; removing a word added on an earlier day must not refund it.
-        const removedWord = context?.previousStudyWords?.find(sw => sw.root_id === rootId);
+        const removedWord = context?.previousStudyWords.find(sw => sw.root_id === rootId);
+        void removeWidgetOccurrence(userId, rootId).catch(() => undefined);
         void decrementIfAddedToday(removedWord?.created_at);
       } else if (result.changed && result.inStudyList && !wasInStudyList) {
         // Word Added to Study is tracked by handleRootPress, which knows how
@@ -309,7 +316,9 @@ export const useStudyWordMutations = (
         // Use centralized auth check (handles getSession automatically)
         let currentUserId: string;
         try {
-          const { user } = await checkAuthentication();
+          const { user } = options?.expectedOwner
+            ? await checkAuthentication(options.expectedOwner)
+            : await checkAuthentication();
           currentUserId = user.id;
         } catch {
           // No redirect: the Stack.Protected guards own auth navigation. While
@@ -331,9 +340,11 @@ export const useStudyWordMutations = (
         const isFirstWord = isAdd && existingWords?.length === 0;
 
         // Gates apply to adds only — removing must always be possible
+        const reservation = options?.attribution?.sheet_id;
         if (isAdd) {
-          const refusal = await checkAddAllowed(currentUserId);
+          const refusal = await checkAddAllowed(currentUserId, reservation);
           if (refusal) {
+            if (reservation && !options.readerIntent) await decrementDailyWordCount(reservation);
             announceRefusal(refusal);
             return undefined;
           }
@@ -341,7 +352,7 @@ export const useStudyWordMutations = (
 
         // Increment daily word count only for add operations
         if (isAdd) {
-          const incrementSuccess = await incrementDailyWordCount();
+          const incrementSuccess = await incrementDailyWordCount(reservation);
           if (!incrementSuccess) {
             // Lost a race against a concurrent add rather than a cold refusal,
             // but it is the same outcome and the same explanation.
@@ -365,23 +376,25 @@ export const useStudyWordMutations = (
             userId: currentUserId,
             rootId,
             intent,
+            ...(options?.readerIntent && { readerIntent: options.readerIntent }),
           });
-          if (isAdd && !result.changed) await decrementDailyWordCount();
-          if (isAdd && result.changed && result.inStudyList) {
+          if (isAdd && !result.changed) await decrementDailyWordCount(reservation);
+          if (isAdd && result.changed && result.inStudyList && !reservation) {
             void analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
+              ...options?.attribution,
               root_id: rootId,
               method: options?.method ?? 'sheet',
               source,
             });
             if (isFirstWord) onFirstWordSaved?.();
           }
+          options?.onConfirmed?.(result.changed);
           return result.inStudyList;
         } catch {
-          // Adding reserves the daily quota before the network write so two
-          // rapid presses cannot both pass the ceiling. Release that slot when
-          // the write fails; otherwise transient errors permanently consume
-          // today's allowance.
-          if (isAdd) await decrementDailyWordCount();
+          // A reader RPC may have committed before the connection failed.
+          // Its receipt settles this reservation on replay. Legacy writes
+          // retain their existing refund behavior until the RPC is available.
+          if (isAdd && !options?.readerIntent) await decrementDailyWordCount(reservation);
           // The mutation's own onError already reported this failure (toast +
           // Sentry + analytics + optimistic-cache revert) — stop here instead
           // of re-throwing into the outer catch below, which would report the

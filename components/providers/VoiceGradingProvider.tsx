@@ -88,7 +88,7 @@ interface VoiceGradingContextValue {
    *
    * Mirrors `acquireSession` below, and for the same reason: the resource is
    * expensive and shared. A ~110M-parameter int8 ONNX model is not something to
-   * hold for the whole app run now that voice is on by default — a learner
+   * hold for the whole app run — a learner
    * reading articles on a 3 GB Android device should not be carrying a
    * recognizer, and an app that does becomes a prime low-memory-killer target
    * while backgrounded.
@@ -341,8 +341,15 @@ function watchSystemAudio(
   };
 }
 
-export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
-  const enabled = useAppSelectorShallow(selectVoiceEnabled);
+export const VoiceGradingProvider = ({
+  children,
+  signedIn = true,
+}: {
+  children: ReactNode;
+  signedIn?: boolean;
+}) => {
+  const voiceEnabled = useAppSelectorShallow(selectVoiceEnabled);
+  const enabled = signedIn && voiceEnabled;
 
   // The bytes: fetched independently of everything below, on Wi-Fi, and never
   // torn down by this component's lifecycle.

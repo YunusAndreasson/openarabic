@@ -49,6 +49,7 @@ const EXITING_PRIMING = FadeOut.duration(TIMING_CONFIG.FAST.duration);
 const MAX_METRICS_WITH_PRIMING = 2;
 
 interface CompletionScreenProps {
+  source?: 'widget';
   title?: string;
   iconSize?: number;
   contentStyle?: ViewStyle;
@@ -67,6 +68,7 @@ interface CompletionScreenProps {
 }
 
 export const CompletionScreen = ({
+  source,
   title = STRINGS.SESSION_COMPLETE,
   iconSize = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE,
   contentStyle,
@@ -84,7 +86,7 @@ export const CompletionScreen = ({
   // Completion side effects: analytics and the learner's local ledgers. Not
   // the query refresh — useReview's finalizeSession runs that as this screen
   // appears — and not the success haptic, which is the checkmark's below.
-  useReviewCompletion(sessionMetrics);
+  useReviewCompletion(sessionMetrics, source);
 
   const sessionRows = useEncouragingMetrics(sessionMetrics, currentDailyStreak);
 

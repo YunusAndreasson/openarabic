@@ -23,7 +23,7 @@ import { recordStudyDay } from '@/utils/studyDayLedger';
  *
  * @param sessionMetrics - Optional metrics from the completed session
  */
-export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
+export const useReviewCompletion = (sessionMetrics?: SessionMetrics, source?: 'widget'): void => {
   /**
    * Execute completion logic when component mounts
    * Deferred to after animations complete for better UX
@@ -39,6 +39,7 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
     runWhenIdle(() => {
       void analytics.track(ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE, {
         wordsReviewed: sessionMetrics.wordsReviewed,
+        ...(source && { source }),
         wordsKnown: sessionMetrics.wordsKnown,
         wordsUnknown: sessionMetrics.wordsUnknown,
         sessionDuration: Date.now() - sessionMetrics.startTime,
@@ -77,5 +78,5 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
         // Attribution is non-critical — never let it affect the session.
       }
     });
-  }, [sessionMetrics]);
+  }, [sessionMetrics, source]);
 };

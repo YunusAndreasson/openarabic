@@ -1,3 +1,6 @@
+import { GuidedVoiceChoice } from '@/components/review/GuidedVoiceChoice';
+import { FirstReviewScreen } from '@/components/review/FirstReviewScreen';
+import type { RootId } from '@/types/branded.types';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import {
@@ -253,7 +256,15 @@ function ReviewDebugHud({
 }
 
 // Main review content component (only rendered after tutorial is dismissed)
-function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element {
+function ReviewContent({
+  fromRemember,
+  dueRoot,
+  widget,
+}: {
+  widget: boolean;
+  fromRemember: boolean;
+  dueRoot?: RootId;
+}): JSX.Element {
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
   const colors = useColors();
@@ -301,6 +312,8 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     restudying,
     continueFromRestudy,
   } = useReview({
+    rootId: dueRoot,
+    source: widget ? 'widget' : 'practice_tab',
     fromRemember,
     setPlaybackPriority: voice.setPlaybackPriority,
     isMicStreamOpen: voice.isMicStreamOpen,
@@ -688,6 +701,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   if (showingCompletion) {
     return (
       <CompletionScreen
+        source={widget ? 'widget' : undefined}
         sessionMetrics={sessionMetrics}
         testID="completion-screen"
         fromRemember={fromRemember}
@@ -986,6 +1000,8 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                       onDownloadOverCellular={handleDownloadOverCellular}
                       onEnableMicrophone={handleEnableMicrophone}
                     />
+                  ) : !voiceEnabled && !isUpdating ? (
+                    <GuidedVoiceChoice />
                   ) : null}
                 </View>
               </Animated.View>
@@ -1032,9 +1048,44 @@ const voiceDebugStyles = StyleSheet.create({
 });
 
 export default function ReviewScreen(): JSX.Element {
-  const { fromRemember: fromRememberParam } = useLocalSearchParams<{ fromRemember?: string }>();
-  const fromRemember = fromRememberParam === 'true';
+  const {
+    fromRemember: fromRememberParam,
+    rootId,
+    dueRoot,
+    source,
+  } = useLocalSearchParams<{
+    fromRemember?: string;
+    rootId?: string;
+    dueRoot?: string;
+    source?: string;
+  }>();
+  const guidedRoot =
+    Number.isSafeInteger(Number(rootId)) && Number(rootId) > 0
+      ? (Number(rootId) as RootId)
+      : undefined;
+  if (guidedRoot) return <FirstReviewScreen rootId={guidedRoot} />;
+  return (
+    <PracticeReviewScreen
+      widget={source === 'widget'}
+      fromRemember={fromRememberParam === 'true'}
+      dueRoot={
+        Number.isSafeInteger(Number(dueRoot)) && Number(dueRoot) > 0
+          ? (Number(dueRoot) as RootId)
+          : undefined
+      }
+    />
+  );
+}
 
+function PracticeReviewScreen({
+  fromRemember,
+  dueRoot,
+  widget,
+}: {
+  widget: boolean;
+  fromRemember: boolean;
+  dueRoot?: RootId;
+}) {
   // Check if tutorial needs to be shown before starting session.
   // `shouldShowTutorial` returns false for BOTH "already seen" and "store hasn't
   // hydrated yet", so this must not be snapshotted into state before isLoaded:
@@ -1098,5 +1149,5 @@ export default function ReviewScreen(): JSX.Element {
   }
 
   // After tutorial is dismissed, render the actual review session
-  return <ReviewContent fromRemember={fromRemember} />;
+  return <ReviewContent widget={widget} fromRemember={fromRemember} dueRoot={dueRoot} />;
 }

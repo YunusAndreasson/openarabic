@@ -38,6 +38,8 @@ export function useSmartNotifications(): void {
   const userId = user?.id;
   const { data: words } = useQuery(gated(fsrsQueries.all, userId));
 
+  const previousOwner = useRef<string | undefined>(undefined);
+  const currentInputs = useEffectEvent(() => ({ userId, reminderTime, words, isAuthLoading }));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
@@ -55,17 +57,20 @@ export function useSmartNotifications(): void {
     if (!userId) return undefined;
     const cached = queryClient.getQueryData<number>(fsrsQueries.lastCompletedAtKey(userId));
     if (typeof cached === 'number') return cached;
-    return (await readSmartReminderPrefs())?.lastSessionCompletedAt;
+    const mirror = await readSmartReminderPrefs();
+    return !mirror?.owner || mirror.owner === userId ? mirror?.lastSessionCompletedAt : undefined;
   });
 
   /** Mirrors the setting, and the cooldown with it, for the headless task. */
   const writeMirror = useEffectEvent(async (): Promise<number | undefined> => {
     const lastSessionCompletedAt = await resolveLastCompletedAt();
-    await writeSmartReminderPrefs({ ...reminderTime, lastSessionCompletedAt });
+    if (currentInputs().userId === userId && currentInputs().reminderTime === reminderTime)
+      await writeSmartReminderPrefs({ ...reminderTime, owner: userId, lastSessionCompletedAt });
     return lastSessionCompletedAt;
   });
 
   const runSync = useEffectEvent(async (trigger: string) => {
+    if (isAuthLoading) return;
     if (!isAuthenticated || !userId || !reminderTime.enabled) {
       await cancelSmartNotifications();
       return;
@@ -79,7 +84,19 @@ export function useSmartNotifications(): void {
 
     // Keep the headless mirror's cooldown in step with the plan built here.
     const lastSessionCompletedAt = await writeMirror();
-    await syncReminderPlan(words, { ...reminderTime, lastSessionCompletedAt }, trigger);
+    const current = () => {
+      const latest = currentInputs();
+      return (
+        latest.userId === userId && latest.reminderTime === reminderTime && latest.words === words
+      );
+    };
+    if (current())
+      await syncReminderPlan(
+        words,
+        { ...reminderTime, owner: userId, lastSessionCompletedAt },
+        trigger,
+        current,
+      );
   });
 
   const scheduleSync = useEffectEvent((trigger: string) => {
@@ -92,8 +109,14 @@ export function useSmartNotifications(): void {
 
   // Recompute when any planner input changes (includes sign-out → cancel path)
   useEffect(() => {
-    scheduleSync('data-change');
-  }, [words, reminderTime, isAuthenticated, userId]);
+    if (isAuthLoading) return;
+    const switched = previousOwner.current && previousOwner.current !== userId;
+    previousOwner.current = userId;
+    if (switched || !isAuthenticated || !reminderTime.enabled) {
+      void cancelSmartNotifications();
+    }
+    if (isAuthenticated && reminderTime.enabled) scheduleSync('data-change');
+  }, [words, reminderTime, isAuthenticated, userId, isAuthLoading]);
 
   // Mirror the setting for the headless background task. Not while auth is
   // still restoring: with no user yet there is no cooldown to resolve, and the

@@ -1,9 +1,4 @@
 {
-  "app/article/[id].tsx": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 2
-    }
-  },
   "app/review.tsx": {
     "react-hooks/capitalized-calls": {
       "count": 1
@@ -99,11 +94,6 @@
   "hooks/articles/useReadingProgress.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
-    }
-  },
-  "hooks/articles/useStudyWordMutations.ts": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 2
     }
   },
   "hooks/audio/useSleepTimer.ts": {

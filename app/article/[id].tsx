@@ -1,9 +1,17 @@
+import { articleOccurrence } from '@/services/widgets/articleOccurrence';
+import { guestCanPractise } from '@/services/firstPage';
+import { ArticleWordTargets } from '@/hooks/articles/articleWordTargets';
+import { useAppSelector } from '@/store/hooks';
+import { TrackWordSheet } from '@/components/first-page/TrackWordSheet';
+import { beginReaderSave, usePendingReaderSave } from '@/hooks/onboarding/useReaderSave';
+import type { SaveMethod } from '@/services/readerSave';
+import type { ArticleId } from '@/types/branded.types';
 import type { ErrorBoundaryProps } from 'expo-router';
 import { router, useLocalSearchParams } from 'expo-router';
-import type { JSX } from 'react';
+import type { ComponentRef, JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LayoutRectangle } from 'react-native';
-import { View } from 'react-native';
+import { AccessibilityInfo, View } from 'react-native';
 import { GestureDetector, useTapGesture } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 
@@ -22,6 +30,7 @@ import { ToastProvider, useTutorialContext, useToast } from '@/components/provid
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useArticleListen } from '@/hooks/articles/useArticleListen';
 import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
 import { useReaderKeepAwake } from '@/hooks/articles/useReaderKeepAwake';
@@ -47,6 +56,9 @@ const ArticleScreenContentComparison = (
 const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const colors = useColors();
   const { showToast } = useToast();
+  const { session } = useAuth();
+  const newReader = useAppSelector(state => state.firstPage.guided && !state.firstPage.hasSaved);
+  const guideSave = !session || newReader;
   const params = useLocalSearchParams<{
     disableAutoScroll?: string;
     sentenceId?: string;
@@ -158,14 +170,35 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // Long-press quick save also counts as discovering the word interaction
   const handleWordLongPressWithTutorial = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {
-      void handleWordLongPress(word, layout);
+      if (guideSave && !guestCanPractise(Number(id), word) && !selectedWordIds.has(word.root_id))
+        return;
+      if (guideSave && word.root_id && !selectedWordIds.has(word.root_id))
+        saveArticleWord(
+          word,
+          'long_press',
+          id,
+          sentenceWordsMap.get(word.sentence_id),
+          article?.author.name,
+          session?.user?.id,
+        );
+      else void handleWordLongPress(word, layout);
 
       if (showWordTapTutorial) {
         setIsTutorialCardDismissed(true);
         completeTutorial(TutorialId.WORD_TAP);
       }
     },
-    [showWordTapTutorial, completeTutorial, handleWordLongPress],
+    [
+      showWordTapTutorial,
+      completeTutorial,
+      article,
+      sentenceWordsMap,
+      session,
+      handleWordLongPress,
+      guideSave,
+      selectedWordIds,
+      id,
+    ],
   );
 
   // Memoize renderSentenceItem to prevent unnecessary recreations
@@ -173,7 +206,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     ({ item, index }: { item: Tables<'article_sentences'>; index: number }) => {
       const words = sentenceWordsMap.get(item.id) ?? [];
 
-      if (!words || words.length === 0) {
+      if (words.length === 0) {
         return null;
       }
 
@@ -337,7 +370,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         <FloatingActionButtons
           onShare={shareLink ? () => void sharePublicLink(shareLink) : undefined}
           isInReadingList={isInReadingList}
-          onToggleReadingList={handleToggleReadingListWithFeedback}
+          onToggleReadingList={session ? handleToggleReadingListWithFeedback : undefined}
           isListening={isListeningToThisArticle}
           isListenLoading={isListenLoading}
           onToggleListen={() => void handleToggleListen()}
@@ -365,7 +398,27 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         isVisible={wordDetailsModal.isVisible}
         onClose={wordDetailsModal.close}
         word={wordDetailsModal.data}
+        hideAdd={
+          guideSave &&
+          !!wordDetailsModal.data &&
+          !guestCanPractise(Number(id), wordDetailsModal.data)
+        }
         onAddToStudy={handleAddWordToStudy}
+        onGuidedAdd={
+          !guideSave || isInStudyList
+            ? undefined
+            : word => {
+                wordDetailsModal.close();
+                saveArticleWord(
+                  word,
+                  'sheet',
+                  id,
+                  sentenceWordsMap.get(word.sentence_id),
+                  article.author.name,
+                  session?.user?.id,
+                );
+              }
+        }
         isInStudyList={isInStudyList}
         isStudyStateLoading={isLoadingStudyWords}
       />
@@ -409,8 +462,34 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps): JSX.Element
   );
 }
 
+function saveArticleWord(
+  word: SentenceWord,
+  method: SaveMethod,
+  id: string | undefined,
+  line: SentenceWord[] | undefined,
+  credit?: string,
+  owner?: string,
+) {
+  if (word.root_id)
+    void beginReaderSave(
+      articleOccurrence(Number(id) as ArticleId, word, line ?? [], credit),
+      method,
+      owner,
+    );
+}
+
 export default function ArticleScreen(): JSX.Element {
+  const [targets] = useState(() => new Map<number, ComponentRef<typeof View>>());
+  const { session } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const pending = usePendingReaderSave();
+  const save =
+    pending?.word.source === 'article' &&
+    pending.word.articleId === Number(id) &&
+    (!pending.owner || pending.owner === session?.user?.id)
+      ? pending
+      : null;
+  const showingSave = !!save && !save.keepReading;
   const colors = useColors();
 
   // The wake lock lives in ArticleScreenContent (`useReaderKeepAwake`), which
@@ -424,7 +503,27 @@ export default function ArticleScreen(): JSX.Element {
   return (
     <ToastProvider>
       <View style={containerStyle}>
-        <ArticleScreenContent id={id ?? ''} />
+        <View
+          style={FLEX_ONE_STYLE}
+          accessibilityElementsHidden={showingSave}
+          importantForAccessibility={showingSave ? 'no-hide-descendants' : 'auto'}
+        >
+          <ArticleWordTargets value={targets}>
+            <ArticleScreenContent id={id} />
+          </ArticleWordTargets>
+        </View>
+        {save && (
+          <TrackWordSheet
+            key={save.id}
+            save={save}
+            onExit={() =>
+              requestAnimationFrame(() => {
+                const node = targets.get(save.word.occurrenceId);
+                if (node) AccessibilityInfo.sendAccessibilityEvent(node, 'focus');
+              })
+            }
+          />
+        )}
       </View>
     </ToastProvider>
   );

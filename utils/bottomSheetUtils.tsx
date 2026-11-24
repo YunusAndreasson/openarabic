@@ -25,7 +25,11 @@ const DISAPPEARS_ON_INDEX = -1;
  * onClose/onDismiss prop after the close animation completes. This prevents
  * content flash during close animation and avoids redundant re-renders.
  */
-const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProps) => {
+const BlurBackdropComponent = ({
+  animatedIndex,
+  style,
+  dismissible = true,
+}: BottomSheetBackdropProps & { dismissible?: boolean }) => {
   const { close } = useBottomSheet();
   const { intensity, tint } = useBlurProps('backdrop');
   /**
@@ -48,7 +52,7 @@ const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProp
   const tapHandler = useTapGesture({
     onDeactivate: event => {
       'worklet';
-      if (!event.canceled) scheduleOnRN(close);
+      if (dismissible && !event.canceled) scheduleOnRN(close);
     },
   });
 
@@ -125,6 +129,9 @@ const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProp
  * Use directly as the backdropComponent prop on BottomSheet.
  */
 export const BottomSheetBackdrop = memo(BlurBackdropComponent);
+export const FixedBottomSheetBackdrop = (props: BottomSheetBackdropProps) => (
+  <BlurBackdropComponent {...props} dismissible={false} />
+);
 
 const styles = StyleSheet.create({
   backdrop: StyleSheet.absoluteFill,

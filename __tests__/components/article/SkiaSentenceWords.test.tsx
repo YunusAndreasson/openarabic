@@ -356,6 +356,18 @@ describe('SkiaSentenceWords', () => {
       expect(screen.getByText('جدا')).toBeTruthy();
     });
 
+    test('keeps the whole inflected form on one line at its intrinsic width', () => {
+      const word = createWord(0, { word_form: 'وَقَعْتُ' });
+      const screen = render(<SkiaSentenceWords words={[word]} selectedRootIds={NO_SELECTION} />);
+      const label = screen.getByText(word.word_form);
+      expect(label.props.children).toBe(word.word_form);
+      expect(label.props.numberOfLines).toBe(1);
+      expect(label.props.adjustsFontSizeToFit).toBe(true);
+      expect(StyleSheet.flatten(screen.getByTestId('sentence-word-0').props.style).flexShrink).toBe(
+        0,
+      );
+    });
+
     test('keeps the words pressable', () => {
       const onWordPress = jest.fn();
       const screen = render(

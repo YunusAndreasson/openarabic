@@ -1,5 +1,5 @@
 import BottomSheet, { useBottomSheetSpringConfigs } from '@gorhom/bottom-sheet';
-import { useImperativeHandle, type ReactNode, type Ref } from 'react';
+import { useImperativeHandle, useState, type ReactNode, type Ref } from 'react';
 import { useWindowDimensions } from 'react-native';
 
 import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
@@ -8,6 +8,7 @@ import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicSty
 import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
 import {
   BottomSheetBackdrop,
+  FixedBottomSheetBackdrop,
   COMMON_BOTTOM_SHEET_PROPS,
   SHEET_MAX_HEIGHT_RATIO,
 } from '@/utils/bottomSheetUtils';
@@ -19,13 +20,21 @@ export interface BrandedBottomSheetMethods {
 interface BrandedBottomSheetProps {
   ref?: Ref<BrandedBottomSheetMethods>;
   isVisible: boolean;
+  dismissible?: boolean;
   onClose: () => void;
   children: ReactNode;
 }
 
 /** Shared branded shell and visibility lifecycle for app-owned bottom sheets. */
-export function BrandedBottomSheet({ ref, isVisible, onClose, children }: BrandedBottomSheetProps) {
-  const bottomSheetRef = useBottomSheetVisibility(isVisible);
+export function BrandedBottomSheet({
+  ref,
+  isVisible,
+  onClose,
+  children,
+  dismissible = true,
+}: BrandedBottomSheetProps) {
+  const [hasOpened, setHasOpened] = useState(isVisible);
+  const bottomSheetRef = useBottomSheetVisibility(isVisible, dismissible);
   const dynamicStyles = useBottomSheetDynamicStyles();
   const animationConfigs = useBottomSheetSpringConfigs(SPRING_CONFIG.BOTTOM_SHEET);
   const { height: windowHeight } = useWindowDimensions();
@@ -36,11 +45,19 @@ export function BrandedBottomSheet({ ref, isVisible, onClose, children }: Brande
     bottomSheetRef,
   ]);
 
+  // expand() is a no-op until Gorhom measures its dynamic snap point. Mount at
+  // the open index on first presentation, including a restored reader sheet.
+  // Keep the host for subsequent ref-driven close animations and reopens.
+  if (!hasOpened) {
+    if (!isVisible) return null;
+    setHasOpened(true);
+  }
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      index={-1}
+      index={isVisible ? 0 : -1}
       {...COMMON_BOTTOM_SHEET_PROPS}
+      enablePanDownToClose={dismissible}
       maxDynamicContentSize={windowHeight * SHEET_MAX_HEIGHT_RATIO}
       // gorhom defaults the content wrapper to accessible="true" (label "Bottom
       // Sheet", role "adjustable"). On iOS that collapses the whole sheet into
@@ -52,7 +69,7 @@ export function BrandedBottomSheet({ ref, isVisible, onClose, children }: Brande
       onClose={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleComponent={BrandedBottomSheetHandle}
-      backdropComponent={BottomSheetBackdrop}
+      backdropComponent={dismissible ? BottomSheetBackdrop : FixedBottomSheetBackdrop}
     >
       {children}
     </BottomSheet>

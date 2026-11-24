@@ -25,6 +25,11 @@ export const REDUX_PERSIST_KEY = 'root';
 
 /** Static keys — the full value is the key. */
 export const STORAGE_KEYS = {
+  WIDGET_COPY: '@openarabic/widget/last-word.v1',
+  WIDGET_WORDS: '@openarabic/widget/occurrences.v1',
+  WIDGET_OFFERS: '@openarabic/widget/offers.v1',
+  FIRST_REVIEWS: '@openarabic/reader/reviews.v1',
+  READER_SAVE: '@openarabic/reader/pendingSave.v1',
   ONBOARDING_PROGRESS: '@openarabic/onboarding/progress',
   NOTIFICATION_PROMPT_STATE: '@openarabic/notifications/promptState',
   SMART_REMINDER_PREFS: '@openarabic/notifications/smartReminderPrefs',
@@ -32,6 +37,9 @@ export const STORAGE_KEYS = {
   /** Id of the account that last signed in here — see utils/accountSwitch. */
   LAST_SIGNED_IN_USER: '@openarabic/auth/lastSignedInUser',
   /** Install date, install_id and once-per-install flags for analytics — see services/analyticsInstall. */
+  REVIEW_REMINDER_DETAIL: '@openarabic/reminders/detail.v1',
+  REVIEW_REMINDER_JOURNEY: '@openarabic/reminders/journey.v1',
+  ACCOUNT_TEARDOWN: '@openarabic/account/teardown.v1',
   ANALYTICS_INSTALL: '@openarabic/analytics/install',
 
   TUTORIAL_WELCOME_INTRO: '@openarabic/tutorials/welcomeIntroSeen',
@@ -81,6 +89,12 @@ export type StorageKeyScope = 'account' | 'account-scoped' | 'device';
  * list it replaced would have.
  */
 const STORAGE_KEY_SCOPES = {
+  // The pending guest-to-account handoff survives the claim of its verified owner.
+  WIDGET_COPY: 'account-scoped',
+  WIDGET_WORDS: 'account-scoped',
+  WIDGET_OFFERS: 'device',
+  FIRST_REVIEWS: 'account-scoped',
+  READER_SAVE: 'device',
   ONBOARDING_PROGRESS: 'account-scoped',
   TUTORIAL_WELCOME_INTRO: 'account-scoped',
   TUTORIAL_WORD_TAP: 'account-scoped',
@@ -101,9 +115,12 @@ const STORAGE_KEY_SCOPES = {
 
   /** One-time migration marker for files on this filesystem. */
   AUDIO_CACHE_LEGACY_SWEEP: 'device',
-  /** Remembers who owns the unscoped keys above; must outlive a sign-out. */
+  /** Remembers who owns the unscoped keys above; also handles direct account switches. */
   LAST_SIGNED_IN_USER: 'device',
   /** Belongs to the install: a sign-out must not make the install new again. */
+  REVIEW_REMINDER_DETAIL: 'account-scoped',
+  REVIEW_REMINDER_JOURNEY: 'device',
+  ACCOUNT_TEARDOWN: 'device',
   ANALYTICS_INSTALL: 'device',
   /** See the note on the key itself — mixed contents, swept a different way. */
   REDUX_PERSIST_ROOT: 'device',

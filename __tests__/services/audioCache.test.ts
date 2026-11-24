@@ -162,6 +162,27 @@ describe('audioCache', () => {
     expect(result).toBe(cachedPath);
   });
 
+  test('account cleanup deletes audio only after an in-flight private word download has finished', async () => {
+    mockDigestStringAsync.mockResolvedValue(hash);
+    const entered = Promise.withResolvers<void>();
+    const transfer = Promise.withResolvers<void>();
+    mockDownloadFileAsync.mockImplementation(async () => {
+      entered.resolve();
+      await transfer.promise;
+    });
+    const cache: typeof import('@/services/audioCache').audioCache =
+      require('../../services/audioCache').audioCache;
+    mockFileConstructor.mockImplementation(makeFileMock({ cachedExists: false }));
+    const download = cache.getAudio(url, { quick: true });
+    await entered.promise;
+    const purge = cache.clearLearnerCache();
+    transfer.resolve();
+    await Promise.all([download, purge]);
+    expect(mockDirectoryDelete.mock.invocationCallOrder[0]).toBeGreaterThan(
+      mockFileMove.mock.invocationCallOrder[0]!,
+    );
+  });
+
   test('getAudio downloads file when not cached', async () => {
     // Mock crypto to return the expected hash
     mockDigestStringAsync.mockResolvedValue(hash);

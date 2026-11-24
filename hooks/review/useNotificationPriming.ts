@@ -90,6 +90,7 @@ export interface UseNotificationPrimingResult {
  */
 export function useNotificationPriming(): UseNotificationPrimingResult {
   const dispatch = useAppDispatch();
+  const guided = useAppSelector(state => state.firstPage.guided);
   const reminderTime = useAppSelector(state => state.settings.reminderTime);
   const [showPrimingCard, setShowPrimingCard] = useState(false);
   const [resolved, setResolved] = useState(false);
@@ -109,7 +110,7 @@ export function useNotificationPriming(): UseNotificationPrimingResult {
 
     const evaluate = async () => {
       // Feature already on (or the user is mid-accept) — nothing to ask.
-      if (reminderTime.enabled || impressionRecordedRef.current) return;
+      if (guided || reminderTime.enabled || impressionRecordedRef.current) return;
       if (yieldedToVoiceRef.current) return;
 
       const state = await loadNotificationPromptState();
@@ -149,7 +150,7 @@ export function useNotificationPriming(): UseNotificationPrimingResult {
     return () => {
       cancelled = true;
     };
-  }, [reminderTime.enabled, voiceOfferOpen]);
+  }, [guided, reminderTime.enabled, voiceOfferOpen]);
 
   const accept = useCallback(async (): Promise<void> => {
     await acceptPriming('review_complete', dispatch);
@@ -185,6 +186,7 @@ export interface UseFirstWordNotificationPrimingResult {
  */
 export function useFirstWordNotificationPriming(): UseFirstWordNotificationPrimingResult {
   const dispatch = useAppDispatch();
+  const guided = useAppSelector(state => state.firstPage.guided);
   const remindersEnabled = useAppSelector(state => state.settings.reminderTime.enabled);
   const { shouldShowTutorial } = useTutorialContext();
   const [showPrimingCard, setShowPrimingCard] = useState(false);
@@ -204,7 +206,7 @@ export function useFirstWordNotificationPriming(): UseFirstWordNotificationPrimi
   };
 
   const offer = (): void => {
-    if (remindersEnabled || showPrimingCard || evaluatingRef.current) return;
+    if (guided || remindersEnabled || showPrimingCard || evaluatingRef.current) return;
     if (shouldShowTutorial(TutorialId.WELCOME_INTRO)) return;
 
     evaluatingRef.current = true;

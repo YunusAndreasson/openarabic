@@ -391,6 +391,11 @@ describe('useFSRS Hook - Edge Cases', () => {
           fsrs_state: State.Relearning,
         }),
         expect.objectContaining({ managed: true }),
+        expect.objectContaining({
+          created: reviewWord.created_at,
+          reps: reviewWord.fsrs_reps,
+          last: reviewWord.fsrs_last_review,
+        }),
       );
     });
 

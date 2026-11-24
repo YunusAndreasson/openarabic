@@ -1,12 +1,9 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 
-import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
-import { analytics } from '@/services/analytics';
 import { AccountDeletionService } from '@/services/accountDeletion';
 import { handleError, showSuccessToast } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
@@ -21,8 +18,8 @@ export interface UseAccountDeletionReturn {
 
   // Methods
   /**
-   * Validates the typed confirmation, deletes the account and navigates to
-   * auth. Owns the whole flow, failure included: it never throws, and on
+   * Validates the typed confirmation, deletes the account and returns to
+   * the reader. Owns the whole flow, failure included: it never throws, and on
    * failure the screen stays put with what the learner typed.
    */
   deleteAccount: () => Promise<void>;
@@ -35,13 +32,12 @@ export interface UseAccountDeletionReturn {
  */
 export function useAccountDeletion(): UseAccountDeletionReturn {
   const { user } = useAuth();
+  const owner = user?.id ?? null;
   // Form state
   const [fetchedUserEmail, setFetchedUserEmail] = useState<string | null>(null);
   const [confirmationText, setConfirmationText] = useState('');
   const [loading, setLoading] = useState(false);
   const [confirmationError, setConfirmationError] = useState('');
-
-  const queryClient = useQueryClient();
 
   // Fetch user email on mount
   useEffect(() => {
@@ -68,7 +64,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
 
   /**
    * Deletes the user's account after validation
-   * Shows success toast and navigates to auth screen
+   * Shows success toast and returns to the public reader
    */
   const deleteAccount = useCallback(async (): Promise<void> => {
     // Validate confirmation text
@@ -79,25 +75,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
     setLoading(true);
 
     try {
-      // Delete account via service (no email needed - uses session)
-      await AccountDeletionService.deleteAccount();
-
-      // The deleted account's word/audio/reading/streak data otherwise stays
-      // resident in the query cache for the rest of the process lifetime —
-      // a stale leftover of an account the app just confirmed was deleted.
-      queryClient.clear();
-
-      // Track successful deletion
-      // Deletion is already irreversible. Analytics must never turn a completed
-      // deletion into a user-visible failure state.
-      try {
-        await analytics.track(ANALYTICS_EVENTS.ACCOUNT_DELETED, {
-          timestamp: new Date().toISOString(),
-        });
-        await analytics.reset();
-      } catch {
-        // Best effort only.
-      }
+      await AccountDeletionService.deleteAccount(owner);
 
       // Show success feedback. No mount check: the account is gone either way,
       // and an auth-state update that has already unmounted this screen used
@@ -107,7 +85,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
 
       // Navigate before the auth-state update unmounts this screen. Deferring
       // behind an isMounted check can strand the user on a stale protected tab.
-      router.replace(ROUTE_PATHS.AUTH);
+      router.replace(ROUTE_PATHS.FIRST_PAGE);
     } catch (error) {
       await handleError(error, {
         toastMessage: STRINGS.FAILED_TO_DELETE_ACCOUNT,
@@ -118,7 +96,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
 
       setLoading(false);
     }
-  }, [confirmationText, validateConfirmation, queryClient]);
+  }, [confirmationText, owner, validateConfirmation]);
 
   return {
     // State

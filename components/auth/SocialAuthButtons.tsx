@@ -1,102 +1,100 @@
+import type { StartReaderAuth } from '@/services/readerSaveAuth';
 import type { JSX } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { NativeAppleSignIn } from './NativeAppleSignIn';
 import { ListSeparator } from '@/components/common';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { AUTH_CONTENT_MAX_WIDTH_RATIO, LAYOUT } from '@/constants/layout';
+import { AUTH_CONTENT_MAX_WIDTH_RATIO, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { UseAppleAuthReturn } from '@/hooks/auth/useAppleAuth';
-import type { UseGoogleAuthReturn } from '@/hooks/auth/useGoogleAuth';
+import { getGoogleSignin, type UseGoogleAuthReturn } from '@/hooks/auth/useGoogleAuth';
 import { useColors } from '@/hooks/theme/useColors';
 
 const isIOS = Platform.OS === 'ios';
 
 interface SocialAuthButtonsProps {
+  startAttempt?: StartReaderAuth;
+  reader?: boolean;
   appleAuth: UseAppleAuthReturn;
   googleAuth: UseGoogleAuthReturn;
 }
 
-/**
- * Social Authentication Buttons Component
- *
- * Displays Apple and Google sign-in options using custom themed buttons
- * for consistent design across all platforms.
- *
- * **Expo Go Compatibility:**
- * - Buttons visible in Expo Go for UI preview
- * - Buttons will show error messages when pressed (native modules unavailable)
- * - Fully functional in development builds and production builds
- *
- * Features:
- * - Follows design system (Colors.ts, layout.ts)
- * - Integrates with useAppleAuth and useGoogleAuth hooks
- * - Loading states for each button independently
- * - Error handling via hooks (toast notifications)
- * - Accessibility support
- */
-export function SocialAuthButtons({ appleAuth, googleAuth }: SocialAuthButtonsProps): JSX.Element {
+export function SocialAuthButtons({
+  appleAuth,
+  googleAuth,
+  startAttempt,
+  reader,
+}: SocialAuthButtonsProps): JSX.Element {
   const { signInWithApple, loading: appleLoading } = appleAuth;
   const { signInWithGoogle, loading: googleLoading } = googleAuth;
   const colors = useColors();
+  const GoogleButton = reader ? getGoogleSignin()?.GoogleSigninButton : undefined;
   const { width } = useWindowDimensions();
 
   return (
     <View style={[styles.container, { maxWidth: width * AUTH_CONTENT_MAX_WIDTH_RATIO }]}>
       {/* Apple Sign In Button - iOS only */}
       {isIOS && (
-        <ThemedButton
-          variant="outlined"
-          title={STRINGS.SIGN_IN_WITH_APPLE}
-          icon="logo-apple"
-          loading={appleLoading}
+        <NativeAppleSignIn
           disabled={appleLoading || googleLoading}
-          fullWidth
-          testID="apple-sign-in-button"
-          accessibilityLabel="Sign in with Apple"
-          onPress={() => void signInWithApple()}
+          onPress={() => void signInWithApple(startAttempt)}
         />
       )}
 
       {/* Google Sign In Button */}
-      <ThemedButton
-        variant="outlined"
-        title={STRINGS.SIGN_IN_WITH_GOOGLE}
-        icon="logo-google"
-        loading={googleLoading}
-        disabled={isIOS ? appleLoading || googleLoading : googleLoading}
-        fullWidth
-        testID="google-sign-in-button"
-        accessibilityLabel="Sign in with Google"
-        onPress={() => void signInWithGoogle()}
-      />
+      {GoogleButton ? (
+        <GoogleButton
+          size={GoogleButton.Size.Wide}
+          style={styles.nativeButton}
+          accessibilityLabel={STRINGS.SIGN_IN_WITH_GOOGLE}
+          disabled={appleLoading || googleLoading}
+          onPress={() => void signInWithGoogle(startAttempt)}
+        />
+      ) : (
+        <ThemedButton
+          variant="outlined"
+          title={STRINGS.SIGN_IN_WITH_GOOGLE}
+          icon="logo-google"
+          loading={googleLoading}
+          disabled={isIOS ? appleLoading || googleLoading : googleLoading}
+          fullWidth
+          testID="google-sign-in-button"
+          accessibilityLabel="Sign in with Google"
+          onPress={() => void signInWithGoogle(startAttempt)}
+        />
+      )}
 
       {/* Divider with "or" text - appears after social buttons */}
-      <View style={styles.dividerContainer}>
-        <ListSeparator
-          color={colors.border}
-          height={ListSeparator.RULE_HEIGHT}
-          style={styles.dividerLine}
-        />
-        <ThemedText
-          type="caption"
-          colorName="secondaryText"
-          style={styles.dividerText}
-          accessibilityLabel="Or continue with email"
-        >
-          {STRINGS.CONTINUE_WITH}
-        </ThemedText>
-        <ListSeparator
-          color={colors.border}
-          height={ListSeparator.RULE_HEIGHT}
-          style={styles.dividerLine}
-        />
-      </View>
+      {!reader && (
+        <View style={styles.dividerContainer}>
+          <ListSeparator
+            color={colors.border}
+            height={ListSeparator.RULE_HEIGHT}
+            style={styles.dividerLine}
+          />
+          <ThemedText
+            type="caption"
+            colorName="secondaryText"
+            style={styles.dividerText}
+            accessibilityLabel="Or continue with email"
+          >
+            {STRINGS.CONTINUE_WITH}
+          </ThemedText>
+          <ListSeparator
+            color={colors.border}
+            height={ListSeparator.RULE_HEIGHT}
+            style={styles.dividerLine}
+          />
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  nativeButton: { width: '100%', height: MIN_TOUCH_TARGET.LARGE },
   container: {
     gap: LAYOUT.SPACING.SMALL, // Tighter grouping between social buttons (proximity)
     width: '100%',

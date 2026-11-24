@@ -1,3 +1,4 @@
+import type { StartReaderAuth } from '@/services/readerSaveAuth';
 import type * as AppleAuthLibrary from '@invertase/react-native-apple-authentication';
 import { useState } from 'react';
 import { Platform } from 'react-native';
@@ -65,7 +66,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * Hook return type for Apple authentication
  */
 export interface UseAppleAuthReturn {
-  signInWithApple: () => Promise<void>;
+  signInWithApple: (start?: StartReaderAuth) => Promise<void>;
   loading: boolean;
 }
 

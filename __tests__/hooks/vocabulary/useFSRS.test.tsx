@@ -491,6 +491,11 @@ describe('useFSRS Hook', () => {
             fsrs_reps: expect.any(Number),
           }),
           expect.objectContaining({ managed: true }),
+          expect.objectContaining({
+            created: newWord.created_at,
+            reps: newWord.fsrs_reps,
+            last: newWord.fsrs_last_review,
+          }),
         );
       });
     });
@@ -534,6 +539,11 @@ describe('useFSRS Hook', () => {
             fsrs_last_review: expect.any(String),
           }),
           expect.objectContaining({ managed: true }),
+          expect.objectContaining({
+            created: word.created_at,
+            reps: word.fsrs_reps,
+            last: word.fsrs_last_review,
+          }),
         );
       });
     });
@@ -597,6 +607,11 @@ describe('useFSRS Hook', () => {
           1,
           expect.objectContaining({ fsrs_stability: expect.closeTo(expectedStability, 3) }),
           expect.objectContaining({ managed: true }),
+          expect.objectContaining({
+            created: word.created_at,
+            reps: word.fsrs_reps,
+            last: word.fsrs_last_review,
+          }),
         );
 
         if (expectComplete) {
@@ -1017,6 +1032,11 @@ describe('useFSRS Hook', () => {
           1,
           expect.any(Object),
           expect.objectContaining({ managed: true }),
+          expect.objectContaining({
+            created: words[0]!.created_at,
+            reps: words[0]!.fsrs_reps,
+            last: words[0]!.fsrs_last_review,
+          }),
         );
       });
     });

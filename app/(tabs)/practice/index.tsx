@@ -1,11 +1,14 @@
+import { FirstReviewReceipt } from '@/components/practice/FirstReviewReceipt';
+import type { RootId } from '@/types/branded.types';
 import { useQueryClient } from '@tanstack/react-query';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { ScreenStateHandler } from '@/components/common/ScreenStateHandler';
+import { ReviewReminderPanel } from '@/components/practice/ReviewReminderPanel';
 import { PracticeEmptyState, PracticeStatCards } from '@/components/practice';
 import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
@@ -46,7 +49,24 @@ const MOUNT_FADE_IN_STYLE = fadeInStyle(
 // Module-level, so the state handler is handed the same element every render.
 const PRACTICE_EMPTY_STATE = <PracticeEmptyState />;
 
+const PRACTICE_DASHBOARD = <PracticeDashboard />;
+
 export default function PracticeScreen(): JSX.Element {
+  const { reviewedRoot } = useLocalSearchParams<{ reviewedRoot?: string }>();
+  const { user } = useAuth();
+  const root = Number(reviewedRoot);
+  if (user && Number.isSafeInteger(root) && root > 0)
+    return (
+      <FirstReviewReceipt
+        key={user.id + '-' + root}
+        owner={user.id}
+        root={root as RootId}
+        fallback={PRACTICE_DASHBOARD}
+      />
+    );
+  return PRACTICE_DASHBOARD;
+}
+function PracticeDashboard(): JSX.Element {
   const { user } = useAuth();
   const reducedMotion = useReducedMotion();
   const userId = user?.id;
@@ -276,6 +296,7 @@ export default function PracticeScreen(): JSX.Element {
         contentContainerStyle={scrollContentStyle}
       >
         <Animated.View style={reducedMotion ? styles.vocabularySection : VOCABULARY_SECTION_STYLE}>
+          {userId && <ReviewReminderPanel key={userId} owner={userId} />}
           <PracticeStatCards
             dueWords={shown.cost.dueWords}
             reviewedToday={shown.cost.reviewedToday}

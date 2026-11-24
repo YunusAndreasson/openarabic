@@ -16,12 +16,13 @@ import { renderHook } from '@testing-library/react-native';
 jest.mock('@/services/analytics', () => ({ analytics: { track: jest.fn() } }));
 
 const mockDispatch = jest.fn();
+let mockGuided = false;
 let mockSettings: { voiceEnabled: boolean; voiceOfferDismissed: boolean };
 
 jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
   useAppSelectorShallow: (selector: (state: unknown) => unknown) =>
-    selector({ settings: mockSettings }),
+    selector({ settings: mockSettings, firstPage: { guided: mockGuided } }),
 }));
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
@@ -103,4 +104,17 @@ describe('useVoiceOfferEligible', () => {
     mockSettings = { voiceEnabled: false, voiceOfferDismissed: true };
     expect(renderHook(() => useVoiceOfferEligible()).result.current).toBe(false);
   });
+});
+
+test('a fresh guided learner finishing a second session gets no unsolicited voice card or impression', () => {
+  mockGuided = true;
+  mockSettings = { voiceEnabled: false, voiceOfferDismissed: false };
+  try {
+    expect(renderHook(() => useVoicePriming('completion')).result.current.showPrimingCard).toBe(
+      false,
+    );
+    expect(analytics.track).not.toHaveBeenCalled();
+  } finally {
+    mockGuided = false;
+  }
 });

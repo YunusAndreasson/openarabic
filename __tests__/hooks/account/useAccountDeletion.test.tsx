@@ -1,11 +1,9 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
 
-import { createHookTestWrapper, type HookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { STRINGS } from '@/constants/strings';
 import { useAccountDeletion } from '@/hooks/account/useAccountDeletion';
 import { AccountDeletionService } from '@/services/accountDeletion';
-import { analytics } from '@/services/analytics';
 import { handleError, showSuccessToast } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 
@@ -19,13 +17,6 @@ jest.mock('@/services/accountDeletion', () => ({
   AccountDeletionService: {
     getCurrentUserEmail: jest.fn(),
     deleteAccount: jest.fn(),
-  },
-}));
-
-jest.mock('@/services/analytics', () => ({
-  analytics: {
-    track: jest.fn().mockResolvedValue(undefined),
-    reset: jest.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -45,23 +36,15 @@ jest.mock('@/utils/haptics', () => ({
 const getCurrentUserEmail = jest.mocked(AccountDeletionService.getCurrentUserEmail);
 const deleteAccountService = jest.mocked(AccountDeletionService.deleteAccount);
 
-// The real client: the deletion clears its cache. One per test, kept across
-// re-renders (a client built inside the wrapper was a new, empty cache on every
-// render of the hook).
-let wrapper: HookTestWrapper;
-beforeEach(() => {
-  ({ wrapper } = createHookTestWrapper());
-});
-
 describe('useAccountDeletion identity', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('shows the authenticated user email immediately without a second network lookup', () => {
-    mockUseAuth.mockReturnValue({ user: { email: 'learner@example.com' } });
+    mockUseAuth.mockReturnValue({ user: { id: 'learner', email: 'learner@example.com' } });
 
-    const { result } = renderHook(() => useAccountDeletion(), { wrapper });
+    const { result } = renderHook(() => useAccountDeletion());
 
     expect(result.current.userEmail).toBe('learner@example.com');
     expect(getCurrentUserEmail).not.toHaveBeenCalled();
@@ -71,7 +54,7 @@ describe('useAccountDeletion identity', () => {
     mockUseAuth.mockReturnValue({ user: { email: null } });
     getCurrentUserEmail.mockResolvedValue('fallback@example.com');
 
-    const { result } = renderHook(() => useAccountDeletion(), { wrapper });
+    const { result } = renderHook(() => useAccountDeletion());
 
     await waitFor(() => expect(result.current.userEmail).toBe('fallback@example.com'));
     expect(getCurrentUserEmail).toHaveBeenCalledTimes(1);
@@ -81,11 +64,11 @@ describe('useAccountDeletion identity', () => {
 describe('useAccountDeletion deleteAccount', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAuth.mockReturnValue({ user: { email: 'learner@example.com' } });
+    mockUseAuth.mockReturnValue({ user: { id: 'learner', email: 'learner@example.com' } });
   });
 
   const renderWithConfirmation = (text: string) => {
-    const hook = renderHook(() => useAccountDeletion(), { wrapper });
+    const hook = renderHook(() => useAccountDeletion());
     act(() => {
       hook.result.current.setConfirmationText(text);
     });
@@ -103,7 +86,7 @@ describe('useAccountDeletion deleteAccount', () => {
     expect(result.current.confirmationError).toBe(STRINGS.DELETE_ACCOUNT_CONFIRMATION_MISMATCH);
   });
 
-  it('on success confirms, then navigates to auth itself', async () => {
+  it('on success confirms and returns to the public reader', async () => {
     deleteAccountService.mockResolvedValue(undefined);
     const { result } = renderWithConfirmation(STRINGS.DELETE_ACCOUNT_CONFIRMATION_WORD);
 
@@ -111,11 +94,10 @@ describe('useAccountDeletion deleteAccount', () => {
       await result.current.deleteAccount();
     });
 
+    expect(deleteAccountService).toHaveBeenCalledWith('learner');
     expect(successFeedback).toHaveBeenCalledTimes(1);
     expect(showSuccessToast).toHaveBeenCalledWith(STRINGS.DELETE_ACCOUNT_SUCCESS);
-    expect(router.replace).toHaveBeenCalledWith('/auth');
-    // The deleted account's anonymous analytics id is not carried into the next session.
-    expect(analytics.reset).toHaveBeenCalledTimes(1);
+    expect(router.replace).toHaveBeenCalledWith('/first-page');
   });
 
   it('confirms the deletion even when the screen is already gone', async () => {
@@ -163,5 +145,6 @@ describe('useAccountDeletion deleteAccount', () => {
     expect(result.current.confirmationText).toBe(STRINGS.DELETE_ACCOUNT_CONFIRMATION_WORD);
     expect(router.replace).not.toHaveBeenCalled();
     expect(router.back).not.toHaveBeenCalled();
+    expect(showSuccessToast).not.toHaveBeenCalled();
   });
 });

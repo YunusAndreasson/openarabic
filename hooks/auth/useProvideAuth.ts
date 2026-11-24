@@ -1,7 +1,10 @@
+import type * as Lifecycle from '@/services/accountLifecycle';
+import { widgetBridge } from '@/services/widgets/native';
+import { markReturningInstall } from '@/store/firstPageSlice';
+import { restoreWidgetSession } from '@/services/widgets/publish';
 import * as Sentry from '@sentry/react-native';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useEffectEvent, useState, useMemo, useCallback } from 'react';
 
-import { simpleAudioService } from '@/services/audioPlayer';
 import { supabase, setupSupabaseAppStateListener } from '@/services/supabase';
 import { useAppDispatch } from '@/store/hooks';
 import { accountSwitched } from '@/store/accountActions';
@@ -11,6 +14,11 @@ import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 
 // UserSession and AuthResult types are defined in '@/types/auth.types'
 
+function acceptSession(owner: string, signedIn = false) {
+  const { accountTeardown } = require('@/services/accountLifecycle') as typeof Lifecycle;
+  return accountTeardown.acceptSession(owner, signedIn);
+}
+
 export function useProvideAuth(): AuthResult {
   const [session, setSession] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,6 +26,13 @@ export function useProvideAuth(): AuthResult {
   // app — which is what keeps `claimDevice`, `initAuth` and the auth
   // subscription below from being torn down and re-created.
   const dispatch = useAppDispatch();
+  const expireAccount = useEffectEvent(() => {
+    const owner = session?.user?.id;
+    if (owner) {
+      const { accountTeardown } = require('@/services/accountLifecycle') as typeof Lifecycle;
+      void accountTeardown.begin(owner, 'expired').catch(() => undefined);
+    }
+  });
 
   // Called whenever a session is established, and AWAITED before that session
   // is published. A no-op unless a different account last used this device —
@@ -58,8 +73,13 @@ export function useProvideAuth(): AuthResult {
           setSession(null);
         } else if (data.session) {
           authBreadcrumb('Successfully initialized with valid session');
-          await claimDevice(data.session.user.id);
-          if (isCurrent()) setSession(data.session);
+          if (await acceptSession(data.session.user.id)) {
+            await claimDevice(data.session.user.id);
+            if (!isCurrent()) return;
+            restoreWidgetSession(data.session.user.id);
+            widgetBridge?.openPublications(data.session.user.id);
+            setSession(data.session);
+          }
         } else {
           authBreadcrumb('Initialized but no valid session found');
           setSession(null);
@@ -114,20 +134,20 @@ export function useProvideAuth(): AuthResult {
       // A session-less refresh/update has nothing to publish. Leave the
       // pending startup read or account claim in charge of loading state.
       if (event !== 'SIGNED_OUT' && !newSession) return;
+      if (event === 'SIGNED_OUT') {
+        expireAccount();
+      }
       const eventSeq = ++authEventSeq;
 
-      // Defer all operations (including Sentry) to avoid deadlock
+      // Defer auth, account cleanup and diagnostics outside the SDK lock.
       setTimeout(() => {
         // FIXED: Guard against race condition where component unmounts between setTimeout queue and execution
         if (!isMounted) return;
 
         authBreadcrumb(`Auth state change: ${event}`);
 
-        if (event === 'SIGNED_OUT') {
-          // Stop audio to prevent stale playback state
-          simpleAudioService.stop().catch(() => {
-            // Silent failure — audio may not be playing
-          });
+        if (event === 'SIGNED_OUT' && eventSeq === authEventSeq) {
+          dispatch(markReturningInstall());
           setSession(null);
           setIsLoading(false);
         } else if (newSession && authEventSeq === eventSeq) {
@@ -135,11 +155,29 @@ export function useProvideAuth(): AuthResult {
           // Publish only once the claim has settled, and only if no later
           // auth event overtook it while it ran — that one has already
           // published the state this would now be overwriting.
-          void claimDevice(newSession.user.id).then(() => {
-            if (!isMounted || authEventSeq !== eventSeq) return;
-            setSession(newSession);
-            setIsLoading(false);
-          });
+          const isCurrent = () => isMounted && authEventSeq === eventSeq;
+          void acceptSession(newSession.user.id, event === 'SIGNED_IN')
+            .then(async accepted => {
+              if (!isCurrent()) return;
+              if (!accepted) {
+                setSession(null);
+                setIsLoading(false);
+                return;
+              }
+              await claimDevice(newSession.user.id);
+              if (!isCurrent()) return;
+              widgetBridge?.openPublications(newSession.user.id);
+              restoreWidgetSession(newSession.user.id);
+              setSession(newSession);
+              setIsLoading(false);
+            })
+            .catch((error: unknown) => {
+              if (isMounted && authEventSeq === eventSeq) {
+                setSession(null);
+                setIsLoading(false);
+              }
+              void handleError(error, { showToast: false });
+            });
         }
       }, 0);
     });
@@ -149,7 +187,7 @@ export function useProvideAuth(): AuthResult {
       subscription.unsubscribe();
       removeSupabaseListener();
     };
-  }, [initAuth, claimDevice]);
+  }, [initAuth, claimDevice, dispatch]);
 
   // Memoize the returned object to ensure reference stability
   const authResult = useMemo(

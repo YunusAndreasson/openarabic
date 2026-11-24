@@ -47,6 +47,7 @@ export type FSRSModelName = 'FSRS-6' | 'FSRS-7';
  * Options for fetching FSRS words from the database
  */
 export interface GetFSRSWordsOptions {
+  rootId?: RootId;
   onlyDue?: boolean;
   forStats?: boolean;
   limit?: number;
@@ -59,6 +60,7 @@ export interface GetFSRSWordsOptions {
 }
 
 export interface UseFSRSOptions {
+  rootId?: RootId;
   userId: string | undefined;
   onComplete?: () => void;
   /**
@@ -123,4 +125,12 @@ export interface UseFSRSResult {
    * await this first or it can race a write still in flight.
    */
   flushPendingWrites: () => Promise<void>;
+}
+
+/** An optimistic drill successor has a prior schedule but no server-stamped UUID yet. */
+export interface GradePrecondition {
+  revision?: string | null;
+  created: string | null;
+  reps: number | null;
+  last: string | null;
 }

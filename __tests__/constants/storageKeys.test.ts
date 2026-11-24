@@ -104,8 +104,13 @@ describe('storageKeys', () => {
       // walking the scope table and went back to a hand-written list, a key
       // added to STORAGE_KEYS would fall out of this count.
       const deviceKeys = [
+        // Recovery still needs its journal after the account-key sweep.
+        STORAGE_KEYS.ACCOUNT_TEARDOWN,
+        STORAGE_KEYS.READER_SAVE,
         STORAGE_KEYS.AUDIO_CACHE_LEGACY_SWEEP,
         STORAGE_KEYS.LAST_SIGNED_IN_USER,
+        STORAGE_KEYS.REVIEW_REMINDER_JOURNEY,
+        STORAGE_KEYS.WIDGET_OFFERS,
         STORAGE_KEYS.ANALYTICS_INSTALL,
         STORAGE_KEYS.REDUX_PERSIST_ROOT,
       ];

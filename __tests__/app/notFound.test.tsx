@@ -6,6 +6,8 @@
 import { describe, expect, jest, test } from '@jest/globals';
 import { render } from '@testing-library/react-native';
 
+jest.mock('@/hooks/onboarding/useReaderSave', () => ({ usePendingReaderSave: () => null }));
+
 jest.mock('expo-router', () => ({
   Redirect: jest.fn(() => null),
 }));
@@ -31,9 +33,9 @@ describe('NotFoundScreen', () => {
     expect(redirectTarget()).toBe(ROUTE_PATHS.EXPLORE_TAB);
   });
 
-  test('sends a signed-out visitor to sign in', () => {
+  test('sends a fresh signed-out visitor to the bundled passage', () => {
     jest.mocked(useAuth).mockReturnValue({ session: null } as ReturnType<typeof useAuth>);
     render(<NotFoundScreen />);
-    expect(redirectTarget()).toBe(ROUTE_PATHS.AUTH);
+    expect(redirectTarget()).toBe(ROUTE_PATHS.FIRST_PAGE);
   });
 });
