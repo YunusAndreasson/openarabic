@@ -56,6 +56,7 @@ export const bookmarkService = {
     userId: string,
     articleIds: readonly ArticleId[],
     request: RequestOptions = {},
+    ignoreDuplicates = false,
   ): Promise<void> {
     if (articleIds.length === 0) return;
 
@@ -64,7 +65,7 @@ export const bookmarkService = {
       () =>
         supabase.from('reading_list').upsert(
           articleIds.map(articleId => ({ user_id: userId, article_id: articleId })),
-          { onConflict: READING_LIST_CONFLICT_KEY },
+          { onConflict: READING_LIST_CONFLICT_KEY, ...(ignoreDuplicates && { ignoreDuplicates }) },
         ),
       {
         ...errorConfig.readingList.add,

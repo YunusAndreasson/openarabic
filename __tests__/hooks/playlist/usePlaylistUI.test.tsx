@@ -14,6 +14,8 @@ jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
 
+jest.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ user: { id: 'reader' } }) }));
+
 jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
 }));

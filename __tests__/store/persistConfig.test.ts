@@ -198,7 +198,6 @@ describe('migration 2', () => {
 test('a signed-out pre-reader store rehydrates as returning', async () => {
   const state = await rehydrate({ settings: {}, _persist: { version: 2, rehydrated: true } });
   expect(state.firstPage.returningInstall).toBe(true);
-  expect(state.firstPage.browsed).toBe(false);
   expect(state.firstPage.shown).toBe(false);
 });
 

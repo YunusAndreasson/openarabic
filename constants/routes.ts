@@ -68,7 +68,7 @@ type SheetDetents = NonNullable<NativeStackNavigationOptions['sheetAllowedDetent
  * See `createSheetOptions` for what `'fitToContents'` requires of a screen.
  */
 export const SHEET_ROUTES = {
-  'sleep-timer': [0.4],
+  'sleep-timer': [0.5, 1],
   // These four fit their contents: fixed-height charts, or a handful of rows,
   // under a short header — no scrolling.
   'due-words': 'fitToContents',

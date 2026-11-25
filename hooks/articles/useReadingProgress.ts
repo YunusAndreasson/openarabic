@@ -6,6 +6,9 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import type { ReadingProgress } from '@/services/readingProgress';
 import type { ArticleId } from '@/types/branded.types';
 import { readingProgressMutation } from '@/utils/mutationDefaults';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { guestProgressAdvanced } from '@/store/guestLibrarySlice';
+import { guestProgressRow, pendingGuestProgress } from '@/utils/guestLibrary';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 
 interface UseReadingProgressOptions {
@@ -23,6 +26,7 @@ export function useReadingProgress({
 }: UseReadingProgressOptions) {
   const { user } = useAuth();
   const userId = user?.id;
+  const dispatch = useAppDispatch();
 
   const lastSavedSentenceRef = useRef<number>(0);
   const latestSentenceRef = useRef<number>(0);
@@ -45,9 +49,9 @@ export function useReadingProgress({
 
   // Extract progress for this specific article from the bulk cache
   const rawProgress = useMemo(() => {
-    if (!progressMap || !userId || articleId <= 0) return null;
+    if (articleId <= 0) return null;
     return progressMap.get(articleId) || null;
-  }, [progressMap, userId, articleId]);
+  }, [progressMap, articleId]);
 
   // Sanitize progress data to ensure it's valid for current article
   const progress = useMemo(() => {
@@ -126,7 +130,7 @@ export function useReadingProgress({
   // Only save forward progress (never regress)
   const updateProgress = useCallback(
     (sentenceIndex: number) => {
-      if (!isActive || !userId || articleId <= 0 || totalSentences <= 0) {
+      if (!isActive || articleId <= 0 || totalSentences <= 0) {
         return;
       }
 
@@ -141,6 +145,20 @@ export function useReadingProgress({
       );
 
       if (validSentenceIndex > lastRecorded) {
+        if (!userId) {
+          lastSavedSentenceRef.current = validSentenceIndex;
+          dispatch(
+            guestProgressAdvanced(
+              guestProgressRow(
+                articleId,
+                validSentenceIndex,
+                totalSentences,
+                new Date().toISOString(),
+              ),
+            ),
+          );
+          return;
+        }
         // Reserve synchronously before starting the request. Failed requests
         // leave this set in onSettled and can then be retried; successful ones
         // advance lastSavedSentenceRef in onSuccess.
@@ -153,14 +171,14 @@ export function useReadingProgress({
         });
       }
     },
-    [isActive, userId, articleId, totalSentences, progress?.last_sentence_read, mutate],
+    [isActive, userId, articleId, totalSentences, progress?.last_sentence_read, mutate, dispatch],
   );
 
   // Called directly by the list's viewability callback. Keeping the current
   // position in refs avoids a React render for every newly visible sentence.
   const scheduleProgressUpdate = useCallback(
     (sentenceIndex: number) => {
-      if (!isActive || !userId || sentenceIndex < 0) return;
+      if (!isActive || sentenceIndex < 0) return;
 
       latestSentenceRef.current = Math.max(latestSentenceRef.current, sentenceIndex);
       if (debounceTimeoutRef.current) {
@@ -171,7 +189,7 @@ export function useReadingProgress({
         updateProgress(latestSentenceRef.current);
       }, DEBOUNCE_DELAY);
     },
-    [isActive, updateProgress, userId],
+    [isActive, updateProgress],
   );
 
   // Update refs whenever values change
@@ -196,7 +214,12 @@ export function useReadingProgress({
 
       // Save final progress when hook unmounts using latest values from ref
       const data = unmountDataRef.current;
-      if (data.isActive && latestSentenceRef.current >= 0 && data.userId && data.articleId > 0) {
+      if (
+        data.isActive &&
+        latestSentenceRef.current >= 0 &&
+        data.articleId > 0 &&
+        data.totalSentences > 0
+      ) {
         const lastRecorded = Math.max(
           lastSavedSentenceRef.current,
           data.progressLastSentence,
@@ -210,6 +233,19 @@ export function useReadingProgress({
 
         // Never overwrite newer stored progress with an earlier position.
         if (validFinalSentenceIndex > lastRecorded) {
+          if (!data.userId) {
+            dispatch(
+              guestProgressAdvanced(
+                guestProgressRow(
+                  data.articleId,
+                  validFinalSentenceIndex,
+                  data.totalSentences,
+                  new Date().toISOString(),
+                ),
+              ),
+            );
+            return;
+          }
           mutate({
             userId: data.userId,
             articleId: data.articleId,
@@ -219,7 +255,7 @@ export function useReadingProgress({
         }
       }
     };
-  }, [articleId, userId, mutate]);
+  }, [articleId, userId, mutate, dispatch]);
 
   return {
     progress: progress
@@ -252,13 +288,21 @@ export function useBulkReadingProgress(articleIds: ArticleId[]) {
   // the one shared cache entry every component reads — the factory's own
   // options, which this used to restate field for field.
   const query = useQuery(gated(readingProgressQueries.bulk, user?.id));
+  const guestProgress = useAppSelector(state => state.guestLibrary.progress);
+  const receipt = useAppSelector(state =>
+    user ? state.guestLibrary.imported[user.id] : undefined,
+  );
 
   // Filter the full Map to only include requested articleIds for this component
   // This happens in the component, not in the query cache
   const filteredData = useMemo(() => {
-    const data = query.data;
+    const data = new Map(query.data);
+    for (const row of pendingGuestProgress(guestProgress, receipt)) {
+      const id = row.article_id as ArticleId;
+      if (row.last_sentence_read > (data.get(id)?.last_sentence_read ?? -1)) data.set(id, row);
+    }
     // Early return for missing data, empty articleIds, or non-Map data
-    if (!data || articleIds.length === 0 || !(data instanceof Map)) {
+    if (articleIds.length === 0) {
       return new Map<ArticleId, ReadingProgress>();
     }
     const filtered = new Map<ArticleId, ReadingProgress>();
@@ -269,10 +313,12 @@ export function useBulkReadingProgress(articleIds: ArticleId[]) {
       }
     });
     return filtered;
-  }, [query.data, articleIds]);
+  }, [query.data, articleIds, guestProgress, receipt]);
 
   return {
     ...query,
+    isLoading: !!user && query.isLoading,
+    isPlaceholderData: !!user && query.isPlaceholderData,
     // Always a Map: filteredData falls back to an empty Map, so consumers
     // never need null checks before the query resolves.
     data: filteredData,

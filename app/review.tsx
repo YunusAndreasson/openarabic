@@ -1063,9 +1063,10 @@ export default function ReviewScreen(): JSX.Element {
     Number.isSafeInteger(Number(rootId)) && Number(rootId) > 0
       ? (Number(rootId) as RootId)
       : undefined;
-  if (guidedRoot) return <FirstReviewScreen rootId={guidedRoot} />;
+  if (guidedRoot) return <FirstReviewScreen key={guidedRoot} rootId={guidedRoot} />;
   return (
     <PracticeReviewScreen
+      key={`${dueRoot ?? 'all'}:${fromRememberParam ?? ''}:${source ?? ''}`}
       widget={source === 'widget'}
       fromRemember={fromRememberParam === 'true'}
       dueRoot={

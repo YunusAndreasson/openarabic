@@ -1,7 +1,5 @@
 import { describe, expect, jest, test } from '@jest/globals';
-import { startReaderAttempt, openReaderHeaderAuth } from '@/services/readerSaveAuth';
-import { analytics } from '@/services/analytics';
-import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { startReaderAttempt } from '@/services/readerSaveAuth';
 jest.mock('@/services/analytics', () => ({ analytics: { track: jest.fn() } }));
 import type { RootId } from '@/types/branded.types';
 import {
@@ -146,24 +144,4 @@ test('provider cancellation and a late response cannot consume a subsequent Add'
   await oldBinding?.('other-owner');
   expect(readerSave.snapshot()).toEqual(next);
   await readerSave.change(next.id, () => null);
-});
-
-test('header sign-in has separate provider attribution and leaves no save intent', async () => {
-  const header = openReaderHeaderAuth();
-  const attempt = (await header.start('password'))!;
-  attempt.verifiedHeader?.('returning');
-  header.dismiss();
-  expect(analytics.track).toHaveBeenCalledWith(
-    ANALYTICS_EVENTS.AUTH_SESSION_VERIFIED,
-    expect.objectContaining({
-      provider: 'password',
-      placement: 'reader_header',
-      account_outcome: 'returning',
-    }),
-  );
-  expect(analytics.track).not.toHaveBeenCalledWith(
-    ANALYTICS_EVENTS.AUTH_SURFACE_DISMISSED,
-    expect.anything(),
-  );
-  expect(await readerSave.load()).toBeNull();
 });

@@ -7,6 +7,16 @@ import { readingProgressQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
 import { checkAuthentication } from '@/services/supabase';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useAppDispatch } from '@/store/hooks';
+import {
+  guestArticleRemoved,
+  guestArticlesAdded,
+  guestImportRecorded,
+} from '@/store/guestLibrarySlice';
+import { store } from '@/store/store';
+import type { Article } from '@/types/articles.types';
+import { guestBookmark } from '@/utils/guestLibrary';
 import type { ArticleId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import { handleError } from '@/utils/errorHandling';
@@ -20,6 +30,7 @@ interface ReadingListMutationsResult {
   handleToggleReadingList: (
     articleId: ArticleId | undefined,
     isInReadingList: boolean,
+    article?: Article,
   ) => Promise<boolean>;
 
   addToReadingListMutation: UseMutationResult<void, Error, ReadingListVariables>;
@@ -37,6 +48,8 @@ interface ReadingListMutationsResult {
  */
 export const useReadingListMutations = (): ReadingListMutationsResult => {
   const queryClient = useQueryClient();
+  const dispatch = useAppDispatch();
+  const { user } = useAuth();
   const { showToast } = useToast();
 
   /**
@@ -86,7 +99,19 @@ export const useReadingListMutations = (): ReadingListMutationsResult => {
 
   const removeFromReadingListMutation = useMutation({
     ...readingListRemoveMutation,
-    onSuccess: (_data, { userId, articleId }) => onMutationSuccess(false, userId, articleId),
+    onSuccess: (_data, { userId, articleId }) => {
+      const guest = store
+        .getState()
+        .guestLibrary.bookmarks.find(item => item.article_id === articleId);
+      if (guest)
+        dispatch(
+          guestImportRecorded({
+            owner: userId,
+            receipt: { bookmarks: { [articleId]: guest.added_at }, progress: {} },
+          }),
+        );
+      return onMutationSuccess(false, userId, articleId);
+    },
     onError: (error: Error) => {
       // Silently handle errors - no toast notifications for bookmarks actions
       void handleError(error, { showToast: false, captureSentry: false });
@@ -95,13 +120,20 @@ export const useReadingListMutations = (): ReadingListMutationsResult => {
 
   // Handle toggling reading list with session refresh
   const handleToggleReadingList = useCallback(
-    async (articleId: ArticleId | undefined, isInReadingList: boolean) => {
+    async (articleId: ArticleId | undefined, isInReadingList: boolean, article?: Article) => {
       if (!articleId) return false;
+      if (!user) {
+        if (isInReadingList) dispatch(guestArticleRemoved(articleId));
+        else if (article)
+          dispatch(guestArticlesAdded([guestBookmark(article, new Date().toISOString())]));
+        else return false;
+        return true;
+      }
 
       let userId: string;
       try {
-        const { user } = await checkAuthentication();
-        userId = user.id;
+        const verified = await checkAuthentication(user.id);
+        userId = verified.user.id;
       } catch {
         // No redirect: the Stack.Protected guards own auth navigation. While the
         // app still holds a session they bounce `/auth` to Explore, which dropped
@@ -127,7 +159,7 @@ export const useReadingListMutations = (): ReadingListMutationsResult => {
         return false;
       }
     },
-    [addToReadingListMutation, removeFromReadingListMutation, showToast],
+    [addToReadingListMutation, removeFromReadingListMutation, showToast, dispatch, user],
   );
 
   return {

@@ -91,11 +91,6 @@
       "count": 1
     }
   },
-  "hooks/articles/useReadingProgress.ts": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 1
-    }
-  },
   "hooks/audio/useSleepTimer.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1

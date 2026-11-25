@@ -49,7 +49,7 @@ describe('useArticleData', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    ({ wrapper, queryClient } = createHookTestWrapper());
+    ({ wrapper, queryClient } = createHookTestWrapper({ withRedux: true }));
   });
 
   afterEach(() => {
@@ -309,11 +309,11 @@ describe('useArticleData', () => {
     expect(result.current.isArticleMissing).toBe(false);
   });
 
-  test('an uncached offline link can be retried without declaring the article missing', () => {
+  test('an uncached offline link can be retried without declaring the article missing', async () => {
     onlineManager.setOnline(false);
     try {
       const { result } = renderHook(() => useArticleData(articleId(2), undefined), { wrapper });
-      expect(result.current.isArticleError).toBe(true);
+      await waitFor(() => expect(result.current.isArticleError).toBe(true));
       expect(result.current.isArticleMissing).toBe(false);
       expect(mockArticlesService.getArticleById).not.toHaveBeenCalled();
     } finally {

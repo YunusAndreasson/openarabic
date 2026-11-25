@@ -169,7 +169,6 @@ export function useAuthForm(
           return;
         }
 
-        attempt?.verifiedHeader?.('returning');
         await trackReaderAccount(EMAIL_METHOD, false, attempt);
         successFeedback();
         if (!returnToReader) router.replace(ROUTE_PATHS.EXPLORE_TAB);
@@ -200,12 +199,15 @@ export function useAuthForm(
 
     await runAuthRequest(
       async () => {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
+        const attempt = await startAttempt?.('password');
+        if (startAttempt && !attempt) return;
+        const request = () => supabase.auth.signUp({ email, password });
+        const { data, error } = await (attempt
+          ? attempt.exchange({ email, password }, request)
+          : request());
         if (error) {
           void analytics.trackAuthFailed(EMAIL_METHOD, getAnalyticsErrorCode(error) ?? 'unknown');
+          attempt?.end('failed', 'password');
           // "User already registered" is expected user behavior, not a system error
           const isAlreadyRegistered = error.message.toLowerCase().includes('already registered');
           setPasswordError(error.message);
@@ -229,9 +231,11 @@ export function useAuthForm(
           showSuccessToast(STRINGS.SIGN_UP_WELCOME, 5000);
           // Navigate to library after brief delay to show toast
           // Store ref for cleanup on unmount to prevent navigation race conditions
-          navigationTimeoutRef.current = setTimeout(() => {
-            router.replace(ROUTE_PATHS.EXPLORE_TAB);
-          }, 1000);
+          if (!returnToReader) {
+            navigationTimeoutRef.current = setTimeout(() => {
+              router.replace(ROUTE_PATHS.EXPLORE_TAB);
+            }, 1000);
+          }
         } else {
           // Email confirmation required
           showSuccessToast(STRINGS.CHECK_EMAIL_CONFIRMATION, 5000);
@@ -243,7 +247,7 @@ export function useAuthForm(
         // which addresses have accounts. Fire-and-forget: analytics never
         // blocks the UX.
         if (data.user?.identities?.length) {
-          analytics.trackSignUp(EMAIL_METHOD).catch(() => {
+          trackReaderAccount(EMAIL_METHOD, true, attempt).catch(() => {
             // Silent failure for analytics
           });
           metaEvents.logSignUp(EMAIL_METHOD);
@@ -258,7 +262,15 @@ export function useAuthForm(
         isAuthAttempt: true,
       },
     );
-  }, [email, password, validateEmail, validatePassword, runAuthRequest]);
+  }, [
+    email,
+    password,
+    validateEmail,
+    validatePassword,
+    runAuthRequest,
+    returnToReader,
+    startAttempt,
+  ]);
 
   const resetPassword = useCallback(async (): Promise<void> => {
     const isEmailValid = validateEmail(email);

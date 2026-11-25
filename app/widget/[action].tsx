@@ -12,11 +12,8 @@ import { analytics } from '@/services/analytics';
 import { filterDueWords } from '@/utils/newWordPacing';
 import { readSmartReminderPrefs } from '@/utils/smartReminderPrefs';
 import type { ArticleId, RootId } from '@/types/branded.types';
-import {
-  getArticleRoute,
-  getFirstPageWidgetRoute,
-  getWordDetailRoute,
-} from '@/utils/routeBuilders';
+import { getArticleRoute, getWordDetailRoute } from '@/utils/routeBuilders';
+import { getPublicWidgetArticleRoute } from '@/services/widgets/publicArticleRoute';
 import { parsePositiveIntParam } from '@/utils/routeParams';
 
 export default function WordWidgetLink() {
@@ -82,7 +79,9 @@ export default function WordWidgetLink() {
   }, [action, isLoading, privateRoute, owner, cache, v]);
   const destination =
     targeted || !privateRoute || resolved?.stale
-      ? ROUTE_PATHS.FIRST_PAGE
+      ? action === 'practice'
+        ? ROUTE_PATHS.PRACTICE_TAB
+        : ROUTE_PATHS.EXPLORE_TAB
       : resolved?.due
         ? ROUTE_PATHS.REVIEW
         : ROUTE_PATHS.PRACTICE_TAB;
@@ -103,7 +102,7 @@ export default function WordWidgetLink() {
             source: 'word',
           })
         : targeted && (!v || verified) && typeof p === 'string' && /^\d+\.\d+$/.test(p)
-          ? getFirstPageWidgetRoute(p, word)
+          ? getPublicWidgetArticleRoute(p, word)
           : undefined;
   useEffect(() => {
     if (ready && (targeted || action === 'read' || action === 'practice') && !logged.current) {

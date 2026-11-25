@@ -1,6 +1,8 @@
 import { beforeEach, expect, jest, test } from '@jest/globals';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
+import { articleId } from '@/__tests__/helpers/ids';
+import type { AddRefusal } from '@/hooks/articles/useStudyWordMutations';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { useReaderSaveCompletion, usePendingReaderSave } from '@/hooks/onboarding/useReaderSave';
 import { analytics } from '@/services/analytics';
@@ -37,6 +39,7 @@ jest.mock('@/hooks/articles/useStudyWordMutations', () => ({
 
 beforeEach(async () => {
   mockSessionMissing = false;
+  mockAdd.mockReset();
   const prior = await readerSave.load();
   if (prior) await readerSave.change(prior.id, () => null);
 });
@@ -98,4 +101,25 @@ test('a session-read outage keeps the owner-bound ready save on disk', async () 
   renderHook(() => useReaderSaveCompletion(save), { wrapper });
   await readerSave.load();
   expect(readerSave.snapshot()?.id).toBe(save.id);
+});
+
+test('a review backlog preserves its reason on the pending reader save', async () => {
+  const word = {
+    source: 'article' as const,
+    articleId: articleId(559),
+    sentenceId: 7106,
+    rootId: 9470 as RootId,
+    occurrenceId: 59284,
+    form: 'رَأَيْتُ',
+    gloss: 'I saw',
+  };
+  const refusal = { reason: 'due-backlog', message: '100 reviews waiting' } as const;
+  await readerSave.begin(word, 'sheet', 'verified-owner');
+  mockAdd.mockImplementation(async (_root, _intent, options) => {
+    (options as { onRefused: (failure: AddRefusal) => void }).onRefused(refusal);
+  });
+  const { wrapper } = createHookTestWrapper({ withRedux: true });
+  renderHook(() => useReaderSaveCompletion(usePendingReaderSave() as ReaderSave), { wrapper });
+  await waitFor(() => expect(readerSave.snapshot()).toMatchObject({ phase: 'failed', refusal }));
+  expect(mockAdd).toHaveBeenCalledTimes(1);
 });

@@ -2,10 +2,11 @@ import { combineReducers } from '@reduxjs/toolkit';
 
 import { accountSwitched } from '@/store/accountActions';
 
+import guestLibraryReducer from '@/store/guestLibrarySlice';
 import firstPageReducer from '@/store/firstPageSlice';
 import editModeReducer from '@/store/editModeSlice';
 import playlistReducer from '@/store/playlistSlice';
-import settingsReducer from '@/store/settingsSlice';
+import settingsReducer, { deviceSettings } from '@/store/settingsSlice';
 import themeReducer from '@/store/themeSlice';
 import voiceAliasesReducer from '@/store/voiceAliasesSlice';
 
@@ -22,6 +23,7 @@ import voiceAliasesReducer from '@/store/voiceAliasesSlice';
  */
 const sliceReducer = combineReducers({
   firstPage: firstPageReducer,
+  guestLibrary: guestLibraryReducer,
   theme: themeReducer,
   settings: settingsReducer,
   playlist: playlistReducer,
@@ -34,7 +36,12 @@ const sliceReducer = combineReducers({
 export const rootReducer: typeof sliceReducer = (state, action) =>
   sliceReducer(
     accountSwitched.match(action) && state
-      ? { theme: state.theme, firstPage: state.firstPage }
+      ? {
+          theme: state.theme,
+          firstPage: state.firstPage,
+          guestLibrary: state.guestLibrary,
+          settings: deviceSettings(state.settings),
+        }
       : state,
     action,
   );
@@ -44,6 +51,7 @@ export type RootStateShape = ReturnType<typeof rootReducer>;
 /** The slices redux-persist writes into `STORAGE_KEYS.REDUX_PERSIST_ROOT`. */
 export const PERSISTED_SLICES = [
   'firstPage',
+  'guestLibrary',
   'theme',
   'settings',
   'playlist',

@@ -9,6 +9,8 @@ jest.mock('@/store/store', () => ({
     dispatch: jest.fn(),
     getState: () => ({
       theme: { appearance: 'dark' },
+      guestLibrary: { order: [559] },
+      settings: { arabicFontSize: 31 },
       firstPage: { returningInstall: true },
       _persist: { version: 3 },
       voiceAliases: { private: 'word' },
@@ -26,4 +28,6 @@ test('cleanup explicitly replaces the mixed Redux blob even if redux-persist swa
   expect(persistor.flush).toHaveBeenCalled();
   expect(disk).not.toContain('private');
   expect(JSON.parse(JSON.parse(disk).theme)).toEqual({ appearance: 'dark' });
+  expect(JSON.parse(JSON.parse(disk).guestLibrary)).toEqual({ order: [559] });
+  expect(JSON.parse(JSON.parse(disk).settings)).toEqual({ arabicFontSize: 31 });
 });

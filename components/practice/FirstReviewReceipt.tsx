@@ -109,7 +109,7 @@ export function FirstReviewReceipt({
       router.dismissTo(
         word.source === 'article' && word.articleId
           ? getArticleRoute(word.articleId, { sentenceId: word.sentenceId })
-          : ROUTE_PATHS.FIRST_PAGE,
+          : ROUTE_PATHS.EXPLORE_TAB,
       );
     } catch {
       setError(true);

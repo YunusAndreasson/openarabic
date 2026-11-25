@@ -2,7 +2,8 @@ import { useQuery, type QueryObserverResult } from '@tanstack/react-query';
 import NetInfo from '@react-native-community/netinfo';
 import { useMemo } from 'react';
 
-import { articleQueries, fsrsQueries, gated, readingProgressQueries } from '@/constants/queries';
+import { articleQueries, fsrsQueries, gated } from '@/constants/queries';
+import { useReadingList } from '@/hooks/playlist/useReadingList';
 import { useColors } from '@/hooks/theme/useColors';
 import { ArticleNotFoundError, type Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
@@ -94,10 +95,8 @@ export const useArticleData = (
   // query of its own. That one went stale (it never refetched on mount) and
   // had to be patched by hand after every change; this one moves with the
   // list itself, wherever the article was saved or removed.
-  const { data: isInReadingList = false } = useQuery({
-    ...gated(readingProgressQueries.readingList, userId),
-    select: readingList => readingList.some(item => item.article_id === articleId),
-  });
+  const { data: readingList } = useReadingList(userId);
+  const isInReadingList = readingList.some(item => item.article_id === articleId);
 
   // Fetch study words with optimized caching
   // CRITICAL: Use same query as useSentenceSelectedRoots and useArticleWordInteractions for DRY consistency

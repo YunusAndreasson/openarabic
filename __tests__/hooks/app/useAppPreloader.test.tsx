@@ -112,7 +112,7 @@ describe('useAppPreloader splash gate', () => {
       status: 'error',
       fetchStatus: 'idle',
     });
-    expect(articlesService.getArticles).toHaveBeenCalledTimes(1);
+    expect(articlesService.getArticles).not.toHaveBeenCalled();
   });
 
   test('an online failure is not retried on the splash path either', async () => {

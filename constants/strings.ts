@@ -1,6 +1,17 @@
 // Helper functions for consistent messaging
 const tryAgain = 'Try again';
 export const STRINGS = {
+  PRACTICE_GATE_TITLE: 'Make new words stick',
+  PRACTICE_GATE_DESCRIPTION:
+    'Your free account keeps the words you want to remember and your review history.',
+  PRACTICE_GATE_SAVE: 'Build your word list',
+  PRACTICE_GATE_SAVE_DESC: 'Add words to Practice as you read.',
+  PRACTICE_GATE_REVIEW: 'Review at the right time',
+  PRACTICE_GATE_REVIEW_DESC: 'Practice brings words back when you’re likely to forget them.',
+  PRACTICE_GATE_WORD: 'Save this word to practice',
+  PRACTICE_GATE_BACKLOG: 'Clear some reviews first',
+  PRACTICE_GATE_OPEN: 'Open Practice',
+  GUEST_ACCOUNT_PROMPT: 'Create an account to save words and use Practice.',
   TRACK_THIS_WORD: 'Track this word',
   TRACK_WORD_BENEFIT:
     'A free account keeps your practice list and review history. We’ll bring this word back when it’s due.',
@@ -305,7 +316,7 @@ export const STRINGS = {
   RESET_TUTORIALS_MESSAGE: 'Tips will show again as you use the app.',
   RESET_TUTORIALS_FAILED: 'Failed to reset tutorials',
   // Tutorial copy
-  TUTORIAL_WORD_TAP_CTA: 'Tap the highlighted word to see its meaning — then add it to practice',
+  TUTORIAL_WORD_TAP_CTA: 'Tap the highlighted word to see its meaning.',
   // Review tutorial - Intro
   TUTORIAL_INTRO_TITLE: 'How it works',
   TUTORIAL_INTRO_DESCRIPTION: 'Tap a card to reveal the answer, then say how well you knew it.',
@@ -630,7 +641,8 @@ export const STRINGS = {
   DONT_HAVE_ACCOUNT: 'New to OpenArabic?',
   YOUR_EMAIL: 'Email',
   YOUR_PASSWORD: 'Password',
-  SIGN_OUT_CONFIRMATION: 'Sign out of your account?',
+  SIGN_OUT_CONFIRMATION:
+    'Sign out of your account? Your guest Playlist and reading position stay on this device.',
   ENTER_VALID_EMAIL: 'Enter a valid email',
   ENTER_PASSWORD: 'Enter your password',
   NO_INTERNET_CONNECTION: 'No internet connection. Check your connection and try again.',
@@ -701,7 +713,7 @@ export const STRINGS = {
     'When you create an account, we collect your email address. If you use Apple or Google Sign In, we receive basic profile information from those services.',
   PRIVACY_COLLECTION_LEARNING: 'Learning Data',
   PRIVACY_COLLECTION_LEARNING_DESC:
-    'You can read public texts without an account. Your place in the bundled passage stays on this device. If you choose Add to practice, this device remembers the selected word and any email address awaiting a sign-in code so you can finish or cancel the save. With an account, we store your reading progress, vocabulary lists, practice session history, review performance, and app preferences (theme, audio settings, notifications).',
+    'You can read and listen without an account. Your Playlist, reading progress and reading and listening preferences are stored on this device. If you sign in, we copy your guest Playlist and reading progress to your account. The guest originals stay on this device when you sign out. If you choose Add to practice, the device remembers the selected word while you sign in. With an account, we also store your vocabulary list and practice history.',
   PRIVACY_COLLECTION_ANALYTICS: 'Usage Analytics',
   PRIVACY_COLLECTION_ANALYTICS_DESC:
     'We use Mixpanel to record how the app is used: which screens are opened, actions such as reading articles, studying words and practice sessions, and errors. These events are linked to a random identifier created on your device, not to your account, and do not include your name, email address or account ID. A new identifier is created when you sign out or delete your account. Each event also carries a random installation ID that stays the same until you uninstall the app, and on Android we record which link or ad the Play Store says brought you to the app.',

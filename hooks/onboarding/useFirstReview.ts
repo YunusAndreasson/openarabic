@@ -94,7 +94,7 @@ export function useFirstReview(owner: string, root: RootId) {
     router.dismissTo(
       word?.source === 'article' && word.articleId
         ? getArticleRoute(word.articleId, { sentenceId: word.sentenceId })
-        : ROUTE_PATHS.FIRST_PAGE,
+        : ROUTE_PATHS.EXPLORE_TAB,
     );
   }
   useAndroidBackHandler(true, exit);

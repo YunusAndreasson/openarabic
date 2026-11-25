@@ -17,7 +17,7 @@ export function WidgetSettingsEntry({ guest = false }: { guest?: boolean }) {
   if (!show) return null;
   return (
     <ThemedButton
-      title={guest ? STRINGS.SETTINGS : placed ? STRINGS.WIDGET_PLACED : STRINGS.HOME_WIDGET}
+      title={placed ? STRINGS.WIDGET_PLACED : STRINGS.HOME_WIDGET}
       variant="outlined"
       onPress={() => (guest ? router.push(ROUTE_PATHS.WIDGET_SETTINGS) : openWidgetGuide(surface))}
     />

@@ -134,15 +134,21 @@ const ArticleSentenceInternal = function ArticleSentence({
 
       {sentence.english && <ThemedText style={englishTextStyle}>{sentence.english}</ThemedText>}
 
-      <SkiaSentenceWords
-        words={words}
-        onWordPress={onWordPress}
-        onWordLongPress={onWordLongPress}
-        highlightFirstWord={showTutorialCard}
-        activeWordIdSV={activeWordIdSV}
-        highlightRootId={highlightRootId}
-        selectedRootIds={selectedRootIds}
-      />
+      {words.length ? (
+        <SkiaSentenceWords
+          words={words}
+          onWordPress={onWordPress}
+          onWordLongPress={onWordLongPress}
+          highlightFirstWord={showTutorialCard}
+          activeWordIdSV={activeWordIdSV}
+          highlightRootId={highlightRootId}
+          selectedRootIds={selectedRootIds}
+        />
+      ) : (
+        <ThemedText type="arabic" style={styles.plainArabic}>
+          {sentence.arabic}
+        </ThemedText>
+      )}
     </View>
   );
 };
@@ -156,6 +162,7 @@ const styles = StyleSheet.create({
     marginVertical: 0,
     overflow: 'visible',
   },
+  plainArabic: { paddingHorizontal: LAYOUT.SPACING.MEDIUM },
   englishText: {
     fontFamily: FONTS.ENGLISH,
     paddingTop: LAYOUT.SPACING.XXLARGE, // More separation from previous Arabic sentence

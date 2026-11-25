@@ -258,7 +258,7 @@ describe('useAccountScreen', () => {
     expect(mockStopAudio).toHaveBeenCalledTimes(1);
     expect(mockSignOut).toHaveBeenCalledTimes(1);
     expect(mockAnalyticsReset).toHaveBeenCalledTimes(1);
-    expect(mockRouterReplace).toHaveBeenCalledWith('/auth');
+    expect(mockRouterReplace).not.toHaveBeenCalled();
     // Sign Out counts a sign-out that happened, on the id it belongs to: after
     // the sign-out, before reset() makes a new one.
     const [signOutOrder] = mockSignOut.mock.invocationCallOrder;

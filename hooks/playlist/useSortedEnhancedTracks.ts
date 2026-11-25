@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { audioQueries, gated, readingProgressQueries } from '@/constants/queries';
+import { audioQueries, gated } from '@/constants/queries';
+import { useReadingList } from '@/hooks/playlist/useReadingList';
+import { mergePlaylist } from '@/utils/guestLibrary';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAppSelector } from '@/store/hooks';
 import { selectAudioLanguage } from '@/store/settingsSlice';
@@ -22,8 +24,13 @@ export function useSortedEnhancedTracks() {
   const customOrder = useAppSelector(state => state.playlist.customOrder);
   const audioPreference = useAppSelector(selectAudioLanguage);
 
-  const readingListQuery = useQuery(gated(readingProgressQueries.readingList, user?.id));
-  const { data: readingList = [] } = readingListQuery;
+  const {
+    query: readingListQuery,
+    data: readingList,
+    pending,
+    guestOrder,
+  } = useReadingList(user?.id);
+  const resolvedOrder = user && customOrder.length > 0 ? customOrder : guestOrder;
 
   const sortedReadingList = useMemo(() => {
     if (!readingList.length) return [];
@@ -37,17 +44,22 @@ export function useSortedEnhancedTracks() {
     });
 
     // Sort by custom order with date fallback
-    return sortByCustomOrder(
+    const sorted = sortByCustomOrder(
       deduped,
-      customOrder,
+      resolvedOrder,
       item => item.article_id,
       (a, b) => sortByDateDesc(a.added_at, b.added_at),
     );
-  }, [readingList, customOrder]);
+    return user && pending.length ? mergePlaylist(pending, guestOrder, sorted) : sorted;
+  }, [readingList, resolvedOrder, pending, guestOrder, user]);
 
-  const enhancedTracksQuery = useQuery(
+  const accountTracks = useQuery(
     gated(userId => audioQueries.tracks(userId, audioPreference), user?.id),
   );
+  const guestTracks = useQuery(
+    audioQueries.playlist(sortedReadingList, audioPreference, !user || pending.length > 0),
+  );
+  const enhancedTracksQuery = user && pending.length === 0 ? accountTracks : guestTracks;
   const { data: enhancedTracks = [] } = enhancedTracksQuery;
 
   const sortedEnhancedTracks = useMemo(() => {

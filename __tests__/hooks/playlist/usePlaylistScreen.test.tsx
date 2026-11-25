@@ -146,6 +146,7 @@ jest.mock('@/constants/queries', () => ({
     },
   },
   audioQueries: {
+    playlist: () => ({ queryKey: ['guest-playlist'], enabled: false }),
     tracks: (userId: string, preference: AudioLanguage) => ({
       queryKey: ['enhancedAudioTracks', userId, preference],
       queryFn: async () => [],

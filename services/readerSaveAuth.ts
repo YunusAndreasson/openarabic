@@ -19,12 +19,11 @@ export type StartReaderAuth = (provider: SaveProvider) => Promise<ReaderAuthAtte
 export interface ReaderAuthAttempt {
   id: string;
   properties: Record<string, string | undefined>;
-  verifiedHeader?: (outcome: 'returning' | 'unknown') => void;
   exchange<T>(fields: ExchangeFields, fn: () => Promise<T>): Promise<T>;
   end(outcome: 'cancelled' | 'failed', stage: string): void;
 }
 
-export function resumeReaderAttempt(save: ReaderSave): ReaderAuthAttempt | undefined {
+function resumeReaderAttempt(save: ReaderSave): ReaderAuthAttempt | undefined {
   const attemptId = save.attempt?.id;
   if (!attemptId) return;
   return {
@@ -78,50 +77,6 @@ export async function startReaderAttempt(sheetId: string, provider: SaveProvider
   if (save?.attempt?.id !== id) return;
   void analytics.track(ANALYTICS_EVENTS.AUTH_METHOD_ATTEMPTED, saveProperties(save));
   return resumeReaderAttempt(save);
-}
-
-/** Voluntary sign-in has its own attribution and cannot claim a reader save. */
-export function openReaderHeaderAuth() {
-  const surface = { placement: 'reader_header', platform: Platform.OS, sheet_id: randomUUID() };
-  void analytics.track(ANALYTICS_EVENTS.AUTH_SURFACE_VIEWED, surface);
-  let current: ReaderAuthAttempt | undefined;
-  let closed = false;
-  const start: StartReaderAuth = async provider => {
-    if (closed) return undefined;
-    const id = randomUUID();
-    const properties = { ...surface, attempt_id: id, provider };
-    void analytics.track(ANALYTICS_EVENTS.AUTH_METHOD_ATTEMPTED, properties);
-    current = {
-      id,
-      properties,
-      exchange: (_fields, run) => run(),
-      end(outcome, stage) {
-        void analytics.track(
-          outcome === 'cancelled'
-            ? ANALYTICS_EVENTS.AUTH_ATTEMPT_CANCELLED
-            : ANALYTICS_EVENTS.AUTH_ATTEMPT_FAILED,
-          { ...properties, stage },
-        );
-      },
-      verifiedHeader(account_outcome) {
-        if (closed || current?.id !== id) return;
-        closed = true;
-        void analytics.track(ANALYTICS_EVENTS.AUTH_SESSION_VERIFIED, {
-          ...properties,
-          account_outcome,
-        });
-      },
-    };
-    return current;
-  };
-  return {
-    start,
-    dismiss() {
-      if (closed) return;
-      closed = true;
-      void analytics.track(ANALYTICS_EVENTS.AUTH_SURFACE_DISMISSED, current?.properties ?? surface);
-    },
-  };
 }
 
 export function trackReaderAccount(method: string, created: boolean, attempt?: ReaderAuthAttempt) {

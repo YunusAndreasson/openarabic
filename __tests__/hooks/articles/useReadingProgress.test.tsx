@@ -41,7 +41,7 @@ describe('useReadingProgress', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
-    ({ wrapper, queryClient } = createHookTestWrapper());
+    ({ wrapper, queryClient } = createHookTestWrapper({ withRedux: true }));
 
     // Setup auth mock to return test user
     mockUseAuth.useAuth = jest.fn((..._args: unknown[]) => ({

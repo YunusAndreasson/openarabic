@@ -2,12 +2,14 @@ import { Stack } from 'expo-router';
 import { useCallback } from 'react';
 
 import { STRINGS } from '@/constants/strings';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { AppTab } from '@/types/enums';
 import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
 
 export default function AccountLayout() {
   const colors = useColors();
+  const { user } = useAuth();
 
   // Account is a tab root now, not a modal pushed from Explore's header. Two
   // things follow from that, and both are why this layout no longer renders a
@@ -30,10 +32,12 @@ export default function AccountLayout() {
     <Stack>
       <Stack.Screen name="index" options={createTabHeaderOptions({ title: AppTab.ACCOUNT })} />
       <Stack.Screen name="FontSelector" options={screenOptions(STRINGS.ARABIC_FONT)} />
-      <Stack.Screen name="DeleteAccount" options={screenOptions(STRINGS.DELETE_ACCOUNT)} />
       <Stack.Screen name="help" options={screenOptions(STRINGS.HELP_CENTER)} />
       <Stack.Screen name="feedback" options={screenOptions(STRINGS.CONTACT_SUPPORT)} />
-      <Stack.Screen name="advanced" options={screenOptions(STRINGS.ADVANCED_VOICE_GRADING)} />
+      <Stack.Protected guard={!!user}>
+        <Stack.Screen name="DeleteAccount" options={screenOptions(STRINGS.DELETE_ACCOUNT)} />
+        <Stack.Screen name="advanced" options={screenOptions(STRINGS.ADVANCED_VOICE_GRADING)} />
+      </Stack.Protected>
       <Stack.Screen name="terms" options={screenOptions(STRINGS.TERMS_OF_SERVICE)} />
       <Stack.Screen name="privacy" options={screenOptions(STRINGS.PRIVACY_POLICY)} />
       <Stack.Screen name="legal" options={screenOptions(STRINGS.LEGAL_ATTRIBUTIONS)} />
