@@ -2580,12 +2580,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kesha-antonov/react-native-background-downloader@npm:^4.8.0":
+"@kesha-antonov/react-native-background-downloader@npm:4.8.0":
   version: 4.8.0
   resolution: "@kesha-antonov/react-native-background-downloader@npm:4.8.0"
   peerDependencies:
     react-native: ">=0.57.0"
   checksum: 10c0/c50f1aff748476c49f8d6f5870a23a82e2a8dc6cd5e35bf969f31de01e7a30fce281a6dcd44659f4d90e98d8550f81d85a211410b41c62b1cd7d32ccd1331312
+  languageName: node
+  linkType: hard
+
+"@kesha-antonov/react-native-background-downloader@patch:@kesha-antonov/react-native-background-downloader@npm%3A4.8.0#~/.yarn/patches/@kesha-antonov-react-native-background-downloader-npm-4.8.0-e9f898482f.patch":
+  version: 4.8.0
+  resolution: "@kesha-antonov/react-native-background-downloader@patch:@kesha-antonov/react-native-background-downloader@npm%3A4.8.0#~/.yarn/patches/@kesha-antonov-react-native-background-downloader-npm-4.8.0-e9f898482f.patch::version=4.8.0&hash=dd4db6"
+  peerDependencies:
+    react-native: ">=0.57.0"
+  checksum: 10c0/48c1913f67020a5400058e8e8035eb89442274c2c291e0b187fc7f880eaa8f5c25b46baa7a8b6744af8fb025c952712429d44ab7eb55635e33563701abfafef7
   languageName: node
   linkType: hard
 
@@ -5040,7 +5049,7 @@ __metadata:
     "@gorhom/bottom-sheet": "npm:^5.2.14"
     "@invertase/react-native-apple-authentication": "npm:^2.5.1"
     "@jest/globals": "npm:30.5.2"
-    "@kesha-antonov/react-native-background-downloader": "npm:^4.8.0"
+    "@kesha-antonov/react-native-background-downloader": "patch:@kesha-antonov/react-native-background-downloader@npm%3A4.8.0#~/.yarn/patches/@kesha-antonov-react-native-background-downloader-npm-4.8.0-e9f898482f.patch"
     "@react-native-async-storage/async-storage": "npm:2.2.0"
     "@react-native-community/netinfo": "npm:12.0.1"
     "@react-native-community/slider": "npm:5.2.1"
@@ -5089,7 +5098,7 @@ __metadata:
     expo-keep-awake: "npm:~58.0.4"
     expo-linking: "npm:~58.0.17"
     expo-navigation-bar: "npm:~58.0.4"
-    expo-notifications: "npm:~58.1.9"
+    expo-notifications: "patch:expo-notifications@npm%3A58.1.9#~/.yarn/patches/expo-notifications-npm-58.1.9-51c073033c.patch"
     expo-router: "npm:~58.0.32"
     expo-splash-screen: "npm:~58.0.14"
     expo-status-bar: "npm:~58.0.5"
@@ -7778,7 +7787,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-notifications@npm:~58.1.9":
+"expo-notifications@npm:58.1.9":
   version: 58.1.9
   resolution: "expo-notifications@npm:58.1.9"
   dependencies:
@@ -7792,6 +7801,23 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10c0/c87ccdf6e7e5dd19b845e5e27d3580217a49fd11b33d1554fcb69d68b583b7ff339077823cc9c330c21b8724fda81c7a7c07fe1e0c87c8409a2e6beb552c500e
+  languageName: node
+  linkType: hard
+
+"expo-notifications@patch:expo-notifications@npm%3A58.1.9#~/.yarn/patches/expo-notifications-npm-58.1.9-51c073033c.patch":
+  version: 58.1.9
+  resolution: "expo-notifications@patch:expo-notifications@npm%3A58.1.9#~/.yarn/patches/expo-notifications-npm-58.1.9-51c073033c.patch::version=58.1.9&hash=a87e22"
+  dependencies:
+    "@expo/image-utils": "npm:^0.12.7"
+    abort-controller: "npm:^3.0.0"
+    badgin: "npm:^1.1.5"
+    expo-application: "npm:~58.1.2"
+    expo-constants: "npm:~58.0.16"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/1737a9219f703940762097f8b63cb6642efa1b1218087a403f2000acb3ed198ea474017ec7eb30f73a627f17dd508e7c369058e5c4bfd53da2cbd866be86a5a7
   languageName: node
   linkType: hard
 
@@ -12259,14 +12285,14 @@ __metadata:
 
 "react-native-draggable-flatlist@patch:react-native-draggable-flatlist@npm%3A4.0.3#~/.yarn/patches/react-native-draggable-flatlist-npm-4.0.3-4f5f75341e.patch":
   version: 4.0.3
-  resolution: "react-native-draggable-flatlist@patch:react-native-draggable-flatlist@npm%3A4.0.3#~/.yarn/patches/react-native-draggable-flatlist-npm-4.0.3-4f5f75341e.patch::version=4.0.3&hash=263e99"
+  resolution: "react-native-draggable-flatlist@patch:react-native-draggable-flatlist@npm%3A4.0.3#~/.yarn/patches/react-native-draggable-flatlist-npm-4.0.3-4f5f75341e.patch::version=4.0.3&hash=f20574"
   dependencies:
     "@babel/preset-typescript": "npm:^7.17.12"
   peerDependencies:
     react-native: ">=0.64.0"
     react-native-gesture-handler: ">=2.0.0"
     react-native-reanimated: ">=2.8.0"
-  checksum: 10c0/6ba106a1847c2a0fc6866fdb04a4798e34198ee3b40a2ade703bda8bb0a61d94fe719f5e0e65d4021aa2a88a416153cec0e3aae73631c92ee9fdf0d7d95d046d
+  checksum: 10c0/d925e618292eacb86e1ed033606a8a846534489f3e3818a77e48439eb95e2b78539333e4429b5920e84bd827f42307f833f515f5ca2db7e3eb25fb4057c408b2
   languageName: node
   linkType: hard
 

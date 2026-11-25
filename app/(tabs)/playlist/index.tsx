@@ -1,17 +1,16 @@
 import { ListSeparator } from '@/components/common';
 import { ScreenStateHandler } from '@/components/common/ScreenStateHandler';
 import { useFocusEffect } from 'expo-router';
-import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import Animated, { FadeOut } from 'react-native-reanimated';
 
 import { SavedEmptyState, PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
-import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
@@ -29,19 +28,6 @@ const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
 });
 
-// Use responsive height calculation instead of hardcoded value
-const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.AUDIO_ITEM;
-
-// FlashList recycles row views. Reanimated entering layout animations can be
-// interrupted while a recycled view is being rebound, leaving the native view
-// at an in-between opacity. A CSS keyframe returns to the explicit base opacity
-// after the animation, so every row deterministically settles fully visible.
-const ROW_FADE_IN_STYLE = {
-  ...fadeInStyle(TIMING_CONFIG.MEDIUM.duration, 'backwards'),
-  opacity: 1,
-};
-
-// Memoized separator component for both DraggableFlatList and FlashList
 const ItemSeparator = memo(() => <ListSeparator height={LAYOUT.SPACING.SMALL} />);
 ItemSeparator.displayName = 'ItemSeparator';
 
@@ -99,25 +85,20 @@ const PlaylistListItem = memo(
 
     return (
       <Animated.View exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}>
-        {/* Keep the recyclable-row CSS fade on a child. Reanimated's exiting
-            animation also owns opacity, and putting both systems on the same
-            view lets either one overwrite the other during deletion. */}
-        <Animated.View style={ROW_FADE_IN_STYLE}>
-          <PlaylistItemCard
-            title={item.articles.title}
-            secondaryText={authorCategoryText}
-            editMode={editMode}
-            isBeingDragged={_isBeingDragged}
-            onDelete={handleDelete}
-            // Entire card triggers article navigation when not in edit mode
-            onPress={!editMode ? handlePress : undefined}
-            // Add article image for bookmarks-style appearance
-            imageUrl={generateStorageUrl('images', item.articles.image_url)}
-            articleId={item.article_id}
-            dragHandleProps={dragHandleProps}
-            isNowPlaying={isNowPlaying}
-          />
-        </Animated.View>
+        <PlaylistItemCard
+          title={item.articles.title}
+          secondaryText={authorCategoryText}
+          editMode={editMode}
+          isBeingDragged={_isBeingDragged}
+          onDelete={handleDelete}
+          // Entire card triggers article navigation when not in edit mode
+          onPress={!editMode ? handlePress : undefined}
+          // Add article image for bookmarks-style appearance
+          imageUrl={generateStorageUrl('images', item.articles.image_url)}
+          articleId={item.article_id}
+          dragHandleProps={dragHandleProps}
+          isNowPlaying={isNowPlaying}
+        />
       </Animated.View>
     );
   },
@@ -148,18 +129,11 @@ PlaylistListItem.displayName = 'PlaylistListItem';
 export default function PlaylistScreen(): JSX.Element {
   const miniPlayerClearance = useMiniPlayerClearance();
   const tabBarAutoHide = useTabBarAutoHide();
-  const { onScrollOffset } = tabBarAutoHide;
   const { editMode, reset } = useEditMode('playlist');
   const { showToast } = useToast();
   // A row tap plays that article, so the row of the article the player is on
   // says so — otherwise nothing in the list tells you which one you hear.
   const nowPlayingArticleId = useNowPlayingArticleId();
-
-  useEffect(() => {
-    // Switching list implementations mounts at the top, which may not emit
-    // a scroll event. Restore navigation to match that resting position.
-    onScrollOffset(0);
-  }, [editMode, onScrollOffset]);
 
   // Reset edit mode when screen loses focus
   useFocusEffect(
@@ -231,26 +205,19 @@ export default function PlaylistScreen(): JSX.Element {
     [handleDelete],
   );
 
-  // Optimized render function - unified for both list types
   const renderItem = useCallback(
-    (params: { item: BookmarkItem; index?: number } | RenderItemParams<BookmarkItem>) => {
-      const { item } = params;
-
-      // Extract drag props if available (only in DraggableFlatList)
-      const drag = 'drag' in params ? params.drag : undefined;
-      const isDragging = 'isActive' in params ? params.isActive : false;
-
+    ({ item, drag, isActive }: RenderItemParams<BookmarkItem>) => {
       return (
         <PlaylistListItem
           editMode={editMode}
           item={item}
           onDelete={handleDeletePress}
           onArticlePress={handleArticlePress}
-          drag={drag}
-          moveTrack={drag ? moveTrack : undefined}
-          first={!!drag && item === sortedReadingList[0]}
-          last={!!drag && item === sortedReadingList.at(-1)}
-          _isBeingDragged={isDragging}
+          drag={editMode ? drag : undefined}
+          moveTrack={editMode ? moveTrack : undefined}
+          first={item === sortedReadingList[0]}
+          last={item === sortedReadingList.at(-1)}
+          _isBeingDragged={isActive}
           isNowPlaying={item.article_id === nowPlayingArticleId}
         />
       );
@@ -265,9 +232,6 @@ export default function PlaylistScreen(): JSX.Element {
     ],
   );
 
-  // keyExtractor is a module-level constant, already stable.
-  const memoizedKeyExtractor = keyExtractor;
-
   return (
     <ScreenStateHandler
       isLoading={shouldShowInitialLoading}
@@ -277,63 +241,38 @@ export default function PlaylistScreen(): JSX.Element {
       isEmpty={shouldShowEmpty}
       empty={<SavedEmptyState />}
     >
-      {editMode ? (
-        <DraggableFlatList<BookmarkItem>
-          // NOT `{...tabBarAutoHide}`. DraggableFlatList renders its inner list as
-          // `{...props}` and then sets its own `onScroll` / `scrollEventThrottle`
-          // after it, so a spread handler is dropped on the floor — the code reads
-          // as working and the tab bar simply never hides in edit mode. This is the
-          // library's supported way in.
-          onScrollOffsetChange={tabBarAutoHide.onScrollOffset}
-          onContainerLayout={({ layout }) => tabBarAutoHide.onViewportHeightChange(layout.height)}
-          data={sortedReadingList}
-          // The now-playing row is not in `data`; this is what re-renders it.
-          extraData={nowPlayingArticleId}
-          keyExtractor={memoizedKeyExtractor}
-          renderItem={renderItem}
-          onDragEnd={handleDragEnd}
-          // iOS best practice: Allow natural bounce behavior for tactile feedback
-          bounces={true}
-          alwaysBounceVertical={true}
-          overScrollMode="always"
-          // `automatic` is required for the iOS large-title collapse-on-scroll
-          // animation that the parent Stack.Screen opts into.
-          contentInsetAdjustmentBehavior="automatic"
-          showsVerticalScrollIndicator={true}
-          // The list is the route's primary scrollable — must fill the screen
-          // for UIKit to collapse the large title (per RN-Stack docs).
-          containerStyle={styles.container}
-          contentContainerStyle={listContainerStyle}
-          ItemSeparatorComponent={ItemSeparator}
-          removeClippedSubviews
-          initialNumToRender={6}
-          windowSize={7}
-        />
-      ) : (
-        <FlashList<BookmarkItem>
-          // Brings `scrollEventThrottle: 16`, replacing the 64ms this list used to
-          // set: at 64ms a fast flick delivers only three or four samples, too
-          // coarse to tell a direction change from one long run — the tab bar
-          // stayed hidden after the user had already scrolled back up.
-          {...tabBarAutoHide}
-          data={sortedReadingList}
-          // The now-playing row is not in `data`; this is what re-renders it.
-          extraData={nowPlayingArticleId}
-          drawDistance={ITEM_HEIGHT * 3}
-          keyExtractor={memoizedKeyExtractor}
-          // iOS best practice: Allow natural bounce behavior for tactile feedback
-          bounces={true}
-          alwaysBounceVertical={true}
-          overScrollMode="always"
-          // `automatic` is required for the iOS large-title collapse-on-scroll
-          // animation that the parent Stack.Screen opts into.
-          contentInsetAdjustmentBehavior="automatic"
-          showsVerticalScrollIndicator={true}
-          contentContainerStyle={listContainerStyle}
-          ItemSeparatorComponent={ItemSeparator}
-          renderItem={renderItem}
-        />
-      )}
+      {/* Keep one scroll view mounted across Edit and Done, including at large text sizes. */}
+      <DraggableFlatList<BookmarkItem>
+        // NOT `{...tabBarAutoHide}`. DraggableFlatList renders its inner list as
+        // `{...props}` and then sets its own `onScroll` / `scrollEventThrottle`
+        // after it, so a spread handler is dropped on the floor — the code reads
+        // as working and the tab bar simply never hides in edit mode. This is the
+        // library's supported way in.
+        onScrollOffsetChange={tabBarAutoHide.onScrollOffset}
+        onContainerLayout={({ layout }) => tabBarAutoHide.onViewportHeightChange(layout.height)}
+        data={sortedReadingList}
+        // The now-playing row is not in `data`; this is what re-renders it.
+        extraData={editMode ? undefined : nowPlayingArticleId}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        onDragEnd={handleDragEnd}
+        // iOS best practice: Allow natural bounce behavior for tactile feedback
+        bounces={true}
+        alwaysBounceVertical={true}
+        overScrollMode="always"
+        // `automatic` is required for the iOS large-title collapse-on-scroll
+        // animation that the parent Stack.Screen opts into.
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={true}
+        // The list is the route's primary scrollable — must fill the screen
+        // for UIKit to collapse the large title (per RN-Stack docs).
+        containerStyle={styles.container}
+        contentContainerStyle={listContainerStyle}
+        ItemSeparatorComponent={ItemSeparator}
+        removeClippedSubviews={Platform.OS === 'android'}
+        initialNumToRender={6}
+        windowSize={7}
+      />
     </ScreenStateHandler>
   );
 }

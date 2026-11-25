@@ -84,6 +84,7 @@ beforeEach(() => {
 
 interface Props {
   key: string;
+  active?: boolean;
   sessionGlosses?: readonly string[];
   /** The card whose Arabic prompt has finished — hands-free arms on this. */
   promptDoneKey?: string | null;
@@ -92,8 +93,9 @@ interface Props {
 
 function renderReview(initialProps: Props = { key: 'first' }) {
   return renderHook<ReturnType<typeof useVoiceReview>, Props>(
-    ({ key, sessionGlosses, promptDoneKey = null, handsFree = false }) =>
+    ({ key, active, sessionGlosses, promptDoneKey = null, handsFree = false }) =>
       useVoiceReview({
+        active,
         expected: 'book',
         currentWordKey: key,
         sessionGlosses,
@@ -160,6 +162,67 @@ const capturedSpeech = (): Awaited<ReturnType<Voice['arm']>> => ({
   },
 });
 
+test('a hands-free retry survives prompt completion, transient failure, and context updates', async () => {
+  jest.useFakeTimers();
+  try {
+    jest.mocked(voice.transcribe).mockResolvedValueOnce('');
+    jest
+      .mocked(voice.arm)
+      .mockResolvedValueOnce(capturedSpeech())
+      .mockResolvedValueOnce({ ok: false, reason: 'error', message: 'input stream reopening' })
+      .mockImplementationOnce(async options => {
+        options?.onCapturing?.();
+        return new Promise(() => undefined);
+      });
+
+    const view = renderReview({ key: 'first', handsFree: true });
+    await act(async () => view.result.current.speakNow());
+    view.rerender({ key: 'first', handsFree: true, promptDoneKey: 'first' });
+    expect(view.result.current.phase).toBe('result');
+
+    await act(async () => view.result.current.retry());
+    await act(async () => jest.advanceTimersByTime(armRetryDelay(0) ?? 0));
+    expect(view.result.current.phase).toBe('listening');
+    expect(voice.arm).toHaveBeenCalledTimes(3);
+    expect(voice.arm).toHaveBeenLastCalledWith(expect.objectContaining({ handsFree: false }));
+
+    const cancellations = jest.mocked(voice.cancel).mock.calls.length;
+    jest.mocked(useVoiceGrading).mockReturnValue({ ...voice, hotwordCount: 5 });
+    view.rerender({ key: 'first', handsFree: true, promptDoneKey: 'first' });
+    expect(view.result.current.phase).toBe('listening');
+    expect(voice.cancel).toHaveBeenCalledTimes(cancellations);
+    view.unmount();
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+test('leaving the review releases the microphone and discards a pending retry', async () => {
+  jest.useFakeTimers();
+  try {
+    const release = jest.fn();
+    jest.mocked(voice.acquireSession).mockReturnValue(release);
+    jest.mocked(voice.arm).mockResolvedValueOnce({ ok: false, reason: 'error' });
+    const view = renderReview({ key: 'first', handsFree: true });
+    await act(async () => view.result.current.speakNow());
+
+    view.rerender({ key: 'first', active: false, handsFree: true, promptDoneKey: 'first' });
+    await act(async () => jest.advanceTimersByTime(1000));
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(voice.cancel).toHaveBeenCalled();
+    expect(voice.arm).toHaveBeenCalledTimes(1);
+    expect(view.result.current.phase).toBe('idle');
+
+    view.rerender({ key: 'first', active: true, handsFree: true, promptDoneKey: 'first' });
+    expect(view.result.current.handsFreeActive).toBe(false);
+    await act(async () => view.result.current.speakNow());
+    expect(voice.arm).toHaveBeenCalledTimes(2);
+    view.unmount();
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
 test('a tapped window going live gives the "go" tick', async () => {
   jest.mocked(voice.arm).mockImplementationOnce(options => {
     options?.onCapturing?.();
@@ -179,6 +242,24 @@ test('a tapped window going live gives the "go" tick', async () => {
  * give the answer away at all.
  */
 describe('disclosure', () => {
+  test('a silent manual timeout cannot become a transcript or reveal', async () => {
+    const captured = capturedSpeech();
+    if (!captured.ok) throw new Error('Expected a successful silent capture');
+    jest.mocked(voice.arm).mockResolvedValueOnce({
+      ...captured,
+      result: { ...captured.result, heardSpeech: false, speechMs: 0, stopReason: 'noSpeech' },
+    });
+    jest.mocked(voice.transcribe).mockResolvedValueOnce('table');
+    const { result } = renderReview();
+
+    await act(async () => result.current.speakNow());
+
+    expect(result.current.result?.heard).toBe('');
+    expect(voice.transcribe).not.toHaveBeenCalled();
+    expect(callbacks.onRevealAnswer).not.toHaveBeenCalled();
+    expect(callbacks.onKnownAuto).not.toHaveBeenCalled();
+  });
+
   test('a hearing failure keeps the answer hidden', async () => {
     jest.mocked(voice.transcribe).mockResolvedValueOnce('');
     jest.mocked(voice.arm).mockResolvedValueOnce(capturedSpeech());

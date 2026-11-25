@@ -21,7 +21,9 @@ import {
   subscribeVoiceModel,
 } from '@/services/voiceModelStore';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { PARAKEET_ARTIFACTS } from '@/constants/voiceModel';
 import { analytics } from '@/services/analytics';
+import { hash } from '@dr.pogodin/react-native-fs';
 
 jest.mock('@/services/analytics', () => ({
   analytics: { track: jest.fn().mockResolvedValue(undefined) },
@@ -36,7 +38,32 @@ describe('voiceModelStore', () => {
     // the manual mocks set at module scope.
     sherpa = installSherpaMocks();
     net = installNetInfoMock(createNetInfoStateMock(true));
+    jest
+      .mocked(hash)
+      .mockImplementation(
+        async path =>
+          Object.entries(PARAKEET_ARTIFACTS).find(([file]) => path.endsWith(`/${file}`))?.[1] ?? '',
+      );
     __resetVoiceModelStoreForTests();
+  });
+
+  it('removes a damaged cache even when the library reports it ready', async () => {
+    sherpa.download.getModelPath.mockResolvedValue('/mock/model/path');
+    jest.mocked(hash).mockResolvedValueOnce('changed-encoder');
+
+    const snapshot = await probeVoiceModel();
+
+    expect(snapshot).toMatchObject({ state: 'absent', localPath: null });
+    expect(sherpa.download.deleteModel).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report a damaged download as ready', async () => {
+    jest.mocked(hash).mockRejectedValueOnce(new Error('Missing encoder'));
+
+    const snapshot = await requestVoiceModel({ reason: 'user' });
+
+    expect(snapshot).toMatchObject({ state: 'failed', localPath: null });
+    expect(sherpa.download.deleteModel).toHaveBeenCalledTimes(1);
   });
 
   describe('deduping concurrent requests', () => {

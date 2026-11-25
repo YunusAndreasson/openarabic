@@ -1,12 +1,13 @@
 import type { JSX } from 'react';
 import { useMemo } from 'react';
-import { Platform } from 'react-native';
+import { Platform, useWindowDimensions } from 'react-native';
 
 import { router, usePathname } from 'expo-router';
 
 import { NativeTabs } from 'expo-router/native-tabs';
 
 import { ScreenErrorFallback } from '@/components/common';
+import { LAYOUT } from '@/constants/layout';
 import { PRACTICE_DUE_WORDS_LIMIT } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
@@ -26,6 +27,10 @@ const NON_HOME_TAB_ROOT_PATHS: ReadonlySet<string> = new Set(
   TAB_SCREENS.filter(screen => screen.name !== 'explore').map(screen => `/${screen.name}`),
 );
 
+const LONGEST_TAB_LABEL = Math.max(...TAB_SCREENS.map(screen => screen.title.length));
+// Material gives each one-line label a quarter of the available width.
+const TAB_LABEL_AVERAGE_GLYPH_WIDTH = 0.55;
+
 // A component of its own so the pathname subscription re-renders only this,
 // not the tab navigator.
 function AndroidTabBackHandler(): null {
@@ -41,6 +46,9 @@ function AndroidTabBackHandler(): null {
 export default function TabLayout(): JSX.Element {
   const { session } = useAuth();
   const colors = useColors();
+  const { width, fontScale } = useWindowDimensions();
+  const tabContentStyle =
+    Platform.OS === 'android' ? { backgroundColor: colors.background } : undefined;
   // Android only — always false on iOS, where `minimizeBehavior` below hands
   // the same job to UIKit. See `useTabBarAutoHide`.
   const isTabBarHidden = useIsTabBarHidden();
@@ -56,12 +64,18 @@ export default function TabLayout(): JSX.Element {
     }),
     [colors.onTint, colors.tabIconDefault, colors.tint],
   );
+  const labelWidth = width / TAB_SCREENS.length - 2 * LAYOUT.SPACING.TINY;
+  const maxLabelSize = labelWidth / (LONGEST_TAB_LABEL * TAB_LABEL_AVERAGE_GLYPH_WIDTH * fontScale);
+  const labelFontSize =
+    Platform.OS === 'android' && maxLabelSize < LAYOUT.TYPOGRAPHY.SCALE.SMALL
+      ? maxLabelSize
+      : undefined;
   const labelStyle = useMemo(
     () => ({
-      default: { color: colors.tabIconDefault },
-      selected: { color: colors.tabLabelSelected },
+      default: { color: colors.tabIconDefault, fontSize: labelFontSize },
+      selected: { color: colors.tabLabelSelected, fontSize: labelFontSize },
     }),
-    [colors.tabIconDefault, colors.tabLabelSelected],
+    [colors.tabIconDefault, colors.tabLabelSelected, labelFontSize],
   );
 
   return (
@@ -131,6 +145,7 @@ export default function TabLayout(): JSX.Element {
             key={screen.name}
             name={screen.name}
             accessibilityLabel={screen.title}
+            contentStyle={tabContentStyle}
           >
             {/* These three must be *direct* children and the exact element
                 types expo-router exports: NativeTabTrigger reads its own

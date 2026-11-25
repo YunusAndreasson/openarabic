@@ -1,0 +1,64 @@
+diff --git a/lib/index.js b/lib/index.js
+index cc132300f007b2219297da8a052784cfdaf6d3f7..8d9054eab6892ca381562277b9ab9749d836481a 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -30,7 +30,7 @@ function ensureNativeModuleInitialized() {
+     // Try TurboModules first
+     turboModule = (_a = react_native_1.TurboModuleRegistry.get('RNBackgroundDownloader')) !== null && _a !== void 0 ? _a : null;
+     // Check if iOS new architecture event emitters are available
+-    // On Android, we always use NativeEventEmitter because Android uses RCTDeviceEventEmitter
++    // Android delivers events through RCTDeviceEventEmitter.
+     isIOSNewArchitecture = react_native_1.Platform.OS === 'ios' && turboModule != null && typeof turboModule.onDownloadBegin === 'function';
+     if (isIOSNewArchitecture && turboModule) {
+         // New architecture: TurboModules use getConstants() method
+@@ -194,11 +194,12 @@ function initializeEventListeners() {
+         }
+     }
+     else {
+-        // Old architecture: use NativeEventEmitter with the native module
+-        // RCTEventEmitter on native side requires NativeEventEmitter on JS side
++        // Android emits directly on the device emitter and has no listener bookkeeping.
+         // RNBackgroundDownloader is guaranteed to be non-null here since initializeEventListeners
+         // is only called after ensureNativeModuleInitialized() succeeds
+-        const eventEmitter = new react_native_1.NativeEventEmitter(RNBackgroundDownloader);
++        const eventEmitter = react_native_1.Platform.OS === 'android'
++            ? react_native_1.DeviceEventEmitter
++            : new react_native_1.NativeEventEmitter(RNBackgroundDownloader);
+         eventSubscriptions.push(eventEmitter.addListener('downloadBegin', (data) => {
+             const { id, ...rest } = data;
+             (0, logger_1.log)('downloadBegin', id, loggableBegin(rest));
+diff --git a/src/index.ts b/src/index.ts
+index 15d5758bd24042b6873e0ec7b0c6276a2351bb2d..2c76dba2a360c81edcb56ce9a64826aee33c6cf0 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,4 +1,4 @@
+-import { NativeModules, Platform, TurboModuleRegistry, NativeEventEmitter } from 'react-native'
++import { DeviceEventEmitter, NativeModules, Platform, TurboModuleRegistry, NativeEventEmitter } from 'react-native'
+ import { DownloadTask } from './DownloadTask'
+ import { UploadTask } from './UploadTask'
+ import { Config, DownloadParams, Headers, Metadata, TaskInfo, TaskInfoNative, UploadParams, UploadPartResult, UploadTaskInfo, UploadTaskInfoNative } from './types'
+@@ -48,7 +48,7 @@ function ensureNativeModuleInitialized (): RNBackgroundDownloaderModule & Native
+   // Try TurboModules first
+   turboModule = TurboModuleRegistry.get<Spec>('RNBackgroundDownloader') ?? null
+   // Check if iOS new architecture event emitters are available
+-  // On Android, we always use NativeEventEmitter because Android uses RCTDeviceEventEmitter
++  // Android delivers events through RCTDeviceEventEmitter.
+   isIOSNewArchitecture = Platform.OS === 'ios' && turboModule != null && typeof turboModule.onDownloadBegin === 'function'
+ 
+   if (isIOSNewArchitecture && turboModule) {
+@@ -284,11 +284,12 @@ function initializeEventListeners () {
+       }))
+     }
+   } else {
+-    // Old architecture: use NativeEventEmitter with the native module
+-    // RCTEventEmitter on native side requires NativeEventEmitter on JS side
++    // Android emits directly on the device emitter and has no listener bookkeeping.
+     // RNBackgroundDownloader is guaranteed to be non-null here since initializeEventListeners
+     // is only called after ensureNativeModuleInitialized() succeeds
+-    const eventEmitter: EventEmitterWithPayloads = new NativeEventEmitter(RNBackgroundDownloader!)
++    const eventEmitter: EventEmitterWithPayloads = Platform.OS === 'android'
++      ? DeviceEventEmitter
++      : new NativeEventEmitter(RNBackgroundDownloader!)
+ 
+     eventSubscriptions.push(
+       eventEmitter.addListener('downloadBegin', (data: DownloadBeginEvent) => {

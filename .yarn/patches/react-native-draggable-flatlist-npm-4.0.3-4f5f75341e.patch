@@ -89,3 +89,378 @@ index 61054a72720e3b97e330372327495df72c62a040..3af38f5100e9d4bd0aedc9bd53fc887e
  import Animated, { useAnimatedScrollHandler } from "react-native-reanimated";
  import {
    NestableScrollContainerProvider,
+diff --git a/src/components/CellDecorators.tsx b/src/components/CellDecorators.tsx
+--- a/src/components/CellDecorators.tsx
++++ b/src/components/CellDecorators.tsx
+@@ -25,7 +25,7 @@
+     return {
+       transform: [{ scaleX: scale }, { scaleY: scale }],
+     };
+-  }, [isActive]);
++  });
+ 
+   return (
+     <Animated.View style={[style, horizontal && styles.horizontal]}>
+@@ -60,7 +60,7 @@
+       shadowColor: isActive ? color : "transparent",
+       shadowOpacity: isActive ? shadowOpacity : 0,
+     };
+-  }, [isActive, onActiveAnim]);
++  });
+ 
+   return (
+     <Animated.View style={[style, horizontal && styles.horizontal]}>
+@@ -85,7 +85,7 @@
+     return {
+       opacity: isActive ? opacity : 1,
+     };
+-  }, [isActive]);
++  });
+ 
+   return (
+     <Animated.View style={[style, horizontal && styles.horizontal]}>
+diff --git a/src/components/CellRendererComponent.tsx b/src/components/CellRendererComponent.tsx
+--- a/src/components/CellRendererComponent.tsx
++++ b/src/components/CellRendererComponent.tsx
+@@ -67,7 +67,7 @@
+     return {
+       transform: [horizontalAnim.value ? { translateX: t } : { translateY: t }],
+     };
+-  }, [translate, activeKey]);
++  });
+ 
+   const updateCellMeasurements = useStableCallback(() => {
+     const onSuccess: MeasureLayoutOnSuccessCallback = (x, y, w, h) => {
+diff --git a/src/components/DraggableFlatList.tsx b/src/components/DraggableFlatList.tsx
+--- a/src/components/DraggableFlatList.tsx
++++ b/src/components/DraggableFlatList.tsx
+@@ -251,8 +251,7 @@
+           });
+         }
+       }
+-    },
+-    [isTouchActiveNative, onDragEnd, onRelease]
++    }
+   );
+ 
+   useAnimatedReaction(
+@@ -263,8 +262,7 @@
+       if (prev !== null && cur !== prev && cur >= 0 && prev >= 0) {
+         runOnJS(onPlaceholderIndexChange)(cur);
+       }
+-    },
+-    [spacerIndexAnim]
++    }
+   );
+ 
+   const gestureDisabled = useSharedValue(false);
+@@ -342,8 +340,7 @@
+           : evt.contentOffset.y;
+         runOnJS(onScroll)(scrollOffset.value);
+       },
+-    },
+-    [horizontalAnim]
++    }
+   );
+ 
+   useAutoScroll();
+diff --git a/src/components/NestableDraggableFlatList.tsx b/src/components/NestableDraggableFlatList.tsx
+--- a/src/components/NestableDraggableFlatList.tsx
++++ b/src/components/NestableDraggableFlatList.tsx
+@@ -40,7 +40,7 @@
+ 
+   const hoverOffset = useDerivedValue(() => {
+     return listHoverOffset.value + listVerticalOffset.value;
+-  }, [listHoverOffset]);
++  });
+ 
+   useNestedAutoScroll({
+     ...animVals,
+diff --git a/src/components/PlaceholderItem.tsx b/src/components/PlaceholderItem.tsx
+--- a/src/components/PlaceholderItem.tsx
++++ b/src/components/PlaceholderItem.tsx
+@@ -57,7 +57,7 @@
+         ],
+       };
+ 
+-  }, [spacerIndexAnim, placeholderOffset, horizontalAnim, scrollOffset, size]);
++  });
+ 
+   const extraStyle = useMemo(() => {
+     return horizontal ? { width: size } : { height: size };
+diff --git a/src/components/ScrollOffsetListener.tsx b/src/components/ScrollOffsetListener.tsx
+--- a/src/components/ScrollOffsetListener.tsx
++++ b/src/components/ScrollOffsetListener.tsx
+@@ -17,7 +17,7 @@
+     if (cur !== prev) {
+       runOnJS(onScrollOffsetChange)(cur)
+     }
+-  }, [scrollOffset])
++  })
+ 
+   return null;
+ };
+diff --git a/src/context/animatedValueContext.tsx b/src/context/animatedValueContext.tsx
+--- a/src/context/animatedValueContext.tsx
++++ b/src/context/animatedValueContext.tsx
+@@ -79,15 +79,14 @@
+         scrollInit.value = scrollOffset.value;
+         outerScrollInit.value = outerScrollOffset.value;
+       }
+-    },
+-    [outerScrollOffset]
++    }
+   );
+ 
+   const placeholderOffset = useSharedValue(0);
+ 
+   const isDraggingCell = useDerivedValue(() => {
+     return isTouchActiveNative.value && activeIndexAnim.value >= 0;
+-  }, []);
++  });
+ 
+   const autoScrollDistance = useDerivedValue(() => {
+     if (!isDraggingCell.value) return 0;
+@@ -96,14 +95,14 @@
+     const outerScrollDiff = outerScrollOffset.value - outerScrollInit.value;
+     const scrollDiff = innerScrollDiff + outerScrollDiff;
+     return scrollDiff;
+-  }, []);
++  });
+ 
+   const touchPositionDiff = useDerivedValue(() => {
+     const extraTranslate = isTouchActiveNative.value
+       ? autoScrollDistance.value
+       : 0;
+     return touchTranslate.value + extraTranslate;
+-  }, []);
++  });
+ 
+   const touchPositionDiffConstrained = useDerivedValue(() => {
+     const containerMinusActiveCell =
+@@ -131,7 +130,7 @@
+       Math.max(constrainedBase, maxTranslateNegative),
+       maxTranslatePositive
+     );
+-  }, []);
++  });
+ 
+   const dragItemOverflow = props.dragItemOverflow;
+   const hoverAnim = useDerivedValue(() => {
+@@ -139,11 +138,11 @@
+     return dragItemOverflow
+       ? touchPositionDiff.value
+       : touchPositionDiffConstrained.value;
+-  }, []);
++  });
+ 
+   const hoverOffset = useDerivedValue(() => {
+     return hoverAnim.value + activeCellOffset.value;
+-  }, [hoverAnim, activeCellOffset]);
++  });
+ 
+   useDerivedValue(() => {
+     // Reset spacer index when we stop hovering
+@@ -151,7 +150,7 @@
+     if (!isHovering && spacerIndexAnim.value >= 0) {
+       spacerIndexAnim.value = -1;
+     }
+-  }, []);
++  });
+ 
+   // Note: this could use a refactor as it combines touch state + cell animation
+   const resetTouchedCell = useCallback(() => {
+diff --git a/src/hooks/useAutoScroll.tsx b/src/hooks/useAutoScroll.tsx
+--- a/src/hooks/useAutoScroll.tsx
++++ b/src/hooks/useAutoScroll.tsx
+@@ -28,27 +28,27 @@
+ 
+   const hoverScreenOffset = useDerivedValue(() => {
+     return hoverOffset.value - scrollOffset.value;
+-  }, []);
++  });
+ 
+   const isScrolledUp = useDerivedValue(() => {
+     return scrollOffset.value - SCROLL_POSITION_TOLERANCE <= 0;
+-  }, []);
++  });
+ 
+   const isScrolledDown = useDerivedValue(() => {
+     return (
+       scrollOffset.value + containerSize.value + SCROLL_POSITION_TOLERANCE >=
+       scrollViewSize.value
+     );
+-  }, []);
++  });
+ 
+   const distToTopEdge = useDerivedValue(() => {
+     return Math.max(0, hoverScreenOffset.value);
+-  }, []);
++  });
+ 
+   const distToBottomEdge = useDerivedValue(() => {
+     const hoverPlusActiveCell = hoverScreenOffset.value + activeCellSize.value;
+     return Math.max(0, containerSize.value - hoverPlusActiveCell);
+-  }, []);
++  });
+ 
+   const isAtTopEdge = useDerivedValue(() => {
+     return distToTopEdge.value <= autoscrollThreshold;
+@@ -56,12 +56,12 @@
+ 
+   const isAtBottomEdge = useDerivedValue(() => {
+     return distToBottomEdge.value <= autoscrollThreshold;
+-  }, []);
++  });
+ 
+   const scrollTarget = useSharedValue(0);
+   const dragIsActive = useDerivedValue(() => {
+     return activeIndexAnim.value >= 0;
+-  }, []);
++  });
+ 
+   useAnimatedReaction(
+     () => {
+@@ -86,7 +86,7 @@
+     const cellIsActive = activeIndexAnim.value >= 0;
+ 
+     return hasScrolledToTarget && isAtEdge && !isEdgeDisabled && cellIsActive;
+-  }, []);
++  });
+ 
+   function scrollToInternal(offset: number) {
+     if (flatlistRef && "current" in flatlistRef) {
+@@ -113,7 +113,7 @@
+     // Reanimated scrollTo is crashing on android. use 'regular' scrollTo until figured out.
+     // scrollTo(scrollViewRef, targetX, targetY, true);
+     runOnJS(scrollToInternal)(targetOffset);
+-  }, []);
++  });
+ 
+   return null;
+ }
+diff --git a/src/hooks/useCellTranslate.tsx b/src/hooks/useCellTranslate.tsx
+--- a/src/hooks/useCellTranslate.tsx
++++ b/src/hooks/useCellTranslate.tsx
+@@ -102,7 +102,7 @@
+       : 0;
+ 
+     return withSpring(translationAmt, animationConfigRef.value);
+-  }, [activeKey, cellIndex]);
++  });
+ 
+   return translate;
+ }
+diff --git a/src/hooks/useNestedAutoScroll.tsx b/src/hooks/useNestedAutoScroll.tsx
+--- a/src/hooks/useNestedAutoScroll.tsx
++++ b/src/hooks/useNestedAutoScroll.tsx
+@@ -44,31 +44,31 @@
+ 
+   const hoverScreenOffset = useDerivedValue(() => {
+     return hoverOffset.value - outerScrollOffset.value;
+-  }, []);
++  });
+ 
+   const isScrolledUp = useDerivedValue(() => {
+     return outerScrollOffset.value - SCROLL_POSITION_TOLERANCE <= 0;
+-  }, []);
++  });
+ 
+   const isScrolledDown = useDerivedValue(() => {
+     return (
+       outerScrollOffset.value + containerSize.value + SCROLL_POSITION_TOLERANCE >=
+       scrollViewSize.value
+     );
+-  }, []);
++  });
+ 
+   const distToTopEdge = useDerivedValue(() => {
+     return Math.max(0, hoverScreenOffset.value);
+-  }, [hoverScreenOffset]);
++  });
+ 
+   const distToBottomEdge = useDerivedValue(() => {
+     const dist = containerSize.value - (hoverScreenOffset.value + activeCellSize.value)
+     return Math.max(0, dist);
+-  }, [hoverScreenOffset, activeCellSize, containerSize]);
++  });
+ 
+   const isAtTopEdge = useDerivedValue(() => {
+     return distToTopEdge.value <= autoscrollThreshold;
+-  }, []);
++  });
+ 
+   const isAtBottomEdge = useDerivedValue(() => {
+     return distToBottomEdge.value <= autoscrollThreshold;
+@@ -84,8 +84,7 @@
+       if (cur && !prev) {
+         scrollTarget.value = outerScrollOffset.value;
+       }
+-    },
+-    [activeCellSize]
++    }
+   );
+ 
+   function scrollToInternal(y: number) {
+@@ -122,7 +121,7 @@
+       // scrollTo(scrollViewRef, 0, scrollTarget.value, true)
+       runOnJS(scrollToInternal)(targetOffset);
+     }
+-  }, [autoscrollSpeed, autoscrollThreshold, isDraggingCell]);
++  });
+ 
+   return null;
+ }
+diff --git a/src/hooks/useOnCellActiveAnimation.ts b/src/hooks/useOnCellActiveAnimation.ts
+--- a/src/hooks/useOnCellActiveAnimation.ts
++++ b/src/hooks/useOnCellActiveAnimation.ts
+@@ -32,7 +32,7 @@
+       ...DEFAULT_ANIMATION_CONFIG,
+       ...animationConfigRef.value,
+     } as WithSpringConfig);
+-  }, [isActive]);
++  });
+ 
+   return {
+     isActive,
+diff --git a/src/components/CellRendererComponent.tsx b/src/components/CellRendererComponent.tsx
+--- a/src/components/CellRendererComponent.tsx
++++ b/src/components/CellRendererComponent.tsx
+@@ -11,6 +11,7 @@
+   useAnimatedStyle,
+   useSharedValue,
+ } from "react-native-reanimated";
++import { getRuntimeKind, RuntimeKind } from "react-native-worklets";
+ import { useDraggableFlatListContext } from "../context/draggableFlatListContext";
+ import { isWeb } from "../constants";
+ import { useCellTranslate } from "../hooks/useCellTranslate";
+@@ -34,7 +35,7 @@
+   const viewRef = useRef<Animated.View>(null);
+   const { cellDataRef, propsRef, containerRef } = useRefs<T>();
+ 
+-  const { horizontalAnim, scrollOffset } = useAnimatedValues();
++  const { scrollOffset } = useAnimatedValues();
+   const {
+     activeKey,
+     keyExtractor,
+@@ -56,6 +57,11 @@
+   const isActive = activeKey === key;
+ 
+   const animStyle = useAnimatedStyle(() => {
++    // Reanimated also evaluates the initial style while React renders its wrapper.
++    // A new native cell starts in place; only the UI mapper should read drag state.
++    if (!isWeb && getRuntimeKind() === RuntimeKind.ReactNative) {
++      return { transform: [horizontal ? { translateX: 0 } : { translateY: 0 }] };
++    }
+     // When activeKey becomes null at the end of a drag and the list reorders,
+     // the animated style may apply before the next paint, causing a flicker.
+     // Solution is to hold over the last animated value until the next onLayout.
+@@ -65,7 +71,7 @@
+     }
+     const t = activeKey ? translate.value : heldTanslate.value;
+     return {
+-      transform: [horizontalAnim.value ? { translateX: t } : { translateY: t }],
++      transform: [horizontal ? { translateX: t } : { translateY: t }],
+     };
+   });
+ 

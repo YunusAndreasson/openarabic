@@ -1,16 +1,8 @@
-import {
-  Canvas,
-  Group,
-  Path,
-  Skia,
-  usePathInterpolation,
-  vec,
-  type SkPath,
-} from 'react-native-skia';
+import { Canvas, Group, Path, Skia, vec, type SkPath } from 'react-native-skia';
 import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
-import { useSharedValue, withTiming } from 'react-native-reanimated';
+import { I18nManager, View } from 'react-native';
+import { useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
 // Direct paths rather than through a barrel: these are the only chart parts the
@@ -22,7 +14,7 @@ import { appendRoundedTopBar, BAR_TOP_RADIUS, columnGeometry } from '@/utils/bar
 import { withOpacity } from '@/utils/colorUtils';
 
 /**
- * Seven columns, today leftmost: what is due now, then what each of the next
+ * Seven columns, starting with what is due now, then what each of the next
  * six days ADDS.
  *
  * Per-day, not cumulative. The series used to be the running backlog — every
@@ -41,11 +33,8 @@ import { withOpacity } from '@/utils/colorUtils';
  * and the labelled version the /due-words sheet draws at full width. Both pass
  * the same series, so the card and the sheet it opens cannot disagree.
  *
- * The shape MORPHS between datasets rather than snapping, via
- * `usePathInterpolation`. That hook validates `isInterpolatable` on every render
- * and THROWS rather than warning, so `buildWeekPath` is written to emit an
- * identical verb sequence for every possible input, and the call site guards
- * once more before handing the pair over.
+ * The shape morphs between datasets. Each input generates an identical path
+ * verb sequence so the shapes can interpolate.
  */
 
 const DAYS = 7;
@@ -111,8 +100,6 @@ const todayOnly = (counts: readonly number[]): number[] =>
 
 type PathPair = [SkPath, SkPath];
 
-const MORPH_RANGE = [0, 1];
-
 /** The whole week and today's column alone, on one shared vertical scale. */
 function buildPaths(
   counts: readonly number[],
@@ -125,12 +112,12 @@ function buildPaths(
   };
 }
 
-/**
- * Belt and braces. Even with a fixed verb sequence, an unexpected build must
- * degrade to "no morph" rather than throw on the app's most-visited screen.
- */
-const interpolatable = (pair: PathPair): PathPair =>
-  pair[0].isInterpolatable(pair[1]) ? pair : [pair[1], pair[1]];
+/** Skia weights the receiver, so one is the newest geometry. */
+function morphBars([previous, next]: PathPair, progress: number): SkPath {
+  'worklet';
+  if (progress >= 1 || previous === next) return next;
+  return next.interpolate(previous, progress) ?? next;
+}
 
 interface WeekAheadBarsProps {
   /** Per-day counts, today first: due now, then what each later day adds. Length 7. */
@@ -161,13 +148,6 @@ export function WeekAheadBars({
   // canvas rebuilds rather than morphing between two sizes.
   const signature = `${counts.join(',')}|${width}x${height}+${gap}`;
 
-  // Adjusted during render rather than in an effect. `usePathInterpolation`
-  // stores `outputRange` in a `useAnimatedReaction` dependency array, so the
-  // pair has to keep a stable identity between data changes — and a fresh
-  // object each render would re-register the reaction every frame. React
-  // Compiler memoization is an optimisation, not a stability guarantee, so this
-  // is one of the few places that cannot lean on it.
-  //
   // This is React's own "adjusting state when props change" pattern: a
   // render-phase update on this component, which re-renders before anything
   // paints. Doing the same work in an effect would set state after paint and
@@ -198,11 +178,12 @@ export function WeekAheadBars({
     morph.set(withTiming(1, TIMING_CONFIG.COUNT));
   }, [signature, morph]);
 
-  const morphedPath = usePathInterpolation(morph, MORPH_RANGE, interpolatable(pathState.week));
+  const { week, today } = pathState;
+  const morphedPath = useDerivedValue(() => morphBars(week, morph.get()));
   // Today's column morphs with the rest. It used to be rebuilt from the current
   // counts on every render, so the solid bar — the due count itself, drawn —
   // snapped to its new height while the week around it eased there.
-  const todayPath = usePathInterpolation(morph, MORPH_RANGE, interpolatable(pathState.today));
+  const todayPath = useDerivedValue(() => morphBars(today, morph.get()));
 
   // Entrance grows the row off the baseline as one transform, once, offset
   // from the recall chart so the two never start animating on the same frame.
@@ -210,7 +191,10 @@ export function WeekAheadBars({
 
   return (
     <View>
-      <Canvas style={{ width, height }} pointerEvents="none">
+      <Canvas
+        style={{ width, height, transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }] }}
+        pointerEvents="none"
+      >
         <Group transform={growTransform} origin={vec(0, height)}>
           {/* Today is measured; the rest is a projection. Two levels of the one
               accent, never a ramp — the same distinction the shared chart stack

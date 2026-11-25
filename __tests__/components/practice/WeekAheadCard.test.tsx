@@ -9,6 +9,8 @@
 
 import { describe, expect, jest, test } from '@jest/globals';
 import { render } from '@testing-library/react-native';
+import { I18nManager } from 'react-native';
+import { Canvas } from 'react-native-skia';
 
 import { WeekAheadCard } from '@/components/practice/WeekAheadCard';
 import { PRACTICE_DUE_WORDS_LIMIT } from '@/constants/queries';
@@ -28,6 +30,18 @@ const renderCard = (props: { dueCount: number; reviewedToday?: number; onPress?:
   render(<WeekAheadCard forecast={[]} reviewedToday={0} {...props} />);
 
 describe('WeekAheadCard', () => {
+  test('puts the first Skia column at the right edge in RTL', () => {
+    const direction = jest.replaceProperty(I18nManager, 'isRTL', true);
+    try {
+      renderCard({ dueCount: 23 });
+      expect(jest.mocked(Canvas).mock.calls.at(-1)?.[0].style).toMatchObject({
+        transform: [{ scaleX: -1 }],
+      });
+    } finally {
+      direction.restore();
+    }
+  });
+
   test('shows the due count as a labelled numeral, not inside a sentence', () => {
     const view = renderCard({ dueCount: 23 });
 

@@ -1,7 +1,7 @@
 import { GuidedVoiceChoice } from '@/components/review/GuidedVoiceChoice';
 import { FirstReviewScreen } from '@/components/review/FirstReviewScreen';
 import type { RootId } from '@/types/branded.types';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import {
   useCallback,
@@ -267,6 +267,7 @@ function ReviewContent({
 }): JSX.Element {
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
+  const isFocused = useIsFocused();
   const colors = useColors();
   // The voice debug HUD is a development surface. The selector returns the
   // shipped `false` outside __DEV__, so a flag persisted from an older build
@@ -474,9 +475,8 @@ function ReviewContent({
   // heap, and a missed word waiting out its drill lag is held outside it and
   // served straight back — so the very words being drilled, the likeliest to be
   // said by mistake, were the ones missing from the veto.
-  const otherGlosses = glossesOf(
-    sessionWords.filter(word => word.root_id !== currentWord?.root_id),
-  );
+  const getOtherGlosses = () =>
+    glossesOf(sessionWords.filter(word => word.root_id !== currentWord?.root_id));
 
   // The recogniser's hotwords: every answer due this session, known once at the
   // start. Not `wordQueue` — that is a 20-word working heap that refills, and
@@ -518,11 +518,12 @@ function ReviewContent({
     handsFreeActive,
     micDenied,
   } = useVoiceReview({
+    active: isFocused,
     expected: currentWord?.root?.meaning ?? null,
     currentWordKey,
     rootId: currentWord?.root_id ?? null,
     glossAlternates: currentAlternates,
-    otherGlosses,
+    getOtherGlosses,
     sessionGlosses,
     // Stop listening once the answer is revealed — the recall test is over.
     ready: !isUpdating && !isLoading && isAudioReady && !isComplete && !revealed,
@@ -774,7 +775,7 @@ function ReviewContent({
           // English goes under the Arabic on the question face. The card renders
           // its own `answer` there rather than the screen passing a second copy
           // of the same string.
-          discloseAnswer={voiceShowResult}
+          discloseAnswer={voiceShowResult && voiceResult.heard.length > 0}
           // What the recognizer heard, under that answer. It is evidence for
           // the three choices in the band below and a miss must never be
           // graded without it — it just no longer needs a reserved line in
@@ -792,7 +793,7 @@ function ReviewContent({
             ) : null
           }
           answerSlot={
-            restudying && currentRootInsight ? (
+            !revealed ? null : restudying && currentRootInsight ? (
               <ReviewRootInsight explanation={currentRootInsight} />
             ) : currentExample ? (
               <ReviewContextSentence

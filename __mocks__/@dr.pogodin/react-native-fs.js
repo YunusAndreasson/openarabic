@@ -10,6 +10,7 @@ module.exports = {
   DocumentDirectoryPath: '/mock/documents',
   mkdir: jest.fn(),
   exists: jest.fn(),
+  hash: jest.fn(),
   unlink: jest.fn(),
   stat: jest.fn(),
 };
