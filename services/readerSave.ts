@@ -9,6 +9,8 @@ export type SaveProvider = 'apple' | 'google' | 'email_code' | 'password';
 export type SaveMethod = 'sheet' | 'long_press';
 export interface SaveWord {
   contextLine?: string;
+  contextBefore?: string;
+  contextAfter?: string;
   sourceCredit?: string;
   source: 'first_run_reader' | 'article';
   articleId?: ArticleId;

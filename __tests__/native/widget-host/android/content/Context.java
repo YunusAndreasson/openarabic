@@ -20,6 +20,7 @@ public class Context {
     };
     public SharedPreferences getSharedPreferences(String name, int mode) { return state; }
     public Context getApplicationContext() { return this; }
+    public android.content.res.Resources getResources() { return new android.content.res.Resources(); }
     public String getPackageName() { return "qa"; }
     public android.content.pm.PackageManager getPackageManager() {
         return new android.content.pm.PackageManager();

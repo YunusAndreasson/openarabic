@@ -1,4 +1,6 @@
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
+import { Colors } from '@/constants/colors';
+import { STRINGS } from '@/constants/strings';
 import { loadFirstPage } from '@/services/firstPage';
 import type { SaveWord } from '@/services/readerSave';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -11,25 +13,43 @@ import { filterDueWords } from '@/utils/newWordPacing';
 import { dueTimestampMs } from '@/utils/wordClassification';
 import { initialFace, type WordEntry, type WordFace } from '@/widgets/edition';
 
-export type Occurrence = Pick<WordFace, 'arabic' | 'gloss' | 'line' | 'credit' | 'illustrated'> & {
+export type Occurrence = Pick<
+  WordFace,
+  | 'arabic'
+  | 'gloss'
+  | 'line'
+  | 'credit'
+  | 'illustrated'
+  | 'passagePosition'
+  | 'articleId'
+  | 'sentenceId'
+  | 'contextBefore'
+  | 'contextAfter'
+  | 'contextAccent'
+> & {
   occurrenceId: number;
 };
 export type Occurrences = Record<string, Occurrence>;
 
 function publicOccurrences() {
   const page = loadFirstPage();
-  return page.sentences.flatMap(sentence =>
+  return page.sentences.flatMap((sentence, lineIndex) =>
     sentence.words.map((word, i) => {
       const first = Math.max(0, Math.min(i - 1, sentence.words.length - 3));
+      const role = word.segments?.findLast(segment => segment.role)?.role;
+      const context = sentence.words.slice(first, first + 3).map(w => w.form);
       return {
         arabic: word.form,
         gloss: word.gloss,
         credit: page.author,
         illustrated: true,
-        line: sentence.words
-          .slice(first, first + 3)
-          .map(w => w.form)
-          .join(' '),
+        line: context.join(' '),
+        contextBefore: context.slice(0, i - first).join(' '),
+        contextAfter: context.slice(i - first + 1).join(' '),
+        contextAccent: role
+          ? { light: Colors.light.grammar[role], dark: Colors.dark.grammar[role] }
+          : undefined,
+        passagePosition: `${lineIndex}.${i}`,
         occurrenceId: word.practice?.occurrenceId ?? 0,
         suggested: word.suggested,
       };
@@ -47,46 +67,47 @@ export function savedOccurrence(word: SaveWord): Occurrence {
       gloss: word.gloss,
       occurrenceId: word.occurrenceId,
       line: word.contextLine ?? '',
+      contextBefore: word.contextBefore,
+      contextAfter: word.contextAfter,
       credit: word.sourceCredit ?? '',
       illustrated: false,
+      articleId: word.articleId,
+      sentenceId: word.sentenceId,
     }
   );
 }
 
 const localDay = (date: Date) =>
   Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / MILLISECONDS_PER_DAY;
-function publicFace(now: number, installed: number): WordFace {
+export function publicRotation(): WordFace[] {
   const words = publicOccurrences();
+  const first = Math.max(
+    0,
+    words.findIndex(w => w.suggested),
+  );
+  return [...words.slice(first), ...words.slice(0, first)].map(
+    ({ suggested: _suggested, occurrenceId, ...word }) => ({
+      ...initialFace,
+      ...word,
+      key: 'public-' + (occurrenceId || word.passagePosition),
+      occurrenceKey: 'public-' + (occurrenceId || word.passagePosition),
+    }),
+  );
+}
+
+function publicFace(now: number, installed: number, rotation = publicRotation()): WordFace {
   const offset = Math.max(0, localDay(new Date(now)) - localDay(new Date(installed)));
-  const word =
-    words[
-      (Math.max(
-        0,
-        words.findIndex(w => w.suggested),
-      ) +
-        offset) %
-        words.length
-    ];
-  return word
-    ? {
-        ...initialFace,
-        arabic: word.arabic,
-        gloss: word.gloss,
-        line: word.line,
-        credit: word.credit,
-        key: 'public-' + word.arabic,
-        occurrenceKey: 'public-' + (word.occurrenceId || word.arabic),
-      }
-    : initialFace;
+  return rotation[offset % rotation.length] ?? initialFace;
 }
 
 export function publicTimeline(now: number, installed: number): WordEntry[] {
   const date = new Date(now);
-  const entries = [{ date, props: publicFace(now, installed) }];
+  const rotation = publicRotation();
+  const entries = [{ date, props: publicFace(now, installed, rotation) }];
   for (let day = 1; day <= 7; day++) {
     const next = new Date(date);
     next.setHours(24 * day, 0, 0, 0);
-    entries.push({ date: next, props: publicFace(+next, installed) });
+    entries.push({ date: next, props: publicFace(+next, installed, rotation) });
   }
   return entries;
 }
@@ -179,9 +200,16 @@ export function wordTimeline(
         line: occurrence?.line ?? '',
         credit: occurrence?.credit ?? '',
         illustrated: occurrence?.illustrated ?? false,
-        kind: t > now ? 'Saved plan' : 'Practice word',
+        kind: STRINGS.WIDGET_PRACTICE_WORD,
         status,
         generation,
+        rootId: selected.root_id,
+        passagePosition: occurrence?.passagePosition,
+        articleId: occurrence?.articleId,
+        sentenceId: occurrence?.sentenceId,
+        contextBefore: occurrence?.contextBefore,
+        contextAfter: occurrence?.contextAfter,
+        contextAccent: occurrence?.contextAccent,
         key: `${generation}-${selected.root_id}-${t}`,
         occurrenceKey: occurrence?.occurrenceId
           ? 'word-' + occurrence.occurrenceId

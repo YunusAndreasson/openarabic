@@ -65,8 +65,7 @@ module.exports = {
     ...[
       'constants/widgetEdition.ts',
       'plugins/withWordWidgetResources.js',
-      'assets/fonts/NotoSans.ttf',
-      'assets/first-page/books.jpg',
+      'assets/fonts/Amiri.ttf',
     ].map(filePath => ({
       type: 'file',
       filePath,

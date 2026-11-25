@@ -1,11 +1,13 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { ANALYTICS_EVENTS as E } from '@/constants/analytics';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -20,6 +22,7 @@ export default function WidgetGuide() {
   const { surface: entry } = useLocalSearchParams<{ surface?: string }>();
   const surface = entry === 'receipt' || entry === 'guest_settings' ? entry : 'settings';
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const candidate = widgetPreview();
   const face =
@@ -66,26 +69,32 @@ export default function WidgetGuide() {
     const accepted = await widgetBridge.pin().catch(() => false);
     void analytics.track(E.WIDGET_PIN_REQUESTED, { surface, accepted, platform: Platform.OS });
     if (!live.current) return;
-    if (!accepted) {
-      setManual(true);
-      setPending(false);
-      lock.current = false;
-    }
+    if (!accepted) setManual(true);
+    lock.current = false;
+    setPending(false);
     await check();
   }
   const pinning = Platform.OS === 'android' && placement?.canPin && !manual;
   const placed = !!placement?.families.length;
   return (
-    <ScrollView contentContainerStyle={styles.page}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.page,
+        {
+          paddingTop: insets.top + LAYOUT.SPACING.LARGE,
+          paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE,
+        },
+      ]}
+    >
       <Stack.Screen options={{ title: STRINGS.WIDGET_TITLE, presentation: 'modal' }} />
       <ThemedText type="heading2">{STRINGS.WIDGET_TITLE}</ThemedText>
       <ThemedText>{STRINGS.WIDGET_DESCRIPTION}</ThemedText>
-      <View style={[styles.preview, { backgroundColor: colors.tint }]}>
-        <ThemedText style={{ color: colors.onTint }}>{face.kind}</ThemedText>
-        <ThemedText type="arabic" accessibilityLanguage="ar" style={{ color: colors.onTint }}>
+      <View style={[styles.preview, { backgroundColor: colors.elevation2 }]}>
+        <ThemedText type="label">{face.kind}</ThemedText>
+        <ThemedText type="arabic" accessibilityLanguage="ar" align="right">
           {face.arabic}
         </ThemedText>
-        <ThemedText style={{ color: colors.onTint }}>{face.status}</ThemedText>
+        <ThemedText type="bodyBold">{face.due ? face.status : STRINGS.WIDGET_REVEAL}</ThemedText>
       </View>
       <ThemedText type="heading3">
         {placed ? STRINGS.WIDGET_PLACED : STRINGS.WIDGET_GUIDE_TITLE}
@@ -118,7 +127,8 @@ export default function WidgetGuide() {
         title={STRINGS.DONE}
         onPress={() => {
           exit.current = 'done';
-          router.back();
+          if (router.canGoBack()) router.back();
+          else router.replace(ROUTE_PATHS.FIRST_PAGE);
         }}
       />
     </ScrollView>

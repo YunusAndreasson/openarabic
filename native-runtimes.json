@@ -60,6 +60,10 @@
     "1448.6.24": {
       "ios": "2dc28f6cec98bbcc5046c7946960133fa1738282",
       "android": "a45c449d6248d0f29684f248fdeb31bcbbb37ac0"
+    },
+    "1448.6.29": {
+      "ios": "0b8bf1da61b40f6f628d241b21ff93fe9421c0a1",
+      "android": "99587b8a223b70185828b93db739bef5ed5e267f"
     }
   }
 }

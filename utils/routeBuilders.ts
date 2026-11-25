@@ -32,6 +32,12 @@ export type ArticleOpenSource = (typeof ARTICLE_OPEN_SOURCES)[number];
 export const readArticleOpenSource = (param: string | undefined): ArticleOpenSource | 'other' =>
   ARTICLE_OPEN_SOURCES.find(source => source === param) ?? 'other';
 
+export const getFirstPageWidgetRoute = (position: string, word: boolean) =>
+  ({
+    pathname: ROUTE_PATHS.FIRST_PAGE,
+    params: { widgetPosition: position, widgetWord: word ? 'true' : undefined },
+  }) satisfies Href;
+
 interface ArticleRouteOptions {
   /**
    * Open at the top. The reader otherwise resumes at the learner's last-read

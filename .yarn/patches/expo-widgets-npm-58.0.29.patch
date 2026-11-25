@@ -1,34 +1,107 @@
+diff --git a/android/build.gradle b/android/build.gradle
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -1,1 +1,11 @@
+ import org.apache.tools.ant.taskdefs.condition.Os
++
++buildscript {
++  repositories {
++    mavenCentral()
++  }
++  dependencies {
++    // The same Compose compiler already used by Expo UI.
++    classpath("org.jetbrains.kotlin.plugin.compose:org.jetbrains.kotlin.plugin.compose.gradle.plugin:${kotlinVersion}")
++  }
++}
+@@ -3,4 +13,6 @@
+ plugins {
+   id 'com.android.library'
+   id 'expo-module-gradle-plugin'
+ }
++
++apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+@@ -65,3 +77,4 @@
+   buildFeatures {
+     prefab true
++    compose true
+   }
 diff --git a/android/src/main/AndroidManifest.xml b/android/src/main/AndroidManifest.xml
 --- a/android/src/main/AndroidManifest.xml
 +++ b/android/src/main/AndroidManifest.xml
-@@ -1,5 +1,6 @@
+@@ -1,5 +1,14 @@
  <manifest xmlns:android="http://schemas.android.com/apk/res/android">
    <application>
 +    <receiver android:name="expo.modules.widgets.WordWidgetActionReceiver" android:exported="false" />
++    <receiver android:name="expo.modules.widgets.WordWidgetClockReceiver" android:exported="false">
++      <intent-filter>
++        <action android:name="android.intent.action.TIMEZONE_CHANGED" />
++        <action android:name="android.intent.action.TIME_SET" />
++        <action android:name="android.intent.action.DATE_CHANGED" />
++        <action android:name="android.intent.action.LOCALE_CHANGED" />
++      </intent-filter>
++    </receiver>
      <receiver
        android:name="expo.modules.widgets.notifications.ExpoWidgetsNotificationReceiver"
        android:exported="false" />
 diff --git a/android/src/main/java/expo/modules/widgets/ExpoWidgetEmittableTree.kt b/android/src/main/java/expo/modules/widgets/ExpoWidgetEmittableTree.kt
 --- a/android/src/main/java/expo/modules/widgets/ExpoWidgetEmittableTree.kt
 +++ b/android/src/main/java/expo/modules/widgets/ExpoWidgetEmittableTree.kt
-@@ -295,9 +295,11 @@
+@@ -151,7 +151,7 @@
+     "RowView" -> listOf(toPeekRow(converterContext, source))
+     "SpacerView" -> listOf(toPeekSpacer(converterContext))
+     "SwitchView" -> listOf(toPeekSwitch(converterContext))
+-    "TextView" -> listOf(toPeekText(converterContext))
++    "TextView" -> listOf(toPeekText(converterContext, source))
+     "Button", "FilledTonalButton", "OutlinedButton", "ElevatedButton", "TextButton" -> listOf(
+       toPeekButton(converterContext, source)
+     )
+@@ -216,5 +216,18 @@
+-private fun ReadableMap.toPeekText(converterContext: ConverterContext): EmittableText {
++private fun ReadableMap.toPeekText(converterContext: WidgetConverterContext, source: InteractionSource): Emittable {
+   val props = props<TextProps>(converterContext)
++  if (source.name == WordWidgetReveal.NAME && props.fontFamily == "Amiri-Regular") {
++    val bounds = props.modifiers.firstOrNull { it["\$type"]?.asString() == "size" }
++      ?.asRecord<SizeParams>(converterContext)
++    if (bounds != null) {
++      val bitmap = wordArabicBitmap(converterContext.applicationContext, props, bounds)
++      return EmittableImage().also {
++        it.provider = ImageProvider(bitmap)
++        it.modifier = props.textModifier(converterContext)
++          .semantics { contentDescription = props.textContent() }
++        it.contentScale = ContentScale.Fit
++      }
++    }
++  }
+   val typography = props.typography?.toGlanceTypography()
+   return EmittableText().also {
+     it.text = props.textContent()
+@@ -295,9 +308,19 @@
  private fun ReadableMap.toPeekButton(converterContext: WidgetConverterContext, source: InteractionSource): Emittable {
    val props = props<WidgetButtonProps>(converterContext)
    val children = children()
 -  val action =
-+  val word = (source as? InteractionSource.Widget)?.takeIf { it.name == WordWidgetReveal.NAME }
-+  val action = if (word != null) word.revealAction else
-     props.target?.let { target -> WidgetInteraction(source, target).toGlanceAction(converterContext.applicationContext) }
+-    props.target?.let { target -> WidgetInteraction(source, target).toGlanceAction(converterContext.applicationContext) }
 -  val modifier = props.buttonModifier(converterContext)
++  val word = (source as? InteractionSource.Widget)?.takeIf { it.name == WordWidgetReveal.NAME }
++  val action = if (word != null) {
++    when (props.target) {
++      "word" -> word.wordAction
++      "passage" -> word.passageAction
++      "reveal" -> word.revealAction
++      else -> null
++    }
++  } else props.target?.let { target -> WidgetInteraction(source, target).toGlanceAction(converterContext.applicationContext) }
 +  var modifier = props.buttonModifier(converterContext)
-+  word?.revealLabel?.let { label -> modifier = modifier.semantics { contentDescription = label } }
++  if (props.target == "reveal") word?.revealLabel?.let { label ->
++    modifier = modifier.semantics { contentDescription = label }
++  }
    val contentColor = props.contentColorProvider()
    val textContent = children.textContent(converterContext) ?: props.label
    if (textContent != null && (children.isEmpty() || children.isTextOnlyContent())) {
 diff --git a/android/src/main/java/expo/modules/widgets/ExpoWidgetsAppWidgetProvider.kt b/android/src/main/java/expo/modules/widgets/ExpoWidgetsAppWidgetProvider.kt
 --- a/android/src/main/java/expo/modules/widgets/ExpoWidgetsAppWidgetProvider.kt
 +++ b/android/src/main/java/expo/modules/widgets/ExpoWidgetsAppWidgetProvider.kt
-@@ -6,12 +6,31 @@
+@@ -6,12 +6,32 @@
  import io.github.expo.peek.emittables.PeekEmittableAppWidget
  
  open class ExpoWidgetsAppWidgetProvider(
@@ -38,6 +111,7 @@ diff --git a/android/src/main/java/expo/modules/widgets/ExpoWidgetsAppWidgetProv
    override val glanceAppWidget: PeekEmittableAppWidget = ExpoWidgetsPeekWidget(widgetName)
  
 +  private fun refreshWord(context: Context) {
++    WordWidgetConfiguration.observe(context)
 +    val pending = goAsync()
 +    WidgetsUpdater.enqueueReload(context, widgetName).invokeOnCompletion { pending?.finish() }
 +  }
@@ -61,17 +135,20 @@ diff --git a/android/src/main/java/expo/modules/widgets/ExpoWidgetsAppWidgetProv
        val source = intent.getStringExtra(WIDGET_INTERACTION_SOURCE_EXTRA) ?: return
        val target = intent.getStringExtra(WIDGET_INTERACTION_TARGET_EXTRA) ?: return
        WidgetsInteraction.handle(context.applicationContext, source, target)
+@@ -21,3 +41,4 @@
+     super.onReceive(context, intent)
+   }
+ }
++
 diff --git a/android/src/main/java/expo/modules/widgets/ExpoWidgetsPeekWidget.kt b/android/src/main/java/expo/modules/widgets/ExpoWidgetsPeekWidget.kt
 --- a/android/src/main/java/expo/modules/widgets/ExpoWidgetsPeekWidget.kt
 +++ b/android/src/main/java/expo/modules/widgets/ExpoWidgetsPeekWidget.kt
-@@ -2,6 +2,16 @@
- package expo.modules.widgets
- 
+@@ -4,8 +4,26 @@
  import android.annotation.SuppressLint
 +import android.appwidget.AppWidgetManager
 +import android.widget.RemoteViews
 +import androidx.glance.appwidget.ExperimentalGlanceRemoteViewsApi
-+import androidx.glance.appwidget.compose
++import androidx.glance.appwidget.GlanceRemoteViews
 +import androidx.glance.appwidget.action.actionSendBroadcast
 +import android.app.KeyguardManager
 +import android.content.Intent
@@ -80,14 +157,20 @@ diff --git a/android/src/main/java/expo/modules/widgets/ExpoWidgetsPeekWidget.kt
 +import androidx.glance.appwidget.action.actionStartActivity
  import android.content.Context
  import android.os.Bundle
++import android.os.Build
++import android.util.SizeF
++import androidx.core.os.BundleCompat
  import androidx.compose.ui.unit.DpSize
-@@ -10,10 +20,28 @@
++import androidx.compose.ui.unit.dp
+ import androidx.glance.Emittable
+ import androidx.glance.appwidget.AppWidgetId
  import androidx.glance.appwidget.SizeMode
  import io.github.expo.peek.emittables.PeekEmittableAppWidget
- 
++import io.github.expo.peek.emittables.EmittableTree
++
 +internal data class RenderedWord(val generation: String?, val view: RemoteViews,
 +                                val boundary: Long, val visibleAnswer: String?)
-+
+@@ -13,4 +31,53 @@
  internal class ExpoWidgetsPeekWidget(
 -  private val widgetName: String
 +  private val widgetName: String,
@@ -96,22 +179,53 @@ diff --git a/android/src/main/java/expo/modules/widgets/ExpoWidgetsPeekWidget.kt
  ) : PeekEmittableAppWidget() {
    override val sizeMode = SizeMode.Exact
 +
-+  // compose() returns RemoteViews to our caller. Unlike refresh(), it does
-+  // not enqueue a separate Glance session that can write to the launcher.
++  // A newly bound ID need not have an active Glance session yet. Compose
++  // RemoteViews from the measured options and the real ID used by the actions.
 +  @OptIn(ExperimentalGlanceRemoteViewsApi::class)
 +  suspend fun composeSnapshot(context: Context, id: AppWidgetId): RenderedWord {
 +    val (frame, revealed) = synchronized(WordWidgetReveal.prefs(context)) {
 +      val current = WordWidgetReveal.current(context)
 +      current to WordWidgetReveal.read(context, id.appWidgetId, current)
 +    }
-+    val options = AppWidgetManager.getInstance(context).getAppWidgetOptions(id.appWidgetId)
-+    val view = ExpoWidgetsPeekWidget(widgetName, frame, revealed).compose(context, id, options)
++    val manager = AppWidgetManager.getInstance(context)
++    val options = manager.getAppWidgetOptions(id.appWidgetId)
++    val widget = ExpoWidgetsPeekWidget(widgetName, frame, revealed)
++    suspend fun render(size: SizeF): RemoteViews {
++      val dpSize = DpSize(size.width.dp, size.height.dp)
++      val root = widget.provideRoot(context, id, options, dpSize)
++      return wordRemoteViews.compose(context, dpSize, null, options) {
++        EmittableTree(root)
++      }.remoteViews
++    }
++    val hostSizes = if (Build.VERSION.SDK_INT >= 31) {
++      BundleCompat.getParcelableArrayList(options, AppWidgetManager.OPTION_APPWIDGET_SIZES, SizeF::class.java)
++        .orEmpty().filter { it.width > 0f && it.height > 0f }.distinct()
++    } else emptyList()
++    val view = if (Build.VERSION.SDK_INT >= 31 && hostSizes.size > 1) {
++      RemoteViews(hostSizes.associateWith { render(it) })
++    } else if (hostSizes.size == 1) {
++      render(hostSizes.first())
++    } else {
++      // Until the launcher reports a measured size, use the provider minimum.
++      val density = context.resources.displayMetrics.density
++      val info = manager.getAppWidgetInfo(id.appWidgetId)
++      fun dimension(key: String, providerPixels: Int?) =
++        options.getInt(key).takeIf { it > 0 }?.toFloat()
++          ?: ((providerPixels ?: 0) / density).coerceAtLeast(110f)
++      val portrait = SizeF(
++        dimension(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, info?.minWidth),
++        dimension(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, info?.minHeight)
++      )
++      val landscape = SizeF(
++        dimension(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, info?.minWidth),
++        dimension(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, info?.minHeight)
++      )
++      if (landscape == portrait) render(portrait)
++      else RemoteViews(render(landscape), render(portrait))
++    }
 +    return RenderedWord(frame.face["generation"] as? String, view, frame.boundary, frame.identity.takeIf { revealed })
 +  }
- 
-   override fun provideRoot(
-     context: Context,
-@@ -24,10 +52,41 @@
+@@ -24,6 +91,27 @@
      val appContext = context.applicationContext
      val layout = WidgetsLayoutRegistry.layout(appContext, widgetName)
        ?: return createErrorRoot("No layout found for $widgetName")
@@ -126,36 +240,67 @@ diff --git a/android/src/main/java/expo/modules/widgets/ExpoWidgetsPeekWidget.kt
 +      (appContext.getSharedPreferences("word_widget", Context.MODE_PRIVATE).getString("generation", "") == generation &&
 +        !appContext.getSystemService(KeyguardManager::class.java).isDeviceLocked))
 +    val isWord = widgetName == WordWidgetReveal.NAME
++    val seed = WidgetsLayoutRegistry.initialProps(appContext, widgetName)
 +    val props = when {
 +      isWord && !allowed -> null
 +      isWord && !revealed -> stored?.plus("gloss" to "")
 +      else -> stored
 +    }
-+    val seed = WidgetsLayoutRegistry.initialProps(appContext, widgetName)
++    val safeFace = if (allowed) stored else seed
++    val tap = frame?.takeIf { allowed }?.let { WordWidgetReveal.tap(appContext, id.appWidgetId, it, revealed) }
 +    val environment = getWidgetEnvironment(appContext) + mapOf(
 +      "widthDp" to size.width.value.toDouble(), "heightDp" to size.height.value.toDouble(), "seed" to if (isWord) seed?.plus("gloss" to "") else seed,
 +      "wordRevealed" to (allowed && revealed),
++      "wordCanReveal" to (tap != null),
 +      "fontScale" to appContext.resources.configuration.fontScale.toDouble()
 +    )
      val node = evaluateLayout(appContext, layout, props, environment)
- 
+@@ -31,3 +119,44 @@
 -    return node.toPeekRoot(appContext, InteractionSource.Widget(widgetName), size)
-+    val tap = frame?.takeIf { allowed }?.let { WordWidgetReveal.tap(appContext, id.appWidgetId, it, revealed) }
-+    val label = tap?.let { props?.get("arabic").toString() + ", " + appContext.getString(
-+      if (revealed) R.string.word_widget_hide_meaning else R.string.word_widget_reveal_meaning) }
-+    val source = InteractionSource.Widget(widgetName, tap?.let { actionSendBroadcast(it) }, label)
-+    val root = node.toPeekRoot(appContext, source, size)
-+    if (widgetName == "WordInContext") {
-+      appContext.packageManager.getLaunchIntentForPackage(appContext.packageName)?.let { launch ->
-+        val route = if (allowed && !generation.isNullOrEmpty()) "practice?v=$generation" else "read"
-+        launch.action = Intent.ACTION_VIEW
-+        launch.data = Uri.parse("open-arabic:///widget/$route")
-+        root.modifier = root.modifier.clickable(actionStartActivity(launch))
-+      }
++    if (!isWord) return node.toPeekRoot(appContext, InteractionSource.Widget(widgetName), size)
++    val label = tap?.let {
++      val action = appContext.getString(
++        if (revealed) R.string.word_widget_hide_meaning else R.string.word_widget_reveal_meaning)
++      if (revealed) "${props?.get("gloss")}, $action" else action
 +    }
++    val wordAction = wordWidgetLink(appContext, safeFace, word = true)?.let { actionStartActivity(it) }
++    val passageAction = wordWidgetLink(appContext, safeFace, word = false)?.let { actionStartActivity(it) }
++    val source = InteractionSource.Widget(widgetName, tap?.let { actionSendBroadcast(it) }, label, wordAction, passageAction)
++    val root = node.toPeekRoot(appContext, source, size)
++    (passageAction ?: wordAction)?.let { root.modifier = root.modifier.clickable(it) }
 +    return root
    }
  }
++
++@OptIn(ExperimentalGlanceRemoteViewsApi::class)
++private val wordRemoteViews = GlanceRemoteViews()
++
++internal fun wordWidgetLink(context: Context, face: Map<String, Any?>?, word: Boolean): Intent? {
++  val generation = (face?.get("generation") as? String).orEmpty()
++  val position = face?.get("passagePosition") as? String
++  val root = face?.get("rootId") as? Number
++  val article = face?.get("articleId") as? Number
++  val sentence = face?.get("sentenceId") as? Number
++  val route = when {
++    word && (position != null || (generation.isNotEmpty() && root != null)) -> "word"
++    !word && (position != null || (generation.isNotEmpty() && article != null)) -> "passage"
++    generation.isNotEmpty() && root != null -> "word"
++    generation.isNotEmpty() -> "practice"
++    else -> "read"
++  }
++  val uri = Uri.parse("open-arabic:///widget/$route").buildUpon()
++  position?.let { uri.appendQueryParameter("p", it) }
++  if (generation.isNotEmpty()) {
++    uri.appendQueryParameter("v", generation)
++    root?.let { uri.appendQueryParameter("r", it.toLong().toString()) }
++    article?.let { uri.appendQueryParameter("a", it.toLong().toString()) }
++    sentence?.let { uri.appendQueryParameter("s", it.toLong().toString()) }
++  }
++  return context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
++    action = Intent.ACTION_VIEW
++    data = uri.build()
++  }
++}
 diff --git a/android/src/main/java/expo/modules/widgets/WidgetInteractionAction.kt b/android/src/main/java/expo/modules/widgets/WidgetInteractionAction.kt
 --- a/android/src/main/java/expo/modules/widgets/WidgetInteractionAction.kt
 +++ b/android/src/main/java/expo/modules/widgets/WidgetInteractionAction.kt
@@ -164,7 +309,7 @@ diff --git a/android/src/main/java/expo/modules/widgets/WidgetInteractionAction.
    val name: String
  
 -  data class Widget(override val name: String) : InteractionSource
-+  data class Widget(override val name: String, val revealAction: Action? = null, val revealLabel: String? = null) : InteractionSource
++  data class Widget(override val name: String, val revealAction: Action? = null, val revealLabel: String? = null, val wordAction: Action? = null, val passageAction: Action? = null) : InteractionSource
  
    data class Notification(override val name: String, val notificationId: String) : InteractionSource
  }
@@ -194,12 +339,13 @@ diff --git a/android/src/main/java/expo/modules/widgets/WidgetsLayoutRegistry.kt
      return WidgetsStorage.getString(context, storageKey(name, "layout"))?.takeIf { it.isNotEmpty() }
        ?: embeddedWidget(context, name)?.layout
    }
-@@ -23,7 +25,7 @@
+@@ -23,7 +25,8 @@
        ?: initialProps(context, name)
    }
  
 -  private fun initialProps(context: Context, name: String): Map<String, Any?>? {
 +  fun initialProps(context: Context, name: String): Map<String, Any?>? {
++    if (name == WordWidgetReveal.NAME) embeddedWidget(context, name)?.initialProps?.let { return it }
      return WidgetsStorage.getDictionary(context, storageKey(name, "initial_props"))
        ?: embeddedWidget(context, name)?.initialProps
    }
@@ -220,21 +366,33 @@ diff --git a/android/src/main/java/expo/modules/widgets/WidgetsModule.kt b/andro
 diff --git a/android/src/main/java/expo/modules/widgets/WidgetsUpdater.kt b/android/src/main/java/expo/modules/widgets/WidgetsUpdater.kt
 --- a/android/src/main/java/expo/modules/widgets/WidgetsUpdater.kt
 +++ b/android/src/main/java/expo/modules/widgets/WidgetsUpdater.kt
-@@ -17,14 +17,35 @@
+@@ -10,3 +10,4 @@
+ import kotlinx.coroutines.launch
++import kotlinx.coroutines.withTimeoutOrNull
+ import kotlinx.coroutines.sync.Mutex
+ import kotlinx.coroutines.sync.withLock
+@@ -14,17 +15,42 @@
+ internal object WidgetsUpdater {
++  private const val COMPOSITION_TIMEOUT_MS = 3_000L
+   private val updateMutex = Mutex()
+   private val updateScope = CoroutineScope(
      Dispatchers.Default + SupervisorJob() + CoroutineName("expo.widgets.UpdaterScope")
    )
  
 -  fun reload(context: Context, name: String) {
 -    val appContext = context.applicationContext
 +  private fun publicView(context: Context, word: String): android.widget.RemoteViews {
-+    val view = android.widget.RemoteViews(context.packageName, android.R.layout.simple_list_item_1)
-+    view.setTextViewText(android.R.id.text1, word)
++    val res = context.resources
++    val layout = res.getIdentifier("word_widget_public", "layout", context.packageName)
++    val text = res.getIdentifier("word_widget_public_word", "id", context.packageName)
++    val view = android.widget.RemoteViews(context.packageName, layout)
++    view.setTextViewText(text, word)
 +    context.packageManager.getLaunchIntentForPackage(context.packageName)?.let { intent ->
 +      intent.action = android.content.Intent.ACTION_VIEW
 +      intent.data = android.net.Uri.parse("open-arabic:///widget/read")
 +      val tap = android.app.PendingIntent.getActivity(context, 0, intent,
 +        android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT)
-+      view.setOnClickPendingIntent(android.R.id.text1, tap)
++      view.setOnClickPendingIntent(text, tap)
 +    }
 +    return view
 +  }
@@ -261,7 +419,7 @@ diff --git a/android/src/main/java/expo/modules/widgets/WidgetsUpdater.kt b/andr
    }
  
    fun reloadAll(context: Context) {
-@@ -39,13 +60,38 @@
+@@ -39,13 +65,46 @@
      }
    }
  
@@ -284,29 +442,192 @@ diff --git a/android/src/main/java/expo/modules/widgets/WidgetsUpdater.kt b/andr
 +        if (intent != null) synchronized(WordWidgetReveal.prefs(context)) {
 +          WordWidgetReveal.interact(context, appWidgetId, intent, WordWidgetReveal.current(context))
 +        }
-+        val (token, rendered, boundary, visibleAnswer) = widget.composeSnapshot(context, AppWidgetId(appWidgetId))
++        val snapshot = withTimeoutOrNull(COMPOSITION_TIMEOUT_MS) {
++          widget.composeSnapshot(context, AppWidgetId(appWidgetId))
++        }
 +        val prefs = context.getSharedPreferences("word_widget", Context.MODE_PRIVATE)
 +        // setOwner holds this same monitor when changing the native token.
 +        // Keep the comparison and the final binder submission indivisible.
 +        synchronized(prefs) {
 +          val current = prefs.getString("generation", "")
++          val token = snapshot?.generation
 +          val validOwner = token != null && (token.isEmpty() || token == current)
-+          val timely = System.currentTimeMillis() < boundary
-+          if (validOwner && boundary != Long.MAX_VALUE) WordWidgetReveal.schedule(context, appWidgetId, boundary)
++          val visibleAnswer = snapshot?.visibleAnswer
 +          val validAnswer = visibleAnswer == null || WordWidgetReveal.isStillRevealed(context, appWidgetId, visibleAnswer)
-+          val view = if (validOwner && timely && validAnswer) rendered else
++          val view = if (snapshot != null && validOwner && System.currentTimeMillis() < snapshot.boundary && validAnswer) {
++            WordWidgetReveal.schedule(context, appWidgetId, snapshot.boundary)
++            snapshot.view
++          } else {
++            val safeFrame = WordWidgetReveal.current(context)
++            WordWidgetReveal.schedule(context, appWidgetId, safeFrame.boundary)
 +            publicView(context, WidgetsLayoutRegistry.initialProps(context, name)?.get("arabic") as? String ?: "")
++          }
 +          appWidgetManager.updateAppWidget(appWidgetId, view)
 +        }
 +      } else widget.refresh(context, AppWidgetId(appWidgetId))
      }
    }
  
+diff --git a/android/src/main/java/expo/modules/widgets/WordWidgetArabic.kt b/android/src/main/java/expo/modules/widgets/WordWidgetArabic.kt
+new file mode 100644
+--- /dev/null
++++ b/android/src/main/java/expo/modules/widgets/WordWidgetArabic.kt
+@@ -0,0 +1,78 @@
++package expo.modules.widgets
++
++import android.content.Context
++import android.graphics.Bitmap
++import android.graphics.Canvas
++import android.graphics.Paint
++import android.graphics.Rect
++import android.graphics.Typeface
++import android.text.Layout
++import android.text.SpannableStringBuilder
++import android.text.Spanned
++import android.text.StaticLayout
++import android.text.TextDirectionHeuristics
++import android.text.TextPaint
++import android.text.style.ForegroundColorSpan
++import android.util.TypedValue
++import androidx.compose.ui.graphics.toArgb
++import expo.modules.ui.SizeParams
++import expo.modules.ui.TextProps
++import expo.modules.ui.TextSpanRecord
++import expo.modules.ui.colorToComposeColorOrNull
++import java.util.Locale
++import kotlin.math.ceil
++import kotlin.math.roundToInt
++
++/** Glance cannot load an application typeface in the launcher process. Shape the
++ * Arabic in one run here, while the widget retains the original text for TalkBack. */
++internal fun wordArabicBitmap(context: Context, props: TextProps, bounds: SizeParams): Bitmap {
++  val resources = context.resources
++  val metrics = resources.displayMetrics
++  val width = (bounds.width * metrics.density).roundToInt().coerceAtLeast(1)
++  val height = (bounds.height * metrics.density).roundToInt().coerceAtLeast(1)
++  val pad = ceil(metrics.density * 3).toInt()
++  val measure = (width - 2 * pad).coerceAtLeast(1)
++  val font = resources.getIdentifier("amiri", "font", context.packageName)
++  val paint = TextPaint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
++    typeface = if (font != 0) resources.getFont(font) else Typeface.DEFAULT
++    textLocale = Locale.forLanguageTag("ar")
++    color = colorToComposeColorOrNull(props.color)?.toArgb() ?: android.graphics.Color.BLACK
++    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, props.fontSize ?: 24f, metrics)
++  }
++
++  val text = SpannableStringBuilder()
++  fun append(span: TextSpanRecord) {
++    val start = text.length
++    span.children?.forEach(::append) ?: text.append(span.text)
++    colorToComposeColorOrNull(span.color)?.let {
++      text.setSpan(ForegroundColorSpan(it.toArgb()), start, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
++    }
++  }
++  props.spans?.forEach(::append) ?: text.append(props.text)
++
++  fun line() = StaticLayout.Builder.obtain(text, 0, text.length, paint, measure)
++    .setAlignment(Layout.Alignment.ALIGN_NORMAL)
++    .setTextDirection(TextDirectionHeuristics.RTL)
++    .setIncludePad(true)
++    .setMaxLines(1)
++    .build()
++
++  val desiredWidth = Layout.getDesiredWidth(text, paint)
++  if (desiredWidth > measure) paint.textSize *= (measure - 1).coerceAtLeast(1) / desiredWidth
++  val ink = Rect()
++  val plain = text.toString()
++  paint.getTextBounds(plain, 0, plain.length, ink)
++  val availableHeight = (height - 2 * pad).coerceAtLeast(1)
++  if (ink.height() > availableHeight) {
++    paint.textSize *= availableHeight.toFloat() / ink.height()
++    paint.getTextBounds(plain, 0, plain.length, ink)
++  }
++  val layout = line()
++
++  return Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also {
++    val canvas = Canvas(it)
++    val baseline = (height - ink.height()) / 2f - ink.top
++    canvas.translate(pad.toFloat(), baseline - layout.getLineBaseline(0))
++    layout.draw(canvas)
++  }
++}
+diff --git a/android/src/main/java/expo/modules/widgets/WordWidgetCalendar.kt b/android/src/main/java/expo/modules/widgets/WordWidgetCalendar.kt
+new file mode 100644
+--- /dev/null
++++ b/android/src/main/java/expo/modules/widgets/WordWidgetCalendar.kt
+@@ -0,0 +1,21 @@
++package expo.modules.widgets
++
++import java.time.Instant
++import java.time.ZoneId
++
++/** Public rotation is indexed by civil date and does not require a running app. */
++internal object WordWidgetCalendar {
++  data class Day(val face: Map<String, Any?>, val midnight: Long)
++
++  fun day(rotation: Map<*, *>?, now: Long, zone: ZoneId = ZoneId.systemDefault()): Day? {
++    val start = (rotation?.get("firstUse") as? Number)?.toLong() ?: return null
++    val faces = rotation["faces"] as? List<*> ?: return null
++    if (faces.isEmpty()) return null
++    val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
++    val first = Instant.ofEpochMilli(start).atZone(zone).toLocalDate()
++    val elapsed = (today.toEpochDay() - first.toEpochDay()).coerceAtLeast(0)
++    val face = faces[(elapsed % faces.size).toInt()] as? Map<*, *> ?: return null
++    val midnight = today.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
++    return Day(face.entries.mapNotNull { (key, value) -> (key as? String)?.let { it to value } }.toMap(), midnight)
++  }
++}
+diff --git a/android/src/main/java/expo/modules/widgets/WordWidgetConfiguration.kt b/android/src/main/java/expo/modules/widgets/WordWidgetConfiguration.kt
+new file mode 100644
+--- /dev/null
++++ b/android/src/main/java/expo/modules/widgets/WordWidgetConfiguration.kt
+@@ -0,0 +1,41 @@
++package expo.modules.widgets
++
++import android.content.BroadcastReceiver
++import android.content.ComponentCallbacks
++import android.content.Context
++import android.content.Intent
++import android.content.res.Configuration
++
++/** Launcher RemoteViews outlive an Activity. Recompose when the system changes
++ * the appearance or text scale while the widget process is alive. */
++internal object WordWidgetConfiguration {
++  private var observed = false
++
++  @Synchronized
++  fun observe(context: Context) {
++    if (observed) return
++    observed = true
++    val application = context.applicationContext
++    var prior = Configuration(application.resources.configuration)
++    application.registerComponentCallbacks(object : ComponentCallbacks {
++      override fun onConfigurationChanged(current: Configuration) {
++        val mask = Configuration.UI_MODE_NIGHT_MASK
++        val changed = (current.uiMode and mask) != (prior.uiMode and mask) ||
++          current.fontScale != prior.fontScale || current.densityDpi != prior.densityDpi ||
++          current.locales != prior.locales
++        prior = Configuration(current)
++        if (changed) WidgetsUpdater.reload(application, WordWidgetReveal.NAME)
++      }
++
++      override fun onLowMemory() = Unit
++    })
++  }
++}
++
++class WordWidgetClockReceiver : BroadcastReceiver() {
++  override fun onReceive(context: Context, intent: Intent) {
++    WordWidgetConfiguration.observe(context)
++    val pending = goAsync()
++    WidgetsUpdater.enqueueReload(context, WordWidgetReveal.NAME).invokeOnCompletion { pending?.finish() }
++  }
++}
 diff --git a/android/src/main/java/expo/modules/widgets/WordWidgetReveal.kt b/android/src/main/java/expo/modules/widgets/WordWidgetReveal.kt
 new file mode 100644
 --- /dev/null
 +++ b/android/src/main/java/expo/modules/widgets/WordWidgetReveal.kt
-@@ -0,0 +1,135 @@
+@@ -0,0 +1,147 @@
 +package expo.modules.widgets
 +
 +import android.app.AlarmManager
@@ -328,20 +649,29 @@ new file mode 100644
 +  val evaluatedAt: Long
 +) {
 +  companion object {
++    @JvmOverloads
 +    fun select(stored: Map<String, Any?>, seed: Map<String, Any?>, generation: String,
-+               locked: Boolean, now: Long, ownerEpoch: String): WordRevealFrame {
++               locked: Boolean, now: Long, ownerEpoch: String,
++               public: WordWidgetCalendar.Day? = null): WordRevealFrame {
 +      val frames = (stored["frames"] as? List<*>)?.filterIsInstance<Map<*, *>>().orEmpty()
 +      fun time(frame: Map<*, *>) = (frame["at"] as? Number)?.toLong() ?: Long.MAX_VALUE
 +      val active = frames.lastOrNull { time(it) <= now }?.get("face") as? Map<*, *>
-+      val current = stored.minus("frames").toMutableMap()
-+      active?.forEach { (key, value) -> if (key is String) current[key] = value }
++      val current = active?.entries?.mapNotNull { (key, value) ->
++        (key as? String)?.let { it to value }
++      }?.toMap() ?: stored.minus(listOf("frames", "publicRotation"))
 +      val owner = current["generation"] as? String
 +      val expires = (current["expires"] as? Number)?.toLong() ?: 0L
-+      val face = if (owner == null || (owner.isNotEmpty() && (owner != generation || locked)) ||
-+        (expires > 0 && now >= expires)) seed else current
++      val needsPublic = owner == null || owner.isEmpty() || owner != generation || locked ||
++        (expires > 0 && now >= expires)
++      val face = when {
++        needsPublic && public != null -> public.face
++        needsPublic && owner != "" -> seed
++        else -> current
++      }
 +      val dueAt = (face["dueAt"] as? Number)?.toLong() ?: 0L
-+      val boundary = listOfNotNull(frames.firstOrNull { time(it) > now }?.let(::time),
-+        expires.takeIf { it > now }, dueAt.takeIf { it > now }).minOrNull() ?: Long.MAX_VALUE
++      val boundary = if (needsPublic && public != null) public.midnight else listOfNotNull(
++        frames.firstOrNull { time(it) > now }?.let(::time), expires.takeIf { it > now },
++        dueAt.takeIf { it > now }).minOrNull() ?: Long.MAX_VALUE
 +      val canReveal = face["due"] == false && !(face["gloss"] as? String).isNullOrBlank() &&
 +        (dueAt <= 0 || now < dueAt)
 +      // PendingIntents and reveal preferences contain an opaque identity, never the answer.
@@ -366,10 +696,13 @@ new file mode 100644
 +
 +  fun current(context: Context): WordRevealFrame {
 +    val seed = WidgetsLayoutRegistry.initialProps(context, NAME).orEmpty()
-+    return WordRevealFrame.select(WidgetsLayoutRegistry.props(context, NAME) ?: seed, seed,
++    val stored = WidgetsLayoutRegistry.props(context, NAME) ?: seed
++    val now = System.currentTimeMillis()
++    val rotation = stored["publicRotation"] as? Map<*, *>
++    return WordRevealFrame.select(stored, seed,
 +      prefs(context).getString("generation", "").orEmpty(),
-+      context.getSystemService(KeyguardManager::class.java).isDeviceLocked, System.currentTimeMillis(),
-+      prefs(context).getString("revealEpoch", "").orEmpty())
++      context.getSystemService(KeyguardManager::class.java).isDeviceLocked, now,
++      prefs(context).getString("revealEpoch", "").orEmpty(), WordWidgetCalendar.day(rotation, now))
 +  }
 +
 +  // Call with the same preferences monitor as setOwner and the final launcher write.
@@ -507,12 +840,12 @@ diff --git a/ios/Widgets/EntryView.swift b/ios/Widgets/EntryView.swift
  import SwiftUI
  import ExpoModulesCore
  import WidgetKit
-@@ -10,8 +11,29 @@
+@@ -10,8 +11,30 @@
      self.entry = entry
    }
  
 +  private static let loadArabicFont: Void = {
-+    if let url = Bundle.main.url(forResource: "NotoSans", withExtension: "ttf") {
++    if let url = Bundle.main.url(forResource: "Amiri", withExtension: "ttf") {
 +      CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
 +    }
 +  }()
@@ -533,11 +866,12 @@ diff --git a/ios/Widgets/EntryView.swift b/ios/Widgets/EntryView.swift
    private var widgetEnvironment: [String: Any] {
      var env: [String: Any] = getWidgetEnvironment(environment: environment)
 +    _ = Self.loadArabicFont
-+    env["cover"] = Bundle.main.url(forResource: "books", withExtension: "jpg")?.absoluteString
++    env["wordDesign"] = WidgetsLayoutRegistry.initialProps(for: entry.name)?["design"]
++    env["accessibilityText"] = environment.dynamicTypeSize.isAccessibilitySize
      env["timestamp"] = Int(entry.date.timeIntervalSince1970 * 1000)
      return env
    }
-@@ -26,7 +48,7 @@
+@@ -26,7 +49,7 @@
  
    public var body: some View {
      if let layout = WidgetsLayoutRegistry.layout(for: entry.name) {
@@ -560,3 +894,21 @@ diff --git a/ios/Widgets/TimelineProvider.swift b/ios/Widgets/TimelineProvider.s
      let entries = parseTimeline(identifier: groupIdentifier, name: name, family: context.family)
      completion(entries.first ?? WidgetsTimelineEntry(date: Date(), name: name, props: WidgetsLayoutRegistry.initialProps(for: name), entryIndex: nil))
    }
+diff --git a/ios/Widgets/WidgetsLayoutRegistry.swift b/ios/Widgets/WidgetsLayoutRegistry.swift
+--- a/ios/Widgets/WidgetsLayoutRegistry.swift
++++ b/ios/Widgets/WidgetsLayoutRegistry.swift
+@@ -8,5 +8,7 @@
+ public enum WidgetsLayoutRegistry {
+   public static func layout(for name: String) -> String? {
++    if name == "WordInContext" || name == "OpenText",
++       let embedded = embeddedWidgets[name]?.layout { return embedded }
+     if let layout = WidgetsStorage.getString(forKey: "__expo_widgets_\(name)_layout"),
+        !layout.isEmpty {
+       return layout
+@@ -21,4 +23,6 @@
+   public static func initialProps(for name: String) -> [String: Any]? {
++    if name == "WordInContext" || name == "OpenText",
++       let embedded = embeddedWidgets[name]?.initialProps { return embedded }
+     if let props = WidgetsStorage.getDictionary(forKey: "__expo_widgets_\(name)_initial_props") {
+       return props
+     }

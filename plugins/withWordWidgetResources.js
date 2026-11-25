@@ -8,15 +8,6 @@ module.exports = config =>
     withDangerousMod(config, [
       'android',
       mod => {
-        const res = path.join(
-          mod.modRequest.platformProjectRoot,
-          'app/src/main/res/drawable-nodpi',
-        );
-        fs.mkdirSync(res, { recursive: true });
-        fs.copyFileSync(
-          path.join(mod.modRequest.projectRoot, 'assets/first-page/books.jpg'),
-          path.join(res, 'word_widget_books.jpg'),
-        );
         const provider = path.join(
           mod.modRequest.platformProjectRoot,
           'app/src/main/res/xml/word_in_context_info.xml',
@@ -44,16 +35,9 @@ module.exports = config =>
       if (!target[1].buildPhases.some(phase => phase.comment === label)) {
         project.addBuildPhase([], 'PBXShellScriptBuildPhase', label, target[0], {
           shellPath: '/bin/sh',
-          shellScript:
-            'set -eu\ncp "$SCRIPT_INPUT_FILE_0" "$SCRIPT_OUTPUT_FILE_0"\ncp "$SCRIPT_INPUT_FILE_1" "$SCRIPT_OUTPUT_FILE_1"',
-          inputPaths: [
-            '"$(SRCROOT)/../assets/fonts/NotoSans.ttf"',
-            '"$(SRCROOT)/../assets/first-page/books.jpg"',
-          ],
-          outputPaths: [
-            '"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/NotoSans.ttf"',
-            '"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/books.jpg"',
-          ],
+          shellScript: 'set -eu\ncp "$SCRIPT_INPUT_FILE_0" "$SCRIPT_OUTPUT_FILE_0"',
+          inputPaths: ['"$(SRCROOT)/../assets/fonts/Amiri.ttf"'],
+          outputPaths: ['"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Amiri.ttf"'],
         });
       }
       return result;

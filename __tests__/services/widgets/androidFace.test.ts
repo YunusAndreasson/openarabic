@@ -1,21 +1,25 @@
 import { expect, jest, test } from '@jest/globals';
 import { runInNewContext } from 'node:vm';
 import { wordWidget } from '@/widgets/WordInContext.android';
-import { initialFace } from '@/widgets/edition';
+import { initialFace, type WordFace } from '@/widgets/edition';
 
 jest.mock('expo-widgets', () => ({
   createWidget: (_name: string, render: unknown, seed: unknown) => ({ render, seed }),
 }));
 jest.mock('@expo/ui/jetpack-compose', () => ({
+  Box: 'Box',
   Button: 'Button',
   Column: 'Column',
-  Image: 'Image',
   Row: 'Row',
   Text: 'Text',
 }));
 jest.mock('@expo/ui/jetpack-compose/modifiers', () => ({
   background: () => null,
+  cornerRadius: () => null,
   fillMaxSize: () => null,
+  fillMaxWidth: () => null,
+  height: () => null,
+  padding: () => null,
   paddingAll: () => null,
   size: () => null,
 }));
@@ -23,7 +27,8 @@ const widget = wordWidget as unknown as {
   render: (props: unknown, env: unknown) => unknown;
   seed: typeof initialFace;
 };
-function face(props: typeof initialFace, revealed = false, widthDp = 328) {
+
+function face(props: WordFace, revealed = false, widthDp = 328, fontScale = 1, allowed = true) {
   const view = (type: string, attributes: unknown) => ({ type, attributes });
   const fn =
     typeof widget.render === 'function'
@@ -32,67 +37,53 @@ function face(props: typeof initialFace, revealed = false, widthDp = 328) {
           Date,
           _jsx: view,
           _jsxs: view,
+          Box: 'Box',
           Button: 'Button',
           Column: 'Column',
-          Image: 'Image',
           Row: 'Row',
           Text: 'Text',
           background: () => null,
+          cornerRadius: () => null,
           fillMaxSize: () => null,
+          fillMaxWidth: () => null,
+          height: () => null,
+          padding: () => null,
           paddingAll: () => null,
           size: () => null,
         }) as (props: unknown, env: unknown) => unknown);
   return JSON.stringify(
-    fn(
-      { ...widget.seed, ...props },
-      { widthDp, heightDp: 150, seed: widget.seed, wordRevealed: revealed },
-    ),
+    fn(props, {
+      widthDp,
+      heightDp: 158,
+      fontScale,
+      seed: widget.seed,
+      wordRevealed: revealed,
+      wordCanReveal: allowed,
+    }),
   );
 }
-test.each([130, 220, 328])(
-  'a %i dp widget starts Arabic-only, including the TalkBack tree',
-  width => {
-    const tree = face({ ...initialFace, reveal: true }, false, width);
-    expect(tree).toContain(initialFace.arabic);
-    for (const hidden of [
-      initialFace.gloss,
-      initialFace.credit,
-      initialFace.kind,
-      initialFace.status,
-    ])
-      expect(tree).not.toContain(hidden);
-    expect(tree).toContain('Button');
-    expect(tree.includes(initialFace.line)).toBe(width >= 208);
-  },
-);
-test('only an eligible native instance reveal can insert a gloss', () => {
-  expect(face(initialFace, true)).toContain(initialFace.gloss);
-  expect(face({ ...initialFace, generation: 'private' })).not.toContain(initialFace.gloss);
-  for (const restriction of [
-    { due: true },
-    { dueAt: Date.now() - 1 },
-    { expires: Date.now() - 1 },
-  ]) {
-    const tree = face({ ...initialFace, ...restriction }, true);
-    expect(tree).not.toContain(initialFace.gloss);
-    expect(tree).not.toContain('Button');
-  }
+
+test.each([130, 220, 328])('a %i dp widget hides its gloss until an explicit reveal', width => {
+  const tree = face({ ...initialFace, reveal: true }, false, width);
+  expect(tree).toContain(initialFace.arabic);
+  expect(tree).toContain('Reveal meaning');
+  expect(tree).not.toContain(initialFace.gloss);
+  expect(tree.includes(initialFace.line)).toBe(width >= 296);
+  expect(tree.includes(initialFace.credit)).toBe(width >= 208);
 });
 
-test.each([130, 220, 328])(
-  'a not-due personal face visibly labels its reveal control at %i dp',
-  width => {
-    const personal = {
-      ...initialFace,
-      kind: 'Practice word',
-      generation: 'learner',
-      dueAt: Date.now() + 60000,
-    };
-    const tree = face(personal, false, width);
-    expect(tree).toContain('Practice word');
-    expect(tree).toContain('Reveal meaning');
-    expect(tree).not.toContain(personal.gloss);
-    expect(face(personal, true, width)).not.toContain('Reveal meaning');
-    expect(face({ ...personal, due: true }, false, width)).not.toContain('Reveal meaning');
-  },
-);
+test('an eligible native instance reveal displays its gloss and preserves the word link', () => {
+  expect(face(initialFace, true)).toContain(initialFace.gloss);
+  const tree = face({ ...initialFace, due: true }, true, 328, 1, false);
+  expect(tree).not.toContain(initialFace.gloss);
+  expect(tree).not.toContain('Reveal meaning');
+  expect(tree).toContain('"target":"word"');
+});
+
+test('large text gives the main word and response priority over the wide context line', () => {
+  const tree = face(initialFace, true, 328, 2);
+  expect(tree).toContain(initialFace.arabic);
+  expect(tree).toContain(initialFace.gloss);
+  expect(tree).not.toContain(initialFace.line);
+  expect(tree).not.toContain(initialFace.credit);
+});

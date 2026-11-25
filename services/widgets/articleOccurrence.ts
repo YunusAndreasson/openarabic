@@ -19,6 +19,20 @@ export function articleOccurrence(
     form: word.word_form,
     gloss: word.english,
     sourceCredit: credit,
+    contextBefore:
+      i < 0
+        ? undefined
+        : line
+            .slice(start, i)
+            .map(w => w.word_form)
+            .join(' '),
+    contextAfter:
+      i < 0
+        ? undefined
+        : line
+            .slice(i + 1, start + 3)
+            .map(w => w.word_form)
+            .join(' '),
     contextLine:
       i < 0
         ? undefined

@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="word_widget_open_text">Open text</string>
+    <string name="word_widget_edition">Open text</string>
     <string name="word_widget_seed" translatable="false">كَنْزٍ</string>
-    <string name="word_widget_read">Read the line</string>
+    <string name="word_widget_read">Read passage</string>
+    <color name="word_widget_paper">#f2f7f4</color>
+    <color name="word_widget_ink">#1a2b23</color>
+    <color name="word_widget_caption">#145735</color>
 </resources>

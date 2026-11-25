@@ -1,0 +1,5 @@
+<resources>
+    <color name="word_widget_paper">#192b22</color>
+    <color name="word_widget_ink">#fcfffd</color>
+    <color name="word_widget_caption">#9ab5a4</color>
+</resources>

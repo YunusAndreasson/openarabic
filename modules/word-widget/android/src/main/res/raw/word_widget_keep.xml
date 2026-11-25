@@ -1,2 +1,2 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@drawable/word_widget_books" />
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@font/amiri,@layout/word_widget_public" />
