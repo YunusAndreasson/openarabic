@@ -32,11 +32,10 @@ export type ArticleOpenSource = (typeof ARTICLE_OPEN_SOURCES)[number];
 export const readArticleOpenSource = (param: string | undefined): ArticleOpenSource | 'other' =>
   ARTICLE_OPEN_SOURCES.find(source => source === param) ?? 'other';
 
-export const getFirstPageWidgetRoute = (position: string, word: boolean) =>
-  ({
-    pathname: ROUTE_PATHS.FIRST_PAGE,
-    params: { widgetPosition: position, widgetWord: word ? 'true' : undefined },
-  }) satisfies Href;
+export function getAccountFormRoute(form: 'sign-in' | 'sign-up', saveIntent?: string) {
+  const pathname = form === 'sign-in' ? ROUTE_PATHS.AUTH_SIGN_IN : ROUTE_PATHS.AUTH_SIGN_UP;
+  return saveIntent ? ({ pathname, params: { saveIntent } } satisfies Href) : pathname;
+}
 
 interface ArticleRouteOptions {
   /**
@@ -47,13 +46,14 @@ interface ArticleRouteOptions {
   readonly disableAutoScroll?: boolean;
   /** The sentence to bring into view. */
   readonly sentenceId?: number;
+  readonly wordId?: number;
   /** What opened the reader, for analytics only. */
   readonly source?: ArticleOpenSource;
 }
 
 export const getArticleRoute = (
   id: ArticleId,
-  { disableAutoScroll, sentenceId, source }: ArticleRouteOptions = {},
+  { disableAutoScroll, sentenceId, wordId, source }: ArticleRouteOptions = {},
 ) =>
   ({
     pathname: ROUTE_PATHS.ARTICLE,
@@ -62,6 +62,7 @@ export const getArticleRoute = (
       // The reader tests `=== 'true'`; left out rather than 'false'.
       disableAutoScroll: disableAutoScroll ? 'true' : undefined,
       sentenceId,
+      ...(wordId !== undefined && { wordId }),
       source,
     },
   }) satisfies Href;

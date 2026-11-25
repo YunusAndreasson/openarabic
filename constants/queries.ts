@@ -1,3 +1,5 @@
+import { publicArticleCache } from '@/services/publicArticleCache';
+import type { BookmarkItem } from '@/types/bookmark.types';
 /**
  * Unified query management with TanStack Query v5
  *
@@ -321,7 +323,12 @@ export const articleQueries = {
   all: () =>
     queryOptions({
       queryKey: ['articles'] as const,
-      queryFn: ({ signal }) => articlesService.getArticles(managedRequest(signal)),
+      networkMode: 'offlineFirst',
+      refetchOnReconnect: 'always',
+      queryFn: ({ signal }) =>
+        publicArticleCache.read('catalog.json', () =>
+          articlesService.getArticles(managedRequest(signal)),
+        ),
       ...CACHE_TIMES.ARTICLES, // Infinity staleTime
       retry: retryWhileOnline(3),
     }),
@@ -334,8 +341,12 @@ export const articleQueries = {
   detail: (articleId: ArticleId | undefined) =>
     queryOptions({
       queryKey: ['article', articleId] as const,
+      networkMode: 'offlineFirst',
       queryFn: articleId
-        ? ({ signal }) => articlesService.getArticleById(articleId, managedRequest(signal))
+        ? ({ signal }) =>
+            publicArticleCache.read(`article-${articleId}.json`, () =>
+              articlesService.getArticleById(articleId, managedRequest(signal)),
+            )
         : skipToken,
       ...CACHE_TIMES.ARTICLES, // Infinity staleTime
       retry: retryWhileOnline(2),
@@ -521,6 +532,25 @@ export const audioQueries = {
       meta: {
         errorReport: { ...READING_LIST_TRACKS_ERROR_REPORT, analyticsProperties: { userId } },
       },
+    }),
+
+  playlist: (items: readonly BookmarkItem[], audioPreference: AudioLanguage, enabled: boolean) =>
+    queryOptions({
+      queryKey: [
+        'playlist-tracks',
+        audioPreference,
+        items.map(({ article_id, articles }) => [
+          article_id,
+          articles.audio_url,
+          articles.audio_url_bilingual,
+        ]),
+      ] as const,
+      enabled: enabled && items.length > 0,
+      networkMode: 'always',
+      queryFn: () => buildReadingListTracks(items, audioPreference),
+      ...CACHE_TIMES.MEDIUM,
+      placeholderData: [],
+      meta: { errorReport: READING_LIST_TRACKS_ERROR_REPORT },
     }),
 
   /**

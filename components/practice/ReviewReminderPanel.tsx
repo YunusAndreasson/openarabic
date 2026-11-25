@@ -50,7 +50,7 @@ export function ReviewReminderPanel({
   ) : null;
   const colors = useColors();
   const exit =
-    onContinue ?? (state === 'recovery' ? () => router.push(ROUTE_PATHS.FIRST_PAGE) : undefined);
+    onContinue ?? (state === 'recovery' ? () => router.push(ROUTE_PATHS.EXPLORE_TAB) : undefined);
   const reading = exit ? (
     <ThemedButton
       title={STRINGS.CONTINUE_READING}

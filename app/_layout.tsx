@@ -54,6 +54,7 @@ import { TIMING_CONSTANTS } from '@/constants/animation';
 import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
 import { ROUTE_PATHS, SHEET_ROUTES } from '@/constants/routes';
 import { useAnalyticsSuperProperties } from '@/hooks/app/useAnalyticsSuperProperties';
+import { GuestLibraryImport } from '@/hooks/app/useGuestLibraryImport';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useAppOpenTracking } from '@/hooks/app/useAppOpenTracking';
 import { useScreenViewTracking } from '@/hooks/app/useScreenViewTracking';
@@ -97,7 +98,10 @@ import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
 // rather than from inside a page, where an animation set by <Stack.Screen
 // options> only applies after the screen has mounted. Their headers are
 // already hidden by the root screen options.
+export const unstable_settings = { anchor: '(tabs)' };
+
 const FADE_ROUTE_OPTIONS = { animation: 'fade' } as const;
+const AUTH_ROUTE_OPTIONS = { animation: 'fade', presentation: 'modal' } as const;
 const ROOT_SCREEN_LISTENERS = {
   transitionEnd: (event: { data: { closing: boolean } }) => {
     if (event.data.closing) flushPendingSheetNavigation();
@@ -211,11 +215,11 @@ const queryClient = new QueryClient({
 // sees a rehydrated mutation — see registerMutationDefaults' own comment for
 // why a mutation resumed with no registered default fails outright.
 registerMutationDefaults(queryClient);
-registerAccountStorageReset(async () => {
+registerAccountStorageReset(async deletedOwner => {
   invalidateQueryPersistence();
   await queryClient.cancelQueries();
   queryClient.clear();
-  await resetAccountPersistence();
+  await resetAccountPersistence(deletedOwner);
 });
 
 // A mutation paused offline (networkMode 'online') is dehydrated with the rest
@@ -451,7 +455,7 @@ function AppContent() {
     // Auth must be fully resolved (not loading anymore)
     const authIsReady = !isAuthLoading;
 
-    // The guest route reads from the bundle. Only the account home awaits its catalog.
+    // The shared Explore route owns guest catalog loading and offline feedback.
     const contentIsReady = !userId || isLoaded;
 
     // CRITICAL: Require fonts AND auth AND content to be ready
@@ -591,12 +595,6 @@ function AppContent() {
     };
   }, []);
 
-  // Auth-gated navigation is handled declaratively below via <Stack.Protected>
-  // guards on the route groups. Guarded routes stay registered; while a guard
-  // fails they render a redirect to the group's `redirectTo`, so a guard flip
-  // and a deep link into the other group both land where app/index.tsx would
-  // send them — no imperative router.replace needed.
-
   const containerStyle = useMemo(
     () => [styles.container, { backgroundColor: colors.background }],
     [colors.background],
@@ -624,6 +622,7 @@ function AppContent() {
         <FSRSDataProvider userId={session?.user?.id}>
           <VoiceGradingProvider signedIn={isAuthenticated}>
             <GlobalAudioStateProvider>
+              <GuestLibraryImport owner={userId} />
               <Stack
                 screenOptions={rootScreenOptions}
                 // A screen that throws is replaced by this on its own, instead of the
@@ -679,7 +678,7 @@ function AppContent() {
                     gestureEnabled: false,
                   })}
                 />
-                <Stack.Protected guard={isAuthenticated} redirectTo={ROUTE_PATHS.AUTH}>
+                <Stack.Protected guard={isAuthenticated} redirectTo={ROUTE_PATHS.PRACTICE_TAB}>
                   <Stack.Screen
                     name="review"
                     options={createNavigationOptions(colors, {
@@ -690,19 +689,23 @@ function AppContent() {
                       MiniPlayer to stand down (SHEET_ROUTES). Stack.Protected
                       walks its children with Children.forEach, so the array
                       flattens like any other children. */}
-                  {Object.entries(SHEET_ROUTES).map(([name, detents]) => (
-                    <Stack.Screen
-                      key={name}
-                      name={name}
-                      options={createSheetOptions(colors, detents)}
-                    />
-                  ))}
+                  {Object.entries(SHEET_ROUTES)
+                    .filter(([name]) => name !== 'sleep-timer')
+                    .map(([name, detents]) => (
+                      <Stack.Screen
+                        key={name}
+                        name={name}
+                        options={createSheetOptions(colors, detents)}
+                      />
+                    ))}
                 </Stack.Protected>
 
-                {/* Unauthenticated routes — on sign-in auth redirects to Explore */}
-                <Stack.Protected guard={!isAuthenticated} redirectTo={ROUTE_PATHS.EXPLORE_TAB}>
-                  <Stack.Screen name="auth" options={FADE_ROUTE_OPTIONS} />
-                </Stack.Protected>
+                <Stack.Screen
+                  name="sleep-timer"
+                  options={createSheetOptions(colors, SHEET_ROUTES['sleep-timer'])}
+                />
+
+                <Stack.Screen name="auth" options={AUTH_ROUTE_OPTIONS} />
 
                 {/* Unguarded: a reset link opens it signed in or signed out */}
                 <Stack.Screen name="reset-password" options={FADE_ROUTE_OPTIONS} />

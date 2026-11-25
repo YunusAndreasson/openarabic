@@ -7,7 +7,7 @@ import { useIsFocused } from 'expo-router';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
+import { useStudyWordMutations, type AddRefusal } from '@/hooks/articles/useStudyWordMutations';
 import { analytics } from '@/services/analytics';
 import {
   canResumeReaderSave,
@@ -50,6 +50,7 @@ type AddWord = ReturnType<typeof useStudyWordMutations>['handleRootPress'];
 export async function completeReaderSave(save: ReaderSave, owner: string, addWord: AddWord) {
   if (save.owner !== owner || save.phase !== 'ready' || running.has(save.id)) return;
   running.add(save.id);
+  const blocked: { refusal?: AddRefusal } = {};
   const lookup = () =>
     studyWordsFSRSService.getFSRSWords(owner, { rootId: save.word.rootId, limit: 1 });
   try {
@@ -75,6 +76,9 @@ export async function completeReaderSave(save: ReaderSave, owner: string, addWor
         expectedOwner: owner,
         method: save.method,
         attribution: saveProperties(save),
+        onRefused: refusal => {
+          blocked.refusal = refusal;
+        },
         onConfirmed: value => {
           resultState.changed = value;
         },
@@ -105,6 +109,7 @@ export async function completeReaderSave(save: ReaderSave, owner: string, addWor
       phase: 'failed',
       keepReading: false,
       offline: false,
+      refusal: blocked.refusal,
     }));
     void analytics.track(ANALYTICS_EVENTS.SAVE_INTENT_RESOLVED, {
       ...saveProperties(save),

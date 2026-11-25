@@ -83,6 +83,29 @@ const initialState: SettingsState = {
   voiceDebugEnabled: false,
 };
 
+/** Reading, listening and interface choices belong to this installation. */
+export function deviceSettings(state: SettingsState = initialState): SettingsState {
+  const {
+    arabicFont,
+    arabicFontSize,
+    audioLanguagePreference,
+    articlePlaybackRate,
+    audioShuffleEnabled,
+    wordTapShowsTooltip,
+    hapticsEnabled,
+  } = state;
+  return {
+    ...initialState,
+    arabicFont,
+    arabicFontSize,
+    audioLanguagePreference,
+    articlePlaybackRate,
+    audioShuffleEnabled,
+    wordTapShowsTooltip,
+    hapticsEnabled,
+  };
+}
+
 const settingsSlice = createSlice({
   name: 'settings',
   initialState,

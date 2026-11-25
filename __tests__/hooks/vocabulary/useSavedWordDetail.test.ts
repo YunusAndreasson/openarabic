@@ -80,6 +80,17 @@ describe('useSavedWordDetail', () => {
     expect(result.current.word?.root_id).toBe(rootId(42));
   });
 
+  test('a warm link to an unsaved root does not reuse the previous word', () => {
+    mockAllWords = [saved(42)];
+    const { result, rerender } = renderHook(
+      ({ id }: { id: number }) => useSavedWordDetail(rootId(id)),
+      { initialProps: { id: 42 } },
+    );
+    expect(result.current.word?.root_id).toBe(rootId(42));
+    rerender({ id: 2147483647 });
+    expect(result.current.word).toBeUndefined();
+  });
+
   test('a family member opens only when it is saved too', () => {
     mockAllWords = [saved(42), saved(7)];
 

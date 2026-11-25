@@ -14,8 +14,8 @@ test('a cold offline Explore offers retry and finishes loading after reconnect',
   jest.mocked(articlesService.getArticles).mockResolvedValue([]);
   try {
     const { result } = renderHook(() => useExploreCatalog(false), { wrapper });
+    await waitFor(() => expect(result.current.hasCatalogFailed).toBe(true));
     expect(result.current.isCatalogLoading).toBe(false);
-    expect(result.current.hasCatalogFailed).toBe(true);
     expect(articlesService.getArticles).not.toHaveBeenCalled();
 
     await act(async () => {
@@ -23,7 +23,7 @@ test('a cold offline Explore offers retry and finishes loading after reconnect',
       onlineManager.setOnline(true);
     });
     await waitFor(() => expect(result.current.hasCatalogFailed).toBe(false));
-    expect(result.current.isCatalogLoading).toBe(false);
+    await waitFor(() => expect(result.current.isCatalogLoading).toBe(false));
     expect(articlesService.getArticles).toHaveBeenCalledTimes(1);
   } finally {
     queryClient.clear();

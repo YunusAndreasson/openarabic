@@ -41,5 +41,11 @@ export default function WordDetailSheet(): JSX.Element {
   // a valid id.
   const rootId = useRootIdParam();
 
-  return <WordDetailContent hasValidRootId={rootId !== undefined} rootId={rootId ?? NO_ROOT_ID} />;
+  return (
+    <WordDetailContent
+      key={rootId ?? 'missing'}
+      hasValidRootId={rootId !== undefined}
+      rootId={rootId ?? NO_ROOT_ID}
+    />
+  );
 }

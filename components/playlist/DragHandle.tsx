@@ -1,5 +1,5 @@
 import { Icon } from '@/components/ui';
-import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { Alert, Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -28,6 +28,14 @@ export const DragHandle = ({
 }: DragHandleProps) => {
   const colors = useColors();
 
+  function showReorderActions() {
+    Alert.alert(accessibilityLabel, undefined, [
+      { text: STRINGS.CANCEL, style: 'cancel' },
+      ...(moveEarlier ? [{ text: STRINGS.PLAYLIST_MOVE_EARLIER, onPress: moveEarlier }] : []),
+      ...(moveLater ? [{ text: STRINGS.PLAYLIST_MOVE_LATER, onPress: moveLater }] : []),
+    ]);
+  }
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -42,6 +50,7 @@ export const DragHandle = ({
         if (nativeEvent.actionName === 'later') moveLater?.();
       }}
       style={[styles.container, style]}
+      onPress={moveEarlier || moveLater ? showReorderActions : undefined}
       onLongPress={onLongPress}
       delayLongPress={delayLongPress}
       android_ripple={createAndroidRipple(colors)}

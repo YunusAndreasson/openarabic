@@ -32,6 +32,7 @@ export interface ReaderSave {
   reviewOffered?: boolean;
   verified?: boolean;
   offline?: boolean;
+  refusal?: { reason: 'due-backlog' | 'daily-limit'; message: string };
   owner?: string;
   phase: 'auth' | 'ready' | 'failed' | 'saved' | 'existing';
   attempt?: { id: string; provider: SaveProvider };

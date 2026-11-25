@@ -1,3 +1,4 @@
+import { publicArticleCache } from '@/services/publicArticleCache';
 import { accountTeardown } from '@/services/accountLifecycle';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -15,6 +16,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import { ensurePermissions } from '@/services/notificationService';
 import { ReadingProgressService } from '@/services/readingProgress';
+import { guestProgressReset } from '@/store/guestLibrarySlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { reminderClockSet, remindersToggled } from '@/store/settingsSlice';
 import { ToastType } from '@/types/enums';
@@ -52,7 +54,7 @@ export const useAccountScreen = () => {
     const loadCacheSize = async () => {
       try {
         const audioSize = await getCacheSize();
-        setCacheSize(audioSize);
+        setCacheSize(audioSize + publicArticleCache.size());
       } catch (error) {
         void handleError(error, { showToast: false });
       }
@@ -83,6 +85,7 @@ export const useAccountScreen = () => {
               try {
                 // Clear audio cache
                 await clearCache();
+                publicArticleCache.clear();
                 setCacheSize(0);
 
                 // Drop every cached query — but only the queries. A paused
@@ -126,7 +129,6 @@ export const useAccountScreen = () => {
               try {
                 if (!user) return;
                 await accountTeardown.begin(user.id, 'signOut');
-                router.replace(ROUTE_PATHS.AUTH);
               } catch (error) {
                 Alert.alert(
                   STRINGS.ERROR,
@@ -141,11 +143,6 @@ export const useAccountScreen = () => {
   }, [user]);
 
   const handleResetReadingProgress = () => {
-    if (!user?.id) {
-      Alert.alert(STRINGS.ERROR, STRINGS.NO_USER_ID_AVAILABLE);
-      return;
-    }
-
     // No haptic here: opening a confirmation is not an error. The alert's red
     // button carries the warning.
     Alert.alert(
@@ -163,6 +160,16 @@ export const useAccountScreen = () => {
             void (async () => {
               try {
                 // Delete all reading progress from database (or reset to 0 if RLS blocks DELETE)
+                if (!user) {
+                  dispatch(guestProgressReset());
+                  lightFeedback();
+                  showToast(
+                    STRINGS.READING_PROGRESS_RESET_SUCCESSFULLY,
+                    undefined,
+                    ToastType.SUCCESS,
+                  );
+                  return;
+                }
                 await ReadingProgressService.deleteAllProgress(user.id);
 
                 // Reset, not invalidate: the old positions must not stay on

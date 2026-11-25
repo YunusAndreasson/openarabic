@@ -29,7 +29,7 @@ const FONT_DISPLAY_NAMES: Record<ArabicFontName, string> = {
  * on the sub-screen, which meant the one setting people go looking for was
  * invisible from the settings screen entirely.
  */
-export const ReadingSection = memo(() => {
+export const ReadingSection = memo(({ onReset }: { onReset?: () => void }) => {
   const dispatch = useAppDispatch();
 
   // Through the selectors, not the raw fields: an unknown persisted font or an
@@ -74,6 +74,9 @@ export const ReadingSection = memo(() => {
         toggleValue={wordTapShowsTooltip}
         onToggleChange={handleWordTapPreviewToggle}
       />
+      {onReset && (
+        <SettingsCard icon="refresh" label={STRINGS.RESET_READING_PROGRESS} onPress={onReset} />
+      )}
     </SettingsSection>
   );
 });

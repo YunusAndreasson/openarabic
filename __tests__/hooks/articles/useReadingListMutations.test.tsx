@@ -44,6 +44,8 @@ jest.mock('@/components/providers', () => ({
   useToast: () => ({ showToast: (...args: unknown[]) => mockShowToast(...args) }),
 }));
 
+jest.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ user: { id: 'test-user-id' } }) }));
+
 jest.mock('@/services/supabase', () => ({
   checkAuthentication: () => mockCheckAuthentication(),
 }));

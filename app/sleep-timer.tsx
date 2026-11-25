@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BottomSheetHeader, OptionCard } from '@/components/common';
+import { BottomSheetHeader } from '@/components/common';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { ThemedView } from '@/components/primitives/ThemedView';
@@ -73,14 +73,15 @@ export default function SleepTimerScreen(): JSX.Element {
 
   return (
     <ThemedView
+      scrollable
       useSafeArea={false}
       style={[
         styles.container,
         {
           backgroundColor: colors.elevation1,
-          paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE,
         },
       ]}
+      contentContainerStyle={{ paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }}
     >
       <BottomSheetHeader title={STRINGS.SLEEP_TIMER} />
 
@@ -95,15 +96,15 @@ export default function SleepTimerScreen(): JSX.Element {
               const label = STRINGS.SLEEP_TIMER_MINUTES.replace('{minutes}', String(minutes));
               return (
                 <View key={minutes} style={styles.optionContainer}>
-                  <OptionCard
-                    accessibilityLabel={label}
-                    selected={selectedMinutes === minutes}
+                  <ThemedButton
+                    title={label}
+                    variant={selectedMinutes === minutes ? 'tonal' : 'outlined'}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: selectedMinutes === minutes }}
+                    fullWidth
+                    allowTitleWrap
                     onPress={handleOptionSelect(minutes)}
-                  >
-                    <ThemedText type="body" style={styles.optionLabel}>
-                      {label}
-                    </ThemedText>
-                  </OptionCard>
+                  />
                 </View>
               );
             })}
@@ -145,9 +146,6 @@ const styles = StyleSheet.create({
     width: '50%',
     paddingHorizontal: LAYOUT.SPACING.TINY,
     paddingVertical: LAYOUT.SPACING.TINY,
-  },
-  optionLabel: {
-    textAlign: 'center',
   },
   activeTimerContainer: {
     alignItems: 'center',

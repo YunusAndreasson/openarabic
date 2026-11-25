@@ -7,6 +7,8 @@ import { articleQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
+import { guestArticlesAdded } from '@/store/guestLibrarySlice';
+import { guestBookmark } from '@/utils/guestLibrary';
 import { useAppDispatch } from '@/store/hooks';
 import { resetEditMode } from '@/store/editModeSlice';
 import { ToastType } from '@/types/enums';
@@ -46,8 +48,8 @@ export function useAddBeginnerArticles(
   const { data: allArticles = [] } = useQuery(articleQueries.all());
 
   // Get beginner articles
-  const beginnerArticleIds = useMemo(
-    () => getBeginnerArticles(allArticles, BEGINNER_ARTICLE_COUNT).map(a => a.id),
+  const beginnerArticles = useMemo(
+    () => getBeginnerArticles(allArticles, BEGINNER_ARTICLE_COUNT),
     [allArticles],
   );
 
@@ -74,10 +76,23 @@ export function useAddBeginnerArticles(
   });
 
   return {
-    addArticles: () => mutation.mutate({ userId: user?.id, articleIds: beginnerArticleIds }),
+    addArticles: () => {
+      if (user?.id) {
+        mutation.mutate({
+          userId: user.id,
+          articleIds: beginnerArticles.map(article => article.id),
+        });
+      } else if (beginnerArticles.length > 0) {
+        const now = new Date().toISOString();
+        dispatch(guestArticlesAdded(beginnerArticles.map(article => guestBookmark(article, now))));
+        dispatch(resetEditMode('playlist'));
+        successFeedback();
+        options?.onSuccess?.();
+      }
+    },
     isLoading: mutation.isPending,
     isSuccess: mutation.isSuccess,
     isError: mutation.isError,
-    hasArticlesAvailable: beginnerArticleIds.length > 0,
+    hasArticlesAvailable: beginnerArticles.length > 0,
   };
 }

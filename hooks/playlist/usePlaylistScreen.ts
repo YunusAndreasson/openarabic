@@ -9,6 +9,7 @@ import { useSortedEnhancedTracks } from '@/hooks/playlist/useSortedEnhancedTrack
 import { enhancedAudioService } from '@/services/audioPlaylist';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { guestArticleRemoved } from '@/store/guestLibrarySlice';
 import { removeFromCustomOrder } from '@/store/playlistSlice';
 import { selectAudioLanguage } from '@/store/settingsSlice';
 import type { ArticleId } from '@/types/branded.types';
@@ -20,7 +21,7 @@ import { selectionFeedback } from '@/utils/haptics';
  * Skips the first focus (mount) and refetches on subsequent focuses
  * Automatically respects query's staleTime configuration
  */
-function useRefreshOnFocus<T>(refetch: () => Promise<T>) {
+function useRefreshOnFocus<T>(refetch: () => Promise<T>, enabled: boolean) {
   const firstTimeRef = useRef(true);
 
   useFocusEffect(
@@ -29,8 +30,8 @@ function useRefreshOnFocus<T>(refetch: () => Promise<T>) {
         firstTimeRef.current = false;
         return;
       }
-      void refetch();
-    }, [refetch]),
+      if (enabled) void refetch();
+    }, [refetch, enabled]),
   );
 }
 
@@ -46,8 +47,9 @@ export const usePlaylistScreen = () => {
   // fetch lands, so `isLoading` never turns true and an empty placeholder reads
   // as an empty playlist. While the placeholder is what's showing, the real list
   // is not known yet.
-  const pausedFirstLoad = readingListQuery.isPlaceholderData && readingListQuery.isPaused;
-  const isReadingListLoading = readingListQuery.isPlaceholderData && !readingListQuery.isPaused;
+  const pausedFirstLoad = !!user && readingListQuery.isPlaceholderData && readingListQuery.isPaused;
+  const isReadingListLoading =
+    !!user && readingListQuery.isPlaceholderData && !readingListQuery.isPaused;
   const { error: enhancedTracksError } = enhancedTracksQuery;
 
   const shouldShowInitialLoading = useMemo(() => {
@@ -62,8 +64,8 @@ export const usePlaylistScreen = () => {
 
   // Refetch on screen focus using official React Query pattern
   // Automatically respects staleTime (5 minutes) - no manual throttling needed
-  useRefreshOnFocus(readingListQuery.refetch);
-  useRefreshOnFocus(enhancedTracksQuery.refetch);
+  useRefreshOnFocus(readingListQuery.refetch, !!user);
+  useRefreshOnFocus(enhancedTracksQuery.refetch, !!user);
 
   // The playlist's delete is the reader's bookmark removal — the same
   // mutation — so it gets the same analytics, the same refresh of everything
@@ -72,7 +74,11 @@ export const usePlaylistScreen = () => {
   const { removeFromReadingListMutation } = useReadingListMutations();
 
   const handleDelete = async (articleId: ArticleId) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      selectionFeedback();
+      dispatch(guestArticleRemoved(articleId));
+      return;
+    }
     try {
       selectionFeedback();
       await removeFromReadingListMutation.mutateAsync({ userId: user.id, articleId });

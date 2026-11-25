@@ -74,10 +74,9 @@ export function useSavedWordDetail(rootId: RootId): SavedWordDetail {
   // render is the sanctioned "storing information from previous renders"
   // pattern.
   const found = allWords?.find(candidate => candidate.root_id === rootId);
-  const [word, setWord] = useState<StudyWord | undefined>(found);
-  if (found && found !== word) {
-    setWord(found);
-  }
+  const [held, setHeld] = useState<StudyWord | undefined>(found);
+  if (found && found !== held) setHeld(found);
+  const word = found ?? (held?.root_id === rootId ? held : undefined);
 
   const memory = useWordMemory(word);
   const enrichment = useRootEnrichment(rootId);

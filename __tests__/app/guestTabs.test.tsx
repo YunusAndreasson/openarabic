@@ -3,50 +3,32 @@ import { render } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 import TabLayout from '@/app/(tabs)/_layout';
-import { ROUTE_PATHS } from '@/constants/routes';
 
-const mockPublicScreen = jest.fn<(name: string) => void>();
-const mockPrivateScreen = jest.fn<(name: string, redirectTo: string) => void>();
-jest.mock('expo-router', () => {
-  const { Children } = require('react') as typeof import('react');
-  function Stack({ children }: { children: ReactNode }) {
+const mockTab = jest.fn<(name: string) => void>();
+const mockDueCount = jest.fn<(options: { userId?: string }) => number>(() => 0);
+jest.mock('expo-router', () => ({ usePathname: () => '/explore', router: {} }));
+jest.mock('expo-router/native-tabs', () => {
+  function NativeTabs({ children }: { children: ReactNode }) {
     return children;
   }
-  Stack.Screen = ({ name }: { name: string }) => {
-    mockPublicScreen(name);
-    return null;
-  };
-  Stack.Protected = ({
-    guard,
-    redirectTo,
-    children,
-  }: {
-    guard: boolean;
-    redirectTo: string;
-    children: ReactNode;
-  }) => {
-    if (guard) return children;
-    Children.forEach(children, child => {
-      if (child && typeof child === 'object' && 'props' in child) {
-        mockPrivateScreen((child.props as { name: string }).name, redirectTo);
-      }
-    });
-    return null;
-  };
-  return { Stack };
+  NativeTabs.Trigger = Object.assign(
+    ({ name }: { name: string }) => {
+      mockTab(name);
+      return null;
+    },
+    { Icon: () => null, Label: () => null, Badge: () => null },
+  );
+  return { NativeTabs };
 });
 jest.mock('@/hooks/auth', () => ({ useAuth: () => ({ session: null }) }));
 jest.mock('@/hooks/vocabulary/useFSRSQueries', () => ({
-  useDueWordsCount: () => {
-    throw new Error('Guest mounted a study query');
-  },
+  useDueWordsCount: (options: { userId?: string }) => mockDueCount(options),
 }));
-test('guest Browse mounts only Explore and sends private tab entries to authentication', () => {
+jest.mock('@/hooks/ui/useTabBarAutoHide', () => ({ useIsTabBarHidden: () => false }));
+
+test('guests and signed-in readers use the same native tabs, with no guest due badge', () => {
+  mockDueCount.mockReturnValue(0);
   render(<TabLayout />);
-  expect(mockPublicScreen.mock.calls).toEqual([['explore']]);
-  expect(mockPrivateScreen.mock.calls).toEqual([
-    ['practice', ROUTE_PATHS.AUTH],
-    ['playlist', ROUTE_PATHS.AUTH],
-    ['account', ROUTE_PATHS.AUTH],
-  ]);
+  expect(mockTab.mock.calls.flat()).toEqual(['explore', 'playlist', 'practice', 'account']);
+  expect(mockDueCount).toHaveBeenCalledWith(expect.objectContaining({ userId: undefined }));
 });

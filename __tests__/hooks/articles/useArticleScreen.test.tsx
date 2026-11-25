@@ -274,10 +274,10 @@ describe('useArticleScreen Hook', () => {
         }),
       );
 
-      expect(analytics.track).toHaveBeenCalledWith(
-        ANALYTICS_EVENTS.ARTICLE_VIEWED,
-        { article_id: 123, source: 'intro_cta' },
-      );
+      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.ARTICLE_VIEWED, {
+        article_id: 123,
+        source: 'intro_cta',
+      });
       expect(useStudyWordMutations).toHaveBeenCalledWith(expect.any(Function), {
         source: 'article',
         onFirstWordSaved,
@@ -314,7 +314,11 @@ describe('useArticleScreen Hook', () => {
         await result.current.handleToggleReadingListWithFeedback();
       });
 
-      expect(mockHandleToggleReadingList).toHaveBeenCalledWith(1, false);
+      expect(mockHandleToggleReadingList).toHaveBeenCalledWith(
+        1,
+        false,
+        expect.objectContaining({ id: 1 }),
+      );
       expect(mockShowToast).toHaveBeenCalledWith(expect.any(String), 3000, ToastType.INFO);
       // The button that calls this fires the press haptic; a second one here
       // would buzz the same decision twice.

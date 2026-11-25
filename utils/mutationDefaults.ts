@@ -170,6 +170,13 @@ export const readingListAddManyMutation = mutationOptions({
   },
 });
 
+export const guestPlaylistImportMutation = mutationOptions({
+  mutationKey: ['readingList', 'guestImport'] as const,
+  scope: READING_LIST_SCOPE,
+  mutationFn: ({ userId, articleIds }: { userId: string; articleIds: ArticleId[] }) =>
+    bookmarkService.addManyToReadingList(userId, articleIds, managedRequest(), true),
+});
+
 export const readingListRemoveMutation = mutationOptions({
   mutationKey: ['readingList', 'remove'] as const,
   scope: READING_LIST_SCOPE,
@@ -204,4 +211,8 @@ export function registerMutationDefaults(queryClient: QueryClient): void {
     retry: durableWriteRetry,
   });
   queryClient.setMutationDefaults(readingListRemoveMutation.mutationKey, readingListRemoveMutation);
+  queryClient.setMutationDefaults(
+    guestPlaylistImportMutation.mutationKey,
+    guestPlaylistImportMutation,
+  );
 }

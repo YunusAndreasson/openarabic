@@ -150,14 +150,14 @@ export function useArticleScreen({
   // fires the press's own selection tick, and one decision gets one haptic.
   const handleToggleReadingListWithFeedback = useCallback(async () => {
     if (!articleId) return;
-    const succeeded = await handleToggleReadingList(articleId, isInReadingList);
+    const succeeded = await handleToggleReadingList(articleId, isInReadingList, article);
     if (!succeeded) return;
     showToast(
       isInReadingList ? STRINGS.REMOVED_FROM_BOOKMARKS : STRINGS.ADDED_TO_BOOKMARKS,
       3000,
       ToastType.INFO,
     );
-  }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
+  }, [articleId, article, isInReadingList, handleToggleReadingList, showToast]);
 
   const handleClose = useCallback(async () => {
     try {

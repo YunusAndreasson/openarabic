@@ -61,6 +61,7 @@ export interface StudyWordPressOptions {
   expectedOwner?: string;
   attribution?: { platform: string; provider: string; sheet_id: string; attempt_id?: string };
   onConfirmed?: (changed: boolean) => void;
+  onRefused?: (refusal: AddRefusal) => void;
   /** How the add was made; the word card's Save when left out. */
   method?: WordAddMethod;
   /**
@@ -345,7 +346,8 @@ export const useStudyWordMutations = (
           const refusal = await checkAddAllowed(currentUserId, reservation);
           if (refusal) {
             if (reservation && !options.readerIntent) await decrementDailyWordCount(reservation);
-            announceRefusal(refusal);
+            if (options?.onRefused) options.onRefused(refusal);
+            else announceRefusal(refusal);
             return undefined;
           }
         }
@@ -356,7 +358,7 @@ export const useStudyWordMutations = (
           if (!incrementSuccess) {
             // Lost a race against a concurrent add rather than a cold refusal,
             // but it is the same outcome and the same explanation.
-            announceRefusal({
+            (options?.onRefused ?? announceRefusal)({
               reason: 'daily-limit',
               message: await getLimitReachedMessage(),
             });

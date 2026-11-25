@@ -86,7 +86,7 @@ describe('useAccountDeletion deleteAccount', () => {
     expect(result.current.confirmationError).toBe(STRINGS.DELETE_ACCOUNT_CONFIRMATION_MISMATCH);
   });
 
-  it('on success confirms and returns to the public reader', async () => {
+  it('on success confirms and returns to Explore', async () => {
     deleteAccountService.mockResolvedValue(undefined);
     const { result } = renderWithConfirmation(STRINGS.DELETE_ACCOUNT_CONFIRMATION_WORD);
 
@@ -97,7 +97,7 @@ describe('useAccountDeletion deleteAccount', () => {
     expect(deleteAccountService).toHaveBeenCalledWith('learner');
     expect(successFeedback).toHaveBeenCalledTimes(1);
     expect(showSuccessToast).toHaveBeenCalledWith(STRINGS.DELETE_ACCOUNT_SUCCESS);
-    expect(router.replace).toHaveBeenCalledWith('/first-page');
+    expect(router.replace).toHaveBeenCalledWith('/(tabs)/explore');
   });
 
   it('confirms the deletion even when the screen is already gone', async () => {

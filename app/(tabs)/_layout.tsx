@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { useMemo } from 'react';
 import { Platform } from 'react-native';
 
-import { Stack, router, usePathname } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 
 import { NativeTabs } from 'expo-router/native-tabs';
 
@@ -38,24 +38,7 @@ function AndroidTabBackHandler(): null {
   return null;
 }
 
-const GUEST_STACK_OPTIONS = { headerShown: false };
-
 export default function TabLayout(): JSX.Element {
-  const { session } = useAuth();
-  if (session) return <AccountTabs />;
-  return (
-    <Stack screenOptions={GUEST_STACK_OPTIONS}>
-      <Stack.Screen name="explore" />
-      <Stack.Protected guard={false} redirectTo={ROUTE_PATHS.AUTH}>
-        <Stack.Screen name="practice" />
-        <Stack.Screen name="playlist" />
-        <Stack.Screen name="account" />
-      </Stack.Protected>
-    </Stack>
-  );
-}
-
-function AccountTabs(): JSX.Element {
   const { session } = useAuth();
   const colors = useColors();
   // Android only — always false on iOS, where `minimizeBehavior` below hands

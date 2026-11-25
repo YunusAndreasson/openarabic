@@ -8,7 +8,8 @@ import { AuthSwitchPrompt } from './AuthSwitchPrompt';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { LAYOUT } from '@/constants/layout';
-import { ROUTE_PATHS } from '@/constants/routes';
+import { getAccountFormRoute } from '@/utils/routeBuilders';
+import type { StartReaderAuth } from '@/services/readerSaveAuth';
 import { STRINGS } from '@/constants/strings';
 import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
 
@@ -25,14 +26,17 @@ import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
  * - Loading states
  * - Error handling
  */
-export function SignUpForm(): JSX.Element {
-  const fields = useAuthFormFields();
+export function SignUpForm({
+  saveIntent,
+  startAttempt,
+}: { saveIntent?: string; startAttempt?: StartReaderAuth } = {}): JSX.Element {
+  const fields = useAuthFormFields(true, startAttempt);
   const { password, passwordError, loading, signUpWithEmail } = fields;
 
   // dismissTo, not push — see SignInForm: the cross-links must not stack.
   const handleSignIn = useCallback(() => {
-    router.dismissTo(ROUTE_PATHS.AUTH_SIGN_IN);
-  }, []);
+    router.dismissTo(getAccountFormRoute('sign-in', saveIntent));
+  }, [saveIntent]);
 
   return (
     <View style={styles.container}>

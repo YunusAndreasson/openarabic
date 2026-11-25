@@ -25,6 +25,8 @@ import { AudioLanguage } from '@/types/enums';
 
 let mockReduxState = setupTestStore().getState();
 jest.mock('@/store/hooks', () => ({
+  useAppSelectorShallow: (selector: (state: typeof mockReduxState) => unknown) =>
+    selector(mockReduxState),
   useAppSelector: (selector: (state: typeof mockReduxState) => unknown) => selector(mockReduxState),
 }));
 
@@ -94,6 +96,7 @@ jest.mock('@/constants/queries', () => ({
     }),
   },
   audioQueries: {
+    playlist: () => ({ queryKey: ['guest-playlist'], enabled: false }),
     tracks: (userId: string, preference: AudioLanguage) => ({
       queryKey: ['enhancedAudioTracks', userId, preference],
       queryFn: async () => [],

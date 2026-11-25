@@ -274,7 +274,6 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
         // call is a sign-up once and a sign-in after that. Meta's registration
         // event goes with the sign-up, as it does for email.
         const created = isNewAccount(data.user);
-        attempt?.verifiedHeader?.(created ? 'unknown' : 'returning');
         await trackReaderAccount(config.provider, created, attempt);
         if (created) metaEvents.logSignUp(config.provider);
 

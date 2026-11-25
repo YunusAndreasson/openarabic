@@ -85,7 +85,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
 
       // Navigate before the auth-state update unmounts this screen. Deferring
       // behind an isMounted check can strand the user on a stale protected tab.
-      router.replace(ROUTE_PATHS.FIRST_PAGE);
+      router.replace(ROUTE_PATHS.EXPLORE_TAB);
     } catch (error) {
       await handleError(error, {
         toastMessage: STRINGS.FAILED_TO_DELETE_ACCOUNT,

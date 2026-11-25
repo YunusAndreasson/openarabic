@@ -130,7 +130,7 @@ describe('useArticleSearch', () => {
     onlineManager.setOnline(false);
     const { result } = renderHook(() => useArticleSearch('worship'), { wrapper });
     expect(result.current.loadError).toBe(STRINGS.NO_INTERNET_CONNECTION);
-    expect(result.current.isBodyLoading).toBe(false);
+    await waitFor(() => expect(result.current.isBodyLoading).toBe(false));
     await act(async () => {
       onlineManager.setOnline(true);
       result.current.retryBody();

@@ -18,8 +18,8 @@ import { submitPublicWidget } from '@/services/widgets/publicHost';
 import { handleError } from '@/utils/errorHandling';
 import { resetNotificationPromptState } from '@/utils/notificationPromptStorage';
 
-let resetApplicationState: (() => Promise<void>) | undefined;
-export function registerAccountStorageReset(reset: () => Promise<void>) {
+let resetApplicationState: ((deletedOwner?: string) => Promise<void>) | undefined;
+export function registerAccountStorageReset(reset: (deletedOwner?: string) => Promise<void>) {
   resetApplicationState = reset;
 }
 
@@ -53,9 +53,9 @@ export const accountTeardown = createAccountTeardown(
       clearWordWidget(owner);
       await submitPublicWidget('WordInContext', initialFace.arabic);
     },
-    async storage(owner) {
+    async storage(owner, mode) {
       await simpleAudioService.stop();
-      await resetApplicationState?.();
+      await resetApplicationState?.(mode === 'delete' ? owner : undefined);
       resetNotificationPromptState();
       await readerSave.clearOwner(owner);
       await purgeReminderDetail(owner);

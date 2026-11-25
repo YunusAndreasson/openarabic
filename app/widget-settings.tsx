@@ -46,7 +46,7 @@ export default function WidgetSettings() {
         variant="ghost"
         onPress={() => {
           if (router.canGoBack()) router.back();
-          else router.replace(ROUTE_PATHS.FIRST_PAGE);
+          else router.replace(ROUTE_PATHS.EXPLORE_TAB);
         }}
       />
     </ScrollView>

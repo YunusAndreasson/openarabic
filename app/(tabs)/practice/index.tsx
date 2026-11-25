@@ -1,3 +1,4 @@
+import { PracticeGate } from '@/components/auth/PracticeGate';
 import { FirstReviewReceipt } from '@/components/practice/FirstReviewReceipt';
 import type { RootId } from '@/types/branded.types';
 import { useQueryClient } from '@tanstack/react-query';
@@ -55,7 +56,8 @@ export default function PracticeScreen(): JSX.Element {
   const { reviewedRoot } = useLocalSearchParams<{ reviewedRoot?: string }>();
   const { user } = useAuth();
   const root = Number(reviewedRoot);
-  if (user && Number.isSafeInteger(root) && root > 0)
+  if (!user) return <PracticeGate />;
+  if (Number.isSafeInteger(root) && root > 0)
     return (
       <FirstReviewReceipt
         key={user.id + '-' + root}

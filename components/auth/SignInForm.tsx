@@ -9,7 +9,7 @@ import { AuthSwitchPrompt } from './AuthSwitchPrompt';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { TextLink } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
-import { ROUTE_PATHS } from '@/constants/routes';
+import { getAccountFormRoute } from '@/utils/routeBuilders';
 import { STRINGS } from '@/constants/strings';
 import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
 
@@ -28,8 +28,13 @@ import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
  */
 export function SignInForm({
   returnToReader = false,
+  saveIntent,
   startAttempt,
-}: { returnToReader?: boolean; startAttempt?: StartReaderAuth } = {}): JSX.Element {
+}: {
+  returnToReader?: boolean;
+  saveIntent?: string;
+  startAttempt?: StartReaderAuth;
+} = {}): JSX.Element {
   const fields = useAuthFormFields(returnToReader, startAttempt);
   const { loading, signInWithEmail, resetPassword } = fields;
 
@@ -41,8 +46,8 @@ export function SignInForm({
   // learner stack sign-in over sign-up over sign-in without limit. It pops back
   // to the other form when it is below this one, and replaces this one when not.
   const handleCreateAccount = useCallback(() => {
-    router.dismissTo(ROUTE_PATHS.AUTH_SIGN_UP);
-  }, []);
+    router.dismissTo(getAccountFormRoute('sign-up', saveIntent));
+  }, [saveIntent]);
 
   return (
     <View style={styles.container}>
@@ -71,7 +76,7 @@ export function SignInForm({
         />
       </View>
 
-      {!returnToReader && (
+      {(!startAttempt || saveIntent) && (
         <AuthSwitchPrompt
           disabled={loading}
           prompt={STRINGS.DONT_HAVE_ACCOUNT}

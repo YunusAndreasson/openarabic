@@ -2,9 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
-import { ContinueFirstPage, PublicTexts } from '@/components/explore/PublicTexts';
 import { SectionLabel } from '@/components/common';
 import {
   ArticleList,
@@ -20,7 +19,6 @@ import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
-import { useAppSelector } from '@/store/hooks';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useExploreCatalog } from '@/hooks/explore/useExploreCatalog';
 import { useExploreRails } from '@/hooks/explore/useExploreRails';
@@ -49,11 +47,6 @@ function buildEntitiesWithCounts<T extends { id: number; name: string }>(
 }
 
 export default function ExploreScreen(): JSX.Element {
-  const { session } = useAuth();
-  return session ? <AccountExplore /> : <PublicTexts />;
-}
-
-function AccountExplore(): JSX.Element {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const tabBarAutoHide = useTabBarAutoHide();
@@ -81,18 +74,16 @@ function AccountExplore(): JSX.Element {
 
   // First-run onboarding: "Get started" checklist + one-shot welcome intro
   const checklist = useOnboardingChecklist(articlesData);
-  const guided = useAppSelector(state => state.firstPage.guided);
-  const sawFirstPage = useAppSelector(state => state.firstPage.shown);
   const intro = useTutorial(TutorialId.WELCOME_INTRO);
   const { trigger: triggerIntro } = intro;
   useEffect(() => {
-    if (checklist.isEligible && !guided) {
+    if (checklist.isEligible) {
       triggerIntro();
     }
-  }, [checklist.isEligible, triggerIntro, guided]);
+  }, [checklist.isEligible, triggerIntro]);
 
   // Every article rail on the tab, chosen together so no text appears twice
-  const rails = useExploreRails(articlesData, refreshKey, !guided && checklist.isChecklistVisible);
+  const rails = useExploreRails(articlesData, refreshKey, checklist.isChecklistVisible);
 
   const handleOpenFirstText = useOpenStarterArticle(articlesData, 'intro_cta');
 
@@ -161,21 +152,14 @@ function AccountExplore(): JSX.Element {
     // Held back while the welcome intro is up: both resolve from the same
     // eligibility decision, so without this the user watches the card appear and
     // then get covered by the modal 600ms later.
-    if (sawFirstPage) {
-      sections.push(
-        <View key="first-page" style={styles.firstPage}>
-          <ContinueFirstPage />
-        </View>,
-      );
-    } else
-      sections.push(
-        <GetStartedChecklist
-          key="get-started"
-          articlesData={articlesData}
-          checklist={checklist}
-          isSuppressedByIntro={intro.isVisible}
-        />,
-      );
+    sections.push(
+      <GetStartedChecklist
+        key="get-started"
+        articlesData={articlesData}
+        checklist={checklist}
+        isSuppressedByIntro={intro.isVisible}
+      />,
+    );
 
     // Continue reading, or Getting started — absent while the checklist is up
     if (rails.lead) {
@@ -210,15 +194,7 @@ function AccountExplore(): JSX.Element {
     sections.push(<DiscoverySections key="discovery" rails={rails.discovery} />);
 
     return sections;
-  }, [
-    articlesData,
-    rails,
-    categoriesWithArticles,
-    handleSelectFilter,
-    checklist,
-    intro.isVisible,
-    sawFirstPage,
-  ]);
+  }, [articlesData, rails, categoriesWithArticles, handleSelectFilter, checklist, intro.isVisible]);
 
   return (
     <>
@@ -247,5 +223,3 @@ function AccountExplore(): JSX.Element {
 }
 
 // Let parent _layout.tsx stack handle header; no local options needed.
-
-const styles = StyleSheet.create({ firstPage: { marginHorizontal: LAYOUT.SPACING.LARGE } });

@@ -1,10 +1,12 @@
 import { articleOccurrence } from '@/services/widgets/articleOccurrence';
-import { guestCanPractise } from '@/services/firstPage';
 import { ArticleWordTargets } from '@/hooks/articles/articleWordTargets';
-import { useAppSelector } from '@/store/hooks';
-import { TrackWordSheet } from '@/components/first-page/TrackWordSheet';
-import { beginReaderSave, usePendingReaderSave } from '@/hooks/onboarding/useReaderSave';
-import type { SaveMethod } from '@/services/readerSave';
+import { SaveWordGate } from '@/components/auth/SaveWordGate';
+import {
+  beginReaderSave,
+  reportSaveError,
+  usePendingReaderSave,
+} from '@/hooks/onboarding/useReaderSave';
+import { readerSave, type SaveMethod } from '@/services/readerSave';
 import type { ArticleId } from '@/types/branded.types';
 import type { ErrorBoundaryProps } from 'expo-router';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -57,11 +59,12 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const colors = useColors();
   const { showToast } = useToast();
   const { session } = useAuth();
-  const newReader = useAppSelector(state => state.firstPage.guided && !state.firstPage.hasSaved);
-  const guideSave = !session || newReader;
+  const guideSave = !session;
+  const pendingSave = usePendingReaderSave();
   const params = useLocalSearchParams<{
     disableAutoScroll?: string;
     sentenceId?: string;
+    wordId?: string;
     source?: string;
   }>();
   const disableAutoScroll = params.disableAutoScroll === 'true';
@@ -111,6 +114,39 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     source,
     onFirstWordSaved: firstWordPriming.offer,
   });
+
+  const completed = pendingSave?.phase === 'saved' || pendingSave?.phase === 'existing';
+  const handledWordTarget = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const restored =
+      completed &&
+      pendingSave.word.articleId === Number(id) &&
+      pendingSave.owner === session?.user?.id;
+    const wordId = restored ? pendingSave.word.occurrenceId : Number(params.wordId);
+    const key = restored ? pendingSave.id : `${id}:${wordId}`;
+    if (!wordId || handledWordTarget.current === key || (!targetSentenceId && !restored)) return;
+    const sentenceId = restored ? pendingSave.word.sentenceId : targetSentenceId;
+    const word = sentenceWordsMap.get(sentenceId ?? 0)?.find(item => item.id === wordId);
+    if (!word) return;
+    handledWordTarget.current = key;
+    wordDetailsModal.open(word);
+    if (restored) {
+      showToast(
+        pendingSave.phase === 'saved' ? STRINGS.TRACK_WORD_SAVED : STRINGS.TRACK_WORD_EXISTING,
+      );
+      void readerSave.change(pendingSave.id, () => null).catch(reportSaveError);
+    }
+  }, [
+    completed,
+    id,
+    params.wordId,
+    pendingSave,
+    sentenceWordsMap,
+    session?.user?.id,
+    showToast,
+    targetSentenceId,
+    wordDetailsModal,
+  ]);
 
   // In-article Listen control (podcast-style playback via the global MiniPlayer)
   const { isListeningToThisArticle, isListenLoading, handleToggleListen } = useArticleListen(
@@ -170,8 +206,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // Long-press quick save also counts as discovering the word interaction
   const handleWordLongPressWithTutorial = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {
-      if (guideSave && !guestCanPractise(Number(id), word) && !selectedWordIds.has(word.root_id))
-        return;
       if (guideSave && word.root_id && !selectedWordIds.has(word.root_id))
         saveArticleWord(
           word,
@@ -179,7 +213,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           id,
           sentenceWordsMap.get(word.sentence_id),
           article?.author.name,
-          session?.user?.id,
         );
       else void handleWordLongPress(word, layout);
 
@@ -193,7 +226,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       completeTutorial,
       article,
       sentenceWordsMap,
-      session,
       handleWordLongPress,
       guideSave,
       selectedWordIds,
@@ -206,13 +238,10 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     ({ item, index }: { item: Tables<'article_sentences'>; index: number }) => {
       const words = sentenceWordsMap.get(item.id) ?? [];
 
-      if (words.length === 0) {
-        return null;
-      }
-
       // Show tutorial card only on first sentence (unless manually dismissed)
       const isFirstSentence = index === 0;
-      const showTutorialCard = isFirstSentence && showWordTapTutorial && !isTutorialCardDismissed;
+      const showTutorialCard =
+        isFirstSentence && words.length > 0 && showWordTapTutorial && !isTutorialCardDismissed;
 
       // No key prop: FlashList recycles item views, and an identity key would
       // force a full remount per sentence instead of reuse (FlashList docs).
@@ -311,7 +340,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // A request that failed for an article that may well exist. It used to land
   // on "Article not found ... It may have been removed", which told someone on
   // a dropped connection that the text was gone, and offered no retry.
-  if (!article && isArticleError) {
+  if ((!article && isArticleError) || (article && sortedSentences.length === 0)) {
     return (
       <View style={FLEX_ONE_STYLE}>
         <ErrorState message={STRINGS.FAILED_TO_LOAD_ARTICLE} onRetry={refetchArticle} />
@@ -366,17 +395,15 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           and the word sheet, so those still draw over it. Sibling order is the
           whole of it: none of these sets a zIndex that would reorder them (the
           sheet has none, which is why the buttons carry none either). */}
-      {sortedSentences.length > 0 && (
-        <FloatingActionButtons
-          onShare={shareLink ? () => void sharePublicLink(shareLink) : undefined}
-          isInReadingList={isInReadingList}
-          onToggleReadingList={session ? handleToggleReadingListWithFeedback : undefined}
-          isListening={isListeningToThisArticle}
-          isListenLoading={isListenLoading}
-          onToggleListen={() => void handleToggleListen()}
-          onClose={() => void handleClose()}
-        />
-      )}
+      <FloatingActionButtons
+        onShare={shareLink ? () => void sharePublicLink(shareLink) : undefined}
+        isInReadingList={isInReadingList}
+        onToggleReadingList={handleToggleReadingListWithFeedback}
+        isListening={isListeningToThisArticle}
+        isListenLoading={isListenLoading}
+        onToggleListen={() => void handleToggleListen()}
+        onClose={() => void handleClose()}
+      />
 
       {/* The reader is a native modal presented above the root view, so the
           app-wide overlay can't reach it — host the player here instead. */}
@@ -398,11 +425,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         isVisible={wordDetailsModal.isVisible}
         onClose={wordDetailsModal.close}
         word={wordDetailsModal.data}
-        hideAdd={
-          guideSave &&
-          !!wordDetailsModal.data &&
-          !guestCanPractise(Number(id), wordDetailsModal.data)
-        }
         onAddToStudy={handleAddWordToStudy}
         onGuidedAdd={
           !guideSave || isInStudyList
@@ -415,7 +437,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
                   id,
                   sentenceWordsMap.get(word.sentence_id),
                   article.author.name,
-                  session?.user?.id,
                 );
               }
         }
@@ -468,13 +489,11 @@ function saveArticleWord(
   id: string | undefined,
   line: SentenceWord[] | undefined,
   credit?: string,
-  owner?: string,
 ) {
   if (word.root_id)
     void beginReaderSave(
       articleOccurrence(Number(id) as ArticleId, word, line ?? [], credit),
       method,
-      owner,
     );
 }
 
@@ -489,7 +508,8 @@ export default function ArticleScreen(): JSX.Element {
     (!pending.owner || pending.owner === session?.user?.id)
       ? pending
       : null;
-  const showingSave = !!save && !save.keepReading;
+  const showingSave =
+    !!save && !save.keepReading && save.phase !== 'saved' && save.phase !== 'existing';
   const colors = useColors();
 
   // The wake lock lives in ArticleScreenContent (`useReaderKeepAwake`), which
@@ -513,7 +533,7 @@ export default function ArticleScreen(): JSX.Element {
           </ArticleWordTargets>
         </View>
         {save && (
-          <TrackWordSheet
+          <SaveWordGate
             key={save.id}
             save={save}
             onExit={() =>

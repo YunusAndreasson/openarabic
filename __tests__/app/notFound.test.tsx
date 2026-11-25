@@ -33,9 +33,9 @@ describe('NotFoundScreen', () => {
     expect(redirectTarget()).toBe(ROUTE_PATHS.EXPLORE_TAB);
   });
 
-  test('sends a fresh signed-out visitor to the bundled passage', () => {
+  test('sends a fresh signed-out visitor to Explore', () => {
     jest.mocked(useAuth).mockReturnValue({ session: null } as ReturnType<typeof useAuth>);
     render(<NotFoundScreen />);
-    expect(redirectTarget()).toBe(ROUTE_PATHS.FIRST_PAGE);
+    expect(redirectTarget()).toBe(ROUTE_PATHS.EXPLORE_TAB);
   });
 });

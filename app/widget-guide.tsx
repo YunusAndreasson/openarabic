@@ -128,7 +128,7 @@ export default function WidgetGuide() {
         onPress={() => {
           exit.current = 'done';
           if (router.canGoBack()) router.back();
-          else router.replace(ROUTE_PATHS.FIRST_PAGE);
+          else router.replace(ROUTE_PATHS.EXPLORE_TAB);
         }}
       />
     </ScrollView>

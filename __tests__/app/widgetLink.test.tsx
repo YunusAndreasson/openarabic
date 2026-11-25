@@ -41,10 +41,10 @@ test('a verified private ingress recomputes eligibility and attributes the resul
     expect(destination()).toEqual({ pathname: ROUTE_PATHS.REVIEW, params: { source: 'widget' } }),
   );
 });
-test('a previous owner token opens the public reader without fetching private words', async () => {
+test('a previous owner token opens the Practice tab without fetching private words', async () => {
   jest.mocked(widgetBridge!.matchesOwner).mockReturnValue(false);
   render(<WordWidgetLink />);
-  await waitFor(() => expect(destination()).toBe(ROUTE_PATHS.FIRST_PAGE));
+  await waitFor(() => expect(destination()).toBe(ROUTE_PATHS.PRACTICE_TAB));
   expect(mockQuery).not.toHaveBeenCalled();
 });
 test('an offline private tap keeps Practice reachable', async () => {
@@ -52,19 +52,19 @@ test('an offline private tap keeps Practice reachable', async () => {
   render(<WordWidgetLink />);
   await waitFor(() => expect(destination()).toBe(ROUTE_PATHS.PRACTICE_TAB));
 });
-test('unrecognized intents recover to the public passage without counting a widget open', () => {
+test('unrecognized intents recover to Explore without counting a widget open', () => {
   jest.mocked(useLocalSearchParams).mockReturnValue({ action: 'unknown' });
   render(<WordWidgetLink />);
-  expect(destination()).toBe(ROUTE_PATHS.FIRST_PAGE);
+  expect(destination()).toBe(ROUTE_PATHS.EXPLORE_TAB);
   expect(analytics.track).not.toHaveBeenCalled();
 });
 
-test('a public widget word opens the exact occurrence in the bundled passage', () => {
+test('a public widget word opens the exact occurrence in the full reader', () => {
   jest.mocked(useLocalSearchParams).mockReturnValue({ action: 'word', p: '1.0' });
   render(<WordWidgetLink />);
   expect(destination()).toEqual({
-    pathname: ROUTE_PATHS.FIRST_PAGE,
-    params: { widgetPosition: '1.0', widgetWord: 'true' },
+    pathname: ROUTE_PATHS.ARTICLE,
+    params: { id: 559, sentenceId: 7107, wordId: 59292, disableAutoScroll: 'true', source: 'word' },
   });
   expect(mockQuery).not.toHaveBeenCalled();
 });
@@ -78,7 +78,7 @@ test('a personal word link resolves only for the current generation', () => {
   });
   jest.mocked(widgetBridge!.matchesOwner).mockReturnValue(false);
   rerender(<WordWidgetLink />);
-  expect(destination()).toBe(ROUTE_PATHS.FIRST_PAGE);
+  expect(destination()).toBe(ROUTE_PATHS.EXPLORE_TAB);
 });
 
 test('a verified article passage link opens the source sentence', () => {

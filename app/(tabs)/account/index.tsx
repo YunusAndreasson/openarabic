@@ -1,8 +1,10 @@
+import { AccountGateActions } from '@/components/auth/PracticeGate';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { WidgetSettingsEntry } from '@/components/widget/WidgetOffer';
 // External Libraries
 import { SettingsPicker, TimePicker } from '@/components/ui';
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import {
   AboutSection,
@@ -179,16 +181,18 @@ const AccountScreen = () => {
         showsVerticalScrollIndicator
         contentContainerStyle={scrollContentStyle}
       >
-        <ReadingSection />
-        <WidgetSettingsEntry />
+        <ReadingSection onReset={user ? undefined : handleResetReadingProgress} />
+        <WidgetSettingsEntry guest={!user} />
 
-        <PracticeSection
-          onDailyWordLimitPress={handleDailyWordLimitPress}
-          onReminderTimePress={handleTimePickerOpen}
-          onReminderToggle={enabled => void handleReminderToggle(enabled)}
-          reminderTime={reminderTime}
-          formatReminderTime={formatReminderTime}
-        />
+        {user && (
+          <PracticeSection
+            onDailyWordLimitPress={handleDailyWordLimitPress}
+            onReminderTimePress={handleTimePickerOpen}
+            onReminderToggle={enabled => void handleReminderToggle(enabled)}
+            reminderTime={reminderTime}
+            formatReminderTime={formatReminderTime}
+          />
+        )}
 
         <ListeningSection
           onAudioLanguagePress={handleAudioLanguagePress}
@@ -208,11 +212,18 @@ const AccountScreen = () => {
         {/* About + Follow OpenArabic */}
         <AboutSection />
 
-        <AccountSection
-          email={user?.email || STRINGS.NO_EMAIL}
-          onSignOut={handleSignOut}
-          onResetReadingProgress={handleResetReadingProgress}
-        />
+        {user ? (
+          <AccountSection
+            email={user.email || STRINGS.NO_EMAIL}
+            onSignOut={handleSignOut}
+            onResetReadingProgress={handleResetReadingProgress}
+          />
+        ) : (
+          <View style={{ gap: LAYOUT.SPACING.MEDIUM }}>
+            <ThemedText colorName="secondaryText">{STRINGS.GUEST_ACCOUNT_PROMPT}</ThemedText>
+            <AccountGateActions />
+          </View>
+        )}
 
         <BrandFooter showDetails />
       </ScrollView>

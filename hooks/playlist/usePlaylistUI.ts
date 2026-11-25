@@ -5,6 +5,8 @@ import type { DragEndParams } from 'react-native-draggable-flatlist';
 
 import { STRINGS } from '@/constants/strings';
 import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { guestOrderChanged } from '@/store/guestLibrarySlice';
 import { useAppDispatch } from '@/store/hooks';
 import { setCustomOrder } from '@/store/playlistSlice';
 import type { BookmarkItem } from '@/types/bookmark.types';
@@ -22,6 +24,7 @@ interface ListenUIParams {
 export const usePlaylistUI = ({ sortedReadingList, editMode }: ListenUIParams) => {
   const prefetchArticle = useArticlePrefetch();
   const dispatch = useAppDispatch();
+  const { user } = useAuth();
 
   const [canShowEmpty, setCanShowEmpty] = useState(false);
 
@@ -52,9 +55,9 @@ export const usePlaylistUI = ({ sortedReadingList, editMode }: ListenUIParams) =
       if (from === to) return;
       selectionFeedback();
       const newOrder = data.map(item => item.article_id);
-      dispatch(setCustomOrder(newOrder));
+      dispatch(user ? setCustomOrder(newOrder) : guestOrderChanged(newOrder));
     },
-    [dispatch],
+    [dispatch, user],
   );
 
   function moveTrack(articleId: number, offset: -1 | 1) {
