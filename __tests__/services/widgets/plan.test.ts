@@ -1,7 +1,12 @@
 import { expect, test } from '@jest/globals';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { loadFirstPage } from '@/services/firstPage';
-import { publicTimeline, savedOccurrence, wordTimeline } from '@/services/widgets/plan';
+import {
+  publicRotation,
+  publicTimeline,
+  savedOccurrence,
+  wordTimeline,
+} from '@/services/widgets/plan';
 import type { RootId } from '@/types/branded.types';
 import { initialFace } from '@/widgets/edition';
 const now = +new Date(2026, 10, 23, 9, 41);
@@ -114,4 +119,19 @@ test('midnight rotation cannot displace the first due transition at 00:05', () =
     before,
   );
   expect(entries.filter(e => +e.date <= at).at(-1)?.props.due).toBe(true);
+});
+
+test('the public rotation preserves exact word positions, source text and grammar emphasis', () => {
+  const rotation = publicRotation();
+  expect(rotation[0]).toMatchObject({ passagePosition: '0.8', arabic: initialFace.arabic });
+  expect(rotation[1]).toMatchObject({ passagePosition: '1.0' });
+  const grammar = rotation.find(face => face.passagePosition === '0.0');
+  expect(grammar?.contextAccent).toEqual(
+    expect.objectContaining({ light: expect.any(String), dark: expect.any(String) }),
+  );
+  expect(
+    [grammar?.contextBefore, grammar?.arabic, grammar?.contextAfter].filter(Boolean).join(' '),
+  ).toBe(grammar?.line);
+  expect(new Set(rotation.map(face => face.occurrenceKey)).size).toBe(rotation.length);
+  expect(publicTimeline(now + rotation.length * day, now)[0]?.props.key).toBe(rotation[0]?.key);
 });

@@ -2,6 +2,7 @@ import { beforeEach, expect, jest, test } from '@jest/globals';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { AppState } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 
 import FirstPage from '@/app/first-page';
 import { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
@@ -10,7 +11,11 @@ import { STRINGS } from '@/constants/strings';
 import { readerSave } from '@/services/readerSave';
 import { guestCanPractise, loadFirstPage } from '@/services/firstPage';
 
-jest.mock('expo-router', () => ({ useIsFocused: () => true, router: { dismissTo: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  useIsFocused: () => true,
+  useLocalSearchParams: jest.fn(),
+  router: { dismissTo: jest.fn() },
+}));
 jest.mock('@/hooks/theme/useSkiaGpuAvailable', () => ({ useSkiaGpuAvailable: () => false }));
 jest.mock('expo-status-bar', () => ({ StatusBar: () => null }));
 const mockPlay = jest.fn();
@@ -30,9 +35,27 @@ jest.mock('@/components/ui/BrandedBottomSheet', () => ({
 }));
 
 beforeEach(() => {
+  jest.mocked(useLocalSearchParams).mockReturnValue({});
   jest.mocked(AppState.addEventListener).mockReturnValue({
     remove: jest.fn(),
   } as unknown as ReturnType<typeof AppState.addEventListener>);
+});
+
+test('a warm widget link can switch to the next word or return to the passage', () => {
+  const { wrapper } = createHookTestWrapper({ withRedux: true });
+  jest.mocked(useLocalSearchParams).mockReturnValue({ widgetPosition: '0.8', widgetWord: 'true' });
+  const view = render(<FirstPage />, { wrapper });
+  expect(screen.getByText('a treasure')).toBeTruthy();
+
+  jest.mocked(useLocalSearchParams).mockReturnValue({ widgetPosition: '1.0', widgetWord: 'true' });
+  view.rerender(<FirstPage />);
+  expect(screen.queryByText('a treasure')).toBeNull();
+  expect(screen.getByText('and indeed')).toBeTruthy();
+
+  jest.mocked(useLocalSearchParams).mockReturnValue({ widgetPosition: '1.0' });
+  view.rerender(<FirstPage />);
+  expect(screen.queryByText('and indeed')).toBeNull();
+  expect(screen.getByLabelText('وَلَقَدْ')).toBeTruthy();
 });
 
 test('a guest reads the bundled translation and opens and dismisses the contextual word in place', () => {

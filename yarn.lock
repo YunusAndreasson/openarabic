@@ -8010,7 +8010,7 @@ __metadata:
 
 "expo-widgets@patch:expo-widgets@npm%3A58.0.29#~/.yarn/patches/expo-widgets-npm-58.0.29.patch":
   version: 58.0.29
-  resolution: "expo-widgets@patch:expo-widgets@npm%3A58.0.29#~/.yarn/patches/expo-widgets-npm-58.0.29.patch::version=58.0.29&hash=e7b14b"
+  resolution: "expo-widgets@patch:expo-widgets@npm%3A58.0.29#~/.yarn/patches/expo-widgets-npm-58.0.29.patch::version=58.0.29&hash=dae30f"
   dependencies:
     "@expo/plist": "npm:^0.10.2"
     "@expo/ui": "npm:~58.0.29"
@@ -8018,7 +8018,7 @@ __metadata:
     expo: "*"
     react: "*"
     react-native: "*"
-  checksum: 10c0/e3cebc99551f62ccc28f9c6e0aa9cb0a64cb1ef0fa91f2240ea48c6dc580be094fccf9f56f91a66df8dd874fd8353daa0a94cb6e1142d8d450e3b8d40b38e9dc
+  checksum: 10c0/d93dd5dc8d7f6b219629182a15c3afed8cbfb58e5190a433c2f4cadb6b262769c7471e85b519b279703075672026193ccc812abbf88c17d5198e8fc5f5c30072
   languageName: node
   linkType: hard
 

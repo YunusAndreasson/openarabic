@@ -63,6 +63,13 @@ export const STRINGS = {
   WIDGET_PLACED: 'Widget added',
   WIDGET_MANUAL: 'Show manual steps',
   WIDGET_SHOW_GUIDE: 'Show how to add it',
+  WIDGET_SETTINGS_UNAVAILABLE: 'The Home Screen offer isn’t available right now.',
+  WIDGET_OPEN_TEXT: 'Open text',
+  WIDGET_PRACTICE_WORD: 'Practice word',
+  WIDGET_REVEAL: 'Reveal meaning',
+  WIDGET_HIDE: 'Hide meaning',
+  WIDGET_READ_LINE: 'Read passage',
+  WIDGET_OPEN_WORD: 'Open word',
   WIDGET_IOS_STEPS: [
     'Touch and hold an empty area of your Home Screen.',
     'Tap Edit, then Add Widget, or tap the + button.',

@@ -4,8 +4,9 @@ import type { RootId } from '@/types/branded.types';
 import type { SaveMethod } from '@/services/readerSave';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { useLocalSearchParams } from 'expo-router';
 import { openReaderHeaderAuth } from '@/services/readerSaveAuth';
-import { type ComponentRef, useRef, useState } from 'react';
+import { type ComponentRef, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   Pressable,
@@ -48,7 +49,25 @@ const page = loadFirstPage();
 
 export default function FirstPage() {
   const { session } = useAuth();
-  const [sheet, setSheet] = useState<Sheet | null>(null);
+  const { widgetPosition, widgetWord } = useLocalSearchParams<{
+    widgetPosition?: string;
+    widgetWord?: string;
+  }>();
+  const [lineIndex, wordIndex] =
+    typeof widgetPosition === 'string' && /^\d+\.\d+$/.test(widgetPosition)
+      ? widgetPosition.split('.').map(Number)
+      : [];
+  const linkedWord = page.sentences[lineIndex ?? -1]?.words[wordIndex ?? -1];
+  const linePositions = useRef(new Map<number, number>());
+  const linkKey = linkedWord ? `${widgetPosition}:${widgetWord ?? ''}` : undefined;
+  const [previousLink, setPreviousLink] = useState(linkKey);
+  const [sheet, setSheet] = useState<Sheet | null>(() =>
+    linkedWord && widgetWord === 'true' ? { kind: 'word', word: linkedWord } : null,
+  );
+  if (previousLink !== linkKey) {
+    setPreviousLink(linkKey);
+    setSheet(linkedWord && widgetWord === 'true' ? { kind: 'word', word: linkedWord } : null);
+  }
   const pending = usePendingReaderSave();
   const save =
     pending?.word.source === 'first_run_reader' &&
@@ -79,6 +98,12 @@ export default function FirstPage() {
   const selected = sheet?.kind === 'word' ? sheet.word : undefined;
   const scrollView = useRef<ComponentRef<typeof ScrollView>>(null);
   const restored = useRef(false);
+
+  useEffect(() => {
+    if (!linkedWord || lineIndex === undefined) return;
+    const y = linePositions.current.get(lineIndex);
+    if (y !== undefined) scrollView.current?.scrollTo({ y, animated: false });
+  }, [lineIndex, linkedWord]);
 
   useAndroidBackHandler(reader.focused && !open, () => reader.exit('back'));
   function close() {
@@ -145,7 +170,7 @@ export default function FirstPage() {
         onContentSizeChange={() => {
           if (restored.current) return;
           restored.current = true;
-          if (reader.initialOffset > 0)
+          if (!linkedWord && reader.initialOffset > 0)
             scrollView.current?.scrollTo({ y: reader.initialOffset, animated: false });
         }}
         onLayout={event => reader.setHeight(event.nativeEvent.layout.height)}
@@ -172,7 +197,13 @@ export default function FirstPage() {
           <View
             key={line.sentenceId ?? i}
             style={styles.pair}
-            onLayout={i === 0 ? event => reader.setPairTop(event.nativeEvent.layout.y) : undefined}
+            onLayout={event => {
+              const y = event.nativeEvent.layout.y;
+              linePositions.current.set(i, y);
+              if (i === 0) reader.setPairTop(y);
+              if (linkedWord && i === lineIndex)
+                scrollView.current?.scrollTo({ y, animated: false });
+            }}
           >
             <ThemedText colorName="secondaryText" style={styles.translation}>
               {line.translation}

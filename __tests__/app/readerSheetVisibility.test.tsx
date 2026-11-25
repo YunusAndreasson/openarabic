@@ -16,7 +16,11 @@ jest.mock('@gorhom/bottom-sheet', () => ({
   ...jest.requireActual<object>('../../__mocks__/@gorhom/bottom-sheet.js'),
   default: require('../helpers/MeasuredSheet').default,
 }));
-jest.mock('expo-router', () => ({ useIsFocused: () => true, router: { dismissTo: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  useIsFocused: () => true,
+  useLocalSearchParams: () => ({}),
+  router: { dismissTo: jest.fn() },
+}));
 jest.mock('expo-status-bar', () => ({ StatusBar: () => null }));
 jest.mock('expo-audio', () => ({ useAudioPlayer: () => ({}), useAudioPlayerStatus: () => ({}) }));
 let mockOwner: string | undefined;

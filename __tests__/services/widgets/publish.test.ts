@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { useWordWidgetSync } from '@/hooks/app/useWordWidgetSync';
 import { wordWidget } from '@/widgets/WordInContext.ios';
+import { wordWidget as androidWordWidget } from '@/widgets/WordInContext.android';
 import { AppState, Platform } from 'react-native';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { mockReviewStorage } from '@/__tests__/helpers/reviewStorage';
@@ -24,6 +25,7 @@ jest.mock('@/services/widgets/native', () => ({
   widgetBridge: { setOwner: jest.fn(), matchesOwner: jest.fn() },
 }));
 jest.mock('@/widgets/WordInContext.ios', () => ({ wordWidget: { updateTimeline: jest.fn() } }));
+jest.mock('@/widgets/WordInContext.android', () => ({ wordWidget: { updateSnapshot: jest.fn() } }));
 jest.mock('@/widgets/OpenText.ios', () => ({ publicWidget: { updateTimeline: jest.fn() } }));
 jest.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'leaving' }, isLoading: false }),
@@ -134,4 +136,29 @@ test('only a failed account transition or a fresh authenticated session can rele
   restoreWidgetSession('returning');
   widgetOwner('returning', installed);
   expect(widgetBridge!.setOwner).toHaveBeenLastCalledWith('returning');
+});
+
+test('Android receives a JSON-safe public rotation and saved faces across the native bridge', async () => {
+  jest.replaceProperty(Platform, 'OS', 'android');
+  widgetOwner('android-qa', installed);
+  await keepWidgetOccurrence('android-qa', {
+    rootId: root,
+    occurrenceId: 59291,
+    form: 'كَنْزٍ',
+    gloss: 'a treasure',
+    source: 'first_run_reader',
+  });
+  await publishDeck('android-qa', [word], installed, installed);
+  const snapshot = jest.mocked(androidWordWidget.updateSnapshot).mock.calls.at(-1)?.[0];
+  expect(snapshot).toStrictEqual(JSON.parse(JSON.stringify(snapshot)));
+  expect(snapshot?.publicRotation).toMatchObject({
+    firstUse: installed,
+    faces: expect.arrayContaining([
+      expect.objectContaining({ passagePosition: '0.8', generation: '' }),
+    ]),
+  });
+  expect(snapshot?.frames?.[0]?.face).toMatchObject({
+    generation: 'android-qa-generation',
+    rootId: root,
+  });
 });

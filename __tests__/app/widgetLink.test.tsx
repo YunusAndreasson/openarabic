@@ -58,3 +58,36 @@ test('unrecognized intents recover to the public passage without counting a widg
   expect(destination()).toBe(ROUTE_PATHS.FIRST_PAGE);
   expect(analytics.track).not.toHaveBeenCalled();
 });
+
+test('a public widget word opens the exact occurrence in the bundled passage', () => {
+  jest.mocked(useLocalSearchParams).mockReturnValue({ action: 'word', p: '1.0' });
+  render(<WordWidgetLink />);
+  expect(destination()).toEqual({
+    pathname: ROUTE_PATHS.FIRST_PAGE,
+    params: { widgetPosition: '1.0', widgetWord: 'true' },
+  });
+  expect(mockQuery).not.toHaveBeenCalled();
+});
+
+test('a personal word link resolves only for the current generation', () => {
+  jest.mocked(useLocalSearchParams).mockReturnValue({ action: 'word', v: 'token', r: '18276' });
+  const { rerender } = render(<WordWidgetLink />);
+  expect(destination()).toEqual({
+    pathname: ROUTE_PATHS.WORD_DETAIL,
+    params: { rootId: 18276 },
+  });
+  jest.mocked(widgetBridge!.matchesOwner).mockReturnValue(false);
+  rerender(<WordWidgetLink />);
+  expect(destination()).toBe(ROUTE_PATHS.FIRST_PAGE);
+});
+
+test('a verified article passage link opens the source sentence', () => {
+  jest
+    .mocked(useLocalSearchParams)
+    .mockReturnValue({ action: 'passage', v: 'token', a: '559', s: '7106' });
+  render(<WordWidgetLink />);
+  expect(destination()).toEqual({
+    pathname: ROUTE_PATHS.ARTICLE,
+    params: { id: 559, sentenceId: 7106, disableAutoScroll: 'true', source: 'word' },
+  });
+});

@@ -11,9 +11,23 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import { filterDueWords } from '@/utils/newWordPacing';
 import { readSmartReminderPrefs } from '@/utils/smartReminderPrefs';
+import type { ArticleId, RootId } from '@/types/branded.types';
+import {
+  getArticleRoute,
+  getFirstPageWidgetRoute,
+  getWordDetailRoute,
+} from '@/utils/routeBuilders';
+import { parsePositiveIntParam } from '@/utils/routeParams';
 
 export default function WordWidgetLink() {
-  const { action, v } = useLocalSearchParams<{ action: string; v?: string }>();
+  const { action, v, p, r, a, s } = useLocalSearchParams<{
+    action: string;
+    v?: string;
+    p?: string;
+    r?: string;
+    a?: string;
+    s?: string;
+  }>();
   const { user, isLoading } = useAuth();
   const cache = useQueryClient();
   const owner = user?.id;
@@ -24,9 +38,13 @@ export default function WordWidgetLink() {
     stale?: boolean;
   }>();
   const logged = useRef(false);
-  const privateRoute = action === 'practice' && !!owner;
+  const privateRoute = !!owner && (action === 'practice' || !!v);
+  const word = action === 'word';
+  const passage = action === 'passage';
+  const targeted = word || passage;
+  const verified = !!(targeted && owner && v && widgetBridge?.matchesOwner(owner, v));
   useEffect(() => {
-    if (isLoading || !privateRoute || !owner) return;
+    if (isLoading || action !== 'practice' || !privateRoute || !owner) return;
     let live = true;
     async function resolve(account: string) {
       if (!v || !widgetBridge?.matchesOwner(account, v))
@@ -61,32 +79,53 @@ export default function WordWidgetLink() {
     return () => {
       live = false;
     };
-  }, [isLoading, privateRoute, owner, cache, v]);
+  }, [action, isLoading, privateRoute, owner, cache, v]);
   const destination =
-    !privateRoute || resolved?.stale
+    targeted || !privateRoute || resolved?.stale
       ? ROUTE_PATHS.FIRST_PAGE
       : resolved?.due
         ? ROUTE_PATHS.REVIEW
         : ROUTE_PATHS.PRACTICE_TAB;
   const ready =
-    !isLoading && (!privateRoute || (resolved?.owner === owner && resolved.generation === v));
+    !isLoading &&
+    (action !== 'practice' ||
+      !privateRoute ||
+      (resolved?.owner === owner && resolved.generation === v));
+  const rootId = verified ? parsePositiveIntParam<RootId>(r) : undefined;
+  const articleId = verified ? parsePositiveIntParam<ArticleId>(a) : undefined;
+  const target =
+    word && rootId
+      ? getWordDetailRoute(rootId)
+      : passage && articleId
+        ? getArticleRoute(articleId, {
+            sentenceId: parsePositiveIntParam(s),
+            disableAutoScroll: true,
+            source: 'word',
+          })
+        : targeted && (!v || verified) && typeof p === 'string' && /^\d+\.\d+$/.test(p)
+          ? getFirstPageWidgetRoute(p, word)
+          : undefined;
   useEffect(() => {
-    if (ready && (action === 'read' || action === 'practice') && !logged.current) {
+    if (ready && (targeted || action === 'read' || action === 'practice') && !logged.current) {
       logged.current = true;
       void analytics.track(ANALYTICS_EVENTS.WIDGET_OPENED, {
-        destination,
+        destination: target?.pathname ?? destination,
         platform: Platform.OS,
-        edition: privateRoute && !resolved?.stale ? 'personal' : 'public',
+        edition:
+          verified || (action === 'practice' && privateRoute && !resolved?.stale)
+            ? 'personal'
+            : 'public',
         foreground_session_id: currentReminderSession(),
       });
     }
-  }, [action, ready, destination, privateRoute, resolved?.stale]);
+  }, [action, ready, destination, targeted, target, verified, privateRoute, resolved?.stale]);
   return ready ? (
     <Redirect
       href={
-        destination === ROUTE_PATHS.REVIEW
+        target ??
+        (destination === ROUTE_PATHS.REVIEW
           ? { pathname: destination, params: { source: 'widget' } }
-          : destination
+          : destination)
       }
     />
   ) : null;

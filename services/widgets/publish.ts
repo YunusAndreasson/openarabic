@@ -6,7 +6,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import { createSerialQueue } from '@/utils/createSerialQueue';
 import { readSmartReminderPrefs } from '@/utils/smartReminderPrefs';
 import { widgetBridge } from './native';
-import { lastCheckedFace, publicTimeline, wordTimeline } from './plan';
+import { lastCheckedFace, publicRotation, publicTimeline, wordTimeline } from './plan';
 import { readOccurrences, readWidgetCopy, storeWidgetCopy } from './storage';
 import type { WordEntry, WordFace } from '@/widgets/edition';
 
@@ -38,20 +38,33 @@ export function clearWordWidget(leaving = owner, stage: 'revoke' | 'publish' = '
   };
 }
 
-function write(entries: WordEntry[], open: WordEntry[]) {
-  const next = JSON.stringify([entries.map(e => e.props), open.map(e => e.props)]);
+// Expo's native widget bridge accepts JSON values. An optional property
+// explicitly set to undefined anywhere in the snapshot rejects the entire write.
+function nativeFace(face: WordFace): WordFace {
+  return JSON.parse(JSON.stringify(face)) as WordFace;
+}
+
+function write(entries: WordEntry[], open: WordEntry[], installed: number) {
+  const now = open[0]?.date ?? new Date();
+  const next = JSON.stringify([
+    entries.map((e, i) => [i ? +e.date : 0, e.props]),
+    open.map((e, i) => [i ? +e.date : 0, e.props]),
+    now.getTimezoneOffset(),
+    installed,
+  ]);
   if (next === signature) return;
   if (Platform.OS === 'ios') {
     const { wordWidget } = require('@/widgets/WordInContext.ios') as typeof IOSWord;
     const { publicWidget } = require('@/widgets/OpenText.ios') as typeof IOSPublic;
-    wordWidget.updateTimeline(entries);
-    publicWidget.updateTimeline(open);
+    wordWidget.updateTimeline(entries.map(e => ({ date: e.date, props: nativeFace(e.props) })));
+    publicWidget.updateTimeline(open.map(e => ({ date: e.date, props: nativeFace(e.props) })));
   } else if (Platform.OS === 'android') {
     const { wordWidget } = require('@/widgets/WordInContext.android') as typeof AndroidWord;
     if (entries[0])
       wordWidget.updateSnapshot({
-        ...entries[0].props,
-        frames: entries.map(e => ({ at: +e.date, face: e.props })),
+        ...nativeFace(entries[0].props),
+        frames: entries.map(e => ({ at: +e.date, face: nativeFace(e.props) })),
+        publicRotation: { firstUse: installed, faces: publicRotation().map(nativeFace) },
       });
   }
   signature = next;
@@ -65,22 +78,20 @@ function setWidgetOwner(next: string, installed: number, stage: 'sync' | 'revoke
   if (!widgetBridge) return;
   if (next && next === revocation?.owner) next = '';
   firstUse = installed;
-  if (
-    stage === 'sync' &&
-    owner === next &&
-    (next || preview?.key === publicTimeline(Date.now(), installed)[0]?.props.key)
-  )
+  function writePublic() {
+    const open = publicTimeline(Date.now(), installed);
+    write(open, open, installed);
+  }
+  if (stage === 'sync' && owner === next) {
+    if (!next) writePublic();
     return;
+  }
   generation = widgetBridge.setOwner(next);
   owner = next;
   revision++;
   signature = '';
   preview = undefined;
   if (stage === 'revoke') return;
-  function writePublic() {
-    const open = publicTimeline(Date.now(), installed);
-    write(open, open);
-  }
   if (next) {
     writePublic();
     return;
@@ -107,7 +118,7 @@ export function invalidateWordWidget(
   const version = ++revision;
   const open = publicTimeline(Date.now(), installed);
   if (!preview?.generation || preview.generation !== generation) {
-    write(open, open);
+    write(open, open, installed);
     if (status !== 'Checking')
       void readWidgetCopy(expected)
         .then(copy => {
@@ -117,12 +128,12 @@ export function invalidateWordWidget(
             copy?.generation === generation &&
             copy.checked
           )
-            write([{ date: new Date(), props: lastCheckedFace(copy, status) }], open);
+            write([{ date: new Date(), props: lastCheckedFace(copy, status) }], open, installed);
         })
         .catch(() => undefined);
     return;
   }
-  write([{ date: new Date(), props: lastCheckedFace(preview, status) }], open);
+  write([{ date: new Date(), props: lastCheckedFace(preview, status) }], open, installed);
 }
 // An independent headless JS runtime may still see the departing session.
 // It may refresh an existing native generation, but only the foreground auth
@@ -175,7 +186,7 @@ export function publishDeck(
       now,
       installed,
     );
-    write(entries, publicTimeline(now, installed));
+    write(entries, publicTimeline(now, installed), installed);
     await storeWidgetCopy(expected, entries[0]?.props);
   });
 }

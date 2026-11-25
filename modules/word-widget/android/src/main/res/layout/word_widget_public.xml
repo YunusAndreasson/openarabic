@@ -1,9 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:background="#145735" android:orientation="vertical" android:gravity="center_vertical"
-    android:padding="14dp">
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:gravity="right" android:textDirection="rtl" android:text="@string/word_widget_seed"
-        android:textColor="#FCFFFD" android:textSize="36sp" />
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/word_widget_paper"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="12dp">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:text="@string/word_widget_edition"
+        android:textColor="@color/word_widget_caption"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+    <TextView
+        android:id="@+id/word_widget_public_word"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fontFamily="@font/amiri"
+        android:gravity="right|center_vertical"
+        android:maxLines="1"
+        android:text="@string/word_widget_seed"
+        android:textColor="@color/word_widget_ink"
+        android:textDirection="rtl"
+        android:textSize="40sp" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="@string/word_widget_read"
+        android:textColor="@color/word_widget_caption"
+        android:textSize="13sp" />
 </LinearLayout>

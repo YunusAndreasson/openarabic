@@ -23,3 +23,5 @@ java -cp "$out:$cp" RevealHost
 echo 'Instance-local reveal, duplicate taps, word, generation and due boundaries passed'
 java -cp "$out:$cp" CallbackHost
 echo 'Cold broadcast and deadline delivery redrew only the tapped widget'
+java -cp "$out:$cp" CalendarHost
+echo 'Public rotation tracks local midnight, timezone movement, and DST'
