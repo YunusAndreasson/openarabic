@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import type { Insets, StyleProp, ViewStyle } from 'react-native';
+import type { AccessibilityState, Insets, StyleProp, ViewStyle } from 'react-native';
 import { Pressable as RNPressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -21,6 +21,8 @@ interface GlyphButtonProps {
   icon: IconName;
   /** What it does. Required: the control is a glyph, with no text to fall back on. */
   accessibilityLabel: string;
+  accessibilityState?: AccessibilityState;
+  disabled?: boolean;
   onPress?: () => void;
   /** Defaults to the tertiary ink: the quietest control on its surface. */
   color?: string;
@@ -49,6 +51,8 @@ interface GlyphButtonProps {
 export function GlyphButton({
   icon,
   accessibilityLabel,
+  accessibilityState,
+  disabled = false,
   onPress,
   color,
   size = LAYOUT.BUTTON.ICON_SIZE.SMALL,
@@ -61,6 +65,7 @@ export function GlyphButton({
   const colors = useColors();
   const { handlePress, handlePressIn, handlePressOut, animatedStyle } = useButtonPress({
     onPress,
+    disabled,
     hapticType,
     animationOptions: PRESS_DIM,
   });
@@ -69,6 +74,8 @@ export function GlyphButton({
     <PressableComponent
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
+      accessibilityState={{ ...accessibilityState, disabled }}
+      disabled={disabled}
       hitSlop={hitSlop}
       style={style}
       testID={testID}

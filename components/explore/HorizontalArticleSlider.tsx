@@ -39,20 +39,25 @@ const SLIDER_CARD_STYLE = {
  * Snaps by a single interval, since every card is the same width.
  */
 const HorizontalArticleSliderComponent = ({ articles }: HorizontalArticleSliderProps) => {
-  const { width } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
+  const compactHeight = fontScale <= 1;
   if (!articles.length) return null;
 
   const displayArticles = articles.slice(0, MAX_FEATURED_ARTICLES);
 
   return (
-    <SnapRail itemWidth={exploreRailBasis(width) * CARD_WIDTH_RATIO} itemHeight={CARD_HEIGHT}>
+    <SnapRail
+      itemWidth={exploreRailBasis(width) * CARD_WIDTH_RATIO}
+      itemHeight={compactHeight ? CARD_HEIGHT : undefined}
+    >
       {displayArticles.map(article => (
         <ArticleCard
+          bookmarkable
           key={`featured-${article.id}`}
           article={article}
           {...buildArticleCardProps(article)}
           elevation="hairline"
-          style={SLIDER_CARD_STYLE}
+          style={compactHeight ? SLIDER_CARD_STYLE : undefined}
           testID={`slider-article-${article.id}`}
           isFeaturedArticle={true}
         />

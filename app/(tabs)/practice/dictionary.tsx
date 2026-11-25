@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { FlashList } from '@shopify/flash-list';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -24,6 +24,7 @@ import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG, fadeInStyle } from '@/con
 import { LAYOUT } from '@/constants/layout';
 import { firstLoadError } from '@/utils/firstLoadError';
 import { fsrsQueries, gated } from '@/constants/queries';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -69,6 +70,10 @@ const DISABLED_SCROLL_ANCHORING = { disabled: true };
 
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();
+  return user ? <SavedWords userId={user.id} /> : <Redirect href={ROUTE_PATHS.DICTIONARY} />;
+}
+
+function SavedWords({ userId }: { userId: string }): JSX.Element {
   const router = useRouter();
   const prefetchRootEnrichment = useRootEnrichmentPrefetch();
   const colors = useColors();
@@ -83,7 +88,7 @@ export default function DictionaryScreen(): JSX.Element {
     });
   }, []);
 
-  const query = useQuery(gated(fsrsQueries.all, user?.id));
+  const query = useQuery(gated(fsrsQueries.all, userId));
   const studyWords = query.data;
   const loadError = firstLoadError(query, STRINGS.FAILED_TO_LOAD_PRACTICE_DATA);
 

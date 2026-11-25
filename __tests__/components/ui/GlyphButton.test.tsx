@@ -28,6 +28,24 @@ describe('GlyphButton', () => {
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
+  test('retains selected state and suppresses repeat presses while a save is pending', () => {
+    const onPress = jest.fn();
+    render(
+      <GlyphButton
+        accessibilityLabel="Remove bookmark"
+        accessibilityState={{ selected: true }}
+        disabled
+        icon="bookmark"
+        onPress={onPress}
+      />,
+    );
+
+    const button = screen.getByLabelText('Remove bookmark');
+    expect(button).toHaveProp('accessibilityState', { selected: true, disabled: true });
+    fireEvent.press(button);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
   test('takes a target bigger than the glyph', () => {
     render(<GlyphButton accessibilityLabel="Dismiss" icon="close" onPress={jest.fn()} />);
 

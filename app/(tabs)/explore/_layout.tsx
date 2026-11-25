@@ -1,7 +1,9 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useCallback, type JSX } from 'react';
 
 import { ExploreSearchButton } from '@/components/explore/ExploreSearchButton';
+import { TransparentHeaderButton } from '@/components/ui';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import {
   createNavigationOptions,
@@ -32,6 +34,15 @@ function getFilterTitle(params: FilterParams | undefined): string {
 
 const renderSearchButton = () => <ExploreSearchButton />;
 
+const openReadLater = () => router.push(ROUTE_PATHS.READ_LATER);
+const renderReadLaterButton = () => (
+  <TransparentHeaderButton
+    accessibilityLabel={STRINGS.READ_LATER_TITLE}
+    icon="bookmark-outline"
+    onPress={openReadLater}
+  />
+);
+
 export default function LibraryLayout(): JSX.Element {
   const colors = useColors();
 
@@ -44,7 +55,15 @@ export default function LibraryLayout(): JSX.Element {
         // it does by being browsed.
         options={createTabHeaderOptions({
           title: AppTab.EXPLORE,
+          leftComponent: renderReadLaterButton,
           rightComponent: renderSearchButton,
+        })}
+      />
+      <Stack.Screen
+        name="read-later"
+        options={createNavigationOptions(colors, {
+          title: STRINGS.READ_LATER_TITLE,
+          isRegularScreen: true,
         })}
       />
       <Stack.Screen

@@ -11,6 +11,7 @@ import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFont
 import { useRootEnrichment } from '@/hooks/vocabulary/useRootEnrichment';
 import { useWordMemory, type WordMemory } from '@/hooks/vocabulary/useWordMemory';
 import type { RootId } from '@/types/branded.types';
+import type { Tables } from '@/types/database.types';
 import type { RootEnrichment } from '@/types/rootEnrichment.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { toWordAudioData } from '@/utils/audioUtils';
@@ -19,6 +20,8 @@ import { getRootLemma } from '@/utils/stringUtils';
 export interface SavedWordDetail {
   /** The saved word — held once seen, see below. */
   word: StudyWord | undefined;
+  isSaved: boolean;
+  root: Tables<'roots'> | null | undefined;
   /** The saved-word list is still loading. */
   isLoading: boolean;
   /** The saved-word list failed to load. */
@@ -61,7 +64,10 @@ export interface SavedWordDetail {
  * known synchronously on mount, so it is in flight alongside the study-word
  * list rather than behind it.
  */
-export function useSavedWordDetail(rootId: RootId): SavedWordDetail {
+export function useSavedWordDetail(
+  rootId: RootId,
+  publicRoot?: Tables<'roots'> | null,
+): SavedWordDetail {
   const { user } = useAuth();
   const query = useQuery(gated(fsrsQueries.all, user?.id));
 
@@ -78,6 +84,7 @@ export function useSavedWordDetail(rootId: RootId): SavedWordDetail {
   if (found && found !== held) setHeld(found);
   const word = found ?? (held?.root_id === rootId ? held : undefined);
 
+  const root = publicRoot ?? word?.root;
   const memory = useWordMemory(word);
   const enrichment = useRootEnrichment(rootId);
 
@@ -90,18 +97,20 @@ export function useSavedWordDetail(rootId: RootId): SavedWordDetail {
   // Sync, with the promise explicitly discarded: `playWordAudio` catches its
   // own failures and toasts them (`showErrorToast`).
   const playAudio = () => {
-    const audio = word && toWordAudioData(word);
+    const audio = publicRoot ?? (word && toWordAudioData(word));
     if (!audio) return;
     void playWordAudio(audio);
   };
 
-  const { arabicText, englishText } = getRootLemma(word);
+  const { arabicText, englishText } = getRootLemma({ root });
 
   const savedRootIds = new Set((allWords ?? []).map(saved => saved.root_id));
   const canOpenFamilyMember = (memberRootId: RootId) => savedRootIds.has(memberRootId);
 
   return {
     word,
+    isSaved: !!found,
+    root,
     isLoading,
     loadError:
       !word && query.isPaused

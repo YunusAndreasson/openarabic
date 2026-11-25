@@ -47,6 +47,10 @@ export const ICON_SYMBOLS = {
   },
   book: { ios: 'book.fill', android: { name: 'menu_book', codepoint: 0xea19, filled: true } },
   'book-outline': { ios: 'book', android: { name: 'menu_book', codepoint: 0xea19, filled: false } },
+  bookmark: {
+    ios: 'bookmark.fill',
+    android: { name: 'bookmark', codepoint: 0xe866, filled: true },
+  },
   'bookmark-outline': {
     ios: 'bookmark',
     android: { name: 'bookmark', codepoint: 0xe866, filled: false },

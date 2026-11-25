@@ -75,6 +75,15 @@ export const getCategoryFilterRoute = (id: CategoryId, name?: string) =>
     params: { id, name: name || undefined },
   }) satisfies Href;
 
+export const getDictionaryRoute = (query: string) =>
+  ({
+    pathname: ROUTE_PATHS.DICTIONARY,
+    params: { query: query.trim() || undefined },
+  }) satisfies Href;
+
+export const getDictionaryWordRoute = (rootId: RootId) =>
+  ({ pathname: ROUTE_PATHS.DICTIONARY_WORD, params: { rootId } }) satisfies Href;
+
 /**
  * Word detail. Lives inside the practice stack (not at the root) so it pushes
  * within the dictionary's modal instead of presenting behind it.

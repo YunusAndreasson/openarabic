@@ -372,7 +372,7 @@ describe('useArticleScreen Hook', () => {
       });
 
       expect(mockShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('playlist'),
+        expect.stringContaining('Read later'),
         3000,
         ToastType.INFO,
       );

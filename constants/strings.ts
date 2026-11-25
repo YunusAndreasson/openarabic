@@ -554,6 +554,22 @@ export const STRINGS = {
   // Header buttons are icon-only, so these are their only accessible name
   CLOSE_A11Y: 'Close',
   DICTIONARY_A11Y: 'Your words',
+  PUBLIC_DICTIONARY_TITLE: 'Dictionary',
+  PUBLIC_DICTIONARY_SEARCH: 'Search Arabic or English',
+  PUBLIC_DICTIONARY_IDLE_TITLE: 'Look up a word',
+  PUBLIC_DICTIONARY_IDLE_HINT: 'Enter at least two letters in Arabic or English.',
+  PUBLIC_DICTIONARY_EMPTY_TITLE: 'No matching words',
+  PUBLIC_DICTIONARY_EMPTY_HINT: 'Try a shorter Arabic word or a different English meaning.',
+  PUBLIC_DICTIONARY_ERROR: "Couldn't load dictionary entries. " + tryAgain,
+  PUBLIC_DICTIONARY_WORD_MISSING: 'This word is no longer available.',
+  PUBLIC_DICTIONARY_OPEN_WORD: 'Open in dictionary',
+  PUBLIC_DICTIONARY_IN_PRACTICE: 'In practice',
+  FAILED_TO_LOAD_READ_LATER: "Couldn't load Read later. " + tryAgain,
+  READ_LATER_TITLE: 'Read later',
+  READ_LATER_EMPTY_TITLE: 'No saved articles yet',
+  READ_LATER_EMPTY_HINT: 'Tap the bookmark on any article to find it here and in Playlist.',
+  READ_LATER_SAVE: 'Save {title} for later',
+  READ_LATER_REMOVE: 'Remove {title} from Read later',
   EDIT_MODE_START_A11Y: 'Edit list',
   EDIT_MODE_DONE_A11Y: 'Done editing',
   // Article reader floating controls — icon-only, so these are their only accessible name
@@ -561,12 +577,12 @@ export const STRINGS = {
   ARTICLE_CLOSE_A11Y: 'Close article',
   ARTICLE_LISTEN_A11Y: 'Listen to this article',
   ARTICLE_STOP_LISTENING_A11Y: 'Stop listening',
-  ARTICLE_ADD_TO_PLAYLIST_A11Y: 'Add to playlist',
-  ARTICLE_REMOVE_FROM_PLAYLIST_A11Y: 'Remove from playlist',
+  ARTICLE_ADD_TO_READ_LATER_A11Y: 'Save for later',
+  ARTICLE_REMOVE_FROM_READ_LATER_A11Y: 'Remove from Read later',
   // Playlist tab empty state - one-tap quick start
   BOOKMARKS_EMPTY_TITLE: 'Nothing to play yet',
   BOOKMARKS_EMPTY_HINT:
-    'Every article plays in English first, then Arabic. Tap the headphones on any article to add it here.',
+    'Every article plays in English first, then Arabic. Tap the bookmark on an article to listen to it here.',
   PLAYLIST_EMPTY_SEED_CTA: 'Add beginner articles',
   // Practice tab empty state - one-tap quick start
   PLAY_ALL: 'Play all',
@@ -619,8 +635,8 @@ export const STRINGS = {
   METRIC_WORDS_MASTERED: (count: number) => `${count} ${count === 1 ? 'word' : 'words'} mastered`,
   METRIC_WORDS_IMPROVING: (count: number) =>
     `${count} ${count === 1 ? 'word' : 'words'} strengthened`,
-  ADDED_TO_BOOKMARKS: 'Added to playlist',
-  REMOVED_FROM_BOOKMARKS: 'Removed from playlist',
+  ADDED_TO_BOOKMARKS: 'Saved to Read later',
+  REMOVED_FROM_BOOKMARKS: 'Removed from Read later',
   // Word action buttons
   ADD_TO_PRACTICE: 'Add to practice',
   REMOVE_FROM_PRACTICE: 'In practice',

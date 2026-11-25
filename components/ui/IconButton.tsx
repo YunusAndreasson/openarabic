@@ -68,6 +68,7 @@ interface IconButtonProps {
    * text to fall back on, so pass this wherever the icon isn't self-evident.
    */
   accessibilityLabel?: string;
+  accessibilitySelected?: boolean;
 }
 
 /**
@@ -86,6 +87,7 @@ export const IconButton = ({
   tone = 'default',
   hapticType = 'selection',
   accessibilityLabel,
+  accessibilitySelected,
 }: IconButtonProps) => {
   const colors = useColors();
   const config = ICON_BUTTON_SIZES[size];
@@ -114,7 +116,7 @@ export const IconButton = ({
     <Pressable
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
+      accessibilityState={{ disabled, selected: accessibilitySelected }}
       android_ripple={rippleConfig}
       disabled={disabled}
       hitSlop={config.hitSlop}

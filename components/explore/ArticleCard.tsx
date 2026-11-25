@@ -1,3 +1,4 @@
+import { ArticleBookmarkButton } from './ArticleBookmarkButton';
 import { exploreRailBasis } from '@/utils/layoutUtils';
 import { EnhancedImage } from '@/components/ui';
 import { BaseCard } from '@/components/common';
@@ -28,9 +29,16 @@ type ArticleCardProps = Omit<
   summary: string;
   article: Article;
   isFeaturedArticle?: boolean;
+  bookmarkable?: boolean;
 };
 
 const styles = StyleSheet.create({
+  bookmarkableCard: { flex: 1 },
+  bookmark: {
+    position: 'absolute',
+    top: LAYOUT.SPACING.SMALL,
+    end: LAYOUT.SPACING.SMALL,
+  },
   contentContainer: {
     paddingHorizontal: LAYOUT.SPACING.LARGE, // 16px - consistent with image overlay
     paddingTop: LAYOUT.SPACING.TINY, // 4px - tight proximity to overlay meta (Gestalt)
@@ -51,6 +59,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     position: 'relative',
     width: '100%',
+  },
+  expandedTitle: {
+    gap: LAYOUT.SPACING.TINY,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   overlayTextContainer: {
     bottom: 0,
@@ -79,6 +92,7 @@ export function ArticleCard({
   testID,
   article,
   isFeaturedArticle = false,
+  bookmarkable = false,
   // The hero article card is the one surface on Explore meant to sit above the
   // feed rather than in it. It used to get this by riding BaseCard's old
   // default, which every other call site overrode back down — so it was never a
@@ -89,7 +103,8 @@ export function ArticleCard({
   const colors = useColors();
   const router = useRouter();
   const prefetchArticle = useArticlePrefetch();
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, fontScale } = useWindowDimensions();
+  const wrapText = fontScale > 1;
 
   // Sized from the full-width card even inside the narrower slider, so every
   // article image has the same height. From the live window, not the launch
@@ -125,10 +140,30 @@ export function ArticleCard({
     prefetchArticle(article.id);
   }, [prefetchArticle, article.id]);
 
-  return (
+  const heading = (
+    <>
+      <ThemedText
+        colorName={wrapText ? 'headingText' : 'cardOverlayHeading'}
+        numberOfLines={wrapText ? undefined : 2}
+        weight="bold"
+        style={TITLE_STYLE}
+      >
+        {title}
+      </ThemedText>
+      <ThemedText
+        colorName={wrapText ? 'secondaryText' : 'cardOverlayAuthor'}
+        numberOfLines={wrapText ? undefined : 1}
+        type="label"
+      >
+        {metadataText}
+      </ThemedText>
+    </>
+  );
+
+  const card = (
     <BaseCard
       elevation={elevation}
-      style={style}
+      style={bookmarkable ? styles.bookmarkableCard : style}
       testID={testID}
       onPress={handlePress}
       onPressIn={handlePressIn}
@@ -140,32 +175,33 @@ export function ArticleCard({
           recyclingKey={`article-${article.id}`}
           transition={TIMING_CONSTANTS.TRANSITION_DELAY}
         />
-        <View
-          style={[styles.gradientOverlay, { height: gradientHeight }, gradientStyle]}
-          pointerEvents="none"
-        />
-
-        <View style={styles.overlayTextContainer}>
-          <ThemedText
-            colorName="cardOverlayHeading"
-            numberOfLines={2}
-            weight="bold"
-            style={TITLE_STYLE}
-          >
-            {title}
-          </ThemedText>
-
-          <ThemedText colorName="cardOverlayAuthor" numberOfLines={1} type="label">
-            {metadataText}
-          </ThemedText>
-        </View>
+        {!wrapText && (
+          <>
+            <View
+              style={[styles.gradientOverlay, { height: gradientHeight }, gradientStyle]}
+              pointerEvents="none"
+            />
+            <View style={styles.overlayTextContainer}>{heading}</View>
+          </>
+        )}
       </View>
 
+      {wrapText && <View style={styles.expandedTitle}>{heading}</View>}
       <View style={styles.contentContainer}>
-        <ThemedText colorName="captionText" type="caption" numberOfLines={4}>
+        <ThemedText colorName="captionText" type="caption" numberOfLines={wrapText ? undefined : 4}>
           {summary}
         </ThemedText>
       </View>
     </BaseCard>
+  );
+
+  if (!bookmarkable) return card;
+  return (
+    <View style={style}>
+      {card}
+      <View style={styles.bookmark}>
+        <ArticleBookmarkButton overImage article={article} articleId={article.id} title={title} />
+      </View>
+    </View>
   );
 }

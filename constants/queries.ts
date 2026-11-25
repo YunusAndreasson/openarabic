@@ -44,6 +44,7 @@ import { authorsService } from '@/services/authors';
 import { bookmarkService } from '@/services/bookmark';
 import { categoriesService } from '@/services/categories';
 import { readingProgressService } from '@/services/readingProgress';
+import { dictionaryService } from '@/services/dictionary';
 import { rootEnrichmentService } from '@/services/rootEnrichment';
 import {
   buildStudyHistory,
@@ -612,6 +613,25 @@ export const studyStreakQueries = {
   invalidateAll: (queryClient: QueryClient, userId: string) => {
     return queryClient.invalidateQueries({ queryKey: studyDays(userId).queryKey });
   },
+} as const;
+
+/** Public headwords, shared by the search results and dictionary word page. */
+export const dictionaryQueries = {
+  search: (term: string) =>
+    queryOptions({
+      queryKey: ['dictionary', 'search', term] as const,
+      queryFn: term ? ({ signal }) => dictionaryService.search(term, signal) : skipToken,
+      ...CACHE_TIMES.MEDIUM,
+      retry: retryWhileOnline(1),
+    }),
+
+  entry: (rootId: RootId) =>
+    queryOptions({
+      queryKey: ['dictionary', 'entry', rootId] as const,
+      queryFn: ({ signal }) => dictionaryService.getEntry(rootId, signal),
+      ...CACHE_TIMES.STATIC,
+      retry: retryWhileOnline(1),
+    }),
 } as const;
 
 /**

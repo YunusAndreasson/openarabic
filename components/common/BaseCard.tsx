@@ -70,6 +70,7 @@ interface PressableCardProps {
   cardStyle: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
   children?: ReactNode;
+  trailingAction?: ReactNode;
   onPress: () => void;
   onPressIn?: () => void;
   disabled: boolean;
@@ -94,6 +95,7 @@ const PressableCard = ({
   cardStyle,
   contentStyle,
   children,
+  trailingAction,
   onPress,
   onPressIn,
   disabled,
@@ -139,6 +141,7 @@ const PressableCard = ({
       >
         <View style={contentStyle}>{children}</View>
       </PressableComponent>
+      {trailingAction}
     </Animated.View>
   );
 };
@@ -154,6 +157,7 @@ export const BaseCard = ({
   surface = 'card',
   bordered = false,
   contentStyle,
+  trailingAction,
   disabled = false,
   testID,
   accessibilityLabel,
@@ -175,6 +179,7 @@ export const BaseCard = ({
       <PressableCard
         cardStyle={cardStyle}
         contentStyle={contentStyle}
+        trailingAction={trailingAction}
         onPress={onPress}
         onPressIn={onPressIn}
         disabled={disabled}
@@ -209,6 +214,7 @@ export const BaseCard = ({
       accessibilityState={accessibilityState}
     >
       <View style={contentStyle}>{children}</View>
+      {trailingAction}
     </View>
   );
 };

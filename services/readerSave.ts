@@ -21,10 +21,22 @@ export interface SaveWord {
   gloss: string;
 }
 
+interface DictionarySaveWord {
+  source: 'dictionary';
+  rootId: RootId;
+  form: string;
+  gloss: string;
+  articleId?: never;
+  sentenceId?: never;
+  occurrenceId?: never;
+}
+
+export type PendingSaveWord = SaveWord | DictionarySaveWord;
+
 export interface ReaderSave {
   version: 1;
   id: string;
-  word: SaveWord;
+  word: PendingSaveWord;
   method: SaveMethod;
   shown?: boolean;
   /** Keep reading while this account's acknowledged sign-in finishes the durable add. */
@@ -52,9 +64,10 @@ function isSave(v: unknown): v is ReaderSave {
     return false;
   const w = v['word'];
   return (
-    (w['source'] === 'first_run_reader' ||
-      (w['source'] === 'article' && positive(w['articleId']) && positive(w['sentenceId']))) &&
-    positive(w['occurrenceId']) &&
+    (w['source'] === 'dictionary' ||
+      (positive(w['occurrenceId']) &&
+        (w['source'] === 'first_run_reader' ||
+          (w['source'] === 'article' && positive(w['articleId']) && positive(w['sentenceId']))))) &&
     positive(w['rootId']) &&
     typeof w['form'] === 'string' &&
     typeof w['gloss'] === 'string' &&
@@ -120,12 +133,13 @@ export function createReaderSaveJournal(
       };
     },
     load: () => enqueue(read),
-    begin: (word: SaveWord, method: SaveMethod, owner?: string) =>
+    begin: (word: PendingSaveWord, method: SaveMethod, owner?: string) =>
       update(old => {
         if (
           old?.word.source === word.source &&
           old.word.articleId === word.articleId &&
           old.word.occurrenceId === word.occurrenceId &&
+          old.word.rootId === word.rootId &&
           old.phase === 'auth'
         )
           return old;

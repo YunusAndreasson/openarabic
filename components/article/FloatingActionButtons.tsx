@@ -148,12 +148,12 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
             <GlassIconButton
               accessibilityLabel={
                 optimisticIsInReadingList
-                  ? STRINGS.ARTICLE_REMOVE_FROM_PLAYLIST_A11Y
-                  : STRINGS.ARTICLE_ADD_TO_PLAYLIST_A11Y
+                  ? STRINGS.ARTICLE_REMOVE_FROM_READ_LATER_A11Y
+                  : STRINGS.ARTICLE_ADD_TO_READ_LATER_A11Y
               }
               accessibilityState={{ selected: optimisticIsInReadingList }}
               active={optimisticIsInReadingList}
-              icon={optimisticIsInReadingList ? 'headset' : 'headset-outline'}
+              icon={optimisticIsInReadingList ? 'bookmark' : 'bookmark-outline'}
               iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
               PressableComponent={ReaderPressable}
               onPress={handleOptimisticToggle}
