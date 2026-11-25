@@ -1,7 +1,7 @@
 /**
  * FloatingActionButtons Component Tests
  *
- * Tests article floating action buttons (close and add-to-playlist).
+ * Tests article floating action buttons (close and Read later).
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
@@ -79,7 +79,7 @@ describe('FloatingActionButtons', () => {
       expect(getByTestId('icon-close')).toBeTruthy();
     });
 
-    test('renders headset outline when not in reading list', () => {
+    test('renders bookmark outline when not in reading list', () => {
       const { getByTestId } = render(
         <FloatingActionButtons
           isInReadingList={false}
@@ -91,10 +91,10 @@ describe('FloatingActionButtons', () => {
         />,
       );
 
-      expect(getByTestId('icon-headset-outline')).toBeTruthy();
+      expect(getByTestId('icon-bookmark-outline')).toBeTruthy();
     });
 
-    test('renders filled headset when in reading list', () => {
+    test('renders filled bookmark when in reading list', () => {
       const { getByTestId } = render(
         <FloatingActionButtons
           isInReadingList={true}
@@ -106,7 +106,7 @@ describe('FloatingActionButtons', () => {
         />,
       );
 
-      expect(getByTestId('icon-headset')).toBeTruthy();
+      expect(getByTestId('icon-bookmark')).toBeTruthy();
     });
   });
 
@@ -165,8 +165,8 @@ describe('FloatingActionButtons', () => {
 
       expect(queryByTestId('icon-play')).toBeNull();
       expect(queryByTestId('icon-stop')).toBeNull();
-      // The playlist toggle and the close button stay
-      expect(getByTestId('icon-headset-outline')).toBeTruthy();
+      // The bookmark toggle and the close button stay
+      expect(getByTestId('icon-bookmark-outline')).toBeTruthy();
       expect(getByTestId('icon-close')).toBeTruthy();
     });
   });
@@ -193,8 +193,8 @@ describe('FloatingActionButtons', () => {
     });
   });
 
-  describe('Playlist Button', () => {
-    test('calls onToggleReadingList when playlist button is pressed', () => {
+  describe('Bookmark button', () => {
+    test('calls onToggleReadingList when bookmark button is pressed', () => {
       const { getByTestId } = render(
         <FloatingActionButtons
           isInReadingList={false}
@@ -206,15 +206,15 @@ describe('FloatingActionButtons', () => {
         />,
       );
 
-      const playlistIcon = getByTestId('icon-headset-outline');
-      const pressable = playlistIcon.parent?.parent;
+      const bookmarkIcon = getByTestId('icon-bookmark-outline');
+      const pressable = bookmarkIcon.parent?.parent;
 
       expect(pressable).not.toBeNull();
       fireEvent.press(pressable!);
       expect(mockOnToggleReadingList).toHaveBeenCalledTimes(1);
     });
 
-    test('toggles playlist icon optimistically on press', () => {
+    test('toggles bookmark icon optimistically on press', () => {
       const { getByTestId, rerender, queryByTestId } = render(
         <FloatingActionButtons
           isInReadingList={false}
@@ -227,7 +227,7 @@ describe('FloatingActionButtons', () => {
       );
 
       // Initial state - outline
-      expect(getByTestId('icon-headset-outline')).toBeTruthy();
+      expect(getByTestId('icon-bookmark-outline')).toBeTruthy();
 
       // Rerender with updated prop
       rerender(
@@ -241,9 +241,9 @@ describe('FloatingActionButtons', () => {
         />,
       );
 
-      // Should now show filled headset
-      expect(getByTestId('icon-headset')).toBeTruthy();
-      expect(queryByTestId('icon-headset-outline')).toBeNull();
+      // Should now show filled bookmark
+      expect(getByTestId('icon-bookmark')).toBeTruthy();
+      expect(queryByTestId('icon-bookmark-outline')).toBeNull();
     });
   });
 });

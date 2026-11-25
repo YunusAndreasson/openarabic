@@ -13,7 +13,7 @@ import {
   canResumeReaderSave,
   readerSave,
   type ReaderSave,
-  type SaveWord,
+  type PendingSaveWord,
   type SaveMethod,
 } from '@/services/readerSave';
 import { keepWidgetOccurrence } from '@/services/widgets/storage';
@@ -37,7 +37,7 @@ export function usePendingReaderSave() {
   return save === undefined && unavailable ? null : save;
 }
 
-export async function beginReaderSave(word: SaveWord, method: SaveMethod, owner?: string) {
+export async function beginReaderSave(word: PendingSaveWord, method: SaveMethod, owner?: string) {
   try {
     await readerSave.begin(word, method, owner);
   } catch (cause) {
@@ -92,10 +92,10 @@ export async function completeReaderSave(save: ReaderSave, owner: string, addWor
       void analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
         ...saveProperties(save),
         method: save.method,
-        source: save.word.source,
         $insert_id: save.id + '-added',
       });
-    await keepWidgetOccurrence(owner, save.word).catch(() => undefined);
+    if (save.word.source !== 'dictionary')
+      await keepWidgetOccurrence(owner, save.word).catch(() => undefined);
     const phase = resultState.changed ? 'saved' : 'existing';
     const updated = await readerSave.change(save.id, old => ({ ...old, phase }));
     if (updated?.id === save.id)
@@ -125,7 +125,7 @@ export function useReaderSaveCompletion(save: ReaderSave) {
   const dispatch = useAppDispatch();
   const focused = useIsFocused();
   const { handleRootPress } = useStudyWordMutations(undefined, {
-    source: save.word.source,
+    source: saveProperties(save).source,
     journaled: true,
   });
   const user = session?.user;

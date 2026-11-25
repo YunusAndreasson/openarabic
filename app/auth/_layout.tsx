@@ -1,6 +1,7 @@
 import { router, Stack, useIsFocused, useNavigation } from 'expo-router';
 import { useEffect, type JSX } from 'react';
 
+import { SaveAuthCloseButton } from '@/components/auth/SaveAuthCloseButton';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { STRINGS } from '@/constants/strings';
@@ -10,6 +11,7 @@ import { createNavigationOptions, renderCloseButton } from '@/utils/navigation';
 export const unstable_settings = { anchor: 'index' };
 
 const HIDDEN_HEADER_OPTIONS = { headerShown: false } as const;
+const renderSaveAuthCloseButton = () => <SaveAuthCloseButton />;
 
 export default function AuthLayout(): JSX.Element {
   const colors = useColors();
@@ -35,11 +37,23 @@ export default function AuthLayout(): JSX.Element {
       isRegularScreen: true,
     });
 
+  const formOptions =
+    (title: string) =>
+    ({ route }: { route: { params?: object } }) => {
+      const params = route.params;
+      const options = screenOptions(title);
+      if (params && 'saveIntent' in params && typeof params.saveIntent === 'string') {
+        // Closing a form started by a word save returns to the waiting gate.
+        return { ...options, headerRight: renderSaveAuthCloseButton };
+      }
+      return options;
+    };
+
   return (
     <Stack>
       <Stack.Screen name="index" options={HIDDEN_HEADER_OPTIONS} />
-      <Stack.Screen name="sign-in" options={screenOptions(STRINGS.SIGN_IN_TITLE)} />
-      <Stack.Screen name="sign-up" options={screenOptions(STRINGS.CREATE_ACCOUNT_TITLE)} />
+      <Stack.Screen name="sign-in" options={formOptions(STRINGS.SIGN_IN_TITLE)} />
+      <Stack.Screen name="sign-up" options={formOptions(STRINGS.CREATE_ACCOUNT_TITLE)} />
       <Stack.Screen name="terms" options={screenOptions(STRINGS.TERMS_OF_SERVICE)} />
       <Stack.Screen name="privacy" options={screenOptions(STRINGS.PRIVACY_POLICY)} />
     </Stack>

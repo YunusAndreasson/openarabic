@@ -1,5 +1,5 @@
 import { BaseCard, ProgressBar } from '@/components/common';
-import { memo, type ComponentType } from 'react';
+import { memo, type ComponentType, type ReactNode } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -10,7 +10,7 @@ import { DragHandle, type DragHandleProps } from './DragHandle';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { STRINGS } from '@/constants/strings';
 import { FONTS } from '@/constants/fonts';
-import { LAYOUT, TEXT_STYLES } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TEXT_STYLES } from '@/constants/layout';
 import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
 import type { PressableLikeProps } from '@/types/ui/base.types';
@@ -43,6 +43,7 @@ interface PlaylistItemCardProps {
   PressableComponent?: ComponentType<PressableLikeProps>;
   /** The article the audio player is on: its title takes the tint. */
   isNowPlaying?: boolean;
+  trailingAction?: ReactNode;
 }
 
 export const PlaylistItemCard = memo(
@@ -61,6 +62,7 @@ export const PlaylistItemCard = memo(
     compact = false,
     PressableComponent,
     isNowPlaying = false,
+    trailingAction,
   }: PlaylistItemCardProps) => {
     const colors = useColors();
     const { fontScale } = useWindowDimensions();
@@ -93,8 +95,21 @@ export const PlaylistItemCard = memo(
             onPress={editMode ? undefined : onPress}
             onPressIn={editMode ? undefined : onPressIn}
             PressableComponent={PressableComponent}
+            trailingAction={
+              !editMode && trailingAction ? (
+                <View pointerEvents="box-none" style={styles.actionContainer}>
+                  {trailingAction}
+                </View>
+              ) : null
+            }
           >
-            <View style={[styles.cardContent, compact && styles.railFill]}>
+            <View
+              style={[
+                styles.cardContent,
+                compact && styles.railFill,
+                !editMode && !!trailingAction && styles.contentWithAction,
+              ]}
+            >
               {/* Article thumbnail - bookmarks style */}
               {imageUrl && (
                 <View style={styles.imageContainer}>
@@ -195,6 +210,9 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.SMALL, // 2025: tighter padding for compact list items
     alignItems: 'center',
   },
+  contentWithAction: {
+    paddingEnd: MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.SMALL,
+  },
   contentWrapper: {
     flex: 1,
     justifyContent: 'center',
@@ -231,13 +249,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingRight: LAYOUT.SPACING.SMALL,
   },
+  actionContainer: {
+    position: 'absolute',
+    end: LAYOUT.SPACING.TINY,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
   deleteButtonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingLeft: LAYOUT.SPACING.SMALL,
   },
   imageContainer: {
-    marginRight: LAYOUT.SPACING.SMALL, // 2025: tighter gap between image and text
+    marginEnd: LAYOUT.SPACING.SMALL, // 2025: tighter gap between image and text
     alignSelf: 'flex-start',
   },
   thumbnailImage: {

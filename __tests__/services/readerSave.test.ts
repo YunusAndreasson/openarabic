@@ -53,6 +53,24 @@ describe('durable reader Add', () => {
     await restored.change(save.id, () => null);
     expect(await createReaderSaveJournal(storage).load()).toBeNull();
   });
+  test('dictionary saves restore the selected root and coalesce only that entry', async () => {
+    const storage = disk();
+    const journal = createReaderSaveJournal(storage);
+    const headword = {
+      source: 'dictionary',
+      rootId: 12 as RootId,
+      form: 'كتاب',
+      gloss: 'book',
+    } as const;
+    const first = await journal.begin(headword, 'sheet');
+    const restored = createReaderSaveJournal(storage);
+    expect(await restored.load()).toMatchObject({ word: headword, phase: 'auth' });
+    expect((await restored.begin(headword, 'sheet'))?.id).toBe(first?.id);
+    const next = await restored.begin({ ...headword, rootId: 13 as RootId }, 'sheet');
+    expect(next?.id).not.toBe(first?.id);
+    expect(next?.word.rootId).toBe(13);
+  });
+
   test('a receipt requires its owner, while an interrupted provider exchange can resume signed out', async () => {
     const journal = createReaderSaveJournal(disk());
     const save = (await journal.begin(word(4), 'sheet', 'owner'))!;

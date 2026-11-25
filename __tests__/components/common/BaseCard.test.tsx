@@ -15,7 +15,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
-import { Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 
 import { BaseCard } from '@/components/common/BaseCard';
 
@@ -104,6 +104,31 @@ describe('BaseCard', () => {
       );
 
       fireEvent.press(getByTestId('pressable-card'));
+      expect(mockOnPress).toHaveBeenCalledTimes(1);
+    });
+
+    test('the trailing control is a separate button from the main card', () => {
+      const onBookmark = jest.fn();
+      const { getByLabelText } = render(
+        <BaseCard
+          accessibilityLabel="Open article"
+          onPress={mockOnPress}
+          trailingAction={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Save article"
+              onPress={onBookmark}
+            />
+          }
+        >
+          <Text>Article title</Text>
+        </BaseCard>,
+      );
+
+      fireEvent.press(getByLabelText('Save article'));
+      expect(onBookmark).toHaveBeenCalledTimes(1);
+      expect(mockOnPress).not.toHaveBeenCalled();
+      fireEvent.press(getByLabelText('Open article'));
       expect(mockOnPress).toHaveBeenCalledTimes(1);
     });
 

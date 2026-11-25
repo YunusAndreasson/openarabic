@@ -31,6 +31,7 @@ const ArticleRailComponent = ({ items, keyPrefix, onArticlePress }: ArticleRailP
     <SnapRail itemWidth={exploreRailBasis(width) * CARD_WIDTH_RATIO}>
       {items.map(({ article, progress }) => (
         <ArticleRow
+          bookmarkable
           key={`${keyPrefix}-${article.id}`}
           article={article}
           progressPercentage={progress}

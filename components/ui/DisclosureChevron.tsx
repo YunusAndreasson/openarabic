@@ -1,7 +1,11 @@
+import { I18nManager, Platform } from 'react-native';
+
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 import { Icon } from './Icon';
+
+const mirrored = { transform: [{ scaleX: -1 }] };
 
 /**
  * The "this opens something" chevron at the trailing edge of a row.
@@ -22,6 +26,7 @@ export function DisclosureChevron() {
       importantForAccessibility="no"
       color={colors.textTertiary}
       name="chevron-forward"
+      style={Platform.OS === 'android' && I18nManager.isRTL ? mirrored : undefined}
       size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
     />
   );

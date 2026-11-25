@@ -1,3 +1,4 @@
+import { ArticleBookmarkButton } from './ArticleBookmarkButton';
 import type { ComponentType } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,6 +20,7 @@ interface ArticleRowProps {
   onPress?: (article: Article) => void;
   /** The rail size: a smaller title for a card in a horizontal rail. */
   compact?: boolean;
+  bookmarkable?: boolean;
   /** Forwarded to the card. Inside the article reader, pass `ReaderPressable`. */
   PressableComponent?: ComponentType<PressableLikeProps>;
 }
@@ -38,6 +40,7 @@ export function ArticleRow({
   progressPercentage,
   onPress,
   compact,
+  bookmarkable,
   PressableComponent,
 }: ArticleRowProps) {
   const prefetchArticle = useArticlePrefetch();
@@ -52,6 +55,11 @@ export function ArticleRow({
       onPress={onPress ? () => onPress(article) : undefined}
       onPressIn={() => prefetchArticle(article.id)}
       compact={compact}
+      trailingAction={
+        bookmarkable && (
+          <ArticleBookmarkButton article={article} articleId={article.id} title={article.title} />
+        )
+      }
       PressableComponent={PressableComponent}
     />
   );

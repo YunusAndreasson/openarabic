@@ -10,6 +10,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { ArticleSearchResult } from '@/hooks/articles/useArticleSearch';
 import type { Article } from '@/types/articles.types';
+import { DictionaryShortcut } from './DictionaryShortcut';
 import { formatTextCount } from '@/utils/wordCountText';
 
 import {
@@ -48,6 +49,7 @@ interface SearchResultListProps {
   loadError?: string;
   onRetryBody: () => void;
   onArticlePress: (article: Article) => void;
+  onDictionaryPress: () => void;
 }
 
 /**
@@ -74,6 +76,7 @@ export const SearchResultList = ({
   loadError,
   onRetryBody,
   onArticlePress,
+  onDictionaryPress,
 }: SearchResultListProps) => {
   const listContentStyle = useArticleListContentStyle();
 
@@ -82,6 +85,7 @@ export const SearchResultList = ({
   const renderItem = useCallback(
     ({ item }: { item: ArticleSearchResult }): JSX.Element => (
       <ArticleRow
+        bookmarkable
         article={item.article}
         secondaryText={item.bodySnippet}
         onPress={onArticlePress}
@@ -91,25 +95,28 @@ export const SearchResultList = ({
   );
 
   const ListHeaderComponent = useMemo(() => {
-    if (!hasQuery || results.length === 0) return null;
-
     return (
       <View style={styles.listHeader}>
-        <ThemedText type="caption" colorName="secondaryText">
-          {formatTextCount(results.length)}
-        </ThemedText>
-        {isBodyError ? (
-          <TextLink label={STRINGS.SEARCH_TEXTS_BODY_FAILED} onPress={onRetryBody} />
-        ) : (
-          isBodyLoading && (
-            <ThemedText type="caption" colorName="secondaryText">
-              {STRINGS.SEARCH_TEXTS_BODY_LOADING}
-            </ThemedText>
-          )
+        <DictionaryShortcut onPress={onDictionaryPress} />
+        {hasQuery && results.length > 0 && (
+          <ThemedText type="caption" colorName="secondaryText">
+            {formatTextCount(results.length)}
+          </ThemedText>
         )}
+        {hasQuery &&
+          results.length > 0 &&
+          (isBodyError ? (
+            <TextLink label={STRINGS.SEARCH_TEXTS_BODY_FAILED} onPress={onRetryBody} />
+          ) : (
+            isBodyLoading && (
+              <ThemedText type="caption" colorName="secondaryText">
+                {STRINGS.SEARCH_TEXTS_BODY_LOADING}
+              </ThemedText>
+            )
+          ))}
       </View>
     );
-  }, [hasQuery, results.length, isBodyLoading, isBodyError, onRetryBody]);
+  }, [hasQuery, results.length, isBodyLoading, isBodyError, onRetryBody, onDictionaryPress]);
 
   const ListEmptyComponent = useMemo(
     () => (

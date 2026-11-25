@@ -12,7 +12,7 @@ export const saveProperties = (save: ReaderSave) => ({
   sheet_id: save.id,
   attempt_id: save.attempt?.id,
   provider: save.attempt?.provider ?? (save.owner ? 'signed_in' : 'none'),
-  source: save.word.source,
+  source: save.word.source === 'dictionary' ? ('practice' as const) : save.word.source,
 });
 
 export type StartReaderAuth = (provider: SaveProvider) => Promise<ReaderAuthAttempt | undefined>;

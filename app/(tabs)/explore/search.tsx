@@ -11,7 +11,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useArticleSearch } from '@/hooks/articles/useArticleSearch';
 import type { Article } from '@/types/articles.types';
-import { getArticleRoute } from '@/utils/routeBuilders';
+import { getArticleRoute, getDictionaryRoute } from '@/utils/routeBuilders';
 
 /**
  * Typed so `transitionEnd` is visible: it is a native-stack event, and the bare
@@ -104,6 +104,10 @@ export default function SearchScreen(): JSX.Element {
         isBodyError={isBodyError}
         onRetryBody={retryBody}
         onArticlePress={handleArticlePress}
+        onDictionaryPress={() => {
+          searchBarRef.current?.blur();
+          router.push(getDictionaryRoute(query));
+        }}
       />
     </ThemedView>
   );

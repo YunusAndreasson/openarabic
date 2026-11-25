@@ -5,6 +5,7 @@ import { analytics } from '@/services/analytics';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { readerSave } from '@/services/readerSave';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { keepWidgetOccurrence } from '@/services/widgets/storage';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
@@ -12,6 +13,9 @@ jest.mock('@/services/readerSaveRpc', () => ({ readerSaveReceipt: jest.fn(async 
 jest.mock('@/services/analytics', () => ({ analytics: { track: jest.fn() } }));
 jest.mock('@/services/studyWordsFSRS', () => ({
   studyWordsFSRSService: { getFSRSWords: jest.fn() },
+}));
+jest.mock('@/services/widgets/storage', () => ({
+  keepWidgetOccurrence: jest.fn(async () => undefined),
 }));
 jest.mock('@/utils/network', () => ({ isKnownOffline: async () => false }));
 const lookup = jest.mocked(studyWordsFSRSService.getFSRSWords);
@@ -27,6 +31,7 @@ beforeEach(async () => {
   const old = await readerSave.load();
   if (old) await readerSave.change(old.id, () => null);
   lookup.mockResolvedValue([]);
+  jest.mocked(keepWidgetOccurrence).mockResolvedValue(undefined);
   jest.mocked(readerSaveReceipt).mockResolvedValue('legacy');
 });
 test('only the verified owner writes, with explicit add, once across overlapping completions', async () => {
@@ -121,4 +126,38 @@ test('fallback loses attribution when the committed row outlives the failed ackn
     ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY,
     expect.anything(),
   );
+});
+
+test('a dictionary save completes after account verification without sending a fabricated reader occurrence to the widget', async () => {
+  const { rootId, form, gloss } = word;
+  const guestSave = (await readerSave.begin(
+    { source: 'dictionary', rootId, form, gloss },
+    'sheet',
+  ))!;
+  await completeReaderSave(guestSave, 'owner', add);
+  expect(add).not.toHaveBeenCalled();
+
+  const verified = (await readerSave.change(guestSave.id, old => ({
+    ...old,
+    owner: 'owner',
+    phase: 'ready',
+    verified: true,
+  })))!;
+  add.mockImplementation(async (_root, _intent, options) => {
+    options?.onConfirmed?.(true);
+    return true;
+  });
+  await completeReaderSave(verified, 'owner', add);
+  expect(add).toHaveBeenCalledTimes(1);
+  expect(add).toHaveBeenCalledWith(
+    rootId,
+    'add',
+    expect.objectContaining({ expectedOwner: 'owner' }),
+  );
+  expect(readerSave.snapshot()).toMatchObject({
+    id: guestSave.id,
+    phase: 'saved',
+    word: { rootId },
+  });
+  expect(keepWidgetOccurrence).not.toHaveBeenCalled();
 });

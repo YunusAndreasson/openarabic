@@ -41,7 +41,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { getArticleShareLink, sharePublicLink } from '@/utils/publicShare';
-import { readArticleOpenSource } from '@/utils/routeBuilders';
+import { getDictionaryWordRoute, readArticleOpenSource } from '@/utils/routeBuilders';
 
 // Static constants to prevent recreation
 const FLEX_ONE_STYLE = { flex: 1 } as const;
@@ -120,6 +120,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   useEffect(() => {
     const restored =
       completed &&
+      pendingSave.word.source === 'article' &&
       pendingSave.word.articleId === Number(id) &&
       pendingSave.owner === session?.user?.id;
     const wordId = restored ? pendingSave.word.occurrenceId : Number(params.wordId);
@@ -426,6 +427,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         onClose={wordDetailsModal.close}
         word={wordDetailsModal.data}
         onAddToStudy={handleAddWordToStudy}
+        onOpenDictionary={word => router.push(getDictionaryWordRoute(word.root_id))}
         onGuidedAdd={
           !guideSave || isInStudyList
             ? undefined
@@ -538,7 +540,7 @@ export default function ArticleScreen(): JSX.Element {
             save={save}
             onExit={() =>
               requestAnimationFrame(() => {
-                const node = targets.get(save.word.occurrenceId);
+                const node = save.word.occurrenceId && targets.get(save.word.occurrenceId);
                 if (node) AccessibilityInfo.sendAccessibilityEvent(node, 'focus');
               })
             }

@@ -13,6 +13,9 @@ export const ROUTE_PATHS = {
   EXPLORE_SEARCH: '/(tabs)/explore/search',
   /** The category list. Open it through `getCategoryFilterRoute`. */
   EXPLORE_FILTER: '/(tabs)/explore/filter',
+  DICTIONARY: '/dictionary',
+  DICTIONARY_WORD: '/dictionary/word',
+  READ_LATER: '/(tabs)/explore/read-later',
   PRACTICE_TAB: '/(tabs)/practice',
   ACCOUNT: '/(tabs)/account',
   ACCOUNT_HELP: '/(tabs)/account/help',

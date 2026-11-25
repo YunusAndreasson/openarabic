@@ -32,21 +32,20 @@ export default function StudyLayout(): JSX.Element {
           rightComponent: user ? renderReviewButton : undefined,
         })}
       />
-      <Stack.Protected guard={!!user}>
-        <Stack.Screen
-          name="dictionary"
-          options={createNavigationOptions(colors, {
-            title: STRINGS.PRACTICE_WORDS_TITLE,
-            headerRight: renderCloseButton,
-          })}
-        />
-        {/* Word detail lives in THIS stack, not the root one. `dictionary` is
+      <Stack.Screen
+        name="dictionary"
+        options={createNavigationOptions(colors, {
+          title: STRINGS.PRACTICE_WORDS_TITLE,
+          headerRight: renderCloseButton,
+        })}
+      />
+      {/* Word detail lives in THIS stack, not the root one. `dictionary` is
           presented as a modal (createNavigationOptions defaults to modal), and
           a root-level formSheet pushed from inside a modal presents behind it —
           the word screen opened to nothing. Same rule the account layout
           documents: sub-screens of a modal push as regular pages inside it
           rather than stacking modal-on-modal. */}
-        {/* Explicit CloseButton rather than relying on the platform back chevron.
+      {/* Explicit CloseButton rather than relying on the platform back chevron.
           On device this screen rendered with no visible way out at all — just
           the title — so the learner had to know the system back gesture. An X
           we render ourselves cannot be suppressed by header configuration, and
@@ -54,16 +53,15 @@ export default function StudyLayout(): JSX.Element {
           same corner throughout this flow. `headerBackVisible: false` keeps it
           to one exit if the platform does supply a chevron here; both do
           router.back() anyway, so they would only look like a choice. */}
-        <Stack.Screen
-          name="word"
-          options={createNavigationOptions(colors, {
-            title: STRINGS.WORD_DETAIL_TITLE,
-            isRegularScreen: true,
-            headerBackVisible: false,
-            headerRight: renderCloseButton,
-          })}
-        />
-      </Stack.Protected>
+      <Stack.Screen
+        name="word"
+        options={createNavigationOptions(colors, {
+          title: STRINGS.WORD_DETAIL_TITLE,
+          isRegularScreen: true,
+          headerBackVisible: false,
+          headerRight: renderCloseButton,
+        })}
+      />
     </Stack>
   );
 }

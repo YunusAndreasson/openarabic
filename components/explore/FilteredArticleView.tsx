@@ -167,6 +167,7 @@ export const FilteredArticleView = ({ articles, onArticlePress }: FilteredArticl
 
       return (
         <ArticleRow
+          bookmarkable
           article={item.data}
           progressPercentage={getArticleProgressPercentage(progressMap, item.data.id)}
           onPress={onArticlePress}

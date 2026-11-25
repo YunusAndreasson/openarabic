@@ -83,6 +83,8 @@ function event(
 }
 
 export async function startFirstReview(save: ReaderSave) {
+  const { word } = save;
+  if (word.source === 'dictionary') throw new Error('First review requires a reading occurrence');
   const owner = save.owner;
   if (!owner || (save.phase !== 'saved' && save.phase !== 'existing'))
     throw new Error('Unconfirmed word');
@@ -94,7 +96,7 @@ export async function startFirstReview(save: ReaderSave) {
         (r.word.rootId === save.word.rootId && r.step !== 'complete' && (r.attempt || r.previous)),
     );
     if (existing) return existing;
-    const next: FirstReview = { id: save.id, owner, word: save.word, version: 0, step: 'recall' };
+    const next: FirstReview = { id: save.id, owner, word, version: 0, step: 'recall' };
     await AsyncStorage.setItem(key(owner), JSON.stringify([next, ...rows]));
     event(next, EVENTS.REVIEW_SESSION_STARTED, { word_count: 1, $insert_id: next.id + '-started' });
     return next;

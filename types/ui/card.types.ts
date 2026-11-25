@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import type { BaseComponentProps, PressableLikeProps } from './base.types';
@@ -44,6 +44,8 @@ export interface BaseCardProps extends Omit<BaseComponentProps, 'loading'> {
   /** Inner padding and child layout. Keep these here so the entire surface
    * remains tappable; `style` is for the outer surface and external layout. */
   contentStyle?: StyleProp<ViewStyle>;
+  /** Independent control inside the surface. Leave room for it in the card content. */
+  trailingAction?: ReactNode;
   /**
    * Pressable implementation. Defaults to react-native's.
    *

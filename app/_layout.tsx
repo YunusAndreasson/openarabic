@@ -53,6 +53,7 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
 import { ROUTE_PATHS, SHEET_ROUTES } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 import { useAnalyticsSuperProperties } from '@/hooks/app/useAnalyticsSuperProperties';
 import { GuestLibraryImport } from '@/hooks/app/useGuestLibraryImport';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
@@ -84,7 +85,7 @@ import {
   sentryReportingOptions,
 } from '@/utils/errorHandling';
 import { registerMutationDefaults } from '@/utils/mutationDefaults';
-import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
+import { createNavigationOptions, createSheetOptions, renderCloseButton } from '@/utils/navigation';
 import {
   flushPersistedQueryCache,
   invalidateQueryPersistence,
@@ -601,8 +602,7 @@ function AppContent() {
   );
   const rootScreenOptions = useMemo(
     () => ({
-      // Every root screen hides its header, so no other header option here
-      // would ever apply.
+      // The reader and tabs own their headers. Reference screens opt in.
       headerShown: false,
       contentStyle: { backgroundColor: colors.background },
     }),
@@ -674,6 +674,24 @@ function AppContent() {
                      * `gestureEnabled` stays false to state the intent if the
                      * presentation is ever changed back.
                      */
+                    presentation: 'fullScreenModal',
+                    gestureEnabled: false,
+                  })}
+                />
+                <Stack.Screen
+                  name="dictionary/index"
+                  options={createNavigationOptions(colors, {
+                    headerShown: true,
+                    title: STRINGS.PUBLIC_DICTIONARY_TITLE,
+                    headerRight: renderCloseButton,
+                  })}
+                />
+                <Stack.Screen
+                  name="dictionary/word"
+                  options={createNavigationOptions(colors, {
+                    headerShown: true,
+                    title: STRINGS.WORD_DETAIL_TITLE,
+                    headerRight: renderCloseButton,
                     presentation: 'fullScreenModal',
                     gestureEnabled: false,
                   })}

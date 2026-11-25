@@ -37,6 +37,7 @@ export interface WordDetailsBottomSheetProps {
   onClose: () => void;
   word: SentenceWord | null;
   hideAdd?: boolean;
+  onOpenDictionary?: (word: SentenceWord) => void;
   onGuidedAdd?: (word: SentenceWord) => void;
   onAddToStudy: (
     word: SentenceWord,
@@ -84,6 +85,7 @@ export function WordDetailsBottomSheet({
   word: selectedWord,
   onAddToStudy,
   hideAdd = false,
+  onOpenDictionary,
   onGuidedAdd,
   isInStudyList = false,
   isStudyStateLoading = false,
@@ -104,6 +106,7 @@ export function WordDetailsBottomSheet({
   const { showToast } = useToast();
   const sheetRef = useRef<BrandedBottomSheetMethods>(null);
   const openingGeneration = useRef(0);
+  const dictionaryTarget = useRef<SentenceWord | null>(null);
 
   // A gate for an old opening must never dismiss a newer word (including a
   // second opening of the same word) or act after this component unmounts.
@@ -264,7 +267,16 @@ export function WordDetailsBottomSheet({
   };
 
   return (
-    <BrandedBottomSheet ref={sheetRef} isVisible={isVisible && !!selectedWord} onClose={onClose}>
+    <BrandedBottomSheet
+      ref={sheetRef}
+      isVisible={isVisible && !!selectedWord}
+      onClose={() => {
+        const target = dictionaryTarget.current;
+        dictionaryTarget.current = null;
+        onClose();
+        if (target) onOpenDictionary?.(target);
+      }}
+    >
       {/* BottomSheetScrollView, not BottomSheetView: expanding the family list
           or the sentence note can push the content past `maxDynamicContentSize`
           (85% of screen height), and a non-scrolling container simply clips the
@@ -382,17 +394,26 @@ export function WordDetailsBottomSheet({
                     onPress={handleAddToStudy}
                     disabled={isStudyStateLoading || isToggling}
                     fullWidth
+                    allowTitleWrap
                   />
                 </View>
               )}
 
-              {/* No route to the word detail screen, deliberately. The reader
-                  is itself a root-level modal above the tabs, and
-                  `/(tabs)/practice/word` is a child of a stack whose sibling is
-                  the dictionary modal — reaching it from here means either
-                  tearing down the reading session or presenting modal over
-                  modal, which this codebase has already been bitten by. The two
-                  facts worth having fit in the blocks below. */}
+              {word.root_id && onOpenDictionary ? (
+                <View style={styles.buttonSection}>
+                  <ThemedButton
+                    title={STRINGS.PUBLIC_DICTIONARY_OPEN_WORD}
+                    icon="book-outline"
+                    variant="outlined"
+                    allowTitleWrap
+                    fullWidth
+                    onPress={() => {
+                      dictionaryTarget.current = word;
+                      sheetRef.current?.close();
+                    }}
+                  />
+                </View>
+              ) : null}
 
               {/* Where the word comes from — the Lane's-grounded account of the
                   root, leading. It is the stronger of the two explanations and

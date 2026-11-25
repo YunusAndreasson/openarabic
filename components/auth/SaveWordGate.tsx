@@ -18,7 +18,7 @@ import { useReaderSaveCompletion, reportSaveError } from '@/hooks/onboarding/use
 import { useAuth } from '@/hooks/auth/useAuth';
 import { readerSave, type ReaderSave } from '@/services/readerSave';
 
-export function SaveWordGate({ save, onExit }: { save: ReaderSave; onExit: () => void }) {
+export function SaveWordGate({ save, onExit }: { save: ReaderSave; onExit?: () => void }) {
   useReaderSaveCompletion(save);
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -44,7 +44,9 @@ export function SaveWordGate({ save, onExit }: { save: ReaderSave; onExit: () =>
 
   const unclaimed = save.phase === 'auth' && !!user && !save.owner;
   const waiting = save.phase === 'ready' || (save.phase === 'auth' && !!save.owner);
-  if (save.keepReading || save.phase === 'saved' || save.phase === 'existing') return null;
+  // The sheet's Android back listener must stand down while auth owns the screen.
+  if (!focused || save.keepReading || save.phase === 'saved' || save.phase === 'existing')
+    return null;
 
   return (
     <BrandedBottomSheet isVisible onClose={dismiss}>
