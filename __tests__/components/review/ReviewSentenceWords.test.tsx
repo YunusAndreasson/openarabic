@@ -1,7 +1,7 @@
 import { expect, jest, test } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 import * as RN from 'react-native';
-import { Canvas, Group, type SkParagraph } from 'react-native-skia';
+import { Canvas, Group, Paragraph, type SkParagraph } from 'react-native-skia';
 
 import { ReviewSentenceWords } from '@/components/review/ReviewSentenceWords';
 import { ARABIC_FONT_SIZE, getCompactArabicFontSize } from '@/constants/layout';
@@ -55,8 +55,8 @@ test.each([
         }),
       } as unknown as SkParagraph;
     });
-    jest.mocked(Canvas).mockImplementation(({ children, style, accessibilityLabel }) => (
-      <RN.View testID={accessibilityLabel} style={style}>
+    jest.mocked(Canvas).mockImplementation(({ children, style }) => (
+      <RN.View testID="sentence-canvas" style={style}>
         {children}
       </RN.View>
     ));
@@ -64,25 +64,15 @@ test.each([
     const view = render(<ReviewSentenceWords sentence={sentence} />);
     const row = view.getByLabelText(sentence);
     fireEvent(row, 'layout', { nativeEvent: { layout: { width } } });
-    expect(RN.StyleSheet.flatten(row.props.style)).toMatchObject({
-      alignSelf: 'stretch',
-      flexWrap: 'wrap',
-      flexDirection: 'row-reverse',
-      direction: 'ltr',
+    expect(view.getAllByTestId('sentence-canvas', { includeHiddenElements: true })).toHaveLength(1);
+    const scales = jest.mocked(Group).mock.calls.flatMap(([props]) => {
+      const transform = props.transform;
+      return Array.isArray(transform) ? transform.filter(item => 'scale' in item) : [];
     });
-    for (const word of words) {
-      const canvas = view.getByTestId(word, { includeHiddenElements: true });
-      const box = RN.StyleSheet.flatten(canvas.props.style);
+    expect(jest.mocked(Paragraph)).toHaveBeenCalledTimes(words.length);
+    for (const [index, word] of words.entries()) {
       const inkWidth = Math.ceil(advance(word)) + leftInk + rightInk;
-      expect(box.width).toBeCloseTo(Math.min(inkWidth, width));
-      expect(box.marginLeft).toBe(0);
-      expect(box.marginRight).toBe(0);
+      expect(scales[index]).toEqual({ scale: Math.min(1, width / inkWidth) });
     }
-    const scales = jest.mocked(Group).mock.calls.map(([props]) => props.transform);
-    expect(scales).toEqual(
-      words.map(word => [
-        { scale: Math.min(1, width / (Math.ceil(advance(word)) + leftInk + rightInk)) },
-      ]),
-    );
   },
 );

@@ -336,11 +336,8 @@ export function useReview({
   const { metrics: sessionMetrics, updateMetrics } = useSessionMetrics();
 
   // UI state
-  const [showTranslation, setShowTranslation] = useState(false);
-  // Reveal-first: the card starts on its question face; the user flips it to the
-  // answer (revealAnswer) BEFORE self-grading. Reset to false on every new card.
-  const [revealed, setRevealed] = useState(false);
-  const [currentMeaning, setCurrentMeaning] = useState('');
+  const [revealedWordKey, setRevealedWordKey] = useState<string | null>(null);
+  const [disclosedWordKey, setDisclosedWordKey] = useState<string | null>(null);
   // Ensure UI re-renders when updating state changes, so the grade bar and the
   // reveal button re-enable once an advance lands
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
@@ -519,31 +516,15 @@ export function useReview({
     [currentWord, previewIntervals],
   );
 
-  // Snap the card back to its question face the instant a new word arrives.
-  //
-  // This is React's "adjusting state when a prop changes" pattern — a state
-  // update DURING render, guarded by the previous key — and it is load-bearing
-  // here rather than a style choice. These three flags used to be reset in the
-  // effect below, and an effect cannot run before the paint it is reacting to:
-  // the render that first carried the new `currentWord` still had `revealed`
-  // true and `currentMeaning` holding the PREVIOUS card's text, so every single
-  // advance painted the new Arabic word above the old English meaning before
-  // the effect corrected it. Filmed at 30fps on a Pixel emulator, that
-  // mismatched pair was on screen for ~230ms — long enough to read.
-  //
-  // Setting them here re-renders before anything reaches the screen, so the
-  // wrong pairing is never painted. The timer/ref cleanup stays in the effect
-  // below: side effects can't run during render, and those are not visible.
-  // The hold belongs to one card. Derived, so it can never outlive it.
+  // The next FSRS word starts on its question face in the same render that
+  // changes the word. Re-asked words carry a fresh repetition key.
+  const revealed = revealedWordKey === currentWordKey;
+  const showTranslation = revealed;
+  const currentMeaning =
+    disclosedWordKey === currentWordKey
+      ? currentWord?.root?.meaning || STRINGS.NO_TRANSLATION_AVAILABLE
+      : '';
   const restudying = restudyKey !== null && restudyKey === currentWordKey;
-
-  const [syncedWordKey, setSyncedWordKey] = useState(currentWordKey);
-  if (syncedWordKey !== currentWordKey) {
-    setSyncedWordKey(currentWordKey);
-    setShowTranslation(false);
-    setRevealed(false);
-    setCurrentMeaning('');
-  }
 
   // Bring the card back only once the new word is committed. A layout effect,
   // not a passive one: this runs after the commit that carries the new content
@@ -818,7 +799,7 @@ export function useReview({
     if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
       return;
     }
-    setCurrentMeaning(currentWord?.root?.meaning || STRINGS.NO_TRANSLATION_AVAILABLE);
+    setDisclosedWordKey(currentWordKey);
     if (currentWord?.root?.audio_url_en) {
       const englishAudioUrl = generateStorageUrl('audio', currentWord.root.audio_url_en);
       if (englishAudioUrl) {
@@ -840,7 +821,7 @@ export function useReview({
           });
       }
     }
-  }, [currentWord, isComplete, playAfterHandoff]);
+  }, [currentWord, currentWordKey, isComplete, playAfterHandoff]);
 
   // Reveal the answer: flip the card, show the English meaning persistently and
   // play the English audio. Does NOT advance — the user self-grades next. Setting
@@ -858,11 +839,9 @@ export function useReview({
     // nothing, grades nothing and can be done on every card without cost. It
     // must not land harder than the grade that follows it seconds later.
     selectionFeedback();
-    setRevealed(true);
-    setCurrentMeaning(currentWord?.root?.meaning || STRINGS.NO_TRANSLATION_AVAILABLE);
-    setShowTranslation(true);
+    setRevealedWordKey(currentWordKey);
     revealMeaningPassive();
-  }, [revealed, isComplete, currentWord?.root?.meaning, revealMeaningPassive]);
+  }, [revealed, isComplete, currentWordKey, revealMeaningPassive]);
 
   // Commit the self-grade for the revealed card and advance. The answer is
   // already on screen, so this is a clean fade-out → FSRS write → next card
@@ -953,9 +932,8 @@ export function useReview({
       // The voice path never flips the card (its result panel is the answer
       // surface), so a miss can arrive here still on the question face. Show
       // the answer before asking the learner to study it.
-      setRevealed(true);
-      setCurrentMeaning(currentWord?.root?.meaning || STRINGS.NO_TRANSLATION_AVAILABLE);
-      setShowTranslation(true);
+      setRevealedWordKey(currentWordKey);
+      setDisclosedWordKey(currentWordKey);
       // Replay the Arabic rather than the English: pairing the form the learner
       // failed on with the meaning now in front of them is the association
       // worth strengthening. Setting showTranslation above suppresses the
@@ -968,7 +946,7 @@ export function useReview({
         playAfterHandoff(replayUrl).catch(handleError);
       }
     },
-    [currentWordKey, currentWord?.root?.meaning, currentWord?.root?.audio_url, playAfterHandoff],
+    [currentWordKey, currentWord?.root?.audio_url, playAfterHandoff],
   );
 
   const grade = useCallback(

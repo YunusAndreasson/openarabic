@@ -48,7 +48,7 @@ const widgetLayout = {
   minimumHeroHeight: 24,
   sidebarFraction: 0.4,
   responseHeight: 44,
-  largeResponseHeight: 56,
+  responseLines: 2,
   sourceHeight: 24,
   labelHeight: 18,
   contextHeight: 36,

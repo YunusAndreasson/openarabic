@@ -57,6 +57,20 @@ describe('layoutSentenceWords', () => {
     expect(height).toBe(40);
   });
 
+  test('centres each review line with its own row spacing', () => {
+    const { words, height } = layoutSentenceWords([box(160), box(120), box(80)], 300, 6, {
+      centered: true,
+      rowGap: 2,
+    });
+
+    expect(words).toEqual([
+      { x: 133, y: 0 },
+      { x: 7, y: 0 },
+      { x: 110, y: 42 },
+    ]);
+    expect(height).toBe(82);
+  });
+
   test('places the box inside its signed margins', () => {
     // A negative left margin is ink reserve cancelled in layout: the box starts
     // to the left of the slot the word takes up on the line.

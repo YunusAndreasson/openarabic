@@ -1,6 +1,6 @@
 import { Canvas, Group, Path, Skia, vec } from 'react-native-skia';
 import { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { I18nManager, StyleSheet, View } from 'react-native';
 
 import { useBaselineGrowth } from '@/components/common/charts/useBaselineGrowth';
 import { useMeasuredWidth } from '@/components/common/charts/useMeasuredWidth';
@@ -127,6 +127,7 @@ export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriod
             style={{
               width: chartData.chartWidth,
               height: BAR_HEIGHT,
+              transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }],
             }}
           >
             {/* Days without practice: static grid-ink stubs, so the absence of a
