@@ -30,16 +30,6 @@ jest.mock('@/hooks/animations', () =>
   require('@/__tests__/helpers/componentMocks').createAnimationHooksMock(),
 );
 
-// Mock expo-router
-const mockRouterPush = jest.fn();
-const mockRouterDismissTo = jest.fn();
-jest.mock('expo-router', () => ({
-  router: {
-    push: (...args: unknown[]) => mockRouterPush(...args),
-    dismissTo: (...args: unknown[]) => mockRouterDismissTo(...args),
-  },
-}));
-
 // Mock useAuthForm hook
 const mockSignUpWithEmail = jest.fn();
 const mockSetEmail = jest.fn();
@@ -99,7 +89,7 @@ describe('SignUpForm', () => {
     });
 
     test('renders sign in link', () => {
-      const { getByTestId } = render(<SignUpForm />);
+      const { getByTestId } = render(<SignUpForm onSignIn={jest.fn()} />);
       expect(getByTestId('navigate-to-sign-in-link')).toBeTruthy();
     });
   });
@@ -113,13 +103,13 @@ describe('SignUpForm', () => {
       expect(mockSignUpWithEmail).toHaveBeenCalledTimes(1);
     });
 
-    test('navigates to sign in when sign in link pressed', () => {
-      const { getByTestId } = render(<SignUpForm />);
+    test('switches the email step through its parent', () => {
+      const onSwitch = jest.fn();
+      const { getByTestId } = render(<SignUpForm onSignIn={onSwitch} />);
 
       fireEvent.press(getByTestId('navigate-to-sign-in-link'));
 
-      expect(mockRouterDismissTo).toHaveBeenCalledWith('/auth/sign-in');
-      expect(mockRouterPush).not.toHaveBeenCalled();
+      expect(onSwitch).toHaveBeenCalledTimes(1);
     });
 
     test('calls setEmail when email input changes', () => {

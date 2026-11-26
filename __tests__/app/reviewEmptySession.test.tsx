@@ -6,6 +6,7 @@ import { STRINGS } from '@/constants/strings';
 
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), replace: jest.fn(), dismiss: jest.fn() },
+  useIsFocused: () => true,
   useLocalSearchParams: () => ({}),
 }));
 

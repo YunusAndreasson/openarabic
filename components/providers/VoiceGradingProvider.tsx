@@ -477,6 +477,7 @@ export const VoiceGradingProvider = ({
    * closes the gap the later check can't.
    */
   const armClaimRef = useRef(false);
+  const armCancellationRef = useRef(0);
   const windowSeqRef = useRef(0);
   const micLevel = useSharedValue(0);
   const levelPeakRef = useRef(MIN_LEVEL_REFERENCE);
@@ -865,6 +866,7 @@ export const VoiceGradingProvider = ({
         onLast: () => {
           stopSystemAudioWatchRef.current?.();
           stopSystemAudioWatchRef.current = null;
+          armCancellationRef.current += 1;
           abortWindow('not-ready');
           const previous = handoffRef.current;
           const cleanup = (async () => {
@@ -959,6 +961,8 @@ export const VoiceGradingProvider = ({
       // claim and bails, instead of racing it. See armClaimRef's own comment.
       if (armClaimRef.current) return rejectArm('busy');
       armClaimRef.current = true;
+      const cancellation = armCancellationRef.current;
+      const cancelled = () => cancellation !== armCancellationRef.current;
       try {
         markArmEntered();
         // Whoever borrowed the session for playback may not have given it back —
@@ -966,7 +970,7 @@ export const VoiceGradingProvider = ({
         // on. The microphone reclaims it here rather than trusting that, so a tap
         // can never land on a session that is still in .playback.
         await setPlaybackPriority(false);
-        if (!isReady) return rejectArm('not-ready');
+        if (cancelled() || !isReady) return rejectArm('not-ready');
         if (capture.isCapturing || armResolveRef.current !== null) return rejectArm('busy');
 
         // Normally already open — acquireSession did it when the screen mounted.
@@ -982,6 +986,7 @@ export const VoiceGradingProvider = ({
           const endOpen = diagSpan('mic.awaitOpen');
           const openStartedAt = Date.now();
           await openCapture();
+          if (cancelled()) return rejectArm('not-ready');
           if (!streamIsOpen()) {
             // The stream cannot open, and the most likely reason is that the
             // audio session is no longer record-capable — a teardown turned it
@@ -990,6 +995,7 @@ export const VoiceGradingProvider = ({
             // is restarted, which is exactly how this failure was reported.
             diagMark('mic.arm.recover');
             await simpleAudioService.setRecordingSessionEnabled(true);
+            if (cancelled()) return rejectArm('not-ready');
             await openCapture(true);
           }
           markAwaitOpen(Date.now() - openStartedAt);
@@ -1017,6 +1023,7 @@ export const VoiceGradingProvider = ({
           }
         }
 
+        if (cancelled()) return rejectArm('not-ready');
         windowSeqRef.current += 1;
         const windowId = windowSeqRef.current;
         levelPeakRef.current = MIN_LEVEL_REFERENCE;
@@ -1139,6 +1146,7 @@ export const VoiceGradingProvider = ({
   }, []);
 
   const cancel = useCallback(async (): Promise<void> => {
+    armCancellationRef.current += 1;
     abortWindow('busy');
   }, [abortWindow]);
 

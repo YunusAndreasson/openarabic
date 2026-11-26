@@ -188,20 +188,10 @@ describe('ReviewFlipCard voice miss', () => {
     expect(view.getByText(heard)).toBeTruthy();
   });
 
-  test('holds the heard line back while the answer is not disclosed', () => {
-    const view = render(<ReviewFlipCard {...props} discloseCaption={heard} />);
-
-    expect(view.queryByText(heard)).toBeNull();
-  });
-
-  // A hearing failure discloses nothing, so "Try again" is a real retry. The
-  // card says the app missed it and keeps the English to itself — `answer`
-  // stays empty until something actually discloses it.
+  // The flip face still has an answer, but a hearing failure must not expose it.
   test('a hearing failure shows its caption without the answer', () => {
     const notHeard = "Didn't catch that";
-    const view = render(
-      <ReviewFlipCard {...props} answer="" discloseAnswer discloseCaption={notHeard} />,
-    );
+    const view = render(<ReviewFlipCard {...props} discloseCaption={notHeard} />);
 
     expect(view.getByText(notHeard)).toBeTruthy();
     expect(view.queryByText('Book')).toBeNull();

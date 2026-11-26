@@ -8,7 +8,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 
 jest.mock('expo-router', () => ({
-  router: { navigate: jest.fn(), push: jest.fn() },
+  router: { navigate: jest.fn() },
 }));
 
 const renderOptions = () => ({ wrapper: createHookTestWrapper({ withRedux: true }).wrapper });
@@ -24,16 +24,10 @@ test('guest Practice explains the feature and allows continuing to Explore', () 
   expect(router.navigate).toHaveBeenCalledWith(ROUTE_PATHS.EXPLORE_TAB);
 });
 
-test('either authentication action carries the exact pending save and requests the stack anchor', () => {
+test('both authentication actions enter one choice route with the exact pending save', () => {
   render(<AccountGateActions saveIntent="reader-intent" />, renderOptions());
   fireEvent.press(screen.getByText(STRINGS.SIGN_IN));
-  expect(router.push).toHaveBeenCalledWith(
-    { pathname: ROUTE_PATHS.AUTH_SIGN_IN, params: { saveIntent: 'reader-intent' } },
-    { withAnchor: true },
-  );
   fireEvent.press(screen.getByText(STRINGS.CREATE_ACCOUNT));
-  expect(router.push).toHaveBeenCalledWith(
-    { pathname: ROUTE_PATHS.AUTH_SIGN_UP, params: { saveIntent: 'reader-intent' } },
-    { withAnchor: true },
-  );
+  const accountChoice = { pathname: ROUTE_PATHS.AUTH, params: { saveIntent: 'reader-intent' } };
+  expect(jest.mocked(router.navigate).mock.calls).toEqual([[accountChoice], [accountChoice]]);
 });

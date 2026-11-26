@@ -89,7 +89,7 @@ export interface SentenceLayout {
  * Places a sentence's words the way a `row-reverse` + `wrap` flex row with a
  * uniform `gap` and `alignItems: 'center'` placed their separate canvases.
  *
- * The first word sits against the right edge and each next one to its left. A
+ * By default, the first word sits against the right edge and each next one to its left. A
  * word wraps to a new line when it would cross the left edge, unless it is the
  * first on its line: a word wider than the line keeps a line of its own and
  * overflows to the left, as Yoga lets it. Words are centred vertically on their
@@ -99,15 +99,16 @@ export const layoutSentenceWords = (
   words: readonly Pick<SentenceWordMetrics, 'outerWidth' | 'height' | 'marginLeft'>[],
   availableWidth: number,
   gap: number = SENTENCE_WORD_GAP,
+  { rowGap = gap, centered = false } = {},
 ): SentenceLayout => {
-  const lines: number[][] = [];
+  const lines: { indices: number[]; width: number }[] = [];
   let line: number[] = [];
   let lineWidth = 0;
 
   words.forEach((word, index) => {
     const needed = line.length === 0 ? word.outerWidth : lineWidth + gap + word.outerWidth;
     if (line.length > 0 && needed > availableWidth) {
-      lines.push(line);
+      lines.push({ indices: line, width: lineWidth });
       line = [index];
       lineWidth = word.outerWidth;
       return;
@@ -116,15 +117,15 @@ export const layoutSentenceWords = (
     lineWidth = needed;
   });
   if (line.length > 0) {
-    lines.push(line);
+    lines.push({ indices: line, width: lineWidth });
   }
 
   const placed: PlacedWord[] = words.map(() => ({ x: 0, y: 0 }));
   let top = 0;
 
-  lines.forEach((indices, lineIndex) => {
+  lines.forEach(({ indices, width }, lineIndex) => {
     const lineHeight = Math.max(...indices.map(index => words[index]?.height ?? 0));
-    let right = availableWidth;
+    let right = centered ? (availableWidth + width) / 2 : availableWidth;
     for (const index of indices) {
       const word = words[index];
       if (!word) continue;
@@ -135,7 +136,7 @@ export const layoutSentenceWords = (
       };
       right = outerLeft - gap;
     }
-    top += lineHeight + (lineIndex < lines.length - 1 ? gap : 0);
+    top += lineHeight + (lineIndex < lines.length - 1 ? rowGap : 0);
   });
 
   return { words: placed, height: top };

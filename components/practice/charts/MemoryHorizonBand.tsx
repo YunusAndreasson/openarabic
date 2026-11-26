@@ -14,7 +14,7 @@ import {
 } from 'react-native-skia';
 import type { JSX } from 'react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { I18nManager, StyleSheet, View } from 'react-native';
 import {
   Easing,
   useDerivedValue,
@@ -113,8 +113,8 @@ const AXIS_TICKS = HORIZON_BAND_KEYS.map(key => {
     fraction,
     style:
       fraction >= 1
-        ? { ...AXIS_LABEL_BASE_STYLE, right: LAYOUT.SPACING.MEDIUM }
-        : { ...AXIS_LABEL_BASE_STYLE, left: fraction * BAND_WIDTH },
+        ? { ...AXIS_LABEL_BASE_STYLE, end: LAYOUT.SPACING.MEDIUM }
+        : { ...AXIS_LABEL_BASE_STYLE, start: fraction * BAND_WIDTH },
   };
 });
 
@@ -410,7 +410,7 @@ function HorizonBandCanvasComponent({
 
   return (
     <View>
-      <Canvas style={styles.canvas} pointerEvents="none">
+      <Canvas style={I18nManager.isRTL ? RTL_CANVAS_STYLE : styles.canvas} pointerEvents="none">
         {/* The empty axis. Present from the first frame and never animated: a
             learner with nothing practised should meet a year of labelled runway,
             not a grey empty-state box. */}
@@ -479,6 +479,7 @@ export const MemoryHorizonBand = memo(MemoryHorizonBandComponent);
 MemoryHorizonBand.displayName = 'MemoryHorizonBand';
 
 const styles = StyleSheet.create({
+  rtlCanvas: { transform: [{ scaleX: -1 }] },
   canvas: {
     height: BAND_HEIGHT,
     width: BAND_WIDTH,
@@ -487,3 +488,5 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.TINY,
   },
 });
+
+const RTL_CANVAS_STYLE = [styles.canvas, styles.rtlCanvas];

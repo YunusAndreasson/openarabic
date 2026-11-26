@@ -183,6 +183,8 @@ const createEmptyVoiceDebug = (): VoiceDebug => ({
 });
 
 interface UseVoiceReviewArgs {
+  /** Whether the review route is in front of the stack and can own the mic. */
+  active?: boolean;
   manualOnly?: boolean;
   /** The English meaning expected from the user. Empty if no current card. */
   expected: string | null | undefined;
@@ -196,7 +198,7 @@ interface UseVoiceReviewArgs {
   /** Every OTHER answer in the session. Not used for grading: it is the
    *  one thing that may veto remembering a "Got it", because a transcript that
    *  is another drilled word's gloss would otherwise pass two cards forever. */
-  otherGlosses?: readonly string[];
+  getOtherGlosses?: () => readonly string[];
   /** Every answer due this session, fixed at its start — what the recogniser is
    *  biased toward. See `utils/voiceHotwords.ts`. `undefined` while the session
    *  is still loading: the recogniser is not built until this is known. */
@@ -292,12 +294,13 @@ function transcribeWithTimeout(
 }
 
 export function useVoiceReview({
+  active = true,
   manualOnly = false,
   expected,
   currentWordKey,
   rootId,
   glossAlternates,
-  otherGlosses,
+  getOtherGlosses,
   sessionGlosses,
   ready,
   promptDoneKey,
@@ -426,7 +429,7 @@ export function useVoiceReview({
    */
   const handsFreeExhaustedRef = useRef<string | null>(null);
   const [handsFreeExhausted, setHandsFreeExhausted] = useState<string | null>(null);
-  /** The card hands-free has already opened once, so it opens exactly once. */
+  /** A manual or automatic request has claimed this card's automatic arm. */
   const autoArmedForKeyRef = useRef<string | null>(null);
   /**
    * The card whose answer a voice miss has disclosed. A match on that card
@@ -467,13 +470,13 @@ export function useVoiceReview({
   // voice channel: they need the CURRENT phase to decide whether there is
   // anything to take over or to stop.
   const phaseRef = useRef<VoicePhase>('idle');
-  const otherGlossesRef = useRef<readonly string[]>(EMPTY_STRINGS);
+  const getOtherGlossesRef = useRef(getOtherGlosses);
   useEffect(() => {
     onKnownAutoRef.current = onKnownAuto;
     onUnknownAutoRef.current = onUnknownAuto;
     stopAudioRef.current = stopAudio;
     phaseRef.current = phase;
-    otherGlossesRef.current = otherGlosses ?? EMPTY_STRINGS;
+    getOtherGlossesRef.current = getOtherGlosses;
   });
 
   // The most recent resolved-or-pending attempt's loggable fields (everything
@@ -537,8 +540,18 @@ export function useVoiceReview({
   // than the whole `voice` context value: that object's identity changes
   // whenever any of its state does, so depending on it would tear the session
   // down and rebuild it.
-  const { prewarmPermission, acquireSession, acquireEngine, offerHotwordGlosses, stopListening } =
-    voice;
+  const {
+    arm,
+    cancel,
+    transcribe,
+    hotwordCount,
+    prewarmPermission,
+    acquireSession,
+    acquireEngine,
+    offerHotwordGlosses,
+    stopListening,
+  } = voice;
+  const readHotwordCount = useEffectEvent(() => hotwordCount);
 
   // Bias the recogniser toward this session's answers — all of them, so the
   // list never says which one the current card wants. Keyed on the sorted
@@ -605,9 +618,26 @@ export function useVoiceReview({
   // real native input stream; doing that before intent both triggered the OS
   // prompt and lit the microphone privacy indicator behind an idle button.
   useEffect(() => {
-    if (!voiceEnabled || !voice.isReady || !sessionRequested) return;
+    if (!active || !voiceEnabled || !voice.isReady || !sessionRequested) return;
     return acquireSession();
-  }, [voiceEnabled, voice.isReady, sessionRequested, acquireSession]);
+  }, [active, voiceEnabled, voice.isReady, sessionRequested, acquireSession]);
+
+  useEffect(() => {
+    if (active && voiceEnabled) return;
+    armRequestedRef.current = false;
+    armFailuresRef.current = 0;
+    // Focus can change before an accepted tap reaches the arm effect.
+    if (micHoldsAudioSession(phaseRef.current)) setPhase('idle');
+    if (armRetryTimerRef.current !== null) {
+      clearTimeout(armRetryTimerRef.current);
+      armRetryTimerRef.current = null;
+    }
+    // A cancelled auto arm still leaves a manual way back into this card.
+    if (autoArmedForKeyRef.current === currentWordKey) {
+      handsFreeExhaustedRef.current = currentWordKey;
+      setHandsFreeExhausted(currentWordKey);
+    }
+  }, [active, voiceEnabled, currentWordKey]);
 
   // Track whether the recognizer is genuinely on its way, as distinct from any
   // other not-ready state (a load error being the one that matters).
@@ -694,7 +724,7 @@ export function useVoiceReview({
    *   - the budget already ran out on this card — see `handsFreeExhaustedRef`
    */
   useEffect(() => {
-    if (!handsFree || !voiceEnabled || !micGranted) return;
+    if (!active || !handsFree || !voiceEnabled || !micGranted) return;
     if (currentWordKey === 'none' || promptDoneKey !== currentWordKey) return;
     if (!voice.isReady || !ready) return;
     if (!expected || expected.length === 0) return;
@@ -702,6 +732,7 @@ export function useVoiceReview({
     if (autoArmedForKeyRef.current === currentWordKey) return;
     if (handsFreeExhaustedRef.current === currentWordKey) return;
     if (armedForKeyRef.current === currentWordKey) return;
+    if (armRequestedRef.current || armRetryTimerRef.current !== null) return;
 
     autoArmedForKeyRef.current = currentWordKey;
     diagMark('mic.autoArm', { key: currentWordKey });
@@ -712,6 +743,7 @@ export function useVoiceReview({
     armRequestedRef.current = true;
     setAttempt(a => a + 1);
   }, [
+    active,
     handsFree,
     voiceEnabled,
     micGranted,
@@ -727,7 +759,7 @@ export function useVoiceReview({
     // Every early return below is a card where the mic does NOT open. The user
     // experiences that as "I had to wait for the mic", so each reason is
     // recorded — a silent gate is exactly what made this hard to diagnose.
-    if (!voiceEnabled) return;
+    if (!active || !voiceEnabled) return;
     if (currentWordKey === 'none') return;
     let blockedBy: string | null = null;
     if (!voice.isReady) blockedBy = 'model-not-ready';
@@ -774,7 +806,7 @@ export function useVoiceReview({
       });
       voiceBreadcrumb('voice.arm', { wordKey: currentWordKey });
 
-      const outcome = await voice.arm({
+      const outcome = await arm({
         // A window nobody asked for has to outlast the learner thinking; one
         // opened by a tap does not. Only the two deadlines that wait for speech
         // move — see `withHandsFreeBudget`.
@@ -868,9 +900,9 @@ export function useVoiceReview({
           // them tap again for a native hiccup they never saw. The trigger stays
           // whatever asked first; only note that a rung ran.
           armTriggerRef.current = armTriggerRef.current ?? 'ladder';
-          armRequestedRef.current = true;
           armRetryTimerRef.current = setTimeout(() => {
             armRetryTimerRef.current = null;
+            armRequestedRef.current = true;
             setAttempt(a => a + 1);
           }, retryDelay);
           return;
@@ -889,7 +921,7 @@ export function useVoiceReview({
         // buzz and nothing else — a card that silently cannot be answered by
         // the only means it offers. Mark it the same way an exhausted window is
         // marked, which hands the manual control back for this one card.
-        if (handsFreeWindowRef.current) {
+        if (handsFree) {
           handsFreeExhaustedRef.current = currentWordKey;
           setHandsFreeExhausted(currentWordKey);
         }
@@ -919,11 +951,8 @@ export function useVoiceReview({
       // was confirmed, it gets transcribed and graded like any other answer;
       // an empty transcript then surfaces the result panel, which is the honest
       // "we didn't catch that" rather than silence.
-      if (
-        handsFreeWindowRef.current &&
-        outcome.result.stopReason === 'noSpeech' &&
-        !outcome.result.heardSpeech
-      ) {
+      const noSpeech = !outcome.result.heardSpeech;
+      if (handsFreeWindowRef.current && noSpeech) {
         diagMark('mic.handsFree.exhausted', {
           key: currentWordKey,
           durationMs: outcome.result.durationMs,
@@ -942,9 +971,9 @@ export function useVoiceReview({
       const endTranscribe = diagSpan('stt.transcribe', {
         samples: outcome.result.waveform.length,
       });
-      const { transcript, timedOut } = await transcribeWithTimeout(
-        voice.transcribe(outcome.result.waveform),
-      );
+      const { transcript, timedOut } = noSpeech
+        ? { transcript: '', timedOut: false }
+        : await transcribeWithTimeout(transcribe(outcome.result.waveform));
       endTranscribe({ chars: transcript.length, timedOut });
       if (cancelled) return;
       if (timedOut) {
@@ -1009,7 +1038,7 @@ export function useVoiceReview({
           armStages: getArmStages(),
           prompt: getPromptSnapshot(currentWordKey),
           settings: readSettings(),
-          hotwordCount: voice.hotwordCount,
+          hotwordCount: readHotwordCount(),
         });
 
       if (match.matched) {
@@ -1116,14 +1145,29 @@ export function useVoiceReview({
       // its own phase, and 'result' belongs to the panel, so leave that alone.
       setPhase(p => (micHoldsAudioSession(p) ? 'idle' : p));
       // Cancel is a no-op when nothing is in flight.
-      void voice.cancel();
+      void cancel();
     };
     // The hook no longer takes `promptAudioDoneKey` at all. It used to gate the
     // arm AND sit in these deps, which with a tap trigger would be actively
     // harmful: tapping during the prompt makes speakNow stop the clip, the
     // watcher then reports the prompt finished, this effect re-runs — and its
     // cleanup cancels the recording the tap had just started.
-  }, [voiceEnabled, voice, ready, result, expected, currentWordKey, rootId, attempt, showToast]);
+  }, [
+    active,
+    voiceEnabled,
+    voice.isReady,
+    arm,
+    cancel,
+    transcribe,
+    ready,
+    result,
+    expected,
+    currentWordKey,
+    rootId,
+    attempt,
+    showToast,
+    handsFree,
+  ]);
 
   const accept = useCallback((): void => {
     const ctx = attemptCtxRef.current;
@@ -1134,7 +1178,10 @@ export function useVoiceReview({
     if (
       ctx?.rootId != null &&
       ctx.transcript &&
-      isAliasStorable({ transcript: ctx.transcript, otherGlosses: otherGlossesRef.current })
+      isAliasStorable({
+        transcript: ctx.transcript,
+        otherGlosses: getOtherGlossesRef.current?.() ?? EMPTY_STRINGS,
+      })
     ) {
       dispatch(rememberAlias({ rootId: ctx.rootId, transcript: ctx.transcript }));
     }
@@ -1156,8 +1203,11 @@ export function useVoiceReview({
   }, []);
 
   const retry = useCallback((): void => {
+    if (!active || micHoldsAudioSession(phaseRef.current)) return;
+    phaseRef.current = 'arming';
     const ctx = attemptCtxRef.current;
     if (ctx) void logVoiceAttempt({ ...ctx, resolution: 'retry' });
+    attemptCtxRef.current = null;
     // Stop the reveal audio (played when the panel appeared) before reopening
     // the mic, so its tail isn't captured by the new recording.
     stopAudioRef.current();
@@ -1165,13 +1215,14 @@ export function useVoiceReview({
     setPhase('arming');
     tapAtRef.current = Date.now();
     armTriggerRef.current = 'retry';
+    autoArmedForKeyRef.current = currentWordKey;
     markArmTap();
     // Force the arm effect to fire again for this same card and skip the
     // wait-for-audio gate so the mic reopens immediately.
     armRequestedRef.current = true;
     armedForKeyRef.current = null;
     setAttempt(a => a + 1);
-  }, []);
+  }, [active, currentWordKey]);
 
   /**
    * "Open the mic, now." The escape hatch for every card whose automatic arm
@@ -1187,7 +1238,7 @@ export function useVoiceReview({
   const speakNow = useCallback((): void => {
     // A mic that is already open (or grading) is not something to take over —
     // re-arming here would throw away audio the learner has already spoken.
-    if (micHoldsAudioSession(phaseRef.current)) return;
+    if (!active || micHoldsAudioSession(phaseRef.current)) return;
     if (!voice.isReady) return;
     // Claim the tap before React commits: another press must not cancel and
     // restart the native open already requested by this one.
@@ -1212,6 +1263,7 @@ export function useVoiceReview({
     // on every row ever written.
     tapAtRef.current = Date.now();
     armTriggerRef.current = 'tap';
+    autoArmedForKeyRef.current = currentWordKey;
     markArmTap();
     stopAudioRef.current();
     setResult(null);
@@ -1219,7 +1271,7 @@ export function useVoiceReview({
     armRequestedRef.current = true;
     armedForKeyRef.current = null;
     setAttempt(a => a + 1);
-  }, [voice.isReady, prewarmPermission]);
+  }, [active, currentWordKey, voice.isReady, prewarmPermission]);
 
   /**
    * Hold released. Only meaningful once the mic is genuinely capturing —

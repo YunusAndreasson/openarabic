@@ -462,6 +462,7 @@ jest.mock('react-native', () => {
   };
 
   return {
+    I18nManager: { isRTL: false },
     // App state management
     AppState: {
       addEventListener: mockStable(mockSubscription),

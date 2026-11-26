@@ -4,14 +4,12 @@ import type { RootId } from '@/types/branded.types';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
-import Animated, { useReducedMotion } from 'react-native-reanimated';
+import { useCallback, useMemo, useRef } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { ScreenStateHandler } from '@/components/common/ScreenStateHandler';
 import { ReviewReminderPanel } from '@/components/practice/ReviewReminderPanel';
 import { PracticeEmptyState, PracticeStatCards } from '@/components/practice';
-import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { DAYS_7 } from '@/constants/chartConstants';
@@ -20,7 +18,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useVoiceGrading } from '@/components/providers';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
+import { useFocusedLocalClock } from '@/hooks/app/useFocusedLocalClock';
 import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useHeldFigures } from '@/hooks/practice/useHeldFigures';
@@ -35,17 +33,6 @@ import { isDueCountCapped } from '@/utils/dueCountText';
 import { calculateDueWordsForecast } from '@/utils/fsrsUtils';
 import { runWhenIdle } from '@/utils/runWhenIdle';
 import { countReviewedToday, isDueWord } from '@/utils/wordClassification';
-
-// Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render alloc.
-// Replaces imperative `entering={FadeIn}` which the React Compiler can't track and
-// which forces a Reanimated mount-side-effect on every focus.
-const MOUNT_FADE_IN_STYLE = fadeInStyle(
-  TIMING_CONFIG.SLOW.duration,
-  'forwards',
-  // SLOW's own curve is CSS `ease` (bezier 0.25, 0.1, 0.25, 1), which is what
-  // this fade ran on before fadeInStyle gained a timing argument.
-  'ease',
-);
 
 // Module-level, so the state handler is handed the same element every render.
 const PRACTICE_EMPTY_STATE = <PracticeEmptyState />;
@@ -70,7 +57,6 @@ export default function PracticeScreen(): JSX.Element {
 }
 function PracticeDashboard(): JSX.Element {
   const { user } = useAuth();
-  const reducedMotion = useReducedMotion();
   const userId = user?.id;
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -164,16 +150,7 @@ function PracticeDashboard(): JSX.Element {
   // Memory capacity gauge needs all words, not just due
   const studyWords = useMemo(() => allWords ?? [], [allWords]);
 
-  // The instant the time-dependent figures below are computed for. They used
-  // to read the clock inside memos keyed only on the word list — and the list
-  // keeps its identity across identical refetches, so a tab left open
-  // overnight, or resumed days later, kept showing yesterday's "reviewed
-  // today", recall and week-ahead figures. Refreshed whenever the tab is shown
-  // or the app comes back.
-  const [now, setNow] = useState(() => Date.now());
-  const refreshNow = useCallback(() => setNow(Date.now()), []);
-  useFocusEffect(refreshNow);
-  useResumeFromBackground(refreshNow);
+  const now = useFocusedLocalClock();
 
   // Only the current recall snapshot is needed here. The full seven-day
   // forgetting forecast belongs to the due-words sheet and is intentionally
@@ -297,7 +274,7 @@ function PracticeDashboard(): JSX.Element {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={scrollContentStyle}
       >
-        <Animated.View style={reducedMotion ? styles.vocabularySection : VOCABULARY_SECTION_STYLE}>
+        <View style={styles.vocabularySection}>
           {userId && <ReviewReminderPanel key={userId} owner={userId} />}
           <PracticeStatCards
             dueWords={shown.cost.dueWords}
@@ -314,7 +291,7 @@ function PracticeDashboard(): JSX.Element {
             onMemoryPress={handleMemoryStrengthInfo}
             onReviewsPress={handleReviewsPress}
           />
-        </Animated.View>
+        </View>
       </ScrollView>
     </ScreenStateHandler>
   );
@@ -333,5 +310,3 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.SMALL, // 8px gap for perfect consistency with stat cards
   },
 });
-
-const VOCABULARY_SECTION_STYLE = [styles.vocabularySection, MOUNT_FADE_IN_STYLE];

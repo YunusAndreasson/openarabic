@@ -27,7 +27,7 @@ type GoogleSignInModule = typeof GoogleSigninLibrary;
  */
 let cachedGoogleSignin: GoogleSignInModule | null | undefined;
 
-export function getGoogleSignin(): GoogleSignInModule | null {
+function getGoogleSignin(): GoogleSignInModule | null {
   if (cachedGoogleSignin === undefined) {
     try {
       cachedGoogleSignin =
@@ -58,7 +58,7 @@ const RETRY_BACKOFF_MS = 1000;
  * Hook return type for Google authentication
  */
 export interface UseGoogleAuthReturn {
-  signInWithGoogle: (start?: StartReaderAuth) => Promise<void>;
+  signInWithGoogle: (start?: StartReaderAuth, onCancel?: () => void) => Promise<void>;
   loading: boolean;
 }
 

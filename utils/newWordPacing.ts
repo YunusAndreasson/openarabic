@@ -7,7 +7,7 @@ import {
 } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { MILLISECONDS_PER_HOUR, normalizeTimestamp } from '@/utils/dateTimeUtils';
-import { isDueAt } from '@/utils/wordClassification';
+import { dueTimestampMs } from '@/utils/wordClassification';
 
 /**
  * Retention-gated pacing for *new* words. The daily new-word limit the learner
@@ -134,6 +134,28 @@ export interface FilterDueWordsOptions {
   nowMs: number;
 }
 
+export function cooldownReviewTimestampMs(word: StudyWord): number {
+  const lastReview = normalizeTimestamp(word.fsrs_last_review);
+  return lastReview ? Date.parse(lastReview) : 0;
+}
+
+/** Callers evaluating several dates can pass the same parsed word timestamps. */
+export function createDueWordFilter({
+  lastCompletedAt,
+  cooldownHours = DEFAULT_SESSION_COOLDOWN_HOURS,
+  nowMs,
+}: FilterDueWordsOptions) {
+  const applyCooldown = isSessionCooldownActive(lastCompletedAt, cooldownHours, nowMs);
+  const cutoffMs = nowMs - cooldownHours * MILLISECONDS_PER_HOUR;
+  return (word: StudyWord, dueAt = dueTimestampMs(word), lastReviewedAt?: number) => {
+    if (!(dueAt <= nowMs)) return false;
+    if (!applyCooldown || isCooldownExemptState(word.fsrs_state)) return true;
+
+    const lastMs = lastReviewedAt ?? cooldownReviewTimestampMs(word);
+    return !(Number.isFinite(lastMs) && lastMs >= cutoffMs);
+  };
+}
+
 /**
  * Client-side mirror of the server's onlyDue + sessionCooldown filter
  * (`studyWordsFSRSService.getFSRSWords`'s `onlyDue`/`sessionCooldownHours`
@@ -144,29 +166,7 @@ export interface FilterDueWordsOptions {
  * request resolves and silently wave new-word adds through. Keep in lockstep
  * with the server-side filter.
  */
-export function filterDueWords(
-  allWords: StudyWord[],
-  { lastCompletedAt, cooldownHours = DEFAULT_SESSION_COOLDOWN_HOURS, nowMs }: FilterDueWordsOptions,
-): StudyWord[] {
-  const applyCooldown = isSessionCooldownActive(lastCompletedAt, cooldownHours, nowMs);
-  const cutoffMs = nowMs - cooldownHours * MILLISECONDS_PER_HOUR;
-
-  return allWords.filter(word => {
-    // "Due" itself is `isDueAt` — new words always, otherwise fsrs_due <= now.
-    // Only the cooldown below is this function's own.
-    if (!isDueAt(word, nowMs)) return false;
-
-    // New words never had a session to cool down from, and Learning /
-    // Relearning are exempt by design — the same COOLDOWN_EXEMPT_STATES the
-    // server filter in studyWordsFSRSService.getFSRSWords uses, with its
-    // rationale there.
-    if (!applyCooldown || isCooldownExemptState(word.fsrs_state)) {
-      return true;
-    }
-
-    const lastStr = normalizeTimestamp(word.fsrs_last_review);
-    const lastMs = lastStr ? Date.parse(lastStr) : 0;
-    const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
-    return !isRecentlyReviewed;
-  });
+export function filterDueWords(allWords: StudyWord[], options: FilterDueWordsOptions): StudyWord[] {
+  const isDue = createDueWordFilter(options);
+  return allWords.filter(word => isDue(word));
 }

@@ -1,0 +1,61 @@
+diff --git a/android/src/main/java/expo/modules/notifications/notifications/presentation/ExpoNotificationPresentationModule.kt b/android/src/main/java/expo/modules/notifications/notifications/presentation/ExpoNotificationPresentationModule.kt
+index c7b932b368f4b8e77f54186eca3774354c5aa3d5..fc3ae9bce76490e7c15466e68645bcc3dd709f55 100644
+--- a/android/src/main/java/expo/modules/notifications/notifications/presentation/ExpoNotificationPresentationModule.kt
++++ b/android/src/main/java/expo/modules/notifications/notifications/presentation/ExpoNotificationPresentationModule.kt
+@@ -2,6 +2,8 @@ package expo.modules.notifications.notifications.presentation
+ 
+ import android.content.Context
+ import android.os.Bundle
++import android.os.Handler
++import android.os.Looper
+ import expo.modules.kotlin.Promise
+ import expo.modules.kotlin.exception.Exceptions
+ import expo.modules.kotlin.modules.Module
+@@ -19,12 +21,20 @@ open class ExpoNotificationPresentationModule : Module() {
+   private val context: Context
+     get() = appContext.reactContext ?: throw Exceptions.ReactContextLost()
+ 
++  // A pending result can arrive after a dev-client reload destroyed this module.
++  @Volatile private var destroyed = false
++  private val handler = Handler(Looper.getMainLooper())
++
+   protected fun createResultReceiver(body: ResultReceiverBody) =
+-    createDefaultResultReceiver(null, body)
++    createDefaultResultReceiver(handler) { code, data ->
++      if (!destroyed && appContext.hasActiveReactInstance) body(code, data)
++    }
+ 
+   override fun definition() = ModuleDefinition {
+     Name("ExpoNotificationPresenter")
+ 
++    OnDestroy { destroyed = true }
++
+     AsyncFunction("getPresentedNotificationsAsync") { promise: Promise ->
+       getAllPresented(
+         context,
+diff --git a/android/src/main/java/expo/modules/notifications/notifications/scheduling/NotificationScheduler.kt b/android/src/main/java/expo/modules/notifications/notifications/scheduling/NotificationScheduler.kt
+index 933c65904f91176db0b4f978d092654eee59cdfb..918d3feb0003dbc7ee6aa8389c1e7d920aed538f 100644
+--- a/android/src/main/java/expo/modules/notifications/notifications/scheduling/NotificationScheduler.kt
++++ b/android/src/main/java/expo/modules/notifications/notifications/scheduling/NotificationScheduler.kt
+@@ -36,14 +36,20 @@ open class NotificationScheduler : Module() {
+   protected open val schedulingContext: Context
+     get() = appContext.reactContext ?: throw Exceptions.ReactContextLost()
+ 
++  // A pending result can arrive after a dev-client reload destroyed this module.
++  @Volatile private var destroyed = false
+   private val handler = Handler(Looper.getMainLooper())
+ 
+   protected fun createResultReceiver(body: ResultReceiverBody) =
+-    createDefaultResultReceiver(handler, body)
++    createDefaultResultReceiver(handler) { code, data ->
++      if (!destroyed && appContext.hasActiveReactInstance) body(code, data)
++    }
+ 
+   override fun definition() = ModuleDefinition {
+     Name("ExpoNotificationScheduler")
+ 
++    OnDestroy { destroyed = true }
++
+     AsyncFunction("getAllScheduledNotificationsAsync") { promise: Promise ->
+       getAllScheduledNotifications(
+         schedulingContext,

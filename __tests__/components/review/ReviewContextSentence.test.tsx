@@ -16,20 +16,18 @@
  *   words used to be coloured spans nested in a `<Text>`; on Android each span
  *   is its own shaping run, so the Arabic came apart at every colour boundary.
  *
- * `SkiaColoredArabic` paints to a canvas, so its glyphs are not in the RN tree
- * and cannot be queried by text. It is stubbed below with a node that exposes
- * exactly what this component hands it — the word, its segments, and the
- * default colour — which is the contract these tests are actually about.
+ * The Skia paragraph mock exposes the word and the segments passed to shaping.
  */
 
-import { afterAll, beforeAll, describe, expect, jest, test } from '@jest/globals';
+import { afterAll, beforeAll, beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { configure, fireEvent, render, resetToDefaults } from '@testing-library/react-native';
-import React from 'react';
-import { StyleSheet, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
+import { Canvas, Group, Paragraph, Rect, type SkParagraph } from 'react-native-skia';
 
 import { ReviewContextSentence } from '@/components/review/ReviewContextSentence';
 import { STRINGS } from '@/constants/strings';
 import type { ExampleWord, WordExample } from '@/services/sentences';
+import { buildWordParagraph } from '@/utils/skiaParagraphBuilder';
 
 jest.mock('react-native-reanimated', () =>
   require('@/__tests__/helpers/componentMocks').createReanimatedMock(),
@@ -39,34 +37,14 @@ jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
 
-jest.mock('@/components/common/SkiaColoredArabic', () => {
-  const react = require('react');
-  const { Text, View } = require('react-native');
-  return {
-    SkiaColoredArabic: ({
-      text,
-      segments,
-      color,
-    }: {
-      text: string;
-      segments?: { text: string; color: string }[];
-      color?: string;
-    }) =>
-      react.createElement(
-        View,
-        // The whole word, exactly as handed to the painter — a split word would
-        // show up here as a missing or truncated testID.
-        { testID: `painted-word-${text}` },
-        (segments?.length ? segments : [{ text, color: color ?? '' }]).map((segment, index) =>
-          react.createElement(
-            Text,
-            { key: index, style: { color: segment.color || color } },
-            segment.text,
-          ),
-        ),
-      ),
-  };
-});
+jest.mock('@/hooks/theme/useSkiaGpuAvailable', () => ({ useSkiaGpuAvailable: () => true }));
+jest.mock('@/hooks/theme/useSkiaFonts', () => ({
+  useSkiaFonts: () => ({ fontFamily: 'Amiri', fontManager: {} }),
+}));
+jest.mock('@/utils/skiaParagraphBuilder', () => ({
+  ...jest.requireActual<object>('@/utils/skiaParagraphBuilder'),
+  buildWordParagraph: jest.fn(),
+}));
 
 const ARABIC_TEXT = '#1a1a1a';
 const DEFINITE_ARTICLE = '#C7894A';
@@ -114,19 +92,6 @@ function someNodeIsColored(nodes: { props: { style?: unknown } }[], color: strin
   );
 }
 
-/** The marker underline is a sibling node, present only on the target word —
- *  rendered under `example-word-{position}-underline`, not on the word's own
- *  wrapper, so a query that finds nothing means "not marked". */
-function underlineColor(
-  queryByTestId: (testId: string) => { props: { style?: unknown } } | null,
-  position: number,
-): unknown {
-  const node = queryByTestId(`example-word-${position}-underline`);
-  return node
-    ? StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>)?.backgroundColor
-    : undefined;
-}
-
 function renderExample(example = makeExample()) {
   const view = render(<ReviewContextSentence example={example} />);
   fireEvent(view.getByLabelText(example.arabic), 'layout', {
@@ -139,6 +104,35 @@ describe('ReviewContextSentence', () => {
   // Individual glyphs and the underline are visual children of one accessible sentence.
   beforeAll(() => configure({ defaultIncludeHiddenElements: true }));
   afterAll(resetToDefaults);
+  beforeEach(() => {
+    jest.mocked(buildWordParagraph).mockImplementation(
+      ({ word, colors }) =>
+        ({
+          getMaxIntrinsicWidth: () => 60,
+          getHeight: () => 30,
+          getPath: () => null,
+          text: word.word_form,
+          segments: word.coloredSegments ?? [{ text: word.word_form, color: colors.arabicText }],
+        }) as unknown as SkParagraph,
+    );
+    jest.mocked(Canvas).mockImplementation(({ children }) => <View>{children}</View>);
+    jest.mocked(Group).mockImplementation(({ children }) => <>{children}</>);
+    jest.mocked(Paragraph).mockImplementation(({ paragraph }) => {
+      const { text, segments } = paragraph as unknown as {
+        text: string;
+        segments: { text: string; color: string }[];
+      };
+      return (
+        <View testID={`painted-word-${text}`}>
+          {segments.map((segment, index) => (
+            <Text key={index} style={{ color: segment.color }}>
+              {segment.text}
+            </Text>
+          ))}
+        </View>
+      );
+    });
+  });
   describe('The sentence', () => {
     test('renders every word of the sentence', () => {
       const { getAllByText } = renderExample();
@@ -191,10 +185,11 @@ describe('ReviewContextSentence', () => {
 
   describe('Marking the practised word', () => {
     test('underlines the target word and only the target word', () => {
-      const { queryByTestId } = renderExample();
+      renderExample();
 
-      expect(underlineColor(queryByTestId, 2)).toBeDefined();
-      expect(underlineColor(queryByTestId, 1)).toBeUndefined();
+      expect(jest.mocked(Rect)).toHaveBeenCalledTimes(1);
+      const marker = jest.mocked(Rect).mock.calls[0]?.[0];
+      expect(marker && 'x' in marker && marker.x).toBeLessThan(160);
     });
 
     // Regression: the old implementation split the sentence string on the
@@ -208,17 +203,18 @@ describe('ReviewContextSentence', () => {
           word({ position: 2, wordForm: 'الكتاب', rootId: 77, isTarget: false }),
         ],
       });
-      const { queryByTestId } = renderExample(example);
+      renderExample(example);
 
-      expect(underlineColor(queryByTestId, 1)).toBeDefined();
-      expect(underlineColor(queryByTestId, 2)).toBeUndefined();
+      expect(jest.mocked(Rect)).toHaveBeenCalledTimes(1);
+      const marker = jest.mocked(Rect).mock.calls[0]?.[0];
+      expect(marker && 'x' in marker && marker.x).toBeGreaterThan(160);
     });
 
     test('marks the word with an underline, never with a text colour', () => {
-      const { queryByTestId, getAllByText } = renderExample();
+      const { getAllByText } = renderExample();
 
       // The underline is a sibling of the word's text…
-      expect(underlineColor(queryByTestId, 2)).toBeDefined();
+      expect(jest.mocked(Rect).mock.calls[0]?.[0].color).toBeDefined();
       // …and the word's own segments keep their grammar colours, which is what
       // makes the two channels readable at once.
       expect(someNodeIsColored(getAllByText('ال'), DEFINITE_ARTICLE)).toBe(true);

@@ -64,6 +64,14 @@
     "1448.6.29": {
       "ios": "0b8bf1da61b40f6f628d241b21ff93fe9421c0a1",
       "android": "99587b8a223b70185828b93db739bef5ed5e267f"
+    },
+    "1448.6.30": {
+      "ios": "cf123bb703b44140f62091989ae9a91be817dee6",
+      "android": "ecccce3d3ab237f922bf38c411409bd4caf1dc25"
+    },
+    "1448.6.31": {
+      "ios": "5ea73a0c9d994a6e87bba73b740454e3876eae2e",
+      "android": "7c6f4f965a7e296e3fbd54f684d0cd31ed5a3def"
     }
   }
 }

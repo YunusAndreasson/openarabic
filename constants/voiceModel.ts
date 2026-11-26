@@ -49,6 +49,14 @@ import { Platform } from 'react-native';
  */
 export const PARAKEET_MODEL_ID = 'sherpa-onnx-nemo-parakeet_tdt_transducer_110m-en-36000-int8';
 
+/** SHA-256 for the recognizer inputs in the `asr-models` release for this model ID. */
+export const PARAKEET_ARTIFACTS = {
+  'encoder.int8.onnx': '0f35509ddeb9b39002fb077d979a9fe74f06eb0bc4dd5c34f512f82e5111d657',
+  'decoder.int8.onnx': 'f7c331c5504c2e593c76ed22b728e3f554af6c4a383dde862e719ced08b1da19',
+  'joiner.int8.onnx': 'bf7dff69e9f2cdbe9943d70da358f38b361c115ba0105bae7e908e0d6ec782f6',
+  'tokens.txt': '450e56bd2f036fe5b6aa821865838cc5aa9d8b0106134ce9a9ba0664abe6cd10',
+} as const;
+
 /**
  * Decoding is greedy, and nothing here can change that.
  *

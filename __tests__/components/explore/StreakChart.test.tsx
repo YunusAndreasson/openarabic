@@ -8,6 +8,7 @@
 
 import { describe, expect, jest, test } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
+import { I18nManager } from 'react-native';
 import { Canvas } from 'react-native-skia';
 
 import { StreakChart } from '@/components/explore/StreakChart';
@@ -33,5 +34,20 @@ describe('StreakChart', () => {
 
     const props = jest.mocked(Canvas).mock.calls.at(-1)?.[0];
     expect(props?.style).toMatchObject({ width: 351 });
+  });
+
+  test('mirrors the bars alongside the native RTL labels', () => {
+    const rtl = jest.replaceProperty(I18nManager, 'isRTL', true);
+    try {
+      const view = render(<StreakChart dailyActivity={DAYS} streakPeriods={[]} />);
+      fireEvent(view.root, 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 351, height: 60 } },
+      });
+
+      const props = jest.mocked(Canvas).mock.calls.at(-1)?.[0];
+      expect(props?.style).toMatchObject({ transform: [{ scaleX: -1 }] });
+    } finally {
+      rtl.restore();
+    }
   });
 });

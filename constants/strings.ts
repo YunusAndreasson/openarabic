@@ -481,6 +481,7 @@ export const STRINGS = {
   CHECKLIST_DISMISS_A11Y: 'Hide the Get started checklist',
   // Sign In screen
   SIGN_IN_TITLE: 'Sign in',
+  AUTH_BACK_TO_OPTIONS: 'Back to sign-in options',
   SIGN_IN_SUBTITLE: 'Welcome back',
   // Sign Up screen
   CREATE_ACCOUNT_TITLE: 'Create account',

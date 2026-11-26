@@ -90,7 +90,7 @@ async function openReviewForBook() {
   return { line, entry, root, sentence, view, reveal, queryClient };
 }
 
-test('revealing كتابًا wraps the coloured sentence as complete words at the measured card width', async () => {
+test('without a GPU, revealing كتابًا wraps complete words at the measured card width', async () => {
   const shape = jest.spyOn(paragraphs, 'buildWordParagraph');
   const { line, sentence, reveal } = await openReviewForBook();
   fireEvent.press(reveal);
@@ -110,17 +110,7 @@ test('revealing كتابًا wraps the coloured sentence as complete words at th
       expect(StyleSheet.flatten(text.props.style).maxWidth).toBe(width);
     }
   }
-  expect(shape).toHaveBeenCalledWith(
-    expect.objectContaining({
-      word: {
-        word_form: 'وَإِذَا',
-        coloredSegments: [
-          expect.objectContaining({ text: 'وَ' }),
-          expect.objectContaining({ text: 'إِذَا' }),
-        ],
-      },
-    }),
-  );
+  expect(shape).not.toHaveBeenCalled();
 });
 
 test('only reveal exposes the dictionary meaning and inflected sentence, and only acknowledgement exposes the receipt', async () => {

@@ -7,6 +7,7 @@ import { wordWidget as androidWordWidget } from '@/widgets/WordInContext.android
 import { AppState, Platform } from 'react-native';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { mockReviewStorage } from '@/__tests__/helpers/reviewStorage';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { RootId } from '@/types/branded.types';
 import { readWidgetCopy, keepWidgetOccurrence } from '@/services/widgets/storage';
 import {
@@ -20,6 +21,7 @@ import {
   widgetPreview,
 } from '@/services/widgets/publish';
 import { widgetBridge } from '@/services/widgets/native';
+import { fsrsGradeMutation } from '@/utils/mutationDefaults';
 
 jest.mock('@/services/widgets/native', () => ({
   widgetBridge: { setOwner: jest.fn(), matchesOwner: jest.fn() },
@@ -32,7 +34,7 @@ jest.mock('@/hooks/auth/useAuth', () => ({
 }));
 jest.mock('@/utils/network', () => ({ isKnownOffline: async () => false }));
 jest.mock('@/services/studyWordsFSRS', () => ({
-  studyWordsFSRSService: { getFSRSWords: async () => [mockDeckWord] },
+  studyWordsFSRSService: { getFSRSWords: jest.fn() },
 }));
 jest.mock('@/services/widgets/placement', () => ({
   observePlacement: async () => undefined,
@@ -45,16 +47,31 @@ const word = createTestWord({
   fsrs_state: 2,
   fsrs_due: new Date(installed + 3600_000).toISOString(),
 });
-const mockDeckWord = { ...word, root: { letters: 'وَرْد', meaning: 'rose' } };
+const mockDeckWord = {
+  ...word,
+  root: { id: root, letters: 'وَرْد', meaning: 'rose', audio_url: '', audio_url_en: '' },
+};
 beforeEach(() => {
   mockReviewStorage();
   jest.replaceProperty(Platform, 'OS', 'ios');
   jest.setSystemTime(installed);
+  jest.mocked(studyWordsFSRSService.getFSRSWords).mockResolvedValue([mockDeckWord]);
   jest
     .mocked(widgetBridge!.setOwner)
     .mockImplementation(owner => (owner ? owner + '-generation' : ''));
-  clearWordWidget();
+  clearWordWidget()();
+  restoreWidgetSession('leaving');
 });
+
+function navigationAt(name: string) {
+  const removeListener = jest.fn();
+  return {
+    getCurrentRoute: jest.fn(() => ({ name })),
+    addListener: jest.fn((_event: 'state', _listener: () => void) => removeListener),
+    isReady: () => true,
+    removeListener,
+  };
+}
 test('a pending full query cannot overwrite an account change; sign-out purges the native personal timeline', async () => {
   widgetOwner('first', installed);
   const pending = publishDeck('first', [word], installed, installed);
@@ -91,7 +108,8 @@ test('a pending full query cannot overwrite an account change; sign-out purges t
 test('foreground sync during pending sign-out cannot reacquire the private generation', async () => {
   const sub = jest.spyOn(AppState, 'addEventListener');
   const { wrapper } = createHookTestWrapper();
-  const view = renderHook(() => useWordWidgetSync(), { wrapper });
+  const navigation = navigationAt('practice');
+  const view = renderHook(() => useWordWidgetSync(navigation), { wrapper });
   await waitFor(() => expect(widgetPreview()?.generation).toBe('leaving-generation'));
   clearWordWidget();
   const listener = sub.mock.calls.filter(([event]) => event === 'change').at(-1)![1];
@@ -100,6 +118,49 @@ test('foreground sync during pending sign-out cannot reacquire the private gener
   expect(widgetBridge!.setOwner).toHaveBeenLastCalledWith('');
   view.unmount();
 });
+
+test.each(['navigation', 'background'] as const)(
+  'coalesces Review grade refreshes until %s and keeps the last checked face visible',
+  async exit => {
+    const navigation = navigationAt('review');
+    const sub = jest.spyOn(AppState, 'addEventListener');
+    const { wrapper, queryClient } = createHookTestWrapper();
+    const view = renderHook(() => useWordWidgetSync(navigation), { wrapper });
+    await waitFor(() => expect(widgetPreview()?.generation).toBe('leaving-generation'));
+    const fetchDeck = jest.mocked(studyWordsFSRSService.getFSRSWords);
+    expect(fetchDeck).toHaveBeenCalledTimes(1);
+
+    const grade = () =>
+      queryClient
+        .getMutationCache()
+        .build(queryClient, {
+          mutationKey: fsrsGradeMutation.mutationKey,
+          mutationFn: async () => undefined,
+        })
+        .execute(undefined);
+    await act(async () => {
+      await grade();
+      await grade();
+    });
+    expect(fetchDeck).toHaveBeenCalledTimes(1);
+    expect(widgetPreview()).toMatchObject({ generation: 'leaving-generation', kind: 'Checking' });
+
+    await act(async () => {
+      if (exit === 'navigation') {
+        navigation.getCurrentRoute.mockReturnValue({ name: 'practice' });
+        navigation.addListener.mock.calls.at(-1)?.[1]();
+      } else {
+        sub.mock.calls
+          .filter(([event]) => event === 'change')
+          .at(-1)?.[1]('background');
+      }
+    });
+    await waitFor(() => expect(widgetPreview()?.kind).not.toBe('Checking'));
+    expect(fetchDeck).toHaveBeenCalledTimes(2);
+    view.unmount();
+    expect(navigation.removeListener).toHaveBeenCalledTimes(1);
+  },
+);
 test('revocation survives a public render failure and retries the public face', async () => {
   widgetOwner('private', installed);
   await publishDeck('private', [word], installed, installed);

@@ -56,7 +56,18 @@ function layout(
 
   const canReveal = !!env.wordCanReveal;
   const revealed = canReveal && !!env.wordRevealed;
-  const responseHeight = largeText ? grid.largeResponseHeight : grid.responseHeight;
+  // Reserve space for both lines at the larger gloss size so revealing a word
+  // keeps the action in place. Spend the available height on the readable text
+  // and keep a minimum area for the Arabic word.
+  const scaledResponseHeight = Math.ceil(
+    grid.responseLines * labelHeight * (grid.glossSize / grid.labelSize),
+  );
+  const responseHeight = largeText
+    ? Math.max(
+        grid.responseHeight,
+        Math.min(scaledResponseHeight, usableHeight - grid.minimumHeroHeight - grid.gap),
+      )
+    : grid.responseHeight;
   const hasSource = !!(data.passagePosition || data.articleId);
   const showSource =
     hasSource && (wide || (intermediate && !largeText && heightDp >= grid.defaultHeight));
@@ -107,7 +118,7 @@ function layout(
       <Box modifiers={[fillMaxSize(), padding(grid.gap, 0, grid.gap, 0)]} contentAlignment="center">
         <Text
           color={revealed ? ink : actionInk}
-          maxLines={2}
+          maxLines={grid.responseLines}
           style={{
             fontSize: revealed ? grid.glossSize : grid.labelSize,
             fontWeight: '600',

@@ -37,7 +37,7 @@
  * same trap is documented on `ReviewDiagSnapshot` in `utils/reviewDiagnostics.ts`.
  */
 import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
-import { DocumentDirectoryPath, mkdir } from '@dr.pogodin/react-native-fs';
+import { DocumentDirectoryPath, hash, mkdir } from '@dr.pogodin/react-native-fs';
 import { Platform } from 'react-native';
 import {
   ModelCategory,
@@ -49,7 +49,7 @@ import {
 } from 'react-native-sherpa-onnx/download';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { PARAKEET_MODEL_ID } from '@/constants/voiceModel';
+import { PARAKEET_ARTIFACTS, PARAKEET_MODEL_ID } from '@/constants/voiceModel';
 import { analytics } from '@/services/analytics';
 import { createExternalStore } from '@/utils/createExternalStore';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
@@ -125,6 +125,7 @@ let store = createExternalStore(INITIAL_SNAPSHOT);
  * one promise.
  */
 let inFlight: Promise<VoiceModelSnapshot> | null = null;
+let diskProbe: Promise<VoiceModelSnapshot> | null = null;
 
 /** Sticky for the app run once the learner accepts the cellular cost. */
 let meteredAllowed = false;
@@ -134,6 +135,22 @@ let netInfoUnsubscribe: (() => void) | null = null;
 
 /** Set once a `disk-space` failure is seen, so the Wi-Fi listener cannot retry into it. */
 let blockedUntilExplicitRetry = false;
+
+async function hasIntactArtifacts(localPath: string): Promise<boolean> {
+  try {
+    for (const [file, sha256] of Object.entries(PARAKEET_ARTIFACTS)) {
+      if ((await hash(`${localPath}/${file}`, 'sha256')) !== sha256) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function removeCorruptModel(): Promise<void> {
+  voiceBreadcrumb('voice.model.integrity.failed', undefined, 'warning');
+  await deleteModel(ModelCategory.Stt, PARAKEET_MODEL_ID);
+}
 
 function emit(next: Partial<VoiceModelSnapshot>): void {
   store.update(current => ({ ...current, ...next }));
@@ -215,17 +232,41 @@ function waitForWifi(reason: VoiceModelRequestReason): void {
 }
 
 /**
- * Read the library's ready marker and resolve the local model directory.
+ * Verify the extracted model. The library's ready marker survives damaged
+ * files, and native ONNX initialization can abort on malformed graphs.
  * Safe to call on every launch and every foreground resume.
  */
-export async function probeVoiceModel(): Promise<VoiceModelSnapshot> {
+export function probeVoiceModel(): Promise<VoiceModelSnapshot> {
+  if (diskProbe) return diskProbe;
+  diskProbe = inspectModelOnDisk().finally(() => {
+    diskProbe = null;
+  });
+  return diskProbe;
+}
+
+async function inspectModelOnDisk(): Promise<VoiceModelSnapshot> {
   const before = store.get();
+  if (before.state === 'downloading' || before.state === 'extracting') return before;
   try {
     const localPath = await getModelPath(ModelCategory.Stt, PARAKEET_MODEL_ID);
+    const intact = localPath ? await hasIntactArtifacts(localPath) : false;
     // A download or deletion can finish while the filesystem probe is pending.
     if (store.get() !== before) return store.get();
-    if (localPath) {
+    if (localPath && intact) {
+      if (before.state === 'ready' && before.localPath === localPath) return before;
       emit({ state: 'ready', progress: 1, localPath, error: null, errorKind: null });
+    } else if (localPath) {
+      emit({ ...INITIAL_SNAPSHOT, state: 'absent' });
+      try {
+        await removeCorruptModel();
+      } catch (error) {
+        emit({
+          ...INITIAL_SNAPSHOT,
+          state: 'failed',
+          error: toError(error).message,
+          errorKind: 'unknown',
+        });
+      }
     } else if (before.state === 'unknown' || before.state === 'ready') {
       emit({ ...INITIAL_SNAPSHOT, state: 'absent' });
     }
@@ -321,6 +362,10 @@ export function requestVoiceModel(opts: {
         model = await ensureModel(ModelCategory.Stt, PARAKEET_MODEL_ID, ensureOpts);
       }
 
+      if (!(await hasIntactArtifacts(model.localPath))) {
+        await removeCorruptModel();
+        throw new Error('Downloaded voice model failed integrity validation');
+      }
       emit({
         state: 'ready',
         progress: 1,
@@ -391,6 +436,7 @@ export function __resetVoiceModelStoreForTests(): void {
   stopWaitingForWifi();
   store = createExternalStore(INITIAL_SNAPSHOT);
   inFlight = null;
+  diskProbe = null;
   meteredAllowed = false;
   blockedUntilExplicitRetry = false;
 }

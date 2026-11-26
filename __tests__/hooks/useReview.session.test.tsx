@@ -131,11 +131,32 @@ describe('useReview Hook - Session Management', () => {
       const wrapper = createWrapper();
       const { result, rerender } = renderHook(() => useReview(), { wrapper });
 
+      act(() => result.current.revealAnswer());
+      expect(result.current.revealed).toBe(true);
+      expect(result.current.currentMeaning).not.toBe('');
+
       useFSRS.mockReturnValue(fsrsState(mocks, word2, { progress: 50 }));
 
       rerender(undefined);
 
+      expect(result.current.revealed).toBe(false);
       expect(result.current.showTranslation).toBeFalsy();
+      expect(result.current.currentMeaning).toBe('');
+    });
+
+    test('disclosure without flipping belongs to the current repetition only', () => {
+      const word = createMockWord({ root_id: rootId(101), fsrs_reps: 1 });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
+      const { result, rerender } = renderHook(() => useReview(), { wrapper: createWrapper() });
+
+      act(() => result.current.revealMeaningPassive());
+      expect(result.current.revealed).toBe(false);
+      expect(result.current.currentMeaning).not.toBe('');
+
+      useFSRS.mockReturnValue(fsrsState(mocks, { ...word, fsrs_reps: 2 }));
+      rerender(undefined);
+
+      expect(result.current.revealed).toBe(false);
       expect(result.current.currentMeaning).toBe('');
     });
   });

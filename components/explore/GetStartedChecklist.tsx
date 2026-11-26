@@ -114,7 +114,7 @@ const GetStartedChecklistComponent = ({
       height: measuredHeight * (1 - collapseProgress.get()),
       overflow: 'hidden' as const,
     };
-  }, [measuredHeight]);
+  });
 
   const handleRowPress = useCallback(
     (step: OnboardingStep) => {

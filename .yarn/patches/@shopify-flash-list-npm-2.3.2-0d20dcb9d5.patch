@@ -1,0 +1,82 @@
+diff --git a/dist/recyclerview/RecyclerViewManager.js b/dist/recyclerview/RecyclerViewManager.js
+index 1aa651d9d985a36d3c6ef69f20407f51ca0e3e6f..fa32bad632c8fb17152a1c12c0f7f21ca4ed0d0d 100644
+--- a/dist/recyclerview/RecyclerViewManager.js
++++ b/dist/recyclerview/RecyclerViewManager.js
+@@ -208,6 +208,9 @@ export class RecyclerViewManager {
+         return !this.hasRenderedProgressively;
+     }
+     computeItemViewability() {
++        if (!this.hasLayout()) {
++            return;
++        }
+         // Using higher buffer for masonry to avoid missing items
+         this.itemViewabilityManager.shouldListenToVisibleIndices &&
+             this.itemViewabilityManager.updateViewableItems(this.propsRef.masonry
+@@ -215,6 +218,9 @@ export class RecyclerViewManager {
+                 : this.computeVisibleIndices().toArray());
+     }
+     recordInteraction() {
++        if (!this.hasLayout()) {
++            return;
++        }
+         this.itemViewabilityManager.recordInteraction();
+     }
+     recomputeViewableItems() {
+diff --git a/dist/recyclerview/viewability/ViewabilityManager.js b/dist/recyclerview/viewability/ViewabilityManager.js
+index 67e342b5669223330d2c72554759729cd14fde81..51dbd2be4eb7969618eb1db192f2c088fcaa8bab 100644
+--- a/dist/recyclerview/viewability/ViewabilityManager.js
++++ b/dist/recyclerview/viewability/ViewabilityManager.js
+@@ -25,10 +25,10 @@ export default class ViewabilityManager {
+         };
+         this.updateViewableItems = (newViewableIndices) => {
+             var _a;
+-            const listSize = this.rvManager.getWindowSize();
+-            if (listSize === undefined || !this.shouldListenToVisibleIndices) {
++            if (!this.rvManager.hasLayout() || !this.shouldListenToVisibleIndices) {
+                 return;
+             }
++            const listSize = this.rvManager.getWindowSize();
+             const scrollOffset = ((_a = this.rvManager.getAbsoluteLastScrollOffset()) !== null && _a !== void 0 ? _a : 0) -
+                 this.rvManager.firstItemOffset;
+             this.viewabilityHelpers.forEach((viewabilityHelper) => {
+diff --git a/src/recyclerview/RecyclerViewManager.ts b/src/recyclerview/RecyclerViewManager.ts
+index 41704d03e807f962c17ca8d008738c7a387d9b2a..a5fb3b79738974d4fef442601f97a9954f548afc 100644
+--- a/src/recyclerview/RecyclerViewManager.ts
++++ b/src/recyclerview/RecyclerViewManager.ts
+@@ -281,6 +281,9 @@ export class RecyclerViewManager<T> {
+   }
+ 
+   computeItemViewability() {
++    if (!this.hasLayout()) {
++      return;
++    }
+     // Using higher buffer for masonry to avoid missing items
+     this.itemViewabilityManager.shouldListenToVisibleIndices &&
+       this.itemViewabilityManager.updateViewableItems(
+@@ -291,6 +294,9 @@ export class RecyclerViewManager<T> {
+   }
+ 
+   recordInteraction() {
++    if (!this.hasLayout()) {
++      return;
++    }
+     this.itemViewabilityManager.recordInteraction();
+   }
+ 
+diff --git a/src/recyclerview/viewability/ViewabilityManager.ts b/src/recyclerview/viewability/ViewabilityManager.ts
+index 972c20f7bd2c4bc480c02f5d5dac407ead23c9fd..eb2181332b4f868662ce111504ca7f156dd8a48a 100644
+--- a/src/recyclerview/viewability/ViewabilityManager.ts
++++ b/src/recyclerview/viewability/ViewabilityManager.ts
+@@ -71,10 +71,10 @@ export default class ViewabilityManager<T> {
+   };
+ 
+   public updateViewableItems = (newViewableIndices?: number[]) => {
+-    const listSize = this.rvManager.getWindowSize();
+-    if (listSize === undefined || !this.shouldListenToVisibleIndices) {
++    if (!this.rvManager.hasLayout() || !this.shouldListenToVisibleIndices) {
+       return;
+     }
++    const listSize = this.rvManager.getWindowSize();
+     const scrollOffset =
+       (this.rvManager.getAbsoluteLastScrollOffset() ?? 0) -
+       this.rvManager.firstItemOffset;

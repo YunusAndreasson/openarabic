@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { fsrsQueries } from '@/constants/queries';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { currentReminderSession } from '@/services/reviewReminderJourney';
 import { widgetBridge } from '@/services/widgets/native';
@@ -10,9 +11,16 @@ import { observePlacement, widgetInstallTime } from '@/services/widgets/placemen
 import { invalidateWordWidget, publishDeck, widgetOwner } from '@/services/widgets/publish';
 import { isKnownOffline } from '@/utils/network';
 
+interface WidgetNavigation {
+  addListener(event: 'state', listener: () => void): () => void;
+  getCurrentRoute(): { name: string } | undefined;
+  isReady(): boolean;
+}
+const REVIEW_SCREEN = ROUTE_PATHS.REVIEW.slice(1);
+
 /** Only an acknowledged full query can certify the widget's schedule. Optimistic cache writes
  * retire that certificate; its original check date never advances on a cache read. */
-export function useWordWidgetSync() {
+export function useWordWidgetSync(navigation: WidgetNavigation) {
   const { user, isLoading } = useAuth();
   const owner = user?.id ?? '';
   const cache = useQueryClient();
@@ -23,6 +31,12 @@ export function useWordWidgetSync() {
     let stop: (() => void) | undefined;
     let seq = 0;
     let detachMutations: (() => void) | undefined;
+    let detachNavigation: (() => void) | undefined;
+    let flushDeck: (() => void) | undefined;
+    const reviewingInForeground = () =>
+      AppState.currentState !== 'background' &&
+      navigation.isReady() &&
+      navigation.getCurrentRoute()?.name === REVIEW_SCREEN;
 
     async function setup() {
       const installed = await widgetInstallTime();
@@ -37,11 +51,28 @@ export function useWordWidgetSync() {
         cache.isMutating({ mutationKey: fsrsGradeMutation.mutationKey }) +
         cache.isMutating({ mutationKey: studyWordToggleMutation.mutationKey });
       let pending = mutating();
+      let needsRefresh = false;
+      const refresh = () => {
+        if (!active() || !needsRefresh || mutating()) return;
+        needsRefresh = false;
+        void fetchDeck();
+      };
+      flushDeck = refresh;
+      detachNavigation = navigation.addListener('state', () => {
+        if (!reviewingInForeground()) refresh();
+      });
       detachMutations = cache.getMutationCache().subscribe(() => {
         const next = mutating();
         if (next && !pending) invalidateWordWidget(owner, installed, 'Checking');
-        if (!next && pending) void fetchDeck();
+        const settled = !next && pending;
         pending = next;
+        if (settled) {
+          // The full-deck read and widget publication compete with the next
+          // card. Keep the last checked face while grades land, then refresh
+          // once the learner can leave Review or return to the launcher.
+          needsRefresh = true;
+          if (!reviewingInForeground()) refresh();
+        }
       });
       stop = cache.getQueryCache().subscribe(event => {
         if (event.type !== 'updated' || !same(event.query.queryKey as readonly unknown[])) return;
@@ -76,6 +107,7 @@ export function useWordWidgetSync() {
     }
     void setup().catch(() => undefined);
     const sub = AppState.addEventListener('change', state => {
+      if (state === 'background') flushDeck?.();
       if (state !== 'active') return;
       void observePlacement(currentReminderSession()).catch(() => undefined);
       void widgetInstallTime()
@@ -92,7 +124,8 @@ export function useWordWidgetSync() {
       lifetime.abort();
       stop?.();
       detachMutations?.();
+      detachNavigation?.();
       sub.remove();
     };
-  }, [cache, owner, isLoading]);
+  }, [cache, owner, isLoading, navigation]);
 }

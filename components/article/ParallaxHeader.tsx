@@ -130,7 +130,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
       transform: [{ translateY }, { scale }],
       opacity,
     };
-  }, [headerHeight, reducedMotion, scrollY]);
+  });
 
   // Memoize EnhancedImage props to prevent unnecessary re-renders
   const imageProps = useMemo(

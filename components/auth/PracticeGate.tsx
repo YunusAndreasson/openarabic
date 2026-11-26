@@ -9,27 +9,19 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
 import { useColors } from '@/hooks/theme/useColors';
-import { getAccountFormRoute } from '@/utils/routeBuilders';
+import { getAccountRoute } from '@/utils/routeBuilders';
 
 export function AccountGateActions({ saveIntent }: { saveIntent?: string }) {
+  const openAccount = () => router.navigate(getAccountRoute(saveIntent));
   return (
     <View style={styles.actions}>
-      <ThemedButton
-        fullWidth
-        allowTitleWrap
-        title={STRINGS.CREATE_ACCOUNT}
-        onPress={() =>
-          router.push(getAccountFormRoute('sign-up', saveIntent), { withAnchor: true })
-        }
-      />
+      <ThemedButton fullWidth allowTitleWrap title={STRINGS.CREATE_ACCOUNT} onPress={openAccount} />
       <ThemedButton
         fullWidth
         allowTitleWrap
         variant="outlined"
         title={STRINGS.SIGN_IN}
-        onPress={() =>
-          router.push(getAccountFormRoute('sign-in', saveIntent), { withAnchor: true })
-        }
+        onPress={openAccount}
       />
     </View>
   );

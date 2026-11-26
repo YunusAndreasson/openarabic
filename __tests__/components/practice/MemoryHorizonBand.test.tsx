@@ -7,7 +7,8 @@
  */
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { render, waitFor } from '@testing-library/react-native';
-import { Atlas } from 'react-native-skia';
+import { I18nManager, StyleSheet } from 'react-native';
+import { Atlas, Canvas } from 'react-native-skia';
 
 import { rootId } from '@/__tests__/helpers/ids';
 import { MemoryHorizonBand } from '@/components/practice/charts/MemoryHorizonBand';
@@ -45,6 +46,22 @@ const expectSilence = () => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+});
+
+test('anchors labels to the RTL start and mirrors the full Skia plot', () => {
+  const direction = jest.replaceProperty(I18nManager, 'isRTL', true);
+  try {
+    const view = render(<MemoryHorizonBand {...field(7)} />);
+
+    expect(StyleSheet.flatten(view.getByText('Days').props.style)).toMatchObject({
+      start: expect.any(Number),
+    });
+    expect(StyleSheet.flatten(jest.mocked(Canvas).mock.calls.at(-1)?.[0].style)).toMatchObject({
+      transform: [{ scaleX: -1 }],
+    });
+  } finally {
+    direction.restore();
+  }
 });
 
 describe('the dot sprite', () => {

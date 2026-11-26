@@ -12,15 +12,7 @@ interface AuthScreenShellProps {
 }
 
 /**
- * The frame both email auth screens sit in: a keyboard-aware scroll view, a
- * centred subtitle, and a form column capped at 90% of the screen width.
- *
- * `sign-in.tsx` and `sign-up.tsx` were byte-identical across all 71 lines
- * except three tokens — the form they rendered, the subtitle string, and the
- * component name — including both `StyleSheet.create` blocks. Scoped to
- * `components/auth` rather than promoted to a shared primitive: the padding
- * here is tuned for a headerless auth screen and is not what a tab screen or a
- * sheet wants.
+ * Keyboard-aware scroll view and centered form column for the email step.
  */
 export function AuthScreenShell({ subtitle, children }: AuthScreenShellProps): JSX.Element {
   const { width } = useWindowDimensions();

@@ -641,12 +641,11 @@ export function ReviewFlipCard({
   // The question face's one slot, resolved once: a voice result outranks the
   // microphone (a result is up only when the mic is idle), and most cards have
   // neither, which is the case the face has to collapse for. Within a result
-  // the English shows only once disclosed — a hearing failure leaves `answer`
-  // empty and shows its caption alone.
+  // the English shows only once disclosed. A hearing failure only has a caption.
   const questionBody =
-    discloseAnswer && (answer || discloseCaption) ? (
+    discloseAnswer || discloseCaption ? (
       <>
-        {answer ? (
+        {discloseAnswer && answer ? (
           <ThemedText type="heading2" colorName="englishText" style={STATIC_STYLES.meaning}>
             {capitalizeFirstLetter(answer)}
           </ThemedText>
@@ -702,31 +701,33 @@ export function ReviewFlipCard({
                     so the learner can carry on with one tap anywhere rather than
                     aiming at the button. Outside that hold there is no face-level
                     press — the grade bar owns the decision. */}
-                <Pressable
-                  style={STATIC_STYLES.facePressable}
-                  onPress={restudying ? onRestudyContinue : undefined}
-                  disabled={!restudying}
-                  accessible={false}
-                  importantForAccessibility="no"
-                >
-                  <WordDisplay
-                    word={word}
-                    wordType={wordType}
-                    onWordPress={onReplayAudio}
-                    holdWordPress={replayHeld}
+                {revealed && (
+                  <Pressable
+                    style={STATIC_STYLES.facePressable}
+                    onPress={restudying ? onRestudyContinue : undefined}
+                    disabled={!restudying}
+                    accessible={false}
+                    importantForAccessibility="no"
                   >
-                    <View style={STATIC_STYLES.answerBody}>
-                      <ThemedText
-                        type="heading2"
-                        colorName="englishText"
-                        style={STATIC_STYLES.meaning}
-                      >
-                        {answer ? capitalizeFirstLetter(answer) : answer}
-                      </ThemedText>
-                      {answerSlot}
-                    </View>
-                  </WordDisplay>
-                </Pressable>
+                    <WordDisplay
+                      word={word}
+                      wordType={wordType}
+                      onWordPress={onReplayAudio}
+                      holdWordPress={replayHeld}
+                    >
+                      <View style={STATIC_STYLES.answerBody}>
+                        <ThemedText
+                          type="heading2"
+                          colorName="englishText"
+                          style={STATIC_STYLES.meaning}
+                        >
+                          {answer ? capitalizeFirstLetter(answer) : answer}
+                        </ThemedText>
+                        {answerSlot}
+                      </View>
+                    </WordDisplay>
+                  </Pressable>
+                )}
                 {faceFeedback}
               </Animated.View>
 
