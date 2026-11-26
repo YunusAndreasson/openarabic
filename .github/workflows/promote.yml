@@ -72,6 +72,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -83,14 +85,16 @@ jobs:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
 
       - name: Promote release
+        env:
+          FROM_TRACK: ${{ inputs.from_track }}
+          ROLLOUT: ${{ inputs.rollout }}
+          VERSION_CODE: ${{ inputs.version_code }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          node scripts/promote-play-release.mjs \
-            --key ./google-service-account.json \
-            --from "${{ inputs.from_track }}" \
-            --to production \
-            --rollout "${{ inputs.rollout }}" \
-            ${{ inputs.version_code != '' && format('--version-code {0}', inputs.version_code) || '' }} \
-            ${{ inputs.dry_run && '--dry-run' || '' }}
+          args=(--key ./google-service-account.json --from "$FROM_TRACK" --to production --rollout "$ROLLOUT")
+          [ -n "$VERSION_CODE" ] && args+=(--version-code "$VERSION_CODE")
+          [ "$DRY_RUN" = true ] && args+=(--dry-run)
+          node scripts/promote-play-release.mjs "${args[@]}"
 
       - name: Notify on failure
         if: failure()

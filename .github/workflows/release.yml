@@ -61,7 +61,7 @@ jobs:
       )
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1  # zizmor: ignore[artipacked] this job pushes the version commit and tag
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -190,15 +190,14 @@ jobs:
       # === GitHub Release Creation (after successful build) ===
       - name: Create GitHub Release
         if: github.event_name == 'workflow_dispatch' && success() && steps.version.outputs.version
+        env:
+          NEW_VERSION: ${{ steps.version.outputs.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          NEW_VERSION="${{ steps.version.outputs.version }}"
-
           gh release create "v$NEW_VERSION" \
             --title "Release v$NEW_VERSION" \
             --notes "Automated release for version $NEW_VERSION" \
             --latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify on failure
         if: failure()
