@@ -133,10 +133,11 @@ export const ReviewHeader = ({
         >
           <Icon
             color={colors.secondaryText}
-            // The outline cut: Ionicons' plain `close` is the filled, heavy-stroke
-            // variant, which without a circle around it reads as a bold mark.
-            name="close-outline"
-            size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
+            // The app's one close mark: the same glyph and size as CloseButton
+            // (HeaderIconButton 'medium'), so Review's X matches every other screen.
+            // XLARGE (28) here made it the loudest thing in the header.
+            name="close"
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
           />
         </Pressable>
       )}
