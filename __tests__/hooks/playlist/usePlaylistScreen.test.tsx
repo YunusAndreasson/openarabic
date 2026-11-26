@@ -315,9 +315,15 @@ describe('usePlaylistScreen', () => {
   // ============================================================================
 
   describe('handleArticlePlay', () => {
-    test('does nothing when audio is busy', async () => {
+    test('ignores a second tap on the track that is still loading', async () => {
       const { isAudioBusy } = require('@/utils/audioUtils');
       jest.mocked(isAudioBusy).mockReturnValue(true);
+      jest.mocked(mockSimpleAudioService.getStatus).mockReturnValue(
+        createAudioStatusMock({
+          playing: false,
+          currentTrack: createEnhancedAudioTrackMock({ articleId: 1 as ArticleId }),
+        }),
+      );
 
       const { result } = renderHook(() => usePlaylistScreen(), {
         wrapper: createWrapper(),
@@ -328,6 +334,39 @@ describe('usePlaylistScreen', () => {
       });
 
       expect(mockSimpleAudioService.playPlaylist).not.toHaveBeenCalled();
+    });
+
+    test('a tap on another row plays it even while the current track reads busy', async () => {
+      // The owner's report: only the first tapped row ever played. A status left
+      // reading not-loaded or buffering must not swallow taps on other rows.
+      const tracks = [
+        createEnhancedAudioTrackMock({ articleId: 1 as ArticleId, title: 'Track 1' }),
+        createEnhancedAudioTrackMock({ articleId: 2 as ArticleId, title: 'Track 2' }),
+      ];
+      queryClient.setQueryData(
+        ['enhancedAudioTracks', mockUser.id, AudioLanguage.ARABIC_ONLY],
+        tracks,
+      );
+      const { isAudioBusy } = require('@/utils/audioUtils');
+      jest.mocked(isAudioBusy).mockReturnValue(true);
+      jest.mocked(mockSimpleAudioService.getStatus).mockReturnValue(
+        createAudioStatusMock({
+          playing: true,
+          currentTrack: createEnhancedAudioTrackMock({ articleId: 1 as ArticleId }),
+        }),
+      );
+
+      const { result } = renderHook(() => usePlaylistScreen(), {
+        wrapper: createWrapper(),
+      });
+
+      await act(async () => {
+        await result.current.handleArticlePlay(2 as ArticleId);
+      });
+
+      const [playedTracks = []] =
+        jest.mocked(mockSimpleAudioService.playPlaylist).mock.calls[0] ?? [];
+      expect(playedTracks.map(track => track.articleId)).toEqual([2]);
     });
 
     test('stops playback when tapping currently playing article', async () => {

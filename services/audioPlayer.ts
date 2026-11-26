@@ -978,13 +978,18 @@ class SimpleAudioService {
         this.activateLockScreen(track);
       }
 
-      // Update status to playing (actual state will come from event subscription)
-      // Note: Native states (isLoaded, isBuffering) will be updated by event subscription
+      // waitForPlayerReady resolved, so the source is loaded. Publish that here:
+      // the native "loaded" event is not guaranteed (see above), and a status left
+      // reading not-loaded made isAudioBusy() true for the whole track, so every
+      // later tap on another Playlist row was ignored. Later native events still
+      // report real buffering.
       this.updateStatus({
         playing: true,
         currentTrack: this.currentTrack,
         currentTime: 0,
         duration: 0,
+        isLoaded: true,
+        isBuffering: false,
       });
 
       // Preload next playlist track in native memory for faster transition

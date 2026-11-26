@@ -88,13 +88,13 @@ describe('ReviewHeader', () => {
         <ReviewHeader progress={5} maxProgress={10} onClose={mockOnClose} />,
       );
 
-      expect(getByTestId('icon-close-outline')).toBeTruthy();
+      expect(getByTestId('icon-close')).toBeTruthy();
     });
 
     test('does not render close button when onClose is not provided', () => {
       const { queryByTestId } = render(<ReviewHeader progress={5} maxProgress={10} />);
 
-      expect(queryByTestId('icon-close-outline')).toBeNull();
+      expect(queryByTestId('icon-close')).toBeNull();
     });
   });
 
@@ -130,7 +130,7 @@ describe('ReviewHeader', () => {
       );
 
       // Find the pressable that contains the close icon
-      const closeIcon = getByTestId('icon-close-outline');
+      const closeIcon = getByTestId('icon-close');
       const pressable = closeIcon.parent;
 
       expect(pressable).not.toBeNull();
@@ -154,7 +154,7 @@ describe('ReviewHeader', () => {
         <ReviewHeader progress={5} maxProgress={10} onClose={mockOnClose} />,
       );
 
-      const pressable = getByTestId('icon-close-outline').parent;
+      const pressable = getByTestId('icon-close').parent;
       expect(pressable).toBeTruthy();
       fireEvent.press(pressable!);
 

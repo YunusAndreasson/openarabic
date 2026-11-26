@@ -91,9 +91,12 @@ export const usePlaylistScreen = () => {
 
   const handleArticlePlay = useCallback(
     async (articleId: ArticleId) => {
-      if (isAudioBusy()) return;
-
       const status = simpleAudioService.getStatus();
+      // Busy only guards a double tap on the track that is still loading. A tap on
+      // another row always wins: play() supersedes the load in flight, and a status
+      // left reading 'buffering' must never swallow every later tap.
+      if (isAudioBusy() && status.currentTrack?.articleId === articleId) return;
+
       if (status.playing && status.currentTrack?.articleId === articleId) {
         selectionFeedback();
         await simpleAudioService.stop();
