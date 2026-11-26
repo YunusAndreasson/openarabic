@@ -66,7 +66,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * Hook return type for Apple authentication
  */
 export interface UseAppleAuthReturn {
-  signInWithApple: (start?: StartReaderAuth) => Promise<void>;
+  signInWithApple: (start?: StartReaderAuth, onCancel?: () => void) => Promise<void>;
   loading: boolean;
 }
 

@@ -4089,6 +4089,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@shopify/flash-list@patch:@shopify/flash-list@npm%3A2.3.2#~/.yarn/patches/@shopify-flash-list-npm-2.3.2-0d20dcb9d5.patch":
+  version: 2.3.2
+  resolution: "@shopify/flash-list@patch:@shopify/flash-list@npm%3A2.3.2#~/.yarn/patches/@shopify-flash-list-npm-2.3.2-0d20dcb9d5.patch::version=2.3.2&hash=5cc5bd"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/e1e814067ae7e139ac329cc3ef429598bb23361c38316aa77c6b8f5d713280d2e4e1cf222ca3104fd250a92ec71f9dd509758b25b624cfb8bbf1c8a2060c2317
+  languageName: node
+  linkType: hard
+
 "@sinclair/typebox@npm:^0.27.8":
   version: 0.27.12
   resolution: "@sinclair/typebox@npm:0.27.12"
@@ -5058,7 +5069,7 @@ __metadata:
     "@react-native/jest-preset": "npm:0.88.1"
     "@reduxjs/toolkit": "npm:^2.15.0"
     "@sentry/react-native": "npm:~8.28.0"
-    "@shopify/flash-list": "npm:2.3.2"
+    "@shopify/flash-list": "patch:@shopify/flash-list@npm%3A2.3.2#~/.yarn/patches/@shopify-flash-list-npm-2.3.2-0d20dcb9d5.patch"
     "@supabase/supabase-js": "npm:^2.119.2"
     "@swmansion/argent": "npm:^0.34.0"
     "@tanstack/query-async-storage-persister": "npm:^5.108.2"

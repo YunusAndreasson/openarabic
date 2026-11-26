@@ -1,6 +1,4 @@
-import { router } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AuthCredentialFields } from './AuthFormInputs';
@@ -8,7 +6,6 @@ import { AuthSwitchPrompt } from './AuthSwitchPrompt';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { LAYOUT } from '@/constants/layout';
-import { getAccountFormRoute } from '@/utils/routeBuilders';
 import type { StartReaderAuth } from '@/services/readerSaveAuth';
 import { STRINGS } from '@/constants/strings';
 import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
@@ -17,7 +14,7 @@ import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
  * Sign Up Form Component
  *
  * Dedicated form for creating a new account with email and password.
- * Used on the /auth/sign-up screen.
+ * Email registration step in the account modal.
  *
  * Features:
  * - Email and password inputs with validation
@@ -27,16 +24,11 @@ import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
  * - Error handling
  */
 export function SignUpForm({
-  saveIntent,
+  onSignIn,
   startAttempt,
-}: { saveIntent?: string; startAttempt?: StartReaderAuth } = {}): JSX.Element {
+}: { onSignIn?: () => void; startAttempt?: StartReaderAuth } = {}): JSX.Element {
   const fields = useAuthFormFields(true, startAttempt);
   const { password, passwordError, loading, signUpWithEmail } = fields;
-
-  // dismissTo, not push — see SignInForm: the cross-links must not stack.
-  const handleSignIn = useCallback(() => {
-    router.dismissTo(getAccountFormRoute('sign-in', saveIntent));
-  }, [saveIntent]);
 
   return (
     <View style={styles.container}>
@@ -62,14 +54,16 @@ export function SignUpForm({
         onPress={() => void signUpWithEmail()}
       />
 
-      <AuthSwitchPrompt
-        disabled={loading}
-        prompt={STRINGS.ALREADY_HAVE_ACCOUNT}
-        label={STRINGS.SIGN_IN}
-        accessibilityLabel="Go to sign in"
-        testID="navigate-to-sign-in-link"
-        onPress={handleSignIn}
-      />
+      {onSignIn && (
+        <AuthSwitchPrompt
+          disabled={loading}
+          prompt={STRINGS.ALREADY_HAVE_ACCOUNT}
+          label={STRINGS.SIGN_IN}
+          accessibilityLabel="Go to sign in"
+          testID="navigate-to-sign-in-link"
+          onPress={onSignIn}
+        />
+      )}
     </View>
   );
 }

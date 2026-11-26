@@ -19,6 +19,7 @@ import {
   Stack,
   ThemeProvider as NavigationThemeProvider,
   useNavigationContainerRef,
+  type NativeStackNavigationOptions,
 } from 'expo-router';
 import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -102,7 +103,10 @@ import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
 export const unstable_settings = { anchor: '(tabs)' };
 
 const FADE_ROUTE_OPTIONS = { animation: 'fade' } as const;
-const AUTH_ROUTE_OPTIONS = { animation: 'fade', presentation: 'modal' } as const;
+const AUTH_ROUTE_OPTIONS: NativeStackNavigationOptions =
+  Platform.OS === 'android'
+    ? { presentation: 'formSheet', sheetAllowedDetents: [1], sheetGrabberVisible: true }
+    : { animation: 'fade', presentation: 'modal' };
 const ROOT_SCREEN_LISTENERS = {
   transitionEnd: (event: { data: { closing: boolean } }) => {
     if (event.data.closing) flushPendingSheetNavigation();
@@ -372,7 +376,7 @@ function AppContent() {
   useUpdateReady();
 
   // Smart SRS reminders - keeps the scheduled notification plan in sync with FSRS state
-  useWordWidgetSync();
+  useWordWidgetSync(navigationRef);
   useSmartNotifications();
 
   // Smart due words calculator - refreshes data when app becomes active

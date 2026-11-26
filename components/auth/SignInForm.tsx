@@ -1,5 +1,4 @@
 import type { StartReaderAuth } from '@/services/readerSaveAuth';
-import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -9,7 +8,6 @@ import { AuthSwitchPrompt } from './AuthSwitchPrompt';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { TextLink } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
-import { getAccountFormRoute } from '@/utils/routeBuilders';
 import { STRINGS } from '@/constants/strings';
 import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
 
@@ -17,7 +15,7 @@ import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
  * Sign In Form Component
  *
  * Dedicated form for signing in with email and password.
- * Used on the /auth/sign-in screen.
+ * Email sign-in step in the account modal.
  *
  * Features:
  * - Email and password inputs with validation
@@ -28,11 +26,11 @@ import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
  */
 export function SignInForm({
   returnToReader = false,
-  saveIntent,
+  onCreateAccount,
   startAttempt,
 }: {
   returnToReader?: boolean;
-  saveIntent?: string;
+  onCreateAccount?: () => void;
   startAttempt?: StartReaderAuth;
 } = {}): JSX.Element {
   const fields = useAuthFormFields(returnToReader, startAttempt);
@@ -41,13 +39,6 @@ export function SignInForm({
   const handleForgotPassword = useCallback(async () => {
     await resetPassword();
   }, [resetPassword]);
-
-  // dismissTo, not push: the two forms link to each other, and pushing let a
-  // learner stack sign-in over sign-up over sign-in without limit. It pops back
-  // to the other form when it is below this one, and replaces this one when not.
-  const handleCreateAccount = useCallback(() => {
-    router.dismissTo(getAccountFormRoute('sign-up', saveIntent));
-  }, [saveIntent]);
 
   return (
     <View style={styles.container}>
@@ -76,14 +67,14 @@ export function SignInForm({
         />
       </View>
 
-      {(!startAttempt || saveIntent) && (
+      {onCreateAccount && (
         <AuthSwitchPrompt
           disabled={loading}
           prompt={STRINGS.DONT_HAVE_ACCOUNT}
           label={STRINGS.CREATE_ACCOUNT}
           accessibilityLabel="Go to create account"
           testID="navigate-to-sign-up-link"
-          onPress={handleCreateAccount}
+          onPress={onCreateAccount}
         />
       )}
     </View>

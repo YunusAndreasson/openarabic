@@ -4,12 +4,8 @@ import { STRINGS } from '@/constants/strings';
 import { loadFirstPage } from '@/services/firstPage';
 import type { SaveWord } from '@/services/readerSave';
 import type { StudyWord } from '@/types/vocabulary.types';
-import {
-  MILLISECONDS_PER_HOUR,
-  MILLISECONDS_PER_DAY,
-  normalizeTimestamp,
-} from '@/utils/dateTimeUtils';
-import { filterDueWords } from '@/utils/newWordPacing';
+import { MILLISECONDS_PER_HOUR, MILLISECONDS_PER_DAY } from '@/utils/dateTimeUtils';
+import { cooldownReviewTimestampMs, createDueWordFilter } from '@/utils/newWordPacing';
 import { dueTimestampMs } from '@/utils/wordClassification';
 import { initialFace, type WordEntry, type WordFace } from '@/widgets/edition';
 
@@ -148,24 +144,43 @@ export function wordTimeline(
 ): WordEntry[] {
   const expiry = deck.checked + MILLISECONDS_PER_DAY;
   if (!generation || !deck.words.length || now >= expiry) return publicTimeline(now, installed);
-  const words = [...new Map(deck.words.map(w => [w.root_id, w])).values()];
+  const unique = new Map(deck.words.map(word => [word.root_id, word]));
+  const words = Array.from(unique.values(), word => ({
+    word,
+    dueAt: dueTimestampMs(word),
+    lastReviewedAt: cooldownReviewTimestampMs(word),
+  })).sort((a, b) => a.dueAt - b.dueAt || a.word.root_id - b.word.root_id);
   const midnight = new Date(now);
   midnight.setHours(24, 0, 0, 0);
   const boundaries = new Set([+midnight]);
   const cooldown = DEFAULT_SESSION_COOLDOWN_HOURS * MILLISECONDS_PER_HOUR;
   if (deck.lastCompletedAt) boundaries.add(deck.lastCompletedAt + cooldown);
-  for (const word of words) {
-    boundaries.add(dueTimestampMs(word));
-    if (word.fsrs_last_review)
-      boundaries.add(Date.parse(normalizeTimestamp(word.fsrs_last_review) ?? '') + cooldown + 1);
+  for (const { word, dueAt, lastReviewedAt } of words) {
+    boundaries.add(dueAt);
+    if (word.fsrs_last_review) boundaries.add(lastReviewedAt + cooldown + 1);
   }
-  const eligible = (time: number) =>
-    filterDueWords(words, { nowMs: time, lastCompletedAt: deck.lastCompletedAt }).length;
-  const initialCount = eligible(now);
+  const dueAtTime = (time: number) => {
+    const isDue = createDueWordFilter({ nowMs: time, lastCompletedAt: deck.lastCompletedAt });
+    return words.filter(({ word, dueAt, lastReviewedAt }) => isDue(word, dueAt, lastReviewedAt));
+  };
+  const initialDue = dueAtTime(now);
   const ordered = [...boundaries]
     .filter(t => t > now && t < expiry && Number.isFinite(t))
     .sort((a, b) => a - b);
-  const firstChange = ordered.find(t => eligible(t) !== initialCount);
+
+  // For a fixed session completion, a word stays eligible once its due time
+  // and any cooldown have passed. Find the first count increase without
+  // rescanning the whole deck at each boundary.
+  let first = 0;
+  let end = ordered.length;
+  while (first < end) {
+    const middle = first + Math.floor((end - first) / 2);
+    const boundary = ordered[middle];
+    if (boundary !== undefined && dueAtTime(boundary).length === initialDue.length)
+      first = middle + 1;
+    else end = middle;
+  }
+  const firstChange = ordered[first];
   const times = [now];
   for (const t of ordered) {
     if (firstChange !== undefined && t < firstChange) continue;
@@ -173,20 +188,17 @@ export function wordTimeline(
     if (times.length === 7) break;
   }
   const entries = times.map(t => {
-    const due = filterDueWords(words, { nowMs: t, lastCompletedAt: deck.lastCompletedAt });
+    const due = t === now ? initialDue : dueAtTime(t);
     const candidates = (due.length ? due : words).filter(
-      w => w.root?.letters || deck.occurrences[w.root_id],
+      ({ word }) => word.root?.letters || deck.occurrences[word.root_id],
     );
-    const anchored = candidates.filter(w => deck.occurrences[w.root_id]);
-    const pool = (anchored.length ? anchored : candidates).sort(
-      (a, b) => dueTimestampMs(a) - dueTimestampMs(b) || a.root_id - b.root_id,
-    );
-    const selected =
+    const anchored = candidates.filter(({ word }) => deck.occurrences[word.root_id]);
+    const pool = anchored.length ? anchored : candidates;
+    const choice =
       pool[Math.max(0, localDay(new Date(t)) - localDay(new Date(installed))) % pool.length];
-    if (!selected) return { date: new Date(t), props: publicFace(t, installed) };
+    if (!choice) return { date: new Date(t), props: publicFace(t, installed) };
+    const { word: selected, dueAt } = choice;
     const occurrence = deck.occurrences[selected.root_id];
-    const dueAt = dueTimestampMs(selected);
-    const isDue = due.some(w => w.root_id === selected.root_id);
     const status = due.length
       ? `${due.length} due · ${stamp(t)}`
       : Number.isFinite(dueAt) && dueAt > t
@@ -215,7 +227,7 @@ export function wordTimeline(
           ? 'word-' + occurrence.occurrenceId
           : 'root-' + selected.root_id,
         reveal: false,
-        due: isDue,
+        due: due.length > 0,
         checked: deck.checked,
         dueAt: Number.isFinite(dueAt) ? dueAt : 0,
         expires: expiry,

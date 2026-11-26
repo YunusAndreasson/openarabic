@@ -1,5 +1,6 @@
 import { expect, test } from '@jest/globals';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { loadFirstPage } from '@/services/firstPage';
 import {
   publicRotation,
@@ -8,6 +9,7 @@ import {
   wordTimeline,
 } from '@/services/widgets/plan';
 import type { RootId } from '@/types/branded.types';
+import { MILLISECONDS_PER_HOUR } from '@/utils/dateTimeUtils';
 import { initialFace } from '@/widgets/edition';
 const now = +new Date(2026, 10, 23, 9, 41);
 const due = now + 10 * 60_000;
@@ -119,6 +121,44 @@ test('midnight rotation cannot displace the first due transition at 00:05', () =
     before,
   );
   expect(entries.filter(e => +e.date <= at).at(-1)?.props.due).toBe(true);
+});
+
+test('skips review timestamps that do not change the due count and keeps the exact cooldown boundary', () => {
+  const cooldown = DEFAULT_SESSION_COOLDOWN_HOURS * MILLISECONDS_PER_HOUR;
+  const nextReview = now + cooldown / 2;
+  const olderReviews = Array.from({ length: 250 }, (_, i) =>
+    createTestWord({
+      root_id: (i + 1000) as RootId,
+      fsrs_state: 2,
+      fsrs_due: new Date(now + 2 * day).toISOString(),
+      fsrs_last_review: new Date(now - cooldown + i + 1).toISOString(),
+    }),
+  );
+  const waiting = {
+    ...word,
+    fsrs_state: 2 as const,
+    fsrs_due: new Date(now - 1000).toISOString(),
+    fsrs_last_review: new Date(nextReview - cooldown).toISOString(),
+  };
+  const entries = wordTimeline({ ...deck, words: [...olderReviews, waiting] }, 'g', now, now);
+
+  expect(entries[0]?.props.due).toBe(false);
+  expect(entries[1]).toMatchObject({
+    date: new Date(nextReview + 1),
+    props: { rootId: word.root_id, due: true, status: expect.stringMatching(/^1 due/) },
+  });
+});
+
+test('keeps the first refresh boundary when nothing enters the due queue', () => {
+  const reviewedAt = now + 1000 - DEFAULT_SESSION_COOLDOWN_HOURS * MILLISECONDS_PER_HOUR;
+  const future = {
+    ...word,
+    fsrs_due: new Date(now + 2 * day).toISOString(),
+    fsrs_last_review: new Date(reviewedAt).toISOString(),
+  };
+  const entries = wordTimeline({ ...deck, words: [future] }, 'g', now, now);
+
+  expect(entries[1]).toMatchObject({ date: new Date(now + 1001), props: { due: false } });
 });
 
 test('the public rotation preserves exact word positions, source text and grammar emphasis', () => {

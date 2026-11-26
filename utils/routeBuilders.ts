@@ -32,9 +32,10 @@ export type ArticleOpenSource = (typeof ARTICLE_OPEN_SOURCES)[number];
 export const readArticleOpenSource = (param: string | undefined): ArticleOpenSource | 'other' =>
   ARTICLE_OPEN_SOURCES.find(source => source === param) ?? 'other';
 
-export function getAccountFormRoute(form: 'sign-in' | 'sign-up', saveIntent?: string) {
-  const pathname = form === 'sign-in' ? ROUTE_PATHS.AUTH_SIGN_IN : ROUTE_PATHS.AUTH_SIGN_UP;
-  return saveIntent ? ({ pathname, params: { saveIntent } } satisfies Href) : pathname;
+export function getAccountRoute(saveIntent?: string) {
+  return saveIntent
+    ? ({ pathname: ROUTE_PATHS.AUTH, params: { saveIntent } } satisfies Href)
+    : ROUTE_PATHS.AUTH;
 }
 
 interface ArticleRouteOptions {

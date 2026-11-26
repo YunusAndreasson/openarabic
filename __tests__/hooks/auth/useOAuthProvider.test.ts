@@ -691,9 +691,11 @@ describe('useOAuthProvider', () => {
       const { result } = renderHook(() =>
         useOAuthProvider(googleConfig(jest.fn(async () => null))),
       );
-      await result.current.signIn();
+      const onCancel = jest.fn();
+      await result.current.signIn(undefined, onCancel);
 
       expect(mockAnalytics.trackAuthFailed).toHaveBeenCalledWith('google', 'cancelled');
+      expect(onCancel).toHaveBeenCalledTimes(1);
     });
 
     test("Apple's cancel error is code cancelled too", async () => {
@@ -708,9 +710,11 @@ describe('useOAuthProvider', () => {
           provider: 'apple',
         }),
       );
-      await result.current.signIn();
+      const onCancel = jest.fn();
+      await result.current.signIn(undefined, onCancel);
 
       expect(mockAnalytics.trackAuthFailed).toHaveBeenCalledWith('apple', 'cancelled');
+      expect(onCancel).toHaveBeenCalledTimes(1);
     });
 
     test("a refused exchange carries Supabase's code, never its message", async () => {

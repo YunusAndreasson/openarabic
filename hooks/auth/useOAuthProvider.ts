@@ -150,7 +150,7 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
   const [loading, setLoading] = useState(false);
 
   const signIn = useCallback(
-    async (start?: StartReaderAuth): Promise<void> => {
+    async (start?: StartReaderAuth, onCancel?: () => void): Promise<void> => {
       if (providerSignInInProgress) return;
       providerSignInInProgress = true;
       setLoading(true);
@@ -204,6 +204,7 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
           authBreadcrumb(`${providerName} sign-in cancelled by the user`);
           attempt?.end('cancelled', step);
           void analytics.trackAuthFailed(config.provider, 'cancelled');
+          onCancel?.();
           return;
         }
 
@@ -301,6 +302,7 @@ export function useOAuthProvider<TModule>(config: OAuthProviderConfig<TModule>) 
         if (isCancellation) {
           attempt?.end('cancelled', step);
           void analytics.trackAuthFailed(config.provider, 'cancelled');
+          onCancel?.();
           return;
         }
 

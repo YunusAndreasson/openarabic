@@ -12,9 +12,9 @@ module.exports = {
   // Its ignore list already lets react-native, expo and @react-navigation
   // packages through; immer is added, because under the `react-native` export
   // condition it resolves to an ES-module build (Redux Toolkit loads it).
-  // @tanstack resolves to CommonJS.
+  // The early-scroll regression test exercises FlashList's shipped ESM.
   transformIgnorePatterns: expoTransformIgnorePatterns.map(pattern =>
-    pattern.replace('/node_modules/(?!(', '/node_modules/(?!(immer|'),
+    pattern.replace('/node_modules/(?!(', '/node_modules/(?!(immer|@shopify/flash-list|'),
   ),
 
   // The one place the timeout and the worker count are set: the package.json

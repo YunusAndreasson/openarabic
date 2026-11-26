@@ -7,6 +7,7 @@ import { AUTH_CONTENT_MAX_WIDTH_RATIO, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAppleAuth } from '@/hooks/auth/useAppleAuth';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
+import type { StartReaderAuth } from '@/services/readerSaveAuth';
 
 import { EmailAuthOptions } from './EmailAuthOptions';
 import { LegalLinks } from './LegalLinks';
@@ -27,7 +28,15 @@ const VALUE_PROP_ROWS = [
  * 2. Divider
  * 3. Email Sign In / Create Account navigation buttons
  */
-export function Auth(): JSX.Element {
+export function Auth({
+  onEmailSelect,
+  onProviderCancel,
+  startAttempt,
+}: {
+  onEmailSelect: (form: 'sign-in' | 'sign-up') => void;
+  onProviderCancel: () => void;
+  startAttempt?: StartReaderAuth;
+}): JSX.Element {
   // Auth hooks lifted here for unified loading state
   const appleAuth = useAppleAuth();
   const googleAuth = useGoogleAuth();
@@ -61,10 +70,15 @@ export function Auth(): JSX.Element {
       {/* Content Container */}
       <View style={[styles.contentContainer, { maxWidth: width * AUTH_CONTENT_MAX_WIDTH_RATIO }]}>
         {/* Social Authentication Buttons */}
-        <SocialAuthButtons appleAuth={appleAuth} googleAuth={googleAuth} />
+        <SocialAuthButtons
+          appleAuth={appleAuth}
+          googleAuth={googleAuth}
+          startAttempt={startAttempt}
+          onCancel={onProviderCancel}
+        />
 
         {/* Email Auth Options (Sign In / Create Account) */}
-        <EmailAuthOptions />
+        <EmailAuthOptions onSelect={onEmailSelect} />
       </View>
 
       {/* Legal Links */}
